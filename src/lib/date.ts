@@ -1,20 +1,16 @@
 // Date formatting utilities
 
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+import { format, fromUnixTime, parseISO } from "date-fns";
 
 export function fmtDate(iso: string, fmt: "long" | "iso" | "short" = "long"): string {
-  const [y, m, d] = iso.split("-");
-  if (fmt === "iso") return `${y}.${m}.${d}`;
-  if (fmt === "short") return `${MONTHS[+m - 1]} ${+d}`;
-  return `${+d} ${MONTHS[+m - 1]} ${y}`;
+  const d = parseISO(iso);
+  if (fmt === "iso") return format(d, "yyyy.MM.dd");
+  if (fmt === "short") return format(d, "MMM d");
+  return format(d, "d MMM yyyy");
 }
 
 export function unixToIso(unix: number): string {
-  const d = new Date(unix * 1000);
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
+  return format(fromUnixTime(unix), "yyyy-MM-dd");
 }
 
 export function computeReadingTime(contentMd: string): number {

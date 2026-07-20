@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "vite dev --port 3000",
     "generate-routes": "tsr generate",
+    "db:generate": "drizzle-kit generate",
     "build": "vite build",
     "preview": "vite preview",
     "deploy": "alchemy deploy",
@@ -29,6 +30,7 @@
     "@tanstack/react-router-ssr-query": "1.167.1",
     "@tanstack/react-start": "1.168.30",
     "@tanstack/router-plugin": "1.132.0",
+    "date-fns": "4.1.0",
     "drizzle-orm": "0.45.2",
     "lucide-react": "0.545.0",
     "react": "19.2.0",
@@ -51,6 +53,7 @@
     "@vitejs/plugin-react": "6.0.1",
     "alchemy": "0.93.12",
     "better-sqlite3": "12.11.1",
+    "drizzle-kit": "0.31.10",
     "husky": "9.1.7",
     "jsdom": "28.1.0",
     "lint-staged": "17.0.8",
