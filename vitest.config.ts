@@ -1,9 +1,11 @@
 import { defineConfig } from "vitest/config";
 import { fileURLToPath } from "node:url";
+import react from "@vitejs/plugin-react";
 
 const src = fileURLToPath(new URL("./src", import.meta.url));
 
 export default defineConfig({
+  plugins: [react()],
   resolve: {
     alias: {
       "@": src,
