@@ -4,10 +4,13 @@ import { TanStackStart } from "alchemy/cloudflare";
 import { CloudflareStateStore } from "alchemy/state";
 
 // Alchemy state:
-//   - CI: persist state in Cloudflare (a DO-backed state worker) so repeat runs
-//     are idempotent. Alchemy refuses to use local state in CI to avoid orphaned
-//     infra. CloudflareStateStore reads its token from ALCHEMY_STATE_TOKEN — the
-//     deploy workflow reuses CLOUDFLARE_API_TOKEN for it, so no extra secret.
+//   - CI: persist state in Cloudflare so repeat runs are idempotent (Alchemy
+//     refuses to use local state in CI to avoid orphaned infra). This uses the
+//     account-wide default `alchemy-state-service` worker, SHARED across every
+//     Alchemy project on the account — state is namespaced internally by app +
+//     stage, so projects never collide. All projects must therefore present the
+//     SAME token, supplied via the ALCHEMY_STATE_TOKEN secret. (No per-project
+//     state worker; one worker, one token for the whole account.)
 //   - Local: default file-system state store (.alchemy/).
 const app = await alchemy("laigary", {
   stateStore: process.env.CI ? (scope) => new CloudflareStateStore(scope) : undefined,
@@ -19,7 +22,7 @@ const app = await alchemy("laigary", {
 // bindings are added with the same convention in later phases — #9).
 export const worker = await TanStackStart("laigary-web", {
   name: "laigary-web",
-  command: "vite build",
+  build: "vite build",
   url: true,
 });
 
