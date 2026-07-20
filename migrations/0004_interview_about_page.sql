@@ -1,0 +1,2 @@
+-- interview-about page will be created via admin UI
+-- This migration is intentionally empty (seed removed)

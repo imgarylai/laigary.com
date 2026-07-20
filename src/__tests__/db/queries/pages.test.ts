@@ -1,0 +1,60 @@
+// @vitest-environment node
+
+import { describe, it, expect, beforeEach, afterAll, vi } from "vitest";
+import { createTestDb } from "../helpers/test-db";
+
+const harness = createTestDb();
+
+vi.mock("drizzle-orm/d1", () => ({
+  drizzle: () => harness.db,
+}));
+
+beforeEach(() => harness.truncateAll());
+afterAll(() => harness.close());
+
+describe("upsertPage", () => {
+  it("inserts when slug doesn't exist", async () => {
+    const { upsertPage, getPageBySlug } = await import("@/db/queries");
+    await upsertPage("now", { title: "Now", contentMd: "doing X" });
+
+    const page = await getPageBySlug("now");
+    expect(page?.title).toBe("Now");
+    expect(page?.contentMd).toBe("doing X");
+  });
+
+  it("updates existing page in place", async () => {
+    const { upsertPage, getPageBySlug, getAllPages } = await import("@/db/queries");
+    await upsertPage("now", { title: "Now", contentMd: "v1" });
+    await upsertPage("now", { title: "Now", contentMd: "v2" });
+
+    const all = await getAllPages();
+    expect(all).toHaveLength(1);
+    const page = await getPageBySlug("now");
+    expect(page?.contentMd).toBe("v2");
+  });
+
+  it("preserves existing fields when input keys are absent", async () => {
+    const { upsertPage, getPageBySlug } = await import("@/db/queries");
+    await upsertPage("about", { title: "About", contentMd: "original" });
+    await upsertPage("about", { title: "About v2" });
+
+    const page = await getPageBySlug("about");
+    expect(page?.title).toBe("About v2");
+    expect(page?.contentMd).toBe("original");
+  });
+
+  it("defaults title to slug when creating without one", async () => {
+    const { upsertPage, getPageBySlug } = await import("@/db/queries");
+    await upsertPage("contact", {});
+    const page = await getPageBySlug("contact");
+    expect(page?.title).toBe("contact");
+    expect(page?.contentMd).toBe("");
+  });
+});
+
+describe("getPageBySlug", () => {
+  it("returns null when no row matches", async () => {
+    const { getPageBySlug } = await import("@/db/queries");
+    expect(await getPageBySlug("missing")).toBeNull();
+  });
+});
