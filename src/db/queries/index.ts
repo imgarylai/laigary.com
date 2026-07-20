@@ -53,3 +53,5 @@ export {
 export { getPageBySlug, getAllPages, upsertPage } from "./pages";
 
 export { getSiteSettings, getSiteSetting, updateSiteSettings } from "./site";
+
+export { recordUpload, UploadConflictError, type UploadInput } from "./uploads";

@@ -51,11 +51,22 @@ export const worker = await TanStackStart("laigary-web", {
   bindings: {
     DB: db,
     R2_ASSETS: assets,
-    // Non-secret vars. R2 presign secrets (R2_ACCESS_KEY_ID/SECRET) are added
-    // with the admin upload flow (#28).
+    // Non-secret vars.
     R2_PUBLIC_URL: "https://assets.laigary.com",
     R2_S3_ENDPOINT: "https://d71f0bf817919431312c711f0543a272.r2.cloudflarestorage.com",
     R2_BUCKET_NAME: "laigary-assets",
+    // R2 S3 presign credentials (used by the admin upload flow, #28). Supplied
+    // at deploy time via env (the deploy workflow forwards the GitHub secrets);
+    // alchemy.secret encrypts them into the worker rather than storing plaintext.
+    // Guarded so a deploy before the secrets are configured still succeeds
+    // (uploads activate on the next deploy once the secrets exist) instead of
+    // hard-failing on alchemy.secret(undefined).
+    ...(process.env.R2_ACCESS_KEY_ID && process.env.R2_SECRET_ACCESS_KEY
+      ? {
+          R2_ACCESS_KEY_ID: alchemy.secret(process.env.R2_ACCESS_KEY_ID),
+          R2_SECRET_ACCESS_KEY: alchemy.secret(process.env.R2_SECRET_ACCESS_KEY),
+        }
+      : {}),
   },
 });
 
