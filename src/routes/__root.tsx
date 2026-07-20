@@ -30,7 +30,9 @@ export const Route = createRootRoute({
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    // suppressHydrationWarning: next-themes (mounted in the /admin layout) sets
+    // the theme class on <html> on the client, which the SSR markup can't match.
+    <html lang="en" suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>
