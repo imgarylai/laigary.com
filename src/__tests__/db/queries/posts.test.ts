@@ -1,0 +1,210 @@
+// @vitest-environment node
+
+import { describe, it, expect, beforeEach, afterAll, vi } from "vitest";
+import { createTestDb } from "../helpers/test-db";
+
+const harness = createTestDb();
+
+vi.mock("drizzle-orm/d1", () => ({
+  drizzle: () => harness.db,
+}));
+
+beforeEach(() => harness.truncateAll());
+afterAll(() => harness.close());
+
+async function seedTag(name: string, slug: string) {
+  const { createTag } = await import("@/db/queries");
+  return createTag({ name, slug });
+}
+
+describe("createPost", () => {
+  it("inserts a draft by default with no publishedAt", async () => {
+    const { createPost, getAdminPosts } = await import("@/db/queries");
+    const { id, slug } = await createPost({
+      title: "Hello",
+      slug: "hello",
+      contentMd: "body",
+    });
+    expect(id).toBeTruthy();
+    expect(slug).toBe("hello");
+
+    const { items } = await getAdminPosts();
+    expect(items).toHaveLength(1);
+    expect(items[0].status).toBe("draft");
+  });
+
+  it("sets publishedAt when status is published", async () => {
+    const { createPost, getPublishedPosts } = await import("@/db/queries");
+    await createPost({
+      title: "Live",
+      slug: "live",
+      contentMd: "body",
+      status: "published",
+    });
+    const { posts, total } = await getPublishedPosts();
+    expect(total).toBe(1);
+    expect(posts[0].slug).toBe("live");
+  });
+
+  it("links tags via post_tags", async () => {
+    const { createPost, getPostBySlug } = await import("@/db/queries");
+    const tag = await seedTag("Life", "life");
+    await createPost({
+      title: "Tagged",
+      slug: "tagged",
+      contentMd: "body",
+      status: "published",
+      tagIds: [tag.id],
+    });
+    const post = await getPostBySlug("tagged");
+    expect(post?.tags.map((t) => t.slug)).toEqual(["life"]);
+  });
+
+  it("throws PostConflictError on duplicate slug", async () => {
+    const { createPost, PostConflictError } = await import("@/db/queries");
+    await createPost({ title: "A", slug: "dup", contentMd: "x" });
+    await expect(createPost({ title: "B", slug: "dup", contentMd: "y" })).rejects.toBeInstanceOf(
+      PostConflictError,
+    );
+  });
+});
+
+describe("updatePost", () => {
+  it("updates title and content while preserving other fields", async () => {
+    const { createPost, updatePost, getAdminPosts } = await import("@/db/queries");
+    const { id } = await createPost({ title: "Old", slug: "post", contentMd: "old" });
+    await updatePost(id, { title: "New", slug: "post", contentMd: "new" });
+    const { items } = await getAdminPosts();
+    expect(items[0].title).toBe("New");
+  });
+
+  it("sets publishedAt when transitioning draft → published", async () => {
+    const { createPost, updatePost, getPublishedPosts } = await import("@/db/queries");
+    const { id } = await createPost({ title: "Draft", slug: "draft", contentMd: "x" });
+    await updatePost(id, {
+      title: "Draft",
+      slug: "draft",
+      contentMd: "x",
+      status: "published",
+    });
+    const { total } = await getPublishedPosts();
+    expect(total).toBe(1);
+  });
+
+  it("replaces tag links when tagIds is provided", async () => {
+    const { createPost, updatePost, getPostBySlug } = await import("@/db/queries");
+    const tagA = await seedTag("A", "a");
+    const tagB = await seedTag("B", "b");
+    const { id } = await createPost({
+      title: "T",
+      slug: "t",
+      contentMd: "x",
+      status: "published",
+      tagIds: [tagA.id],
+    });
+
+    await updatePost(id, { title: "T", slug: "t", contentMd: "x", tagIds: [tagB.id] });
+
+    const post = await getPostBySlug("t");
+    expect(post?.tags.map((t) => t.slug)).toEqual(["b"]);
+  });
+
+  it("throws PostNotFoundError for unknown id", async () => {
+    const { updatePost, PostNotFoundError } = await import("@/db/queries");
+    await expect(
+      updatePost("missing", { title: "x", slug: "x", contentMd: "x" }),
+    ).rejects.toBeInstanceOf(PostNotFoundError);
+  });
+});
+
+describe("deletePost", () => {
+  it("removes the post", async () => {
+    const { createPost, deletePost, getAdminPosts } = await import("@/db/queries");
+    const { id } = await createPost({ title: "x", slug: "x", contentMd: "x" });
+    await deletePost(id);
+    const { total } = await getAdminPosts();
+    expect(total).toBe(0);
+  });
+
+  it("throws PostNotFoundError for unknown id", async () => {
+    const { deletePost, PostNotFoundError } = await import("@/db/queries");
+    await expect(deletePost("missing")).rejects.toBeInstanceOf(PostNotFoundError);
+  });
+});
+
+describe("getPublishedPosts", () => {
+  it("filters by tag slug", async () => {
+    const { createPost, getPublishedPosts } = await import("@/db/queries");
+    const a = await seedTag("A", "a");
+    const b = await seedTag("B", "b");
+    await createPost({
+      title: "P1",
+      slug: "p1",
+      contentMd: "x",
+      status: "published",
+      tagIds: [a.id],
+    });
+    await createPost({
+      title: "P2",
+      slug: "p2",
+      contentMd: "x",
+      status: "published",
+      tagIds: [b.id],
+    });
+
+    const onlyA = await getPublishedPosts({ tag: "a" });
+    expect(onlyA.posts).toHaveLength(1);
+    expect(onlyA.posts[0].slug).toBe("p1");
+  });
+
+  it("respects limit and offset", async () => {
+    const { createPost, getPublishedPosts } = await import("@/db/queries");
+    for (let i = 0; i < 5; i++) {
+      await createPost({
+        title: `P${i}`,
+        slug: `p${i}`,
+        contentMd: "x",
+        status: "published",
+      });
+    }
+    const page1 = await getPublishedPosts({ limit: 2, offset: 0 });
+    const page2 = await getPublishedPosts({ limit: 2, offset: 2 });
+    expect(page1.posts).toHaveLength(2);
+    expect(page2.posts).toHaveLength(2);
+    expect(page1.total).toBe(5);
+    expect(page1.posts[0].slug).not.toBe(page2.posts[0].slug);
+  });
+
+  it("returns empty for unknown tag", async () => {
+    const { getPublishedPosts } = await import("@/db/queries");
+    const result = await getPublishedPosts({ tag: "nope" });
+    expect(result).toEqual({ posts: [], total: 0 });
+  });
+
+  it("hides drafts", async () => {
+    const { createPost, getPublishedPosts } = await import("@/db/queries");
+    await createPost({ title: "Draft", slug: "draft", contentMd: "x" });
+    const result = await getPublishedPosts();
+    expect(result.total).toBe(0);
+  });
+});
+
+describe("getAdminPosts", () => {
+  it("filters by q (title substring)", async () => {
+    const { createPost, getAdminPosts } = await import("@/db/queries");
+    await createPost({ title: "Hello world", slug: "hw", contentMd: "x" });
+    await createPost({ title: "Goodbye", slug: "gb", contentMd: "x" });
+    const r = await getAdminPosts({ q: "hello" });
+    expect(r.items).toHaveLength(1);
+    expect(r.items[0].slug).toBe("hw");
+  });
+
+  it("filters by status", async () => {
+    const { createPost, getAdminPosts } = await import("@/db/queries");
+    await createPost({ title: "D", slug: "d", contentMd: "x" });
+    await createPost({ title: "P", slug: "p", contentMd: "x", status: "published" });
+    const drafts = await getAdminPosts({ status: "draft" });
+    expect(drafts.items).toHaveLength(1);
+    expect(drafts.items[0].slug).toBe("d");
+  });
+});
