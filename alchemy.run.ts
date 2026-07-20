@@ -69,13 +69,21 @@ export const worker = await TanStackStart("laigary-web", {
 // on a duplicate — adoption matches by `name`, so the live app must be named
 // "laigary admin" (rename it in Zero Trust, or delete it and let this recreate).
 // Requires the deploy token to carry Access: Apps and Policies (Edit).
-export const adminAccess = await AccessApplication("laigary-admin", {
+//
+// The logical IDs carry an `-v2` suffix to abandon stale Alchemy state from an
+// earlier partial run: state held a policy/app ID that Cloudflare no longer has,
+// so the update path did `PUT /{dead-id}` → 404 (that path has no create
+// fallback). A fresh logical ID forces the create path — which adopts by name if
+// the resource still exists, or creates it otherwise. The old state entries are
+// orphaned and cleaned up on the next apply (their delete handlers treat the
+// already-gone 404 as success). Physical names are unchanged.
+export const adminAccess = await AccessApplication("laigary-admin-v2", {
   name: "laigary admin",
   type: "self_hosted",
   domain: "laigary.com/admin",
   adopt: true,
   policies: [
-    await AccessPolicy("laigary-admin-allow", {
+    await AccessPolicy("laigary-admin-allow-v2", {
       name: "Allow owner",
       decision: "allow",
       adopt: true,
