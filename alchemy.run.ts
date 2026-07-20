@@ -64,33 +64,26 @@ export const worker = await TanStackStart("laigary-web", {
 // the account's existing IdP (Google OAuth); `allowedIdps` is left unset so all
 // account IdPs are accepted. Only the owner's email is allowed in.
 //
-// `adopt: true` takes over the existing Access app/policy (laigary.com/admin was
-// already gated by a Cloudflare Access app from the old site) instead of failing
-// on a duplicate — adoption matches by `name`, so the live app must be named
-// "laigary admin" (rename it in Zero Trust, or delete it and let this recreate).
-// Requires the deploy token to carry Access: Apps and Policies (Edit).
+// `adopt: true` takes over the existing Access app/policy (matched by `name`)
+// instead of failing on a duplicate — so this re-adopts the live "laigary admin"
+// app / "Allow owner" policy rather than recreating them.
 //
-// The logical IDs carry an `-v2` suffix to abandon stale Alchemy state from an
-// earlier partial run: state held a policy/app ID that Cloudflare no longer has,
-// so the update path did `PUT /{dead-id}` → 404 (that path has no create
-// fallback). A fresh logical ID forces the create path — which adopts by name if
-// the resource still exists, or creates it otherwise. Physical names are
-// unchanged.
-//
-// `delete: false` step 1 of renaming the `-v2` logical IDs back to clean names:
-// it persists "don't tear down" into state so that when the `-v2` IDs later
-// become orphans (removed from the program by the rename), their delete handlers
-// skip the Cloudflare deletion — otherwise the orphan cleanup would delete the
-// very app/policy the renamed-back resource re-adopts (same physical name). It
-// also doubles as teardown protection for the /admin auth gate.
-export const adminAccess = await AccessApplication("laigary-admin-v2", {
+// The logical IDs were briefly suffixed `-v2` to abandon stale Alchemy state
+// (state held a dead policy/app ID → the update path did `PUT /{dead-id}` → 404,
+// with no create fallback). Now renamed back to the clean IDs: the previous
+// deploy persisted `delete: false` on the `-v2` resources, so as those become
+// orphans here their delete handlers skip the Cloudflare deletion (they only drop
+// the stale state entry) instead of tearing down the app/policy these clean IDs
+// re-adopt by name. `delete: false` stays on as teardown protection for the
+// /admin auth gate. Physical names are unchanged throughout.
+export const adminAccess = await AccessApplication("laigary-admin", {
   name: "laigary admin",
   type: "self_hosted",
   domain: "laigary.com/admin",
   adopt: true,
   delete: false,
   policies: [
-    await AccessPolicy("laigary-admin-allow-v2", {
+    await AccessPolicy("laigary-admin-allow", {
       name: "Allow owner",
       decision: "allow",
       adopt: true,
