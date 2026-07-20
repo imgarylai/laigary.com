@@ -74,19 +74,27 @@ export const worker = await TanStackStart("laigary-web", {
 // earlier partial run: state held a policy/app ID that Cloudflare no longer has,
 // so the update path did `PUT /{dead-id}` → 404 (that path has no create
 // fallback). A fresh logical ID forces the create path — which adopts by name if
-// the resource still exists, or creates it otherwise. The old state entries are
-// orphaned and cleaned up on the next apply (their delete handlers treat the
-// already-gone 404 as success). Physical names are unchanged.
+// the resource still exists, or creates it otherwise. Physical names are
+// unchanged.
+//
+// `delete: false` step 1 of renaming the `-v2` logical IDs back to clean names:
+// it persists "don't tear down" into state so that when the `-v2` IDs later
+// become orphans (removed from the program by the rename), their delete handlers
+// skip the Cloudflare deletion — otherwise the orphan cleanup would delete the
+// very app/policy the renamed-back resource re-adopts (same physical name). It
+// also doubles as teardown protection for the /admin auth gate.
 export const adminAccess = await AccessApplication("laigary-admin-v2", {
   name: "laigary admin",
   type: "self_hosted",
   domain: "laigary.com/admin",
   adopt: true,
+  delete: false,
   policies: [
     await AccessPolicy("laigary-admin-allow-v2", {
       name: "Allow owner",
       decision: "allow",
       adopt: true,
+      delete: false,
       include: [{ email: { email: "garylai1990@gmail.com" } }],
     }),
   ],
