@@ -9,6 +9,8 @@
     "dev": "vite dev --port 3000",
     "generate-routes": "tsr generate",
     "db:generate": "drizzle-kit generate",
+    "migrate:d1": "bash scripts/migrate-d1-data.sh",
+    "migrate:r2": "bash scripts/migrate-r2-objects.sh",
     "build": "vite build",
     "preview": "vite preview",
     "deploy": "alchemy deploy",
