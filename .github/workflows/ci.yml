@@ -12,6 +12,8 @@ name: CI
 #   ALCHEMY_STATE_TOKEN    — the account-wide Alchemy state-store token (same value
 #                            across every Alchemy project so they share the one
 #                            `alchemy-state-service` worker).
+#   R2_ACCESS_KEY_ID       — R2 S3 API access key id (for presigned uploads, #28).
+#   R2_SECRET_ACCESS_KEY   — R2 S3 API secret access key.
 on:
   push:
     branches: [main]
@@ -73,3 +75,6 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           ALCHEMY_STATE_TOKEN: ${{ secrets.ALCHEMY_STATE_TOKEN }}
+          # R2 S3 presign credentials, baked into the worker via alchemy.secret (#28).
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
