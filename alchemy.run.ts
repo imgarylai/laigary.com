@@ -1,6 +1,12 @@
 /// <reference types="node" />
 import alchemy from "alchemy";
-import { D1Database, R2Bucket, TanStackStart } from "alchemy/cloudflare";
+import {
+  AccessApplication,
+  AccessPolicy,
+  D1Database,
+  R2Bucket,
+  TanStackStart,
+} from "alchemy/cloudflare";
 import { CloudflareStateStore } from "alchemy/state";
 
 // Alchemy state:
@@ -18,36 +24,56 @@ const app = await alchemy("laigary", {
 
 // D1 database. `migrationsDir` makes Alchemy apply migrations/*.sql on deploy
 // (tracked in the d1_migrations table), so the schema is provisioned with the
-// worker. Data is copied from the live site in #10.
+// worker. Data was copied from the live site in #10.
 const db = await D1Database("laigary-db", {
   name: "laigary-db",
   migrationsDir: "./migrations",
 });
 
-// R2 bucket for uploads. Custom domain (assets.laigary.com) is attached at
-// cutover in a later phase; for now the bucket exists and is bound.
+// R2 bucket for uploads.
 const assets = await R2Bucket("laigary-assets", {
   name: "laigary-assets",
 });
 
-// The TanStack Start worker. `url: true` exposes a *.workers.dev URL only —
-// no custom domain is attached, so the live laigary.com site is untouched.
-// R2 presign secrets (R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY) are added with
-// the admin upload flow (#8); the custom domain + Access come at cutover.
+// The TanStack Start worker.
+//   - `domains` binds the live apex `laigary.com` to this worker.
+//     `overrideExistingOrigin` forcibly transfers it off the old worker — i.e.
+//     this deploy is the domain cutover. The public frontend is still the
+//     scaffold placeholder until #6.
+//   - `url: true` also keeps the *.workers.dev URL for testing.
 export const worker = await TanStackStart("laigary-web", {
   name: "laigary-web",
   build: "vite build",
   url: true,
+  domains: [{ domainName: "laigary.com", overrideExistingOrigin: true }],
   bindings: {
     DB: db,
     R2_ASSETS: assets,
-    // Non-secret vars (public URL functional once the custom domain is attached).
+    // Non-secret vars. R2 presign secrets (R2_ACCESS_KEY_ID/SECRET) are added
+    // with the admin upload flow (#28).
     R2_PUBLIC_URL: "https://assets.laigary.com",
     R2_S3_ENDPOINT: "https://d71f0bf817919431312c711f0543a272.r2.cloudflarestorage.com",
     R2_BUCKET_NAME: "laigary-assets",
   },
 });
 
-console.log(`🚀 Deployed: ${worker.url}`);
+// Protect ONLY the /admin path with Cloudflare Access (self-hosted app). The
+// path in `domain` scopes it to /admin — the public site stays open. Login uses
+// the account's existing IdP (Google OAuth); `allowedIdps` is left unset so all
+// account IdPs are accepted. Only the owner's email is allowed in.
+export const adminAccess = await AccessApplication("laigary-admin", {
+  name: "laigary admin",
+  type: "self_hosted",
+  domain: "laigary.com/admin",
+  policies: [
+    await AccessPolicy("laigary-admin-allow", {
+      name: "Allow owner",
+      decision: "allow",
+      include: [{ email: { email: "garylai1990@gmail.com" } }],
+    }),
+  ],
+});
+
+console.log(`🚀 Deployed: ${worker.url} (laigary.com)`);
 
 await app.finalize();
