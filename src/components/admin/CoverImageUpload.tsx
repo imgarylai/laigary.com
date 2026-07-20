@@ -24,7 +24,10 @@ function centerAspectCrop(mediaWidth: number, mediaHeight: number) {
   );
 }
 
-function OGFallback({ title }: { title: string }) {
+// `brand` is the OG image's footer line — passed in from site_settings (via the
+// form loader) so the preview stays in sync with the real SEO metadata instead
+// of hardcoding the site name / url here.
+function OGFallback({ title, brand }: { title: string; brand: string }) {
   return (
     <div className="flex aspect-video w-full flex-col justify-between bg-[#0a0a0a] p-6 text-white">
       <div
@@ -33,7 +36,7 @@ function OGFallback({ title }: { title: string }) {
       >
         {title || "Untitled"}
       </div>
-      <div className="text-xs text-zinc-500">啟靈工程師 | laigary.com</div>
+      <div className="text-xs text-zinc-500">{brand}</div>
     </div>
   );
 }
@@ -42,10 +45,13 @@ export function CoverImageUpload({
   value,
   onChange,
   title,
+  ogBrand,
 }: {
   value: string;
   onChange: (url: string) => void;
   title: string;
+  // OG preview footer line, e.g. `${siteName} | ${siteHost}` from site_settings.
+  ogBrand: string;
 }) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
@@ -130,7 +136,7 @@ export function CoverImageUpload({
               </Button>
             </>
           ) : (
-            <OGFallback title={title} />
+            <OGFallback title={title} brand={ogBrand} />
           )}
         </div>
       </div>
