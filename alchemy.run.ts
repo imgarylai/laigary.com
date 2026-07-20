@@ -63,14 +63,22 @@ export const worker = await TanStackStart("laigary-web", {
 // path in `domain` scopes it to /admin — the public site stays open. Login uses
 // the account's existing IdP (Google OAuth); `allowedIdps` is left unset so all
 // account IdPs are accepted. Only the owner's email is allowed in.
+//
+// `adopt: true` takes over the existing Access app/policy (laigary.com/admin was
+// already gated by a Cloudflare Access app from the old site) instead of failing
+// on a duplicate — adoption matches by `name`, so the live app must be named
+// "laigary admin" (rename it in Zero Trust, or delete it and let this recreate).
+// Requires the deploy token to carry Access: Apps and Policies (Edit).
 export const adminAccess = await AccessApplication("laigary-admin", {
   name: "laigary admin",
   type: "self_hosted",
   domain: "laigary.com/admin",
+  adopt: true,
   policies: [
     await AccessPolicy("laigary-admin-allow", {
       name: "Allow owner",
       decision: "allow",
+      adopt: true,
       include: [{ email: { email: "garylai1990@gmail.com" } }],
     }),
   ],
