@@ -58,7 +58,8 @@
     "tailwind-merge": "3.6.0",
     "tailwindcss": "4.1.18",
     "temml": "0.13.3",
-    "unified": "11.0.5"
+    "unified": "11.0.5",
+    "zod": "4.4.3"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "4.20260702.1",
