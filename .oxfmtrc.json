@@ -1,4 +1,4 @@
 {
   "$schema": "./node_modules/oxfmt/configuration_schema.json",
-  "ignorePatterns": ["src/components/ui/**", "src/hooks/use-mobile.ts"]
+  "ignorePatterns": ["src/components/ui/**", "src/hooks/use-mobile.ts", "src/routeTree.gen.ts"]
 }
