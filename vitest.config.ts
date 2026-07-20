@@ -1,4 +1,4 @@
-import { defineConfig } from "vitest/config";
+import { defineConfig, coverageConfigDefaults } from "vitest/config";
 import { fileURLToPath } from "node:url";
 import react from "@vitejs/plugin-react";
 
@@ -18,5 +18,10 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["src/**/*.test.{ts,tsx}"],
+    coverage: {
+      // shadcn/Base UI generated primitives are vendored code — not our unit to
+      // test. Keep them out of coverage so the number reflects our own code.
+      exclude: [...coverageConfigDefaults.exclude, "src/components/ui/**"],
+    },
   },
 });
