@@ -7,12 +7,15 @@
 # Keys are preserved, so once assets.laigary.com is repointed to the new bucket
 # at cutover, every existing image URL keeps working with no content rewriting.
 #
+# Missing keys (upload rows whose object is gone from the bucket — already-broken
+# references the live site can't serve either) are skipped and counted; any other
+# error (auth, network) aborts. If the summary shows *everything* skipped, the
+# uploads table isn't mirroring the bucket — use the rclone path in
+# docs/data-migration.md instead (enumerates the real bucket via the S3 API).
+#
 # Prereqs:
 #   - Run AFTER migrate-d1-data.sh (reads the uploads table from laigary-db).
 #   - Authenticated wrangler + jq.
-#
-# NOTE: this copies objects tracked in `uploads`. If any objects were put in the
-# bucket outside the admin upload flow, use rclone with two R2 S3 remotes instead.
 #
 # Usage: bash scripts/migrate-r2-objects.sh
 set -euo pipefail
@@ -31,14 +34,28 @@ if [ -z "$rows" ]; then
   exit 0
 fi
 
-count=0
+copied=0
+skipped=0
 while IFS= read -r row; do
   key=$(echo "$row" | jq -r '.r2_key')
   ct=$(echo "$row" | jq -r '.content_type')
-  echo "  copy ${key} (${ct})"
-  npx wrangler r2 object get "${OLD_BUCKET}/${key}" --remote --file "$TMP/obj"
-  npx wrangler r2 object put "${NEW_BUCKET}/${key}" --remote --file "$TMP/obj" --content-type "$ct"
-  count=$((count + 1))
+  if err=$(npx wrangler r2 object get "${OLD_BUCKET}/${key}" --remote --file "$TMP/obj" 2>&1); then
+    npx wrangler r2 object put "${NEW_BUCKET}/${key}" --remote --file "$TMP/obj" --content-type "$ct" >/dev/null
+    echo "  copied  ${key}"
+    copied=$((copied + 1))
+  elif echo "$err" | grep -qiE "does not exist|not found"; then
+    echo "  SKIP (missing in ${OLD_BUCKET})  ${key}"
+    skipped=$((skipped + 1))
+  else
+    echo "$err"
+    echo "==> Aborting: unexpected error on ${key} (not a missing-key error)."
+    exit 1
+  fi
 done <<< "$rows"
 
-echo "==> Copied ${count} object(s) from ${OLD_BUCKET} to ${NEW_BUCKET}."
+echo "==> Done. copied=${copied} skipped=${skipped} (of $((copied + skipped)) upload rows)."
+if [ "$copied" -eq 0 ]; then
+  echo "==> Nothing copied — the uploads table likely doesn't mirror the bucket."
+  echo "    Use the rclone path in docs/data-migration.md."
+  exit 1
+fi

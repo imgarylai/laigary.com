@@ -48,8 +48,19 @@ pnpm migrate:r2     # → scripts/migrate-r2-objects.sh   (run AFTER step 1)
 
 Reads `r2_key` + `content_type` from the migrated `uploads` table and copies
 each object from `laigary-blog-assets` → `laigary-assets` (keys + content types
-preserved), using only the API token. If objects exist outside the upload flow,
-use `rclone` with two R2 S3 remotes instead.
+preserved), using only the API token. Rows whose object is missing from the old
+bucket are skipped and counted (already-broken references); the summary prints
+`copied` / `skipped`.
+
+**If everything is skipped** (or the bucket holds objects not in `uploads`), the
+table isn't a faithful mirror — copy the real bucket contents with `rclone`:
+
+```bash
+# One-time: configure two R2 S3 remotes (needs R2 S3 access keys — from the old
+# project's R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY, or mint an R2 API token).
+rclone config   # add remotes `r2old` and `r2new` (provider Cloudflare R2, S3 endpoint)
+rclone copy r2old:laigary-blog-assets r2new:laigary-assets --progress
+```
 
 ## 3. Verify
 
