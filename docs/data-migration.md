@@ -1,29 +1,23 @@
 # Data migration (#10)
 
-Copy the live site's data from the **old** Cloudflare resources to the **new**
-ones provisioned by Alchemy (#9):
+Copy the live site's data from the **old** D1 (`laigary-blog`) into the **new**
+D1 (`laigary-db`) provisioned by Alchemy (#9). The new D1 already has the full
+schema (Alchemy applied `migrations/*.sql` on deploy), so this is **data-only**,
+and the script is **re-runnable** — run it once now to validate, then again at
+cutover for a fresh snapshot.
 
-|     | Old (laigary.com-next) | New (this repo)  |
-| --- | ---------------------- | ---------------- |
-| D1  | `laigary-blog`         | `laigary-db`     |
-| R2  | `laigary-blog-assets`  | `laigary-assets` |
-
-The new D1 already has the full schema (Alchemy applied `migrations/*.sql` on
-deploy), so this is **data-only**. Both scripts are **re-runnable** — run them
-once now to validate, then again at cutover for a fresh snapshot.
-
-> ⚠️ These scripts hit **production data** and need Cloudflare credentials. Run
-> them yourself; they are not part of CI. Nothing here rewrites content — keys
-> and IDs are preserved.
+> ⚠️ This hits **production data** and needs Cloudflare credentials. Run it
+> yourself; it is not part of CI. Nothing here rewrites content — keys and IDs
+> are preserved.
 
 ## Prerequisites
 
 - Authenticated wrangler: `export CLOUDFLARE_API_TOKEN=… CLOUDFLARE_ACCOUNT_ID=…`
-  (or `npx wrangler login`). The token needs D1 + R2 read on the old resources
-  and write on the new ones.
+  (or `npx wrangler login`). The token needs D1 read on `laigary-blog` and
+  D1 write on `laigary-db`.
 - `jq` installed.
 
-## 1. D1 data
+## D1 data
 
 ```bash
 pnpm migrate:d1     # → scripts/migrate-d1-data.sh
@@ -37,42 +31,25 @@ What it does:
 3. Imports parents → children.
 4. Prints old-vs-new **row counts per table** and fails on any mismatch.
 
-IDs are TEXT UUIDs and are preserved, so foreign keys and the `r2_key`
-references in content stay valid.
+IDs are TEXT UUIDs and are preserved, so foreign keys stay valid.
 
-## 2. R2 objects
+## R2 objects — nothing to migrate
 
-```bash
-pnpm migrate:r2     # → scripts/migrate-r2-objects.sh   (run AFTER step 1)
-```
+The old `laigary-blog-assets` bucket has no content worth migrating (and the R2
+S3 keys are no longer available). `laigary-assets` starts empty; the admin
+upload flow (#8) populates it going forward.
 
-Reads `r2_key` + `content_type` from the migrated `uploads` table and copies
-each object from `laigary-blog-assets` → `laigary-assets` (keys + content types
-preserved), using only the API token. Rows whose object is missing from the old
-bucket are skipped and counted (already-broken references); the summary prints
-`copied` / `skipped`.
+If any migrated `uploads` rows / post `cover_image_url` values reference old
+objects that don't exist, they'll simply 404 — clean those rows up if they
+surface. If a bulk copy is ever needed, use `rclone` between two R2 S3 remotes.
 
-**If everything is skipped** (or the bucket holds objects not in `uploads`), the
-table isn't a faithful mirror — copy the real bucket contents with `rclone`:
-
-```bash
-# One-time: configure two R2 S3 remotes (needs R2 S3 access keys — from the old
-# project's R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY, or mint an R2 API token).
-rclone config   # add remotes `r2old` and `r2new` (provider Cloudflare R2, S3 endpoint)
-rclone copy r2old:laigary-blog-assets r2new:laigary-assets --progress
-```
-
-## 3. Verify
+## Verify
 
 - [ ] D1 row counts match (the script asserts this).
-- [ ] Spot-check a post's `content_md` / `cover_image_url` in the new DB.
-- [ ] R2 object count matches `SELECT COUNT(*) FROM uploads`.
-- [ ] Images load from the new bucket (once its public domain is reachable).
+- [ ] Spot-check a post's `content_md` in the new DB.
 
 ## Cutover note (later phase)
 
-`assets.laigary.com` still points at the **old** bucket. Because keys are
-preserved, repointing it to `laigary-assets` at cutover makes every existing
-`https://assets.laigary.com/<key>` URL resolve from the new bucket with **zero
-content rewriting**. Domain repoint + `laigary.com` custom domain happen at
-final cutover, not here.
+`assets.laigary.com` still points at the old bucket. At final cutover it is
+repointed to `laigary-assets` (along with the `laigary.com` custom domain) —
+not here.
