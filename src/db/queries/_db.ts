@@ -4,14 +4,12 @@
 import { env } from "cloudflare:workers";
 import { drizzle } from "drizzle-orm/d1";
 import { sql, type AnyColumn, type SQL } from "drizzle-orm";
-import type { D1Database } from "@cloudflare/workers-types";
 
-// TanStack Start exposes Cloudflare bindings via `cloudflare:workers`.
-// The DB binding is provisioned in #9 (Alchemy IaC); until it's declared there
-// the cast supplies the type. In tests, `drizzle-orm/d1` is mocked so the real
-// binding is never touched.
+// TanStack Start exposes Cloudflare bindings via `cloudflare:workers`. The DB
+// binding is provisioned + typed by Alchemy (alchemy.run.ts + src/env.d.ts).
+// In tests, `drizzle-orm/d1` is mocked so the real binding is never touched.
 export async function getDb() {
-  return drizzle((env as unknown as { DB: D1Database }).DB);
+  return drizzle(env.DB);
 }
 
 export type Db = Awaited<ReturnType<typeof getDb>>;
