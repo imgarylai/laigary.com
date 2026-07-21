@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Terminal-prompt favicon (interim). Self-contained dark tile so it reads
+       on both light and dark browser tabs. Palette: near-black bg + terminal
+       green. Glyphs drawn as geometry (not font text) for crisp small sizes. -->
+  <rect width="32" height="32" fill="#0d1117"/>
+  <polyline points="8,10 15,16 8,22" fill="none" stroke="#3fb950"
+    stroke-width="2.75" stroke-linecap="square" stroke-linejoin="miter"/>
+  <rect x="17" y="20" width="8" height="3" fill="#3fb950"/>
+</svg>
