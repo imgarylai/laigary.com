@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { homeDataFn } from "@/server/public";
+import { serializeJsonLd, webSiteLd } from "@/lib/json-ld";
 import { AsciiRule, PromptLine } from "@/components/terminal/ui";
 import { TmPage, TmMeta, TmDirLink, TmDirCells } from "@/components/terminal/layout";
 import { useI18n } from "@/i18n/I18nProvider";
@@ -8,6 +9,11 @@ import { fmtDate } from "@/lib/date";
 
 export const Route = createFileRoute("/_site/")({
   loader: () => homeDataFn(),
+  head: ({ loaderData }) => ({
+    scripts: loaderData
+      ? [{ type: "application/ld+json", children: serializeJsonLd(webSiteLd(loaderData.siteName)) }]
+      : [],
+  }),
   component: Home,
 });
 

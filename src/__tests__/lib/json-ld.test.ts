@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { blogPostingLd, serializeJsonLd, techArticleLd } from "@/lib/json-ld";
+import {
+  blogPostingLd,
+  breadcrumbLd,
+  serializeJsonLd,
+  techArticleLd,
+  webSiteLd,
+} from "@/lib/json-ld";
 
 describe("blogPostingLd", () => {
   const base = {
@@ -56,5 +62,29 @@ describe("serializeJsonLd", () => {
     expect(out).not.toContain("</script>");
     expect(out).toContain("\\u003c/script>");
     expect(JSON.parse(out).headline).toBe("</script><script>alert(1)</script>");
+  });
+});
+
+describe("webSiteLd", () => {
+  it("should build a WebSite entity with the author when given a site name", () => {
+    const ld = webSiteLd("啟靈工程師");
+    expect(ld["@type"]).toBe("WebSite");
+    expect(ld.name).toBe("啟靈工程師");
+    expect(ld.url).toBe("https://laigary.com");
+  });
+});
+
+describe("breadcrumbLd", () => {
+  it("should number positions and omit item on the final crumb when building", () => {
+    const ld = breadcrumbLd([
+      { name: "~", path: "/" },
+      { name: "posts", path: "/posts" },
+      { name: "文章標題" },
+    ]) as { itemListElement: Record<string, unknown>[] };
+    expect(ld.itemListElement).toHaveLength(3);
+    expect(ld.itemListElement[0]).toMatchObject({ position: 1, item: "https://laigary.com/" });
+    expect(ld.itemListElement[1]).toMatchObject({ position: 2, item: "https://laigary.com/posts" });
+    expect(ld.itemListElement[2]).toMatchObject({ position: 3, name: "文章標題" });
+    expect("item" in ld.itemListElement[2]).toBe(false);
   });
 });

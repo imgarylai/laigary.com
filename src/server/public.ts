@@ -56,6 +56,7 @@ export const homeDataFn = createServerFn({ method: "GET" }).handler(async () => 
     .filter(Boolean)
     .join(" · ");
   return {
+    siteName: settings.site_name || DEFAULT_SITE_NAME,
     whoami: settings.whoami || whoami,
     intro: settings.site_description || "",
     postCount: total,
