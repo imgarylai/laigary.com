@@ -50,6 +50,13 @@ export const homeDataFn = createServerFn({ method: "GET" }).handler(async () => 
   const whoami = [settings.author_name, settings.author_role, settings.author_location]
     .filter(Boolean)
     .join(" · ");
+  const { socialUrl } = await import("@/lib/social");
+  const socialUrls = [
+    socialUrl("author_github", settings.author_github ?? ""),
+    socialUrl("author_twitter", settings.author_twitter ?? ""),
+    socialUrl("author_linkedin", settings.author_linkedin ?? ""),
+  ].filter((u): u is string => u !== null);
+
   return {
     siteName: settings.site_name || DEFAULT_SITE_NAME,
     whoami: settings.whoami || whoami,
@@ -57,6 +64,8 @@ export const homeDataFn = createServerFn({ method: "GET" }).handler(async () => 
     postCount: total,
     tagCount: tags.length,
     latestDate: posts[0]?.date ?? null,
+    // Absolute profile URLs for the home page's JSON-LD Person.sameAs.
+    socialUrls,
   };
 });
 

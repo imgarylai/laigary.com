@@ -88,3 +88,17 @@ describe("breadcrumbLd", () => {
     expect("item" in ld.itemListElement[2]).toBe(false);
   });
 });
+
+describe("webSiteLd sameAs", () => {
+  it("should attach social profile urls to the author when provided", () => {
+    const ld = webSiteLd("Unconstrained", ["https://github.com/imgarylai"]) as {
+      author: Record<string, unknown>;
+    };
+    expect(ld.author.sameAs).toEqual(["https://github.com/imgarylai"]);
+  });
+
+  it("should omit sameAs when no social urls are provided", () => {
+    const ld = webSiteLd("Unconstrained") as { author: Record<string, unknown> };
+    expect("sameAs" in ld.author).toBe(false);
+  });
+});

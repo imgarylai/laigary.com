@@ -11,7 +11,12 @@ export const Route = createFileRoute("/_site/")({
   loader: () => homeDataFn(),
   head: ({ loaderData }) => ({
     scripts: loaderData
-      ? [{ type: "application/ld+json", children: serializeJsonLd(webSiteLd(loaderData.siteName)) }]
+      ? [
+          {
+            type: "application/ld+json",
+            children: serializeJsonLd(webSiteLd(loaderData.siteName, loaderData.socialUrls)),
+          },
+        ]
       : [],
   }),
   component: Home,

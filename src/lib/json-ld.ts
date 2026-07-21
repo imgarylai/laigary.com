@@ -4,15 +4,19 @@
 export const SITE_ORIGIN = "https://laigary.com";
 const AUTHOR = { "@type": "Person", name: "Gary Lai", url: SITE_ORIGIN } as const;
 
-/** Home page: the site and its author as schema.org entities. */
-export function webSiteLd(siteName: string): Record<string, unknown> {
+/**
+ * Home page: the site and its author as schema.org entities. `sameAs` links
+ * the author's social profiles (absolute URLs) so search engines associate
+ * them with the same person.
+ */
+export function webSiteLd(siteName: string, sameAs: string[] = []): Record<string, unknown> {
   return {
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: siteName,
     url: SITE_ORIGIN,
     inLanguage: "zh-TW",
-    author: AUTHOR,
+    author: sameAs.length > 0 ? { ...AUTHOR, sameAs } : AUTHOR,
   };
 }
 
