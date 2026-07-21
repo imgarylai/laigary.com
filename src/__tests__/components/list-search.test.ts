@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { parseListSearch, parsePostsListSearch } from "@/components/admin/list-search";
+import { parseListSearch } from "@/components/admin/list-search";
+import { parsePostsListSearch } from "@/routes/admin/posts/-list-search";
 
 describe("parseListSearch", () => {
   it("should keep q when it is a non-empty string", () => {

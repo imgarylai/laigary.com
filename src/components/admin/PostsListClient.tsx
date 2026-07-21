@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DataTable } from "./DataTable";
-import type { PostStatus } from "./list-search";
+import type { PostStatus } from "@/routes/admin/posts/-list-search";
 import { DeletePostButton } from "./DeletePostButton";
 import { useI18n } from "@/i18n/I18nProvider";
 

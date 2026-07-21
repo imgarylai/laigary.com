@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { listPostsFn } from "@/server/admin/reads";
-import { parsePostsListSearch } from "@/components/admin/list-search";
+import { parsePostsListSearch } from "./-list-search";
 import { PostsListClient } from "@/components/admin/PostsListClient";
 import { useI18n } from "@/i18n/I18nProvider";
 
