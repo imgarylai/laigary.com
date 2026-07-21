@@ -7,7 +7,7 @@ import { renderOgPng } from "@/lib/og/render";
 import type { OgNode } from "@/lib/og/templates";
 import { getSiteSettings } from "@/db/queries";
 
-const DEFAULT_SITE_NAME = "啟靈工程師";
+const DEFAULT_SITE_NAME = "Unconstrained";
 const DEFAULT_SITE_URL = "laigary.com";
 
 export interface SiteBranding {

@@ -13,7 +13,7 @@ async function renderMd(md: string): Promise<string> {
 }
 
 // Default brand name when site_name is unset. Exported for testing.
-export const DEFAULT_SITE_NAME = "啟靈工程師";
+export const DEFAULT_SITE_NAME = "Unconstrained";
 
 type InterviewSectionRow = { id: string; slug: string; label: string; blurb: string };
 

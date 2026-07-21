@@ -182,7 +182,8 @@ function DesignSystem() {
         <PromptLine>$ cat ./design-language.md</PromptLine>
         <h1 className="mt-3.5 mb-1 text-[22px] font-bold tracking-[-0.01em]">Design Language</h1>
         <p className="mb-1.5 text-[12.5px] text-tm-muted">
-          啟靈工程師的視覺系統 — terminal / dev-forward，flat、monospace。設計與工程交接的單一參考。
+          Unconstrained 的視覺系統 — terminal /
+          dev-forward，flat、monospace。設計與工程交接的單一參考。
         </p>
         <AsciiRule className="mt-2" />
 

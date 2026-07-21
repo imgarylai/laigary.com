@@ -1,6 +1,6 @@
 # laigary.com
 
-**啟靈工程師** (Psychedelic Engineer) — Gary Lai's personal blog, live at [laigary.com](https://laigary.com).
+**Unconstrained** — Gary Lai's personal blog, live at [laigary.com](https://laigary.com).
 
 A **TanStack Start (SSR)** full-stack app deployed on **Cloudflare Workers**, with infrastructure managed as code via **Alchemy**.
 

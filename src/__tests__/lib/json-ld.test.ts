@@ -67,9 +67,9 @@ describe("serializeJsonLd", () => {
 
 describe("webSiteLd", () => {
   it("should build a WebSite entity with the author when given a site name", () => {
-    const ld = webSiteLd("啟靈工程師");
+    const ld = webSiteLd("Unconstrained");
     expect(ld["@type"]).toBe("WebSite");
-    expect(ld.name).toBe("啟靈工程師");
+    expect(ld.name).toBe("Unconstrained");
     expect(ld.url).toBe("https://laigary.com");
   });
 });

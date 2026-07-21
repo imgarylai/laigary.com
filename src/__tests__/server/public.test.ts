@@ -32,6 +32,6 @@ describe("mapInterviewSections", () => {
 
 describe("DEFAULT_SITE_NAME", () => {
   it("is the brand fallback used when site_name is unset", () => {
-    expect(DEFAULT_SITE_NAME).toBe("啟靈工程師");
+    expect(DEFAULT_SITE_NAME).toBe("Unconstrained");
   });
 });
