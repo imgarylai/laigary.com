@@ -2,7 +2,7 @@
 
 **啟靈工程師**(Psychedelic Engineer)— Gary Lai 的個人 blog,線上網址 [laigary.com](https://laigary.com)。
 
-由 [`laigary.com-next`](https://github.com/imgarylai/laigary.com-next)(Next.js + OpenNext)遷移而來(遷移史見 [Epic #1](https://github.com/imgarylai/laigary.com/issues/1)),現為 **TanStack Start (SSR)** 全端應用,部署於 **Cloudflare Workers**,基礎設施以 **Alchemy** IaC 管理。
+**TanStack Start (SSR)** 全端應用,部署於 **Cloudflare Workers**,基礎設施以 **Alchemy** IaC 管理。
 
 ## 功能
 
