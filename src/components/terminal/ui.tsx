@@ -2,8 +2,8 @@ import { type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { useReadingProgress } from "@/hooks/use-reading-progress";
 
-// Small terminal primitives. Styling lives entirely in terminal.css; these just
-// pick the right class (callers may pass an extra class for contextual spacing).
+// Small terminal primitives. Styling is Tailwind utilities (terminal colours via
+// the `tm-*` utilities); callers may pass an extra class for contextual spacing.
 
 const RULE_CHARS = 70;
 
