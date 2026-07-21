@@ -46,10 +46,9 @@ const assets = await R2Bucket("laigary-assets", {
 //   - `domains` binds the live apex `laigary.com` to this worker.
 //     `adopt: true` takes control of the existing custom-domain binding in the
 //     zone (the apex already has one from the old worker), and
-//     `overrideExistingOrigin` forcibly transfers it off that worker — i.e. this
-//     deploy is the domain cutover. The public frontend is still the scaffold
-//     placeholder until #6.
-//   - `url: true` also keeps the *.workers.dev URL for testing.
+//     `overrideExistingOrigin` forcibly transfers it off that worker — i.e. the
+//     first prod deploy is the domain cutover (#12). Idempotent thereafter.
+//   - `url: true` also keeps the *.workers.dev URL for staging smoke tests.
 export const worker = await TanStackStart("laigary-web", {
   name: "laigary-web",
   build: "vite build",
