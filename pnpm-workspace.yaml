@@ -4,3 +4,5 @@ allowBuilds:
   lightningcss: true
   sharp: true
   workerd: true
+minimumReleaseAgeExclude:
+  - use-wg@2.0.5

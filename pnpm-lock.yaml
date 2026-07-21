@@ -219,8 +219,8 @@ importers:
         specifier: 11.0.5
         version: 11.0.5
       use-wg:
-        specifier: 2.0.4
-        version: 2.0.4
+        specifier: 2.0.5
+        version: 2.0.5
       zod:
         specifier: 4.4.3
         version: 4.4.3
@@ -6102,9 +6102,9 @@ packages:
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
-  use-wg@2.0.4:
-    resolution: {integrity: sha512-R9n+Yjl+01nFH1YyuBaTgSesUctwy1WE3CinUWcNkj8TpUR1zjIkpHvnBMcOk5bOg1NMUkKFM7VNBlS+g/6/NQ==}
-    engines: {node: '>=22', npm: '>=10.0.0'}
+  use-wg@2.0.5:
+    resolution: {integrity: sha512-CKAPFqwK4rsFRo1ds0no9zIcbefUt5+z9W6qrIzAVyygSfDudP2iZE9+gE9Lfla15n4GP3jxxBQZKeNimx2Kzw==}
+    engines: {node: '>=22', pnpm: '>=10'}
     hasBin: true
 
   util-deprecate@1.0.2:
@@ -12088,7 +12088,7 @@ snapshots:
     dependencies:
       react: 19.2.0
 
-  use-wg@2.0.4:
+  use-wg@2.0.5:
     dependencies:
       commander: 15.0.0
       pinyin-pro: 3.28.1
