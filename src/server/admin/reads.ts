@@ -31,7 +31,7 @@ type NoteDetail = {
 // The OG preview footer shown in the cover-image picker. Kept in sync with the
 // real SEO metadata by deriving it from site_settings instead of hardcoding.
 function computeOgBrand(settings: Record<string, string>): string {
-  const name = settings.site_name || "啟靈工程師";
+  const name = settings.site_name || "Unconstrained";
   let host = "";
   try {
     host = settings.site_url ? new URL(settings.site_url).host : "";
