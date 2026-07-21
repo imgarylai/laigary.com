@@ -1,9 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { postsDataFn } from "@/server/public";
-import { Button } from "@/components/ui/button";
-import { AsciiRule, PromptLine } from "@/components/terminal/ui";
+import { PromptLine } from "@/components/terminal/ui";
 import { TmPage, TmEmpty, TmRowLink, TmRowCells } from "@/components/terminal/layout";
-import { cn } from "@/lib/utils";
+import { TmPager } from "@/components/terminal/Pager";
 import { useI18n } from "@/i18n/I18nProvider";
 import { FS_BLOG } from "@/lib/fsmap";
 
@@ -78,58 +77,14 @@ function Archive() {
 
       {filtered.length === 0 && <TmEmpty>{t("blog.archive.noMatch")}</TmEmpty>}
 
-      {totalPages > 1 && (
-        <div className="mt-9">
-          <AsciiRule className="mb-4" />
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <span className="text-[11px] text-tm-muted">
-              {t("blog.archive.page", { current: String(safePage), total: String(totalPages) })}
-              <span className="text-tm-dim">
-                {t("blog.archive.showing", {
-                  from: String(start + 1),
-                  to: String(start + pageItems.length),
-                  total: String(filtered.length),
-                })}
-              </span>
-            </span>
-            <div className="flex items-center gap-1.5">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="tm-btn"
-                disabled={safePage === 1}
-                onClick={() => goPage(safePage - 1)}
-              >
-                {t("blog.archive.newer")}
-              </Button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
-                <button
-                  key={n}
-                  type="button"
-                  onClick={() => goPage(n)}
-                  className={cn(
-                    "min-w-[26px] cursor-pointer border border-transparent px-2 py-[3px] text-xs",
-                    n === safePage ? "border-tm-accent text-tm-accent" : "text-tm-muted",
-                  )}
-                >
-                  {n}
-                </button>
-              ))}
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="tm-btn"
-                disabled={safePage === totalPages}
-                onClick={() => goPage(safePage + 1)}
-              >
-                {t("blog.archive.older")}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <TmPager
+        current={safePage}
+        totalPages={totalPages}
+        from={start + 1}
+        to={start + pageItems.length}
+        total={filtered.length}
+        onPage={goPage}
+      />
     </TmPage>
   );
 }
