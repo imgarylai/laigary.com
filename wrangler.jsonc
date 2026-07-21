@@ -9,4 +9,17 @@
   "observability": {
     "enabled": true,
   },
+
+  // Local-dev bindings for the Cloudflare Vite plugin (miniflare). Production
+  // bindings are provisioned by Alchemy (alchemy.run.ts); this only has to
+  // mirror the binding names. The Vite plugin keeps local D1 state under
+  // .wrangler/state, shared with `wrangler d1 ... --local` commands.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "laigary-db",
+      "database_id": "9ac6eb5e-247a-4387-aacf-a5a1ff7b8efc",
+      "migrations_dir": "migrations",
+    },
+  ],
 }
