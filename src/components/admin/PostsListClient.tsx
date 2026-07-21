@@ -82,15 +82,15 @@ export function PostsListClient({ posts }: { posts: Post[] }) {
         meta: { headClassName: "text-right", cellClassName: "text-right" },
         cell: ({ row }) => (
           <div className="flex items-center justify-end gap-2">
-            {/* View the live page — plain anchor since the public post route
-                lands in the frontend phase; drafts have no public page. */}
+            {/* View the live page in a new tab; drafts have no public page. */}
             {row.original.status === "published" && (
               <Button
                 variant="ghost"
                 size="icon-sm"
                 render={
-                  <a
-                    href={`/posts/${row.original.slug}`}
+                  <Link
+                    to="/posts/$slug"
+                    params={{ slug: row.original.slug }}
                     target="_blank"
                     rel="noreferrer"
                     title={t("postList.view")}

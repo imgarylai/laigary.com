@@ -57,15 +57,15 @@ export function NotesListClient({ notes }: { notes: Note[] }) {
         meta: { headClassName: "text-right", cellClassName: "text-right" },
         cell: ({ row }) => (
           <div className="flex items-center justify-end gap-2">
-            {/* View the live page — plain anchor since the public interview
-                route lands in the frontend phase; drafts have no public page. */}
+            {/* View the live page in a new tab; drafts have no public page. */}
             {row.original.status === "published" && (
               <Button
                 variant="ghost"
                 size="icon-sm"
                 render={
-                  <a
-                    href={`/interview/${row.original.sectionSlug}/${row.original.slug}`}
+                  <Link
+                    to="/interview/$section/$slug"
+                    params={{ section: row.original.sectionSlug, slug: row.original.slug }}
                     target="_blank"
                     rel="noreferrer"
                     title={t("noteList.view")}
