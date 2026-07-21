@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
-import { Link, useNavigate } from "@tanstack/react-router";
-import { MagnifyingGlassIcon } from "@phosphor-icons/react";
-import { Input } from "@/components/ui/input";
+import { useMemo, useState } from "react";
+import { Link } from "@tanstack/react-router";
+import { ArrowSquareOutIcon } from "@phosphor-icons/react";
+import type { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -11,14 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "./DataTable";
 import { DeletePostButton } from "./DeletePostButton";
 import { useI18n } from "@/i18n/I18nProvider";
 
@@ -30,109 +23,107 @@ type Post = {
   updatedAt: number;
 };
 
-export function PostsListClient({
-  posts,
-  q,
-  status: statusProp,
-}: {
-  posts: Post[];
-  q: string;
-  status: string;
-}) {
-  const navigate = useNavigate();
+export function PostsListClient({ posts }: { posts: Post[] }) {
   const { t, locale } = useI18n();
+  const [status, setStatus] = useState("all");
 
-  const [query, setQuery] = useState(q);
-  const [status, setStatus] = useState(statusProp || "all");
+  const data = status === "all" ? posts : posts.filter((p) => p.status === status);
 
-  function formatDate(timestamp: number): string {
-    return new Date(timestamp * 1000).toLocaleDateString(locale, {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  }
-
-  // Debounce search / filter changes into the route search params, which
-  // re-runs the list loader. Page resets to 1 on any filter change.
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      navigate({
-        to: "/admin/posts",
-        search: {
-          q: query || undefined,
-          status: status !== "all" ? (status as "draft" | "published") : undefined,
-          page: undefined,
-        },
+  const columns = useMemo<ColumnDef<Post, unknown>[]>(() => {
+    function formatDate(ts: number): string {
+      return new Date(ts * 1000).toLocaleDateString(locale, {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
       });
-    }, 300);
-    return () => clearTimeout(timeout);
-  }, [query, status, navigate]);
+    }
+
+    return [
+      {
+        accessorKey: "title",
+        header: t("postList.title"),
+        // Title → edit (the primary click target for a row).
+        cell: ({ row }) => (
+          <Link
+            to="/admin/posts/$postId/edit"
+            params={{ postId: row.original.id }}
+            className="font-medium hover:underline"
+          >
+            {row.original.title}
+          </Link>
+        ),
+      },
+      {
+        accessorKey: "status",
+        header: t("postList.status"),
+        cell: ({ row }) => (
+          <Badge variant={row.original.status === "published" ? "default" : "secondary"}>
+            {row.original.status}
+          </Badge>
+        ),
+      },
+      {
+        accessorKey: "updatedAt",
+        header: t("postList.updated"),
+        cell: ({ row }) => (
+          <span className="text-muted-foreground">{formatDate(row.original.updatedAt)}</span>
+        ),
+      },
+      {
+        id: "actions",
+        header: t("postList.actions"),
+        enableSorting: false,
+        meta: { headClassName: "text-right", cellClassName: "text-right" },
+        cell: ({ row }) => (
+          <div className="flex items-center justify-end gap-2">
+            {/* View the live page — plain anchor since the public post route
+                lands in the frontend phase; drafts have no public page. */}
+            {row.original.status === "published" && (
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                render={
+                  <a
+                    href={`/posts/${row.original.slug}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    title={t("postList.view")}
+                  />
+                }
+              >
+                <ArrowSquareOutIcon className="size-4" />
+              </Button>
+            )}
+            <DeletePostButton postId={row.original.id} postTitle={row.original.title} />
+          </div>
+        ),
+      },
+    ];
+  }, [t, locale]);
+
+  const toolbar = (
+    <>
+      <Select value={status} onValueChange={(v) => setStatus(v as string)}>
+        <SelectTrigger className="w-[140px]">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">{t("postList.all")}</SelectItem>
+          <SelectItem value="draft">{t("postForm.draft")}</SelectItem>
+          <SelectItem value="published">{t("postForm.published")}</SelectItem>
+        </SelectContent>
+      </Select>
+      <Button render={<Link to="/admin/posts/new" />}>{t("admin.newPost")}</Button>
+    </>
+  );
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        <div className="relative flex-1">
-          <MagnifyingGlassIcon className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder={t("postList.searchPlaceholder")}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-        <Select value={status} onValueChange={(v) => setStatus(v as string)}>
-          <SelectTrigger className="w-[140px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t("postList.all")}</SelectItem>
-            <SelectItem value="draft">{t("postForm.draft")}</SelectItem>
-            <SelectItem value="published">{t("postForm.published")}</SelectItem>
-          </SelectContent>
-        </Select>
-        <Button render={<Link to="/admin/posts/new" />}>{t("admin.newPost")}</Button>
-      </div>
-
-      {posts.length === 0 ? (
-        <p className="py-8 text-center text-muted-foreground">{t("common.noPostsFound")}</p>
-      ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>{t("postList.title")}</TableHead>
-              <TableHead>{t("postList.status")}</TableHead>
-              <TableHead>{t("postList.updated")}</TableHead>
-              <TableHead className="text-right">{t("postList.actions")}</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {posts.map((post) => (
-              <TableRow key={post.id}>
-                <TableCell className="font-medium">{post.title}</TableCell>
-                <TableCell>
-                  <Badge variant={post.status === "published" ? "default" : "secondary"}>
-                    {post.status}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {formatDate(post.updatedAt)}
-                </TableCell>
-                <TableCell className="space-x-2 text-right">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    render={<Link to="/admin/posts/$postId/edit" params={{ postId: post.id }} />}
-                  >
-                    {t("postList.edit")}
-                  </Button>
-                  <DeletePostButton postId={post.id} postTitle={post.title} />
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      )}
-    </div>
+    <DataTable
+      columns={columns}
+      data={data}
+      searchPlaceholder={t("postList.searchPlaceholder")}
+      toolbar={toolbar}
+      emptyMessage={t("common.noPostsFound")}
+    />
   );
 }

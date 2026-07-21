@@ -118,7 +118,8 @@
     "status": "Status",
     "updated": "Updated",
     "actions": "Actions",
-    "edit": "Edit"
+    "edit": "Edit",
+    "view": "View"
   },
   "deletePost": {
     "delete": "Delete",
@@ -193,5 +194,9 @@
     "prev": "Previous",
     "next": "Next",
     "page": "Page {current} / {total}"
+  },
+  "dataTable": {
+    "searchPlaceholder": "Search…",
+    "empty": "No results."
   }
 }

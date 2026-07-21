@@ -1,0 +1,186 @@
+import { useState } from "react";
+import {
+  type ColumnDef,
+  type RowData,
+  type SortingState,
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
+
+// Per-column tailwind hooks used by the header/cell renderers below.
+declare module "@tanstack/react-table" {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  interface ColumnMeta<TData extends RowData, TValue> {
+    headClassName?: string;
+    cellClassName?: string;
+  }
+}
+import {
+  CaretUpIcon,
+  CaretDownIcon,
+  CaretUpDownIcon,
+  CaretLeftIcon,
+  CaretRightIcon,
+  MagnifyingGlassIcon,
+} from "@phosphor-icons/react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { useI18n } from "@/i18n/I18nProvider";
+
+// Shared admin list table (posts / notes / tags). Data is loaded in full and
+// searched / sorted / paginated client-side — fine at this blog's scale and it
+// keeps every list snappy with no per-interaction round-trip. Each list just
+// supplies its column defs and optional toolbar filters.
+export function DataTable<T>({
+  columns,
+  data,
+  searchPlaceholder,
+  toolbar,
+  pageSize = 20,
+  emptyMessage,
+}: {
+  columns: ColumnDef<T, unknown>[];
+  data: T[];
+  searchPlaceholder?: string;
+  toolbar?: React.ReactNode;
+  pageSize?: number;
+  emptyMessage?: string;
+}) {
+  const { t } = useI18n();
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [globalFilter, setGlobalFilter] = useState("");
+
+  const table = useReactTable({
+    data,
+    columns,
+    state: { sorting, globalFilter },
+    onSortingChange: setSorting,
+    onGlobalFilterChange: setGlobalFilter,
+    globalFilterFn: "includesString",
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    initialState: { pagination: { pageSize } },
+  });
+
+  const pageCount = table.getPageCount();
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-3">
+        <div className="relative flex-1">
+          <MagnifyingGlassIcon className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder={searchPlaceholder ?? t("dataTable.searchPlaceholder")}
+            value={globalFilter}
+            onChange={(e) => setGlobalFilter(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        {toolbar}
+      </div>
+
+      <Table>
+        <TableHeader>
+          {table.getHeaderGroups().map((headerGroup) => (
+            <TableRow key={headerGroup.id}>
+              {headerGroup.headers.map((header) => {
+                const canSort = header.column.getCanSort();
+                const sorted = header.column.getIsSorted();
+                return (
+                  <TableHead
+                    key={header.id}
+                    className={header.column.columnDef.meta?.headClassName}
+                  >
+                    {header.isPlaceholder ? null : canSort ? (
+                      <button
+                        type="button"
+                        className="-ml-1 inline-flex items-center gap-1 rounded-none px-1 hover:text-foreground"
+                        onClick={header.column.getToggleSortingHandler()}
+                      >
+                        {flexRender(header.column.columnDef.header, header.getContext())}
+                        {sorted === "asc" ? (
+                          <CaretUpIcon className="size-3" />
+                        ) : sorted === "desc" ? (
+                          <CaretDownIcon className="size-3" />
+                        ) : (
+                          <CaretUpDownIcon className="size-3 opacity-40" />
+                        )}
+                      </button>
+                    ) : (
+                      flexRender(header.column.columnDef.header, header.getContext())
+                    )}
+                  </TableHead>
+                );
+              })}
+            </TableRow>
+          ))}
+        </TableHeader>
+        <TableBody>
+          {table.getRowModel().rows.length === 0 ? (
+            <TableRow>
+              <TableCell
+                colSpan={columns.length}
+                className="py-8 text-center text-muted-foreground"
+              >
+                {emptyMessage ?? t("dataTable.empty")}
+              </TableCell>
+            </TableRow>
+          ) : (
+            table.getRowModel().rows.map((row) => (
+              <TableRow key={row.id}>
+                {row.getVisibleCells().map((cell) => (
+                  <TableCell key={cell.id} className={cell.column.columnDef.meta?.cellClassName}>
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
+
+      {pageCount > 1 && (
+        <div className="flex items-center justify-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!table.getCanPreviousPage()}
+            onClick={() => table.previousPage()}
+          >
+            <CaretLeftIcon />
+            {t("pagination.prev")}
+          </Button>
+          <span className="text-sm text-muted-foreground">
+            {t("pagination.page", {
+              current: String(table.getState().pagination.pageIndex + 1),
+              total: String(pageCount),
+            })}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!table.getCanNextPage()}
+            onClick={() => table.nextPage()}
+          >
+            {t("pagination.next")}
+            <CaretRightIcon />
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}

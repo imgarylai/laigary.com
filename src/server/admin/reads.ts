@@ -21,31 +21,14 @@ function computeOgBrand(settings: Record<string, string>): string {
   return host ? `${name} | ${host}` : name;
 }
 
-const listPostsSchema = z.object({
-  q: z.string().optional(),
-  status: z.enum(["draft", "published"]).optional(),
-  page: z.number().int().min(1).optional(),
-});
-
-export const PAGE_SIZE = 20;
-
-export const listPostsFn = createServerFn({ method: "GET" })
-  .inputValidator((data: unknown) => listPostsSchema.parse(data))
-  .handler(
-    async ({
-      data,
-    }): Promise<{ items: AdminPost[]; total: number; page: number; totalPages: number }> => {
-      const { getAdminPosts } = await import("@/db/queries");
-      const page = data.page ?? 1;
-      const { items, total } = await getAdminPosts({
-        q: data.q,
-        status: data.status,
-        limit: PAGE_SIZE,
-        offset: (page - 1) * PAGE_SIZE,
-      });
-      return { items, total, page, totalPages: Math.max(1, Math.ceil(total / PAGE_SIZE)) };
-    },
-  );
+// The admin posts table searches / sorts / paginates client-side, so the loader
+// takes the full list.
+export const listPostsFn = createServerFn({ method: "GET" }).handler(
+  async (): Promise<AdminPost[]> => {
+    const { getAllAdminPosts } = await import("@/db/queries");
+    return getAllAdminPosts();
+  },
+);
 
 // New-post form: available tags + the OG brand line.
 export const newPostDataFn = createServerFn({ method: "GET" }).handler(
