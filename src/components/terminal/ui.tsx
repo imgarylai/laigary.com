@@ -1,88 +1,52 @@
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { useReadingProgress } from "@/hooks/use-reading-progress";
 
-// Small terminal primitives shared across the blog + interview shells. Colors
-// come from the `--tm-*` variables so everything tracks the active data-theme.
+// Small terminal primitives. Styling lives entirely in terminal.css; these just
+// pick the right class (callers may pass an extra class for contextual spacing).
 
 const RULE_CHARS = 70;
 
 // ASCII horizontal rule — part of the design language; deliberately not an <hr>.
-export function AsciiRule({ thick = false, style }: { thick?: boolean; style?: CSSProperties }) {
+export function AsciiRule({ thick = false, className }: { thick?: boolean; className?: string }) {
   return (
-    <pre
-      aria-hidden
-      style={{
-        margin: 0,
-        color: "var(--tm-dim)",
-        fontSize: 11,
-        overflow: "hidden",
-        userSelect: "none",
-        ...style,
-      }}
-    >
+    <pre aria-hidden className={cn("tm-rule", className)}>
       {(thick ? "═" : "─").repeat(RULE_CHARS)}
     </pre>
   );
 }
 
-// A `$ ...` prompt line (grey, small) shown above page content.
-export function PromptLine({ children, style }: { children: ReactNode; style?: CSSProperties }) {
-  return (
-    <pre style={{ margin: "0 0 12px", color: "var(--tm-muted)", fontSize: 11, ...style }}>
-      {children}
-    </pre>
-  );
+// A `$ ...` prompt line shown above page content.
+export function PromptLine({ children, className }: { children: ReactNode; className?: string }) {
+  return <pre className={cn("tm-prompt", className)}>{children}</pre>;
 }
 
 export function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
   return (
-    <button
+    <Button
       type="button"
+      variant="outline"
+      size="sm"
+      className="tm-btn"
       onClick={() => {
         navigator.clipboard?.writeText(text);
         setCopied(true);
         setTimeout(() => setCopied(false), 1400);
       }}
-      style={{
-        fontFamily: "inherit",
-        fontSize: 11,
-        padding: "3px 8px",
-        background: "transparent",
-        border: "1px solid var(--tm-border)",
-        color: "var(--tm-muted)",
-        cursor: "pointer",
-        opacity: copied ? 1 : 0.7,
-      }}
     >
       {copied ? "copied ✓" : "copy"}
-    </button>
+    </Button>
   );
 }
 
-// Top reading-progress bar tied to window scroll (the post body scrolls the
-// document, not a nested container, in this SSR layout).
+// Top reading-progress bar tied to document scroll.
 export function ReadingProgress() {
-  const [pct, setPct] = useState(0);
-  const raf = useRef(0);
-  useEffect(() => {
-    const onScroll = () => {
-      cancelAnimationFrame(raf.current);
-      raf.current = requestAnimationFrame(() => {
-        const el = document.documentElement;
-        const max = el.scrollHeight - el.clientHeight;
-        setPct(max > 0 ? Math.min(1, Math.max(0, el.scrollTop / max)) : 0);
-      });
-    };
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      cancelAnimationFrame(raf.current);
-    };
-  }, []);
+  const progress = useReadingProgress();
   return (
     <div className="tm-progress-track">
-      <div className="tm-progress-bar" style={{ width: `${pct * 100}%` }} />
+      <div className="tm-progress-bar" style={{ width: `${progress * 100}%` }} />
     </div>
   );
 }

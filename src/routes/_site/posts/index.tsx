@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { postsDataFn } from "@/server/public";
+import { Button } from "@/components/ui/button";
 import { AsciiRule, PromptLine } from "@/components/terminal/ui";
 import { FS_BLOG } from "@/lib/fsmap";
 
@@ -47,148 +48,86 @@ function Archive() {
       </PromptLine>
 
       {tag && (
-        <div
-          style={{
-            marginBottom: 20,
-            fontSize: 11.5,
-            color: "var(--tm-muted)",
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-          }}
-        >
+        <div className="tm-filter">
           <span>
-            filtered by <span style={{ color: "var(--tm-accent)" }}>#{tag}</span>
+            filtered by <span className="tm-filter__tag">#{tag}</span>
           </span>
-          <Link
-            to="/posts"
-            style={{
-              border: "1px solid var(--tm-border)",
-              color: "var(--tm-muted)",
-              fontSize: 10.5,
-              padding: "2px 7px",
-              textDecoration: "none",
-            }}
-          >
+          <Link to="/posts" className="tm-clear">
             clear ✕
           </Link>
         </div>
       )}
 
       {years.map((y) => (
-        <section key={y} style={{ marginTop: 28 }}>
-          <pre style={{ color: "var(--tm-accent)", fontSize: 12, margin: "0 0 6px" }}>./{y}/</pre>
+        <section key={y}>
+          <pre className="tm-year">./{y}/</pre>
           {byYear.get(y)!.map((p) => (
             <Link
               key={p.slug}
               to="/posts/$slug"
               params={{ slug: p.slug }}
               className="tm-archive-row"
-              style={{
-                width: "100%",
-                borderBottom: "1px dashed var(--tm-border)",
-                padding: "7px 8px",
-                color: "var(--tm-fg)",
-                fontSize: 12.5,
-                textDecoration: "none",
-              }}
             >
-              <span style={{ color: "var(--tm-muted)" }}>{p.date.slice(5, 10)}</span>
+              <span className="tm-archive-row__date">{p.date.slice(5, 10)}</span>
               <span>{p.title}</span>
-              <span style={{ color: "var(--tm-dim)", textAlign: "right", fontSize: 11 }}>
-                {p.readingTime}m
-              </span>
+              <span className="tm-archive-row__read">{p.readingTime}m</span>
             </Link>
           ))}
         </section>
       ))}
 
-      {filtered.length === 0 && (
-        <div style={{ color: "var(--tm-muted)", fontSize: 12, padding: "24px 0" }}>
-          // no posts match.
-        </div>
-      )}
+      {filtered.length === 0 && <div className="tm-empty">// no posts match.</div>}
 
       {totalPages > 1 && (
-        <div style={{ marginTop: 36 }}>
-          <AsciiRule style={{ margin: "0 0 10px" }} />
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 12,
-              flexWrap: "wrap",
-            }}
-          >
-            <span style={{ color: "var(--tm-muted)", fontSize: 11 }}>
+        <div className="tm-pager">
+          <AsciiRule className="tm-prompt--pad" />
+          <div className="tm-pager__bar">
+            <span className="tm-pager__status">
               page {safePage}/{totalPages}
-              <span style={{ color: "var(--tm-dim)" }}>
+              <span className="tm-pager__status-dim">
                 {" "}
                 · showing {start + 1}–{start + pageItems.length} of {filtered.length}
               </span>
             </span>
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <PagerBtn disabled={safePage === 1} onClick={() => goPage(safePage - 1)}>
+            <div className="tm-pager__group">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="tm-btn"
+                disabled={safePage === 1}
+                onClick={() => goPage(safePage - 1)}
+              >
                 ← newer
-              </PagerBtn>
+              </Button>
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
-                <button
+                <Button
                   key={n}
                   type="button"
+                  variant="ghost"
+                  size="sm"
+                  className={
+                    n === safePage ? "tm-pager__num tm-pager__num--active" : "tm-pager__num"
+                  }
                   onClick={() => goPage(n)}
-                  style={{
-                    background: "transparent",
-                    border: `1px solid ${n === safePage ? "var(--tm-accent)" : "transparent"}`,
-                    color: n === safePage ? "var(--tm-accent)" : "var(--tm-muted)",
-                    cursor: "pointer",
-                    fontFamily: "inherit",
-                    fontSize: 12,
-                    padding: "3px 8px",
-                    minWidth: 26,
-                  }}
                 >
                   {n}
-                </button>
+                </Button>
               ))}
-              <PagerBtn disabled={safePage === totalPages} onClick={() => goPage(safePage + 1)}>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="tm-btn"
+                disabled={safePage === totalPages}
+                onClick={() => goPage(safePage + 1)}
+              >
                 older →
-              </PagerBtn>
+              </Button>
             </div>
           </div>
         </div>
       )}
     </div>
-  );
-}
-
-function PagerBtn({
-  disabled,
-  onClick,
-  children,
-}: {
-  disabled: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={disabled ? undefined : onClick}
-      disabled={disabled}
-      style={{
-        background: "transparent",
-        border: "1px solid var(--tm-border)",
-        color: disabled ? "var(--tm-dim)" : "var(--tm-fg)",
-        cursor: disabled ? "default" : "pointer",
-        opacity: disabled ? 0.4 : 1,
-        fontFamily: "inherit",
-        fontSize: 11.5,
-        padding: "4px 10px",
-        whiteSpace: "nowrap",
-      }}
-    >
-      {children}
-    </button>
   );
 }

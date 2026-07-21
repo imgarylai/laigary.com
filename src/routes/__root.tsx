@@ -3,7 +3,7 @@ import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { TanStackDevtools } from "@tanstack/react-devtools";
 
 import appCss from "../styles.css?url";
-import { TM_NO_FLASH_SCRIPT } from "../components/terminal/theme";
+import { ThemeProvider } from "../components/ThemeProvider";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -40,18 +40,14 @@ export const Route = createRootRoute({
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
-    // data-theme drives the terminal frontend palette (dark default). The inline
-    // script below reconciles it from localStorage before first paint.
-    // suppressHydrationWarning: both this script and next-themes (mounted in the
-    // /admin layout) mutate <html> on the client, which the SSR markup can't match.
-    <html lang="en" data-theme="dark" suppressHydrationWarning>
+    // suppressHydrationWarning: next-themes writes the theme `class` +
+    // `data-theme` onto <html> on the client, which the SSR markup can't match.
+    <html lang="en" suppressHydrationWarning>
       <head>
-        {/* eslint-disable-next-line react-dom/no-dangerously-set-innerhtml */}
-        <script dangerouslySetInnerHTML={{ __html: TM_NO_FLASH_SCRIPT }} />
         <HeadContent />
       </head>
       <body>
-        {children}
+        <ThemeProvider>{children}</ThemeProvider>
         <TanStackDevtools
           config={{
             position: "bottom-right",

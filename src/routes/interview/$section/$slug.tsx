@@ -18,57 +18,43 @@ function NotePage() {
   return (
     <>
       <ReadingProgress />
-      <article className="tm-page-narrow">
-        <PromptLine style={{ margin: "0 0 6px" }}>
+      <article className="tm-page--narrow">
+        <PromptLine className="tm-prompt--tight">
           {FS_INTERVIEW.note.prompt({ sect: note.section, slug: note.slug })}
         </PromptLine>
-        <div
-          style={{
-            display: "flex",
-            gap: 8,
-            alignItems: "baseline",
-            flexWrap: "wrap",
-            marginBottom: 6,
-            fontSize: 11,
-          }}
-        >
-          <span style={{ color: "var(--tm-accent)" }}>[{note.sectionLabel}]</span>
-          <span style={{ color: "var(--tm-dim)" }}>·</span>
-          <span style={{ color: "var(--tm-muted)" }}>{note.date}</span>
-          <span style={{ color: "var(--tm-dim)" }}>·</span>
-          <span style={{ color: "var(--tm-muted)" }}>{note.minutes} min read</span>
+        <div className="tm-noterow">
+          <span className="tm-noterow__label">[{note.sectionLabel}]</span>
+          <span className="tm-noterow__dot">·</span>
+          <span className="tm-noterow__meta">{note.date}</span>
+          <span className="tm-noterow__dot">·</span>
+          <span className="tm-noterow__meta">{note.minutes} min read</span>
         </div>
 
-        <h1 style={{ fontSize: 20, margin: "8px 0 4px", lineHeight: 1.35, fontWeight: 600 }}>
-          {note.title}
-        </h1>
-        <AsciiRule style={{ margin: "18px 0 22px" }} />
+        <h1 className="tm-title tm-title--sm">{note.title}</h1>
+        <AsciiRule className="tm-rule--head" />
 
         <div className="tm-prose" dangerouslySetInnerHTML={{ __html: html }} />
 
         {note.tags.length > 0 && (
-          <div style={{ marginTop: 40, paddingTop: 16, borderTop: "1px dashed var(--tm-border)" }}>
-            <span style={{ color: "var(--tm-muted)", fontSize: 11, marginRight: 10 }}>--tags</span>
+          <div className="tm-tags">
+            <span className="tm-tags__label">--tags</span>
             {note.tags.map((tag) => (
-              <span
-                key={tag}
-                style={{ color: "var(--tm-accent)", fontSize: 11.5, marginRight: 10 }}
-              >
+              <span key={tag} className="tm-tag">
                 #{tag}
               </span>
             ))}
           </div>
         )}
 
-        <div style={{ marginTop: 32, display: "flex", gap: 14, fontSize: 12 }}>
+        <div className="tm-note-footer">
           <Link
             to="/interview/$section"
             params={{ section: note.section }}
-            style={{ color: "var(--tm-muted)", textDecoration: "none" }}
+            className="tm-cta__link"
           >
             ← cd ../{note.section}
           </Link>
-          <Link to="/interview" style={{ color: "var(--tm-muted)", textDecoration: "none" }}>
+          <Link to="/interview" className="tm-cta__link">
             cd ~
           </Link>
         </div>

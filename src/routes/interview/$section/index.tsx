@@ -17,43 +17,30 @@ function SectionPage() {
 
   return (
     <div className="tm-page">
-      <PromptLine style={{ margin: "0 0 8px" }}>
+      <PromptLine className="tm-prompt--tight">
         {FS_INTERVIEW.section.prompt({ sect: section.slug })}
       </PromptLine>
-      <h1 style={{ fontSize: 18, margin: "0 0 6px" }}>{section.label}</h1>
-      {section.blurb && (
-        <p style={{ color: "var(--tm-muted)", fontSize: 12.5, lineHeight: 1.7, margin: "0 0 8px" }}>
-          {section.blurb}
-        </p>
-      )}
-      <AsciiRule style={{ margin: "8px 0 20px" }} />
+      <h1 className="tm-section__title">{section.label}</h1>
+      {section.blurb && <p className="tm-section__lead">{section.blurb}</p>}
+      <AsciiRule className="tm-rule--sep" />
 
       {notes.length === 0 ? (
-        <div style={{ color: "var(--tm-muted)", fontSize: 12, padding: "20px 0" }}>
-          // no notes yet.
-        </div>
+        <div className="tm-empty">// no notes yet.</div>
       ) : (
-        notes.map((n) => (
-          <Link
-            key={n.slug}
-            to="/interview/$section/$slug"
-            params={{ section: section.slug, slug: n.slug }}
-            className="tm-archive-row"
-            style={{
-              padding: "8px 6px",
-              borderBottom: "1px dashed var(--tm-border)",
-              color: "var(--tm-fg)",
-              fontSize: 12.5,
-              textDecoration: "none",
-            }}
-          >
-            <span style={{ color: "var(--tm-muted)", fontSize: 11 }}>{n.date.slice(5)}</span>
-            <span>{n.title}</span>
-            <span style={{ color: "var(--tm-dim)", textAlign: "right", fontSize: 11 }}>
-              {n.minutes}m
-            </span>
-          </Link>
-        ))
+        <div className="tm-rows">
+          {notes.map((n) => (
+            <Link
+              key={n.slug}
+              to="/interview/$section/$slug"
+              params={{ section: section.slug, slug: n.slug }}
+              className="tm-archive-row"
+            >
+              <span className="tm-archive-row__date">{n.date.slice(5)}</span>
+              <span>{n.title}</span>
+              <span className="tm-archive-row__read">{n.minutes}m</span>
+            </Link>
+          ))}
+        </div>
       )}
     </div>
   );

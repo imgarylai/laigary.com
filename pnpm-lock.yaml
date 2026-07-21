@@ -179,6 +179,9 @@ importers:
       react-hook-form:
         specifier: 7.82.0
         version: 7.82.0(react@19.2.0)
+      react-hotkeys-hook:
+        specifier: 5.3.3
+        version: 5.3.3(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       react-image-crop:
         specifier: 11.1.2
         version: 11.1.2(react@19.2.0)
@@ -5460,6 +5463,12 @@ packages:
     engines: {node: '>=18.0.0'}
     peerDependencies:
       react: ^16.8.0 || ^17 || ^18 || ^19
+
+  react-hotkeys-hook@5.3.3:
+    resolution: {integrity: sha512-aswgyWUnE25hmhzHTfKDmKzsaSE5DJ4LKaU/o6rQSXkDd/1Bh9TfAFQbHkf6fLy11HvlYkp+cDDarGdhmCDhoQ==}
+    peerDependencies:
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
 
   react-image-crop@11.1.2:
     resolution: {integrity: sha512-+0Pc2fxpwKL4u4oLmdKBw8XSwUceFbXbKEHvFOlsl/MGB1OVNic4uBlAPmEHGXYgoJIq+b63xHbc/aJMG0AVkA==}
@@ -11352,6 +11361,11 @@ snapshots:
   react-hook-form@7.82.0(react@19.2.0):
     dependencies:
       react: 19.2.0
+
+  react-hotkeys-hook@5.3.3(react-dom@19.2.0(react@19.2.0))(react@19.2.0):
+    dependencies:
+      react: 19.2.0
+      react-dom: 19.2.0(react@19.2.0)
 
   react-image-crop@11.1.2(react@19.2.0):
     dependencies:
