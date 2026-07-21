@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { getRouteApi } from "@tanstack/react-router";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "./DataTable";
 import { SectionFormDialog } from "./SectionFormDialog";
@@ -15,8 +16,12 @@ type Section = {
   noteCount: number;
 };
 
+const route = getRouteApi("/admin/interview/sections");
+
 export function SectionsListClient({ sections }: { sections: Section[] }) {
   const { t } = useI18n();
+  const { q } = route.useSearch();
+  const navigate = route.useNavigate();
 
   const columns = useMemo<ColumnDef<Section, unknown>[]>(
     () => [
@@ -60,6 +65,10 @@ export function SectionsListClient({ sections }: { sections: Section[] }) {
       searchPlaceholder={t("sectionList.searchPlaceholder")}
       toolbar={<SectionFormDialog />}
       emptyMessage={t("admin.noSections")}
+      globalFilter={q ?? ""}
+      onGlobalFilterChange={(v) =>
+        navigate({ search: (prev) => ({ ...prev, q: v || undefined }), replace: true })
+      }
     />
   );
 }

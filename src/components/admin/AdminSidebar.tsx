@@ -18,6 +18,9 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
+  SidebarMenuSubButton,
 } from "@/components/ui/sidebar";
 import { useI18n } from "@/i18n/I18nProvider";
 
@@ -25,14 +28,18 @@ export function AdminSidebar() {
   const { pathname } = useLocation();
   const { t } = useI18n();
 
-  // Flat nav. The Interview nested sub-nav (sections / notes) lands with its
-  // pages in #30; here it is a single entry so the shell stays navigable.
   const navItems = [
     { title: t("admin.dashboard"), href: "/admin", icon: HouseIcon },
     { title: t("admin.posts"), href: "/admin/posts", icon: ArticleIcon },
     { title: t("admin.tags"), href: "/admin/tags", icon: TagIcon },
     { title: t("admin.pages"), href: "/admin/pages", icon: FileTextIcon },
-    { title: t("admin.interview"), href: "/admin/interview", icon: ChatsIcon },
+  ];
+
+  // Interview has two pages (#53): sections and notes. The parent entry links
+  // to /admin/interview which redirects to the notes list.
+  const interviewSubItems = [
+    { title: t("admin.interviewSections"), href: "/admin/interview/sections" },
+    { title: t("admin.interviewNotes"), href: "/admin/interview/notes" },
   ];
 
   return (
@@ -58,6 +65,27 @@ export function AdminSidebar() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
             ))}
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                isActive={pathname.startsWith("/admin/interview")}
+                render={<Link to="/admin/interview" />}
+              >
+                <ChatsIcon />
+                <span>{t("admin.interview")}</span>
+              </SidebarMenuButton>
+              <SidebarMenuSub>
+                {interviewSubItems.map((item) => (
+                  <SidebarMenuSubItem key={item.href}>
+                    <SidebarMenuSubButton
+                      isActive={pathname.startsWith(item.href)}
+                      render={<Link to={item.href} />}
+                    >
+                      <span>{item.title}</span>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                ))}
+              </SidebarMenuSub>
+            </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
