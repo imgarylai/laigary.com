@@ -11,6 +11,8 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteRouteImport } from './routes/admin/route'
+import { Route as FeedDotxmlRouteImport } from './routes/feed[.]xml'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
 import { Route as AdminTagsRouteImport } from './routes/admin/tags'
@@ -35,6 +37,16 @@ const IndexRoute = IndexRouteImport.update({
 const AdminRouteRoute = AdminRouteRouteImport.update({
   id: '/admin',
   path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FeedDotxmlRoute = FeedDotxmlRouteImport.update({
+  id: '/feed.xml',
+  path: '/feed.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
@@ -117,6 +129,8 @@ const ApiOgInterviewSectSlugRoute = ApiOgInterviewSectSlugRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteRouteWithChildren
+  '/feed.xml': typeof FeedDotxmlRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/tags': typeof AdminTagsRoute
   '/api/og': typeof ApiOgRouteWithChildren
@@ -135,6 +149,8 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/feed.xml': typeof FeedDotxmlRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/tags': typeof AdminTagsRoute
   '/api/og': typeof ApiOgRouteWithChildren
@@ -155,6 +171,8 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteRouteWithChildren
+  '/feed.xml': typeof FeedDotxmlRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/tags': typeof AdminTagsRoute
   '/api/og': typeof ApiOgRouteWithChildren
@@ -176,6 +194,8 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/feed.xml'
+    | '/sitemap.xml'
     | '/admin/settings'
     | '/admin/tags'
     | '/api/og'
@@ -194,6 +214,8 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/feed.xml'
+    | '/sitemap.xml'
     | '/admin/settings'
     | '/admin/tags'
     | '/api/og'
@@ -213,6 +235,8 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
+    | '/feed.xml'
+    | '/sitemap.xml'
     | '/admin/settings'
     | '/admin/tags'
     | '/api/og'
@@ -233,6 +257,8 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRouteRoute: typeof AdminRouteRouteWithChildren
+  FeedDotxmlRoute: typeof FeedDotxmlRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiOgRoute: typeof ApiOgRouteWithChildren
 }
 
@@ -250,6 +276,20 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AdminRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/feed.xml': {
+      id: '/feed.xml'
+      path: '/feed.xml'
+      fullPath: '/feed.xml'
+      preLoaderRoute: typeof FeedDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/': {
@@ -409,6 +449,8 @@ const ApiOgRouteWithChildren = ApiOgRoute._addFileChildren(ApiOgRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRouteRoute: AdminRouteRouteWithChildren,
+  FeedDotxmlRoute: FeedDotxmlRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiOgRoute: ApiOgRouteWithChildren,
 }
 export const routeTree = rootRouteImport
