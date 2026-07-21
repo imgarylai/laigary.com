@@ -3,13 +3,20 @@ import { useRouter } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+  InputGroupText,
+} from "@/components/ui/input-group";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/i18n/I18nProvider";
 import { useSaveShortcut } from "@/hooks/use-save-shortcut";
 import { updateSettingsFn } from "@/server/admin/settings";
+import { SOCIAL_PREFIXES } from "@/lib/social";
 
-type FieldDef = { key: string; labelKey: string; multiline?: boolean };
+type FieldDef = { key: string; labelKey: string; multiline?: boolean; prefix?: string };
 
 // The known site_settings keys, grouped for the form. Settings are a free-form
 // key/value map in the DB; this is the curated set the UI edits.
@@ -28,9 +35,11 @@ const AUTHOR_FIELDS: FieldDef[] = [
   { key: "author_name", labelKey: "admin.authorName" },
   { key: "author_location", labelKey: "admin.location" },
   { key: "author_email", labelKey: "admin.email" },
-  { key: "author_github", labelKey: "admin.github" },
-  { key: "author_twitter", labelKey: "admin.twitter" },
-  { key: "author_linkedin", labelKey: "admin.linkedin" },
+  // Social fields store the bare handle/slug; the visible prefix makes the
+  // expected format obvious, and the mutation normalizes pasted URLs anyway.
+  { key: "author_github", labelKey: "admin.github", prefix: SOCIAL_PREFIXES.author_github },
+  { key: "author_twitter", labelKey: "admin.twitter", prefix: SOCIAL_PREFIXES.author_twitter },
+  { key: "author_linkedin", labelKey: "admin.linkedin", prefix: SOCIAL_PREFIXES.author_linkedin },
 ];
 
 const ALL_KEYS = [...SITE_FIELDS, ...AUTHOR_FIELDS].map((f) => f.key);
@@ -63,6 +72,13 @@ export function SettingsForm({ settings }: { settings: Record<string, string> })
         <FieldLabel htmlFor={`settings-${f.key}`}>{t(f.labelKey)}</FieldLabel>
         {f.multiline ? (
           <Textarea id={`settings-${f.key}`} {...form.register(f.key)} />
+        ) : f.prefix ? (
+          <InputGroup>
+            <InputGroupAddon>
+              <InputGroupText>{f.prefix}</InputGroupText>
+            </InputGroupAddon>
+            <InputGroupInput id={`settings-${f.key}`} {...form.register(f.key)} />
+          </InputGroup>
         ) : (
           <Input id={`settings-${f.key}`} {...form.register(f.key)} />
         )}
