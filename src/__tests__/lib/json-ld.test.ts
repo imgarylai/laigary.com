@@ -4,6 +4,7 @@ import {
   breadcrumbLd,
   serializeJsonLd,
   techArticleLd,
+  webPageLd,
   webSiteLd,
 } from "@/lib/json-ld";
 
@@ -100,5 +101,15 @@ describe("webSiteLd sameAs", () => {
   it("should omit sameAs when no social urls are provided", () => {
     const ld = webSiteLd("Unconstrained") as { author: Record<string, unknown> };
     expect("sameAs" in ld.author).toBe(false);
+  });
+});
+
+describe("webPageLd", () => {
+  it("should build a WebPage pointing at the page url and its og image", () => {
+    const ld = webPageLd({ slug: "about", title: "About" });
+    expect(ld["@type"]).toBe("WebPage");
+    expect(ld.url).toBe("https://laigary.com/about");
+    expect(ld.image).toBe("https://laigary.com/api/og/pages/about");
+    expect(ld.name).toBe("About");
   });
 });

@@ -20,6 +20,21 @@ export function webSiteLd(siteName: string, sameAs: string[] = []): Record<strin
   };
 }
 
+/** DB-backed content pages (/about, /now, …). */
+export function webPageLd(input: { slug: string; title: string }): Record<string, unknown> {
+  const url = `${SITE_ORIGIN}/${input.slug}`;
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: input.title,
+    url,
+    mainEntityOfPage: url,
+    image: `${SITE_ORIGIN}/api/og/pages/${input.slug}`,
+    inLanguage: "zh-TW",
+    author: AUTHOR,
+  };
+}
+
 export interface BreadcrumbItem {
   name: string;
   /** Site-relative path, e.g. `/posts` — omitted on the final (current) crumb. */

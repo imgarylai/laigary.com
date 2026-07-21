@@ -1,5 +1,6 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { pageDataFn } from "@/server/public";
+import { breadcrumbLd, serializeJsonLd, webPageLd } from "@/lib/json-ld";
 import { PromptLine } from "@/components/terminal/ui";
 import { TmPage } from "@/components/terminal/layout";
 import { FS_BLOG } from "@/lib/fsmap";
@@ -14,6 +15,20 @@ export const Route = createFileRoute("/_site/$slug")({
   },
   head: ({ loaderData }) => ({
     meta: loaderData ? [{ title: loaderData.pageTitle }] : [],
+    scripts: loaderData
+      ? [
+          {
+            type: "application/ld+json",
+            children: serializeJsonLd(webPageLd(loaderData.page)),
+          },
+          {
+            type: "application/ld+json",
+            children: serializeJsonLd(
+              breadcrumbLd([{ name: "~", path: "/" }, { name: loaderData.page.title }]),
+            ),
+          },
+        ]
+      : [],
   }),
   component: PagePage,
 });
