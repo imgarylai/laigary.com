@@ -50,6 +50,8 @@ export function DataTable<T>({
   toolbar,
   pageSize = 20,
   emptyMessage,
+  globalFilter: controlledFilter,
+  onGlobalFilterChange,
 }: {
   columns: ColumnDef<T, unknown>[];
   data: T[];
@@ -57,17 +59,26 @@ export function DataTable<T>({
   toolbar?: React.ReactNode;
   pageSize?: number;
   emptyMessage?: string;
+  /** Controlled search text — pass together with onGlobalFilterChange to hold
+      the filter outside the table (e.g. in the route's search params). */
+  globalFilter?: string;
+  onGlobalFilterChange?: (value: string) => void;
 }) {
   const { t } = useI18n();
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [globalFilter, setGlobalFilter] = useState("");
+  const [internalFilter, setInternalFilter] = useState("");
+  const globalFilter = controlledFilter ?? internalFilter;
+  const setGlobalFilter = onGlobalFilterChange ?? setInternalFilter;
 
   const table = useReactTable({
     data,
     columns,
     state: { sorting, globalFilter },
     onSortingChange: setSorting,
-    onGlobalFilterChange: setGlobalFilter,
+    onGlobalFilterChange: (updater) => {
+      const next = typeof updater === "function" ? updater(globalFilter) : updater;
+      setGlobalFilter(typeof next === "string" ? next : "");
+    },
     globalFilterFn: "includesString",
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
