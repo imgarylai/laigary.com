@@ -209,7 +209,8 @@
     "delete": "Delete",
     "deleting": "Deleting…",
     "newTag": "New tag",
-    "searchPlaceholder": "Search tags…"
+    "searchPlaceholder": "Search tags…",
+    "view": "View"
   },
   "tagForm": {
     "name": "Name",
@@ -255,7 +256,8 @@
     "searchPlaceholder": "Search sections…",
     "deleteTitle": "Delete section \"{label}\"?",
     "deleteCascade": "This will also delete {count} note(s) in this section.",
-    "deleteEmpty": "This section has no notes."
+    "deleteEmpty": "This section has no notes.",
+    "view": "View"
   },
   "sectionForm": {
     "slug": "Slug",
@@ -282,7 +284,8 @@
     "searchPlaceholder": "Search notes…",
     "deleteTitle": "Delete note?",
     "deleteConfirm": "Delete \"{title}\"? This cannot be undone.",
-    "deleteFailed": "Failed to delete note"
+    "deleteFailed": "Failed to delete note",
+    "view": "View"
   },
   "noteForm": {
     "title": "Title",

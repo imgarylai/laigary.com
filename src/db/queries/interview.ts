@@ -146,10 +146,12 @@ export async function getTagsInSection(
 
 export type AdminInterviewNote = {
   id: string;
+  slug: string;
   title: string;
   status: string;
   sectionId: string;
   sectionLabel: string;
+  sectionSlug: string;
 };
 
 export async function getAdminInterviewNotes(opts?: {
@@ -165,10 +167,12 @@ export async function getAdminInterviewNotes(opts?: {
   const rows = await db
     .select({
       id: interviewNotes.id,
+      slug: interviewNotes.slug,
       title: interviewNotes.title,
       status: interviewNotes.status,
       sectionId: interviewNotes.sectionId,
       sectionLabel: interviewSections.label,
+      sectionSlug: interviewSections.slug,
     })
     .from(interviewNotes)
     .innerJoin(interviewSections, eq(interviewSections.id, interviewNotes.sectionId))
@@ -187,10 +191,12 @@ export async function getAllAdminInterviewNotes(): Promise<AdminInterviewNote[]>
   return db
     .select({
       id: interviewNotes.id,
+      slug: interviewNotes.slug,
       title: interviewNotes.title,
       status: interviewNotes.status,
       sectionId: interviewNotes.sectionId,
       sectionLabel: interviewSections.label,
+      sectionSlug: interviewSections.slug,
     })
     .from(interviewNotes)
     .innerJoin(interviewSections, eq(interviewSections.id, interviewNotes.sectionId))

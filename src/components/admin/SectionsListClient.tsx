@@ -1,6 +1,8 @@
 import { useMemo } from "react";
 import { getRouteApi } from "@tanstack/react-router";
+import { ArrowSquareOutIcon } from "@phosphor-icons/react";
 import type { ColumnDef } from "@tanstack/react-table";
+import { Button } from "@/components/ui/button";
 import { DataTable } from "./DataTable";
 import { SectionFormDialog } from "./SectionFormDialog";
 import { DeleteSectionButton } from "./DeleteSectionButton";
@@ -49,6 +51,22 @@ export function SectionsListClient({ sections }: { sections: Section[] }) {
         meta: { headClassName: "text-right", cellClassName: "text-right" },
         cell: ({ row }) => (
           <div className="flex items-center justify-end gap-2">
+            {/* View the live section page — plain anchor since the public
+                interview route lands in the frontend phase. */}
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              render={
+                <a
+                  href={`/interview/${row.original.slug}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  title={t("sectionList.view")}
+                />
+              }
+            >
+              <ArrowSquareOutIcon className="size-4" />
+            </Button>
             <SectionFormDialog section={row.original} />
             <DeleteSectionButton section={row.original} />
           </div>

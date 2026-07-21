@@ -209,7 +209,8 @@
     "delete": "刪除",
     "deleting": "刪除中…",
     "newTag": "新增標籤",
-    "searchPlaceholder": "搜尋標籤…"
+    "searchPlaceholder": "搜尋標籤…",
+    "view": "檢視"
   },
   "tagForm": {
     "name": "名稱",
@@ -255,7 +256,8 @@
     "searchPlaceholder": "搜尋分類…",
     "deleteTitle": "刪除分類「{label}」？",
     "deleteCascade": "這也會一併刪除此分類下的 {count} 篇筆記。",
-    "deleteEmpty": "此分類沒有筆記。"
+    "deleteEmpty": "此分類沒有筆記。",
+    "view": "檢視"
   },
   "sectionForm": {
     "slug": "Slug",
@@ -282,7 +284,8 @@
     "searchPlaceholder": "搜尋筆記…",
     "deleteTitle": "刪除筆記？",
     "deleteConfirm": "確定刪除「{title}」？此動作無法復原。",
-    "deleteFailed": "刪除筆記失敗"
+    "deleteFailed": "刪除筆記失敗",
+    "view": "檢視"
   },
   "noteForm": {
     "title": "標題",
