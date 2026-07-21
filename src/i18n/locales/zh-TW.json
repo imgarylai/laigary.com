@@ -82,7 +82,8 @@
     "github": "GitHub",
     "twitter": "Twitter / X",
     "linkedin": "LinkedIn",
-    "whoami": "whoami"
+    "whoami": "whoami",
+    "settingsSaved": "設定已儲存"
   },
   "postForm": {
     "title": "標題",
