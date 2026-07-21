@@ -37,6 +37,7 @@ import { Route as AdminInterviewNotesIndexRouteImport } from './routes/admin/int
 import { Route as AdminInterviewNotesNewRouteImport } from './routes/admin/interview/notes/new'
 import { Route as AdminPagesSlugEditRouteImport } from './routes/admin/pages/$slug/edit'
 import { Route as AdminPostsPostIdEditRouteImport } from './routes/admin/posts/$postId/edit'
+import { Route as ApiOgPagesSlugRouteImport } from './routes/api/og.pages.$slug'
 import { Route as ApiOgPostsSlugRouteImport } from './routes/api/og.posts.$slug'
 import { Route as AdminInterviewNotesNoteIdEditRouteImport } from './routes/admin/interview/notes/$noteId/edit'
 import { Route as ApiOgInterviewSectSlugRouteImport } from './routes/api/og.interview.$sect.$slug'
@@ -181,6 +182,11 @@ const AdminPostsPostIdEditRoute = AdminPostsPostIdEditRouteImport.update({
   path: '/posts/$postId/edit',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const ApiOgPagesSlugRoute = ApiOgPagesSlugRouteImport.update({
+  id: '/pages/$slug',
+  path: '/pages/$slug',
+  getParentRoute: () => ApiOgRoute,
+} as any)
 const ApiOgPostsSlugRoute = ApiOgPostsSlugRouteImport.update({
   id: '/posts/$slug',
   path: '/posts/$slug',
@@ -225,6 +231,7 @@ export interface FileRoutesByFullPath {
   '/admin/interview/notes/new': typeof AdminInterviewNotesNewRoute
   '/admin/pages/$slug/edit': typeof AdminPagesSlugEditRoute
   '/admin/posts/$postId/edit': typeof AdminPostsPostIdEditRoute
+  '/api/og/pages/$slug': typeof ApiOgPagesSlugRoute
   '/api/og/posts/$slug': typeof ApiOgPostsSlugRoute
   '/admin/interview/notes/': typeof AdminInterviewNotesIndexRoute
   '/admin/interview/notes/$noteId/edit': typeof AdminInterviewNotesNoteIdEditRoute
@@ -255,6 +262,7 @@ export interface FileRoutesByTo {
   '/admin/interview/notes/new': typeof AdminInterviewNotesNewRoute
   '/admin/pages/$slug/edit': typeof AdminPagesSlugEditRoute
   '/admin/posts/$postId/edit': typeof AdminPostsPostIdEditRoute
+  '/api/og/pages/$slug': typeof ApiOgPagesSlugRoute
   '/api/og/posts/$slug': typeof ApiOgPostsSlugRoute
   '/admin/interview/notes': typeof AdminInterviewNotesIndexRoute
   '/admin/interview/notes/$noteId/edit': typeof AdminInterviewNotesNoteIdEditRoute
@@ -289,6 +297,7 @@ export interface FileRoutesById {
   '/admin/interview/notes/new': typeof AdminInterviewNotesNewRoute
   '/admin/pages/$slug/edit': typeof AdminPagesSlugEditRoute
   '/admin/posts/$postId/edit': typeof AdminPostsPostIdEditRoute
+  '/api/og/pages/$slug': typeof ApiOgPagesSlugRoute
   '/api/og/posts/$slug': typeof ApiOgPostsSlugRoute
   '/admin/interview/notes/': typeof AdminInterviewNotesIndexRoute
   '/admin/interview/notes/$noteId/edit': typeof AdminInterviewNotesNoteIdEditRoute
@@ -323,6 +332,7 @@ export interface FileRouteTypes {
     | '/admin/interview/notes/new'
     | '/admin/pages/$slug/edit'
     | '/admin/posts/$postId/edit'
+    | '/api/og/pages/$slug'
     | '/api/og/posts/$slug'
     | '/admin/interview/notes/'
     | '/admin/interview/notes/$noteId/edit'
@@ -353,6 +363,7 @@ export interface FileRouteTypes {
     | '/admin/interview/notes/new'
     | '/admin/pages/$slug/edit'
     | '/admin/posts/$postId/edit'
+    | '/api/og/pages/$slug'
     | '/api/og/posts/$slug'
     | '/admin/interview/notes'
     | '/admin/interview/notes/$noteId/edit'
@@ -386,6 +397,7 @@ export interface FileRouteTypes {
     | '/admin/interview/notes/new'
     | '/admin/pages/$slug/edit'
     | '/admin/posts/$postId/edit'
+    | '/api/og/pages/$slug'
     | '/api/og/posts/$slug'
     | '/admin/interview/notes/'
     | '/admin/interview/notes/$noteId/edit'
@@ -600,6 +612,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPostsPostIdEditRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/api/og/pages/$slug': {
+      id: '/api/og/pages/$slug'
+      path: '/pages/$slug'
+      fullPath: '/api/og/pages/$slug'
+      preLoaderRoute: typeof ApiOgPagesSlugRouteImport
+      parentRoute: typeof ApiOgRoute
+    }
     '/api/og/posts/$slug': {
       id: '/api/og/posts/$slug'
       path: '/posts/$slug'
@@ -697,11 +716,13 @@ const InterviewRouteWithChildren = InterviewRoute._addFileChildren(
 )
 
 interface ApiOgRouteChildren {
+  ApiOgPagesSlugRoute: typeof ApiOgPagesSlugRoute
   ApiOgPostsSlugRoute: typeof ApiOgPostsSlugRoute
   ApiOgInterviewSectSlugRoute: typeof ApiOgInterviewSectSlugRoute
 }
 
 const ApiOgRouteChildren: ApiOgRouteChildren = {
+  ApiOgPagesSlugRoute: ApiOgPagesSlugRoute,
   ApiOgPostsSlugRoute: ApiOgPostsSlugRoute,
   ApiOgInterviewSectSlugRoute: ApiOgInterviewSectSlugRoute,
 }
