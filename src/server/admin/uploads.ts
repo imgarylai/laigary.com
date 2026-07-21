@@ -1,21 +1,10 @@
-import { env } from "cloudflare:workers";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { createR2Client, createPresignedUploadUrl, validateUpload, generateR2Key } from "@/lib/r2";
-import { recordUpload, UploadConflictError } from "@/db/queries";
 import { type ActionResult } from "./_shared";
 
-// R2 config comes off the worker env: three plain vars (endpoint/bucket/public
-// url) plus the two presign secrets, which Alchemy injects (alchemy.run.ts).
-function r2Env() {
-  return env as unknown as {
-    R2_S3_ENDPOINT: string;
-    R2_BUCKET_NAME: string;
-    R2_PUBLIC_URL: string;
-    R2_ACCESS_KEY_ID: string;
-    R2_SECRET_ACCESS_KEY: string;
-  };
-}
+// Server-only deps (R2 client, the D1 query, and the `cloudflare:workers` env
+// accessor) are loaded via dynamic import inside the Impls so these
+// client-imported server functions don't drag them into the client bundle.
 
 export const presignSchema = z.object({
   filename: z.string().min(1),
@@ -47,6 +36,10 @@ type UploadRecord = {
 // browser uploads to directly. Content-type is baked into the signature, so the
 // client PUT must send the same content-type.
 export async function presignUploadImpl(input: PresignInput): Promise<ActionResult<PresignResult>> {
+  const { createR2Client, createPresignedUploadUrl, validateUpload, generateR2Key } =
+    await import("@/lib/r2");
+  const { r2Env } = await import("./r2-env");
+
   const validationError = validateUpload(input.contentType, input.sizeBytes);
   if (validationError) return { ok: false, error: validationError };
 
@@ -66,6 +59,10 @@ export async function presignUploadImpl(input: PresignInput): Promise<ActionResu
 // Step 3: verify the object actually landed in R2 (S3 HEAD) before recording the
 // row, then persist it. Returns the public URL for the stored asset.
 export async function confirmUploadImpl(input: ConfirmInput): Promise<ActionResult<UploadRecord>> {
+  const { createR2Client } = await import("@/lib/r2");
+  const { r2Env } = await import("./r2-env");
+  const { recordUpload } = await import("@/db/queries");
+
   const e = r2Env();
   const client = createR2Client(e);
   const headUrl = new URL(`/${e.R2_BUCKET_NAME}/${input.r2Key}`, e.R2_S3_ENDPOINT);
@@ -75,7 +72,11 @@ export async function confirmUploadImpl(input: ConfirmInput): Promise<ActionResu
   try {
     await recordUpload(input);
   } catch (err) {
-    if (err instanceof UploadConflictError) return { ok: false, error: err.message };
+    // Matched by name (not instanceof) to avoid a static import of the error
+    // class, which would pull the query layer into the client bundle.
+    if (err instanceof Error && err.name === "UploadConflictError") {
+      return { ok: false, error: err.message };
+    }
     throw err;
   }
 
