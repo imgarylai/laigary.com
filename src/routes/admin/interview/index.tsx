@@ -1,21 +1,32 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { listSectionsFn } from "@/server/admin/reads";
+import { listSectionsFn, listNotesFn } from "@/server/admin/reads";
 import { SectionsListClient } from "@/components/admin/SectionsListClient";
+import { NotesListClient } from "@/components/admin/NotesListClient";
 import { useI18n } from "@/i18n/I18nProvider";
 
 export const Route = createFileRoute("/admin/interview/")({
-  loader: () => listSectionsFn(),
+  loader: async () => {
+    const [sections, notes] = await Promise.all([listSectionsFn(), listNotesFn()]);
+    return { sections, notes };
+  },
   component: InterviewPage,
 });
 
 function InterviewPage() {
   const { t } = useI18n();
-  const sections = Route.useLoaderData();
+  const { sections, notes } = Route.useLoaderData();
 
   return (
-    <div>
-      <h1 className="mb-6 text-2xl font-bold tracking-tight">{t("admin.interviewSections")}</h1>
-      <SectionsListClient sections={sections} />
+    <div className="space-y-10">
+      <section>
+        <h1 className="mb-6 text-2xl font-bold tracking-tight">{t("admin.interview")}</h1>
+        <h2 className="mb-3 text-lg font-semibold">{t("admin.interviewNotes")}</h2>
+        <NotesListClient notes={notes} />
+      </section>
+      <section>
+        <h2 className="mb-3 text-lg font-semibold">{t("admin.interviewSections")}</h2>
+        <SectionsListClient sections={sections} />
+      </section>
     </div>
   );
 }

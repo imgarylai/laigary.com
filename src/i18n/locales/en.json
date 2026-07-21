@@ -269,5 +269,30 @@
     "saving": "Saving…",
     "createTitle": "New section",
     "editTitle": "Edit section"
+  },
+  "noteList": {
+    "title": "Title",
+    "section": "Section",
+    "status": "Status",
+    "actions": "Actions",
+    "delete": "Delete",
+    "deleting": "Deleting…",
+    "newNote": "New note",
+    "searchPlaceholder": "Search notes…",
+    "deleteTitle": "Delete note?",
+    "deleteConfirm": "Delete \"{title}\"? This cannot be undone.",
+    "deleteFailed": "Failed to delete note"
+  },
+  "noteForm": {
+    "title": "Title",
+    "slug": "Slug",
+    "section": "Section",
+    "sectionPlaceholder": "Select a section",
+    "status": "Status",
+    "tags": "Tags",
+    "create": "Create",
+    "update": "Update",
+    "cancel": "Cancel",
+    "saving": "Saving…"
   }
 }

@@ -1,8 +1,26 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import type { AdminPost, AdminPostDetail, PageListItem, Tag, TagWithUsage } from "@/db/queries";
+import type {
+  AdminInterviewNote,
+  AdminPost,
+  AdminPostDetail,
+  PageListItem,
+  Tag,
+  TagWithUsage,
+} from "@/db/queries";
 
 type PageDetail = { id: string; slug: string; title: string; contentMd: string } | null;
+
+type SectionOption = { id: string; label: string };
+type NoteDetail = {
+  id: string;
+  slug: string;
+  sectionId: string;
+  title: string;
+  contentMd: string;
+  status: "draft" | "published";
+  tagIds: string[];
+} | null;
 
 // Read-side server functions the admin route loaders call. Reads must run on the
 // server (D1 binding), so the query layer is loaded with a dynamic import INSIDE
@@ -70,6 +88,57 @@ export const listSectionsFn = createServerFn({ method: "GET" }).handler(
     }));
   },
 );
+
+// Interview notes admin list (full set; the table paginates client-side).
+export const listNotesFn = createServerFn({ method: "GET" }).handler(
+  async (): Promise<AdminInterviewNote[]> => {
+    const { getAllAdminInterviewNotes } = await import("@/db/queries");
+    return getAllAdminInterviewNotes();
+  },
+);
+
+// New-note form: the sections to pick from + available tags.
+export const newNoteDataFn = createServerFn({ method: "GET" }).handler(
+  async (): Promise<{ sections: SectionOption[]; tags: Tag[] }> => {
+    const { getInterviewSections, getAllTags } = await import("@/db/queries");
+    const [sections, tags] = await Promise.all([getInterviewSections(), getAllTags()]);
+    return { sections: sections.map((s) => ({ id: s.id, label: s.label })), tags };
+  },
+);
+
+// Edit-note form: the note (with its tag ids resolved) + sections + tags.
+export const editNoteDataFn = createServerFn({ method: "GET" })
+  .inputValidator((data: unknown) => z.object({ id: z.string().min(1) }).parse(data))
+  .handler(
+    async ({ data }): Promise<{ note: NoteDetail; sections: SectionOption[]; tags: Tag[] }> => {
+      const { getInterviewNoteById, getInterviewSections, getAllTags } =
+        await import("@/db/queries");
+      const [note, sectionRows, tags] = await Promise.all([
+        getInterviewNoteById(data.id),
+        getInterviewSections(),
+        getAllTags(),
+      ]);
+      const sections = sectionRows.map((s) => ({ id: s.id, label: s.label }));
+      if (!note) return { note: null, sections, tags };
+      // The note's tags come back as { name, slug }; resolve them to tag ids
+      // (unique slugs) for the tag combobox.
+      const noteSlugs = new Set(note.tags.map((nt) => nt.slug));
+      const tagIds = tags.filter((tag) => noteSlugs.has(tag.slug)).map((tag) => tag.id);
+      return {
+        note: {
+          id: note.id,
+          slug: note.slug,
+          sectionId: note.sectionId,
+          title: note.title,
+          contentMd: note.contentMd,
+          status: note.status as "draft" | "published",
+          tagIds,
+        },
+        sections,
+        tags,
+      };
+    },
+  );
 
 // Pages admin list.
 export const listPagesFn = createServerFn({ method: "GET" }).handler(

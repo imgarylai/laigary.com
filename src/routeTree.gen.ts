@@ -20,9 +20,11 @@ import { Route as AdminPagesIndexRouteImport } from './routes/admin/pages/index'
 import { Route as AdminPagesNewRouteImport } from './routes/admin/pages/new'
 import { Route as AdminPostsIndexRouteImport } from './routes/admin/posts/index'
 import { Route as AdminPostsNewRouteImport } from './routes/admin/posts/new'
+import { Route as AdminInterviewNotesNewRouteImport } from './routes/admin/interview/notes/new'
 import { Route as AdminPagesSlugEditRouteImport } from './routes/admin/pages/$slug/edit'
 import { Route as AdminPostsPostIdEditRouteImport } from './routes/admin/posts/$postId/edit'
 import { Route as ApiOgPostsSlugRouteImport } from './routes/api/og.posts.$slug'
+import { Route as AdminInterviewNotesNoteIdEditRouteImport } from './routes/admin/interview/notes/$noteId/edit'
 import { Route as ApiOgInterviewSectSlugRouteImport } from './routes/api/og.interview.$sect.$slug'
 
 const IndexRoute = IndexRouteImport.update({
@@ -80,6 +82,11 @@ const AdminPostsNewRoute = AdminPostsNewRouteImport.update({
   path: '/posts/new',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const AdminInterviewNotesNewRoute = AdminInterviewNotesNewRouteImport.update({
+  id: '/interview/notes/new',
+  path: '/interview/notes/new',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const AdminPagesSlugEditRoute = AdminPagesSlugEditRouteImport.update({
   id: '/pages/$slug/edit',
   path: '/pages/$slug/edit',
@@ -95,6 +102,12 @@ const ApiOgPostsSlugRoute = ApiOgPostsSlugRouteImport.update({
   path: '/posts/$slug',
   getParentRoute: () => ApiOgRoute,
 } as any)
+const AdminInterviewNotesNoteIdEditRoute =
+  AdminInterviewNotesNoteIdEditRouteImport.update({
+    id: '/interview/notes/$noteId/edit',
+    path: '/interview/notes/$noteId/edit',
+    getParentRoute: () => AdminRouteRoute,
+  } as any)
 const ApiOgInterviewSectSlugRoute = ApiOgInterviewSectSlugRouteImport.update({
   id: '/interview/$sect/$slug',
   path: '/interview/$sect/$slug',
@@ -113,9 +126,11 @@ export interface FileRoutesByFullPath {
   '/admin/interview/': typeof AdminInterviewIndexRoute
   '/admin/pages/': typeof AdminPagesIndexRoute
   '/admin/posts/': typeof AdminPostsIndexRoute
+  '/admin/interview/notes/new': typeof AdminInterviewNotesNewRoute
   '/admin/pages/$slug/edit': typeof AdminPagesSlugEditRoute
   '/admin/posts/$postId/edit': typeof AdminPostsPostIdEditRoute
   '/api/og/posts/$slug': typeof ApiOgPostsSlugRoute
+  '/admin/interview/notes/$noteId/edit': typeof AdminInterviewNotesNoteIdEditRoute
   '/api/og/interview/$sect/$slug': typeof ApiOgInterviewSectSlugRoute
 }
 export interface FileRoutesByTo {
@@ -129,9 +144,11 @@ export interface FileRoutesByTo {
   '/admin/interview': typeof AdminInterviewIndexRoute
   '/admin/pages': typeof AdminPagesIndexRoute
   '/admin/posts': typeof AdminPostsIndexRoute
+  '/admin/interview/notes/new': typeof AdminInterviewNotesNewRoute
   '/admin/pages/$slug/edit': typeof AdminPagesSlugEditRoute
   '/admin/posts/$postId/edit': typeof AdminPostsPostIdEditRoute
   '/api/og/posts/$slug': typeof ApiOgPostsSlugRoute
+  '/admin/interview/notes/$noteId/edit': typeof AdminInterviewNotesNoteIdEditRoute
   '/api/og/interview/$sect/$slug': typeof ApiOgInterviewSectSlugRoute
 }
 export interface FileRoutesById {
@@ -147,9 +164,11 @@ export interface FileRoutesById {
   '/admin/interview/': typeof AdminInterviewIndexRoute
   '/admin/pages/': typeof AdminPagesIndexRoute
   '/admin/posts/': typeof AdminPostsIndexRoute
+  '/admin/interview/notes/new': typeof AdminInterviewNotesNewRoute
   '/admin/pages/$slug/edit': typeof AdminPagesSlugEditRoute
   '/admin/posts/$postId/edit': typeof AdminPostsPostIdEditRoute
   '/api/og/posts/$slug': typeof ApiOgPostsSlugRoute
+  '/admin/interview/notes/$noteId/edit': typeof AdminInterviewNotesNoteIdEditRoute
   '/api/og/interview/$sect/$slug': typeof ApiOgInterviewSectSlugRoute
 }
 export interface FileRouteTypes {
@@ -166,9 +185,11 @@ export interface FileRouteTypes {
     | '/admin/interview/'
     | '/admin/pages/'
     | '/admin/posts/'
+    | '/admin/interview/notes/new'
     | '/admin/pages/$slug/edit'
     | '/admin/posts/$postId/edit'
     | '/api/og/posts/$slug'
+    | '/admin/interview/notes/$noteId/edit'
     | '/api/og/interview/$sect/$slug'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -182,9 +203,11 @@ export interface FileRouteTypes {
     | '/admin/interview'
     | '/admin/pages'
     | '/admin/posts'
+    | '/admin/interview/notes/new'
     | '/admin/pages/$slug/edit'
     | '/admin/posts/$postId/edit'
     | '/api/og/posts/$slug'
+    | '/admin/interview/notes/$noteId/edit'
     | '/api/og/interview/$sect/$slug'
   id:
     | '__root__'
@@ -199,9 +222,11 @@ export interface FileRouteTypes {
     | '/admin/interview/'
     | '/admin/pages/'
     | '/admin/posts/'
+    | '/admin/interview/notes/new'
     | '/admin/pages/$slug/edit'
     | '/admin/posts/$postId/edit'
     | '/api/og/posts/$slug'
+    | '/admin/interview/notes/$noteId/edit'
     | '/api/og/interview/$sect/$slug'
   fileRoutesById: FileRoutesById
 }
@@ -290,6 +315,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPostsNewRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/admin/interview/notes/new': {
+      id: '/admin/interview/notes/new'
+      path: '/interview/notes/new'
+      fullPath: '/admin/interview/notes/new'
+      preLoaderRoute: typeof AdminInterviewNotesNewRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/admin/pages/$slug/edit': {
       id: '/admin/pages/$slug/edit'
       path: '/pages/$slug/edit'
@@ -311,6 +343,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiOgPostsSlugRouteImport
       parentRoute: typeof ApiOgRoute
     }
+    '/admin/interview/notes/$noteId/edit': {
+      id: '/admin/interview/notes/$noteId/edit'
+      path: '/interview/notes/$noteId/edit'
+      fullPath: '/admin/interview/notes/$noteId/edit'
+      preLoaderRoute: typeof AdminInterviewNotesNoteIdEditRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/api/og/interview/$sect/$slug': {
       id: '/api/og/interview/$sect/$slug'
       path: '/interview/$sect/$slug'
@@ -330,8 +369,10 @@ interface AdminRouteRouteChildren {
   AdminInterviewIndexRoute: typeof AdminInterviewIndexRoute
   AdminPagesIndexRoute: typeof AdminPagesIndexRoute
   AdminPostsIndexRoute: typeof AdminPostsIndexRoute
+  AdminInterviewNotesNewRoute: typeof AdminInterviewNotesNewRoute
   AdminPagesSlugEditRoute: typeof AdminPagesSlugEditRoute
   AdminPostsPostIdEditRoute: typeof AdminPostsPostIdEditRoute
+  AdminInterviewNotesNoteIdEditRoute: typeof AdminInterviewNotesNoteIdEditRoute
 }
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
@@ -343,8 +384,10 @@ const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminInterviewIndexRoute: AdminInterviewIndexRoute,
   AdminPagesIndexRoute: AdminPagesIndexRoute,
   AdminPostsIndexRoute: AdminPostsIndexRoute,
+  AdminInterviewNotesNewRoute: AdminInterviewNotesNewRoute,
   AdminPagesSlugEditRoute: AdminPagesSlugEditRoute,
   AdminPostsPostIdEditRoute: AdminPostsPostIdEditRoute,
+  AdminInterviewNotesNoteIdEditRoute: AdminInterviewNotesNoteIdEditRoute,
 }
 
 const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(
@@ -371,3 +414,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
