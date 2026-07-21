@@ -1,14 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import {
-  createSection,
-  updateSection,
-  deleteSection,
-  createNote,
-  updateNote,
-  deleteNote,
-} from "@/db/queries";
 import { toFailure, type ActionResult } from "./_shared";
+
+// Queries are loaded via dynamic import inside each Impl (never a static
+// top-level import) so these client-imported server functions don't pull the
+// D1/`cloudflare:workers` query modules into the client bundle.
 
 const slug = z
   .string()
@@ -64,6 +60,7 @@ type Ref = { id: string; slug: string };
 
 export async function createSectionImpl(input: SectionCreateInput): Promise<ActionResult<Ref>> {
   try {
+    const { createSection } = await import("@/db/queries");
     return { ok: true, data: await createSection(input) };
   } catch (err) {
     return toFailure(err);
@@ -73,6 +70,7 @@ export async function createSectionImpl(input: SectionCreateInput): Promise<Acti
 export async function updateSectionImpl(input: SectionUpdateInput): Promise<ActionResult> {
   const { id, ...rest } = input;
   try {
+    const { updateSection } = await import("@/db/queries");
     await updateSection(id, rest);
     return { ok: true };
   } catch (err) {
@@ -82,6 +80,7 @@ export async function updateSectionImpl(input: SectionUpdateInput): Promise<Acti
 
 export async function deleteSectionImpl(input: { id: string }): Promise<ActionResult> {
   try {
+    const { deleteSection } = await import("@/db/queries");
     await deleteSection(input.id);
     return { ok: true };
   } catch (err) {
@@ -91,6 +90,7 @@ export async function deleteSectionImpl(input: { id: string }): Promise<ActionRe
 
 export async function createNoteImpl(input: NoteCreateInput): Promise<ActionResult<Ref>> {
   try {
+    const { createNote } = await import("@/db/queries");
     return { ok: true, data: await createNote(input) };
   } catch (err) {
     return toFailure(err);
@@ -100,6 +100,7 @@ export async function createNoteImpl(input: NoteCreateInput): Promise<ActionResu
 export async function updateNoteImpl(input: NoteUpdateInput): Promise<ActionResult> {
   const { id, ...rest } = input;
   try {
+    const { updateNote } = await import("@/db/queries");
     await updateNote(id, rest);
     return { ok: true };
   } catch (err) {
@@ -109,6 +110,7 @@ export async function updateNoteImpl(input: NoteUpdateInput): Promise<ActionResu
 
 export async function deleteNoteImpl(input: { id: string }): Promise<ActionResult> {
   try {
+    const { deleteNote } = await import("@/db/queries");
     await deleteNote(input.id);
     return { ok: true };
   } catch (err) {

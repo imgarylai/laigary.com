@@ -240,5 +240,34 @@
     "update": "Update",
     "cancel": "Cancel",
     "saving": "Saving…"
+  },
+  "sectionList": {
+    "label": "Label",
+    "slug": "Slug",
+    "sortOrder": "Order",
+    "notes": "Notes",
+    "actions": "Actions",
+    "edit": "Edit",
+    "delete": "Delete",
+    "deleting": "Deleting…",
+    "newSection": "New section",
+    "searchPlaceholder": "Search sections…",
+    "deleteTitle": "Delete section \"{label}\"?",
+    "deleteCascade": "This will also delete {count} note(s) in this section.",
+    "deleteEmpty": "This section has no notes."
+  },
+  "sectionForm": {
+    "slug": "Slug",
+    "label": "Label",
+    "blurb": "Blurb",
+    "icon": "Icon",
+    "iconPlaceholder": "Phosphor icon name",
+    "sortOrder": "Order",
+    "create": "Create",
+    "update": "Update",
+    "cancel": "Cancel",
+    "saving": "Saving…",
+    "createTitle": "New section",
+    "editTitle": "Edit section"
   }
 }
