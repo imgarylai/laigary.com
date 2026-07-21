@@ -188,5 +188,10 @@
     "slugRequired": "Slug is required",
     "slugFormat": "Slug can only contain lowercase letters, numbers, and hyphens",
     "contentRequired": "Content is required"
+  },
+  "pagination": {
+    "prev": "Previous",
+    "next": "Next",
+    "page": "Page {current} / {total}"
   }
 }

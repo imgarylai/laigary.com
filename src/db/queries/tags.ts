@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, asc } from "drizzle-orm";
 import { tags, postTags, interviewNoteTags, posts, interviewNotes } from "@/db/schema";
 import { getDb } from "./_db";
 
@@ -58,6 +58,16 @@ export class TagNotFoundError extends Error {
     super(`Tag ${id} not found`);
     this.name = "TagNotFoundError";
   }
+}
+
+// Lean list of every tag (id/name/slug) for pickers like the post form's tag
+// combobox — no usage joins, unlike getTagsWithUsage which the tags admin needs.
+export async function getAllTags(): Promise<Tag[]> {
+  const db = await getDb();
+  return db
+    .select({ id: tags.id, name: tags.name, slug: tags.slug })
+    .from(tags)
+    .orderBy(asc(tags.name));
 }
 
 export async function createTag(input: { name: string; slug: string }): Promise<Tag> {

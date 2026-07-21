@@ -188,5 +188,10 @@
     "slugRequired": "Slug 為必填",
     "slugFormat": "Slug 只能包含小寫字母、數字和連字號",
     "contentRequired": "內容為必填"
+  },
+  "pagination": {
+    "prev": "上一頁",
+    "next": "下一頁",
+    "page": "第 {current} / {total} 頁"
   }
 }

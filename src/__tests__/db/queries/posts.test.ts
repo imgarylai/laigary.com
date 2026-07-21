@@ -208,3 +208,34 @@ describe("getAdminPosts", () => {
     expect(drafts.items[0].slug).toBe("d");
   });
 });
+
+describe("getAdminPostById", () => {
+  it("returns editable fields + tagIds for a post", async () => {
+    const { createPost, getAdminPostById } = await import("@/db/queries");
+    const tag = await seedTag("Go", "go");
+    const { id } = await createPost({
+      title: "T",
+      slug: "t",
+      contentMd: "body",
+      excerpt: "e",
+      status: "published",
+      tagIds: [tag.id],
+    });
+
+    const post = await getAdminPostById(id);
+    expect(post).toMatchObject({
+      id,
+      title: "T",
+      slug: "t",
+      contentMd: "body",
+      excerpt: "e",
+      status: "published",
+    });
+    expect(post?.tagIds).toEqual([tag.id]);
+  });
+
+  it("returns null for a missing id", async () => {
+    const { getAdminPostById } = await import("@/db/queries");
+    expect(await getAdminPostById("nope")).toBeNull();
+  });
+});
