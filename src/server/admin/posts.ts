@@ -1,7 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { createPost, updatePost, deletePost } from "@/db/queries";
 import { toFailure, type ActionResult } from "./_shared";
+
+// The query layer is loaded via dynamic import inside each Impl (never a static
+// top-level import) so these client-imported server functions don't pull the
+// D1/`cloudflare:workers` query modules into the client bundle.
 
 const slug = z
   .string()
@@ -43,6 +46,7 @@ type PostRef = { id: string; slug: string };
 // validated RPC boundary the admin forms call.
 export async function createPostImpl(input: PostCreateInput): Promise<ActionResult<PostRef>> {
   try {
+    const { createPost } = await import("@/db/queries");
     return { ok: true, data: await createPost(input) };
   } catch (err) {
     return toFailure(err);
@@ -52,6 +56,7 @@ export async function createPostImpl(input: PostCreateInput): Promise<ActionResu
 export async function updatePostImpl(input: PostUpdateInput): Promise<ActionResult<PostRef>> {
   const { id, ...rest } = input;
   try {
+    const { updatePost } = await import("@/db/queries");
     return { ok: true, data: await updatePost(id, rest) };
   } catch (err) {
     return toFailure(err);
@@ -60,6 +65,7 @@ export async function updatePostImpl(input: PostUpdateInput): Promise<ActionResu
 
 export async function deletePostImpl(input: { id: string }): Promise<ActionResult> {
   try {
+    const { deletePost } = await import("@/db/queries");
     await deletePost(input.id);
     return { ok: true };
   } catch (err) {
