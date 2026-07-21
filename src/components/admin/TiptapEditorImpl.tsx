@@ -28,10 +28,9 @@ export default function TiptapEditorImpl({
     immediatelyRender: false,
     extensions: createExtensions({ placeholder: t("editor.placeholder") }),
     content: value,
+    contentType: "markdown",
     onUpdate: ({ editor: e }) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const md = (e.storage as any).markdown.getMarkdown();
-      onChange(md);
+      onChange(e.getMarkdown());
     },
   });
 
@@ -44,13 +43,12 @@ export default function TiptapEditorImpl({
     // character gets typed twice / lag" behaviour. When composition ends the
     // effect runs again with the committed text, so nothing is dropped.
     if (editor.view.composing) return;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const currentMd = (editor.storage as any).markdown.getMarkdown();
+    const currentMd = editor.getMarkdown();
     // Only sync genuine external changes; our own onUpdate echoes back an equal
     // value, so this skips the self-inflicted round-trip. emitUpdate: false
     // keeps an external set from bouncing another onChange back to the parent.
     if (value !== currentMd) {
-      editor.commands.setContent(value, { emitUpdate: false });
+      editor.commands.setContent(value, { emitUpdate: false, contentType: "markdown" });
     }
   }, [value, editor]);
 

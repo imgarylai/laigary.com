@@ -11,17 +11,17 @@ import { describe, expect, it } from "vitest";
 import { Editor } from "@tiptap/react";
 import { createExtensions } from "@/components/admin/editor/extensions";
 
-function makeEditor(content = "<p></p>"): Editor {
+function makeEditor(content = ""): Editor {
   return new Editor({
     element: document.createElement("div"),
     extensions: createExtensions({ placeholder: "" }),
     content,
+    contentType: "markdown",
   });
 }
 
 function getMarkdown(editor: Editor): string {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (editor.storage as any).markdown.getMarkdown();
+  return editor.getMarkdown();
 }
 
 /** Simulate real typing: handleTextInput first (input rules), then insert. */

@@ -2,7 +2,7 @@ import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import Image from "@tiptap/extension-image";
 import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
-import { Markdown } from "tiptap-markdown";
+import { Markdown } from "@tiptap/markdown";
 import Placeholder from "@tiptap/extension-placeholder";
 import Typography from "@tiptap/extension-typography";
 import Highlight from "@tiptap/extension-highlight";
@@ -18,7 +18,7 @@ import CharacterCount from "@tiptap/extension-character-count";
 import { TextStyle } from "@tiptap/extension-text-style";
 import Color from "@tiptap/extension-color";
 import Focus from "@tiptap/extension-focus";
-import { MathExtension } from "@aarkue/tiptap-math-extension";
+import { InlineMath } from "./inline-math";
 import { common, createLowlight } from "lowlight";
 
 const lowlight = createLowlight(common);
@@ -30,7 +30,7 @@ export function createExtensions({ placeholder }: { placeholder: string }) {
     Link.configure({ openOnClick: false }),
     Underline,
     Image,
-    Markdown.configure({ transformPastedText: true, transformCopiedText: true }),
+    Markdown,
     Placeholder.configure({ placeholder }),
     // Keep the harmless typographic replacements (em-dash, ellipsis, arrows, …)
     // but turn OFF smart quotes. Straight ' and " were being auto-rewritten to
@@ -58,6 +58,9 @@ export function createExtensions({ placeholder }: { placeholder: string }) {
     TextStyle,
     Color,
     Focus.configure({ className: "has-focus", mode: "deepest" }),
-    MathExtension.configure({ evaluation: false, addInlineMath: true }),
+    // InlineMath = @aarkue InlineMathNode + markdown mapping (see inline-math.ts).
+    // Registered directly instead of via MathExtension, which is only a thin
+    // wrapper that would add the unextended node.
+    InlineMath.configure({ evaluation: false }),
   ];
 }
