@@ -10,13 +10,15 @@ import { CommandPalette, type PaletteRow } from "./CommandPalette";
 export function TerminalShell({
   homeTo,
   navItems,
-  paletteRows,
+  palettePages,
+  paletteSearch,
   palettePlaceholder,
   children,
 }: {
   homeTo: string;
   navItems: NavItem[];
-  paletteRows: PaletteRow[];
+  palettePages: PaletteRow[];
+  paletteSearch: (query: string) => Promise<PaletteRow[]>;
   palettePlaceholder: string;
   children: ReactNode;
 }) {
@@ -38,7 +40,8 @@ export function TerminalShell({
       <CommandPalette
         open={cmdOpen}
         onOpenChange={setCmdOpen}
-        rows={paletteRows}
+        pages={palettePages}
+        searchContent={paletteSearch}
         placeholder={palettePlaceholder}
       />
     </div>

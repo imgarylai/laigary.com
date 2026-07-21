@@ -1,11 +1,10 @@
 // @vitest-environment jsdom
 //
-// Regression: opening the search palette crashed with "Cannot read properties
-// of undefined (reading 'subscribe')" — the Base UI port of shadcn's
-// CommandDialog rendered its children without the cmdk <Command> root, so
-// CommandInput/CommandList mounted with no store to subscribe to.
+// Covers the ⌘K palette contract: pages are pre-loaded (rendered immediately);
+// content rows are fetched on demand only after the user types, and (for IME
+// input) only once the composition commits — never mid-composition.
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, fireEvent } from "@testing-library/react";
 import { CommandPalette, type PaletteRow } from "@/components/terminal/CommandPalette";
 
 vi.mock("@/i18n/I18nProvider", () => ({
@@ -24,18 +23,79 @@ Element.prototype.scrollIntoView = () => {};
 
 afterEach(cleanup);
 
-const rows: PaletteRow[] = [
-  { kind: "page", label: "~/posts", haystack: "posts", onSelect: () => {} },
-  { kind: "content", label: "Two Sum", haystack: "two-sum leetcode", onSelect: () => {} },
+const pages: PaletteRow[] = [
+  { kind: "page", label: "ls ~", haystack: "home", onSelect: () => {} },
+  { kind: "page", label: "cd ./posts", haystack: "posts archive", onSelect: () => {} },
 ];
 
+const contentRow: PaletteRow = {
+  kind: "content",
+  label: "cat two-sum",
+  sub: "Two Sum",
+  haystack: "two sum leetcode",
+  onSelect: () => {},
+};
+
 describe("CommandPalette", () => {
-  it("should render input and grouped rows when opened", () => {
+  it("pre-loads page rows without any search", () => {
+    const searchContent = vi.fn(async () => [contentRow]);
     render(
-      <CommandPalette open onOpenChange={() => {}} rows={rows} placeholder="type a command" />,
+      <CommandPalette
+        open
+        onOpenChange={() => {}}
+        pages={pages}
+        searchContent={searchContent}
+        placeholder="type a command"
+      />,
     );
     expect(screen.getByPlaceholderText("type a command")).toBeDefined();
-    expect(screen.getByText("~/posts")).toBeDefined();
-    expect(screen.getByText("Two Sum")).toBeDefined();
+    expect(screen.getByText("ls ~")).toBeDefined();
+    expect(screen.getByText("cd ./posts")).toBeDefined();
+    // Content is NOT fetched until the user types.
+    expect(searchContent).not.toHaveBeenCalled();
+    expect(screen.queryByText("Two Sum")).toBeNull();
+  });
+
+  it("searches content on demand after typing", async () => {
+    const searchContent = vi.fn(async () => [contentRow]);
+    render(
+      <CommandPalette
+        open
+        onOpenChange={() => {}}
+        pages={pages}
+        searchContent={searchContent}
+        placeholder="search"
+      />,
+    );
+    fireEvent.change(screen.getByPlaceholderText("search"), { target: { value: "two" } });
+    await waitFor(() => expect(searchContent).toHaveBeenCalledWith("two"));
+    expect(await screen.findByText("Two Sum")).toBeDefined();
+  });
+
+  it("does not search while an IME composition is in flight", async () => {
+    const searchContent = vi.fn(async () => [contentRow]);
+    render(
+      <CommandPalette
+        open
+        onOpenChange={() => {}}
+        pages={pages}
+        searchContent={searchContent}
+        placeholder="search"
+      />,
+    );
+    const input = screen.getByPlaceholderText("search") as HTMLInputElement;
+
+    // Simulate typing Zhuyin/Pinyin: composition starts, the input carries the
+    // half-formed value, but no search fires until the composition commits.
+    fireEvent.compositionStart(input);
+    fireEvent.change(input, { target: { value: "ㄊ" } });
+    // Give the debounce window a chance — it must stay gated while composing.
+    await new Promise((r) => setTimeout(r, 250));
+    expect(searchContent).not.toHaveBeenCalled();
+
+    // Composition commits to a real word → the search now fires with it.
+    fireEvent.change(input, { target: { value: "貪心" } });
+    fireEvent.compositionEnd(input);
+    await waitFor(() => expect(searchContent).toHaveBeenCalledWith("貪心"));
   });
 });

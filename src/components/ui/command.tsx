@@ -37,12 +37,16 @@ function CommandDialog({
   children,
   className,
   showCloseButton = false,
+  shouldFilter,
   ...props
 }: Omit<React.ComponentProps<typeof Dialog>, "children"> & {
   title?: string
   description?: string
   className?: string
   showCloseButton?: boolean
+  // Forwarded to the cmdk <Command> root. Pass `false` to disable cmdk's
+  // built-in filtering when the caller drives the visible rows itself.
+  shouldFilter?: boolean
   children: React.ReactNode
 }) {
   return (
@@ -61,7 +65,7 @@ function CommandDialog({
         {/* Command is the cmdk root that provides the store consumed by
             CommandInput/List/Item — without it they crash on mount
             ("Cannot read properties of undefined (reading 'subscribe')"). */}
-        <Command>{children}</Command>
+        <Command shouldFilter={shouldFilter}>{children}</Command>
       </DialogContent>
     </Dialog>
   )

@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
-import { useMemo } from "react";
-import { interviewShellFn } from "@/server/public";
+import { useCallback, useMemo } from "react";
+import { interviewShellFn, searchInterviewNotesFn } from "@/server/public";
 import { TerminalShell } from "@/components/terminal/TerminalShell";
 import type { NavItem } from "@/components/terminal/TmHeader";
 import type { PaletteRow } from "@/components/terminal/CommandPalette";
@@ -15,7 +15,7 @@ export const Route = createFileRoute("/interview")({
 });
 
 function InterviewLayout() {
-  const { sections, notes } = Route.useLoaderData();
+  const { sections } = Route.useLoaderData();
   const { t } = useI18n();
   const navigate = useNavigate();
 
@@ -29,8 +29,9 @@ function InterviewLayout() {
     { label: "← blog", to: "/" },
   ];
 
-  const paletteRows = useMemo<PaletteRow[]>(() => {
-    const pages: PaletteRow[] = [
+  // Sections + fixed routes only — pre-loaded and filtered locally.
+  const palettePages = useMemo<PaletteRow[]>(
+    () => [
       {
         kind: "page",
         label: fsCmd(FS_INTERVIEW.home),
@@ -50,26 +51,35 @@ function InterviewLayout() {
         haystack: "back to blog",
         onSelect: () => navigate({ to: "/" }),
       },
-    ];
-    const noteRows: PaletteRow[] = notes.map((n) => ({
-      kind: "content",
-      label: fsCmd(FS_INTERVIEW.note, { sect: n.section, slug: n.slug }),
-      sub: n.title,
-      haystack: `${n.title} ${n.slug} ${n.section}`,
-      onSelect: () =>
-        navigate({
-          to: "/interview/$section/$slug",
-          params: { section: n.section, slug: n.slug },
-        }),
-    }));
-    return [...pages, ...noteRows];
-  }, [sections, notes, navigate]);
+    ],
+    [sections, navigate],
+  );
+
+  // Notes searched on demand across sections (title match) — never pre-loaded.
+  const paletteSearch = useCallback(
+    async (query: string): Promise<PaletteRow[]> => {
+      const notes = await searchInterviewNotesFn({ data: { q: query } });
+      return notes.map((n) => ({
+        kind: "content",
+        label: fsCmd(FS_INTERVIEW.note, { sect: n.section, slug: n.slug }),
+        sub: n.title,
+        haystack: `${n.title} ${n.slug} ${n.section}`,
+        onSelect: () =>
+          navigate({
+            to: "/interview/$section/$slug",
+            params: { section: n.section, slug: n.slug },
+          }),
+      }));
+    },
+    [navigate],
+  );
 
   return (
     <TerminalShell
       homeTo="/interview"
       navItems={navItems}
-      paletteRows={paletteRows}
+      palettePages={palettePages}
+      paletteSearch={paletteSearch}
       palettePlaceholder={t("blog.search.placeholderInterview")}
     >
       <Outlet />

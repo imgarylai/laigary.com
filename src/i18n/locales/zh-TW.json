@@ -311,7 +311,9 @@
       "placeholderInterview": "搜尋筆記、分類…",
       "pages": "頁面",
       "content": "內容",
-      "noMatches": "沒有符合的結果。"
+      "noMatches": "沒有符合的結果。",
+      "typeToSearch": "輸入以搜尋…",
+      "searching": "搜尋中…"
     },
     "home": {
       "descPosts": "生活筆記與隨筆",
