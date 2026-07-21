@@ -13,6 +13,7 @@ export const Route = createFileRoute("/interview/$section/$slug")({
     return data;
   },
   head: ({ loaderData }) => ({
+    meta: loaderData ? [{ title: loaderData.pageTitle }] : [],
     scripts: loaderData
       ? [
           {

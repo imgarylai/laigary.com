@@ -20,6 +20,9 @@ export const Route = createFileRoute("/interview/$section/")({
     if (!data) throw notFound();
     return data;
   },
+  head: ({ loaderData }) => ({
+    meta: loaderData ? [{ title: loaderData.pageTitle }] : [],
+  }),
   component: SectionPage,
 });
 
