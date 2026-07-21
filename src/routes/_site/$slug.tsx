@@ -12,6 +12,9 @@ export const Route = createFileRoute("/_site/$slug")({
     if (!data) throw notFound();
     return data;
   },
+  head: ({ loaderData }) => ({
+    meta: loaderData ? [{ title: loaderData.pageTitle }] : [],
+  }),
   component: PagePage,
 });
 

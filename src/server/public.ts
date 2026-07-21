@@ -13,6 +13,17 @@ async function renderMd(md: string): Promise<string> {
   return renderMarkdown(md);
 }
 
+// Browser-tab title for a content page, honoring the `title_template` setting
+// (`%s | Site` style — see lib/site-title). Fetches settings itself so detail
+// server fns can build the final string in one place.
+async function pageTitle(title: string): Promise<string> {
+  const { getSiteSettings } = await import("@/db/queries");
+  const { formatPageTitle } = await import("@/lib/site-title");
+  const settings = await getSiteSettings();
+  const siteName = settings.site_name || DEFAULT_SITE_NAME;
+  return formatPageTitle(settings.title_template ?? "", title, siteName);
+}
+
 // Default brand name when site_name is unset. Exported for testing.
 export const DEFAULT_SITE_NAME = "Unconstrained";
 
@@ -96,7 +107,12 @@ export const postDataFn = createServerFn({ method: "GET" })
     const { extractToc } = await import("@/lib/toc");
     const post = await getPostBySlug(data.slug);
     if (!post) return null;
-    return { post, html: await renderMd(post.contentMd), toc: extractToc(post.contentMd) };
+    return {
+      post,
+      html: await renderMd(post.contentMd),
+      toc: extractToc(post.contentMd),
+      pageTitle: await pageTitle(post.title),
+    };
   });
 
 export const tagsDataFn = createServerFn({ method: "GET" }).handler(async () => {
@@ -110,7 +126,11 @@ export const pageDataFn = createServerFn({ method: "GET" })
     const { getPageBySlug } = await import("@/db/queries");
     const page = await getPageBySlug(data.slug);
     if (!page) return null;
-    return { page: { slug: page.slug, title: page.title }, html: await renderMd(page.contentMd) };
+    return {
+      page: { slug: page.slug, title: page.title },
+      html: await renderMd(page.contentMd),
+      pageTitle: await pageTitle(page.title),
+    };
   });
 
 // ── Interview sub-site ──────────────────────────────────────────────────
@@ -172,6 +192,7 @@ export const sectionDataFn = createServerFn({ method: "GET" })
     if (!section) return null;
     const { notes } = await getInterviewNotesBySection(data.slug, { limit: 500 });
     return {
+      pageTitle: await pageTitle(section.label),
       section: { slug: section.slug, label: section.label, blurb: section.blurb },
       notes: notes.map((n) => ({
         slug: n.slug,
@@ -204,5 +225,6 @@ export const noteDataFn = createServerFn({ method: "GET" })
         tags: note.tags.map((t) => t.name),
       },
       html: await renderMd(note.contentMd),
+      pageTitle: await pageTitle(note.title),
     };
   });
