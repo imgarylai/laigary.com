@@ -1,54 +1,84 @@
-import { createFileRoute, Outlet, Link } from "@tanstack/react-router";
-import { ThemeProvider } from "@/components/ThemeProvider";
-import { ThemeToggle } from "@/components/ThemeToggle";
-import { siteMetaFn } from "@/server/public";
+import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
+import { useMemo } from "react";
+import { blogShellFn } from "@/server/public";
+import { TerminalShell } from "@/components/terminal/TerminalShell";
+import type { NavItem } from "@/components/terminal/TmHeader";
+import type { PaletteRow } from "@/components/terminal/CommandPalette";
+import { FS_BLOG, FS_INTERVIEW, fsCmd } from "@/lib/fsmap";
 
-// Public site shell (a pathless layout). Simple shadcn-styled header + footer,
-// theme toggle. This is a plain interim design reusing the admin design system;
-// the terminal-aesthetic redesign replaces it later.
+// Blog main-site shell (pathless layout). Terminal aesthetic; the interview
+// sub-site lives under its own /interview layout with a separate header.
 export const Route = createFileRoute("/_site")({
-  loader: () => siteMetaFn(),
+  loader: () => blogShellFn(),
+  head: ({ loaderData }) => ({
+    meta: loaderData ? [{ title: loaderData.siteName }] : [],
+  }),
   component: SiteLayout,
 });
 
-const navLink = "text-sm text-muted-foreground transition-colors hover:text-foreground";
+const NAV_ITEMS: NavItem[] = [
+  { label: "~", to: "/" },
+  { label: "archive", to: "/posts" },
+  { label: "tags", to: "/tags" },
+  { label: "interview", to: "/interview" },
+  { label: "about", to: "/$slug", params: { slug: "about" } },
+];
 
 function SiteLayout() {
-  const { siteName } = Route.useLoaderData();
+  const { posts } = Route.useLoaderData();
+  const navigate = useNavigate();
+
+  const paletteRows = useMemo<PaletteRow[]>(() => {
+    const pages: PaletteRow[] = [
+      {
+        kind: "page",
+        label: fsCmd(FS_BLOG.home),
+        haystack: "home ~ ls",
+        onSelect: () => navigate({ to: "/" }),
+      },
+      {
+        kind: "page",
+        label: fsCmd(FS_BLOG.archive),
+        haystack: "posts archive all writing",
+        onSelect: () => navigate({ to: "/posts" }),
+      },
+      {
+        kind: "page",
+        label: fsCmd(FS_BLOG.tags),
+        haystack: "tags topics",
+        onSelect: () => navigate({ to: "/tags" }),
+      },
+      {
+        kind: "page",
+        label: fsCmd(FS_INTERVIEW.home),
+        haystack: "interview prep",
+        onSelect: () => navigate({ to: "/interview" }),
+      },
+      {
+        kind: "page",
+        label: fsCmd(FS_BLOG.page, { slug: "about" }),
+        haystack: "about contact",
+        onSelect: () => navigate({ to: "/$slug", params: { slug: "about" } }),
+      },
+    ];
+    const postRows: PaletteRow[] = posts.map((p) => ({
+      kind: "content",
+      label: fsCmd(FS_BLOG.post, { slug: p.slug }),
+      sub: p.title,
+      haystack: `${p.title} ${p.slug} ${p.tags.join(" ")}`,
+      onSelect: () => navigate({ to: "/posts/$slug", params: { slug: p.slug } }),
+    }));
+    return [...pages, ...postRows];
+  }, [posts, navigate]);
 
   return (
-    <ThemeProvider>
-      <div className="flex min-h-screen flex-col">
-        <header className="border-b">
-          <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-4 px-4 py-4">
-            <Link to="/" className="font-semibold tracking-tight">
-              {siteName}
-            </Link>
-            <nav className="flex items-center gap-4">
-              <Link to="/posts" className={navLink}>
-                Posts
-              </Link>
-              <Link to="/tags" className={navLink}>
-                Tags
-              </Link>
-              <Link to="/interview" className={navLink}>
-                Interview
-              </Link>
-              <ThemeToggle />
-            </nav>
-          </div>
-        </header>
-
-        <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-10">
-          <Outlet />
-        </main>
-
-        <footer className="border-t">
-          <div className="mx-auto w-full max-w-3xl px-4 py-6 text-sm text-muted-foreground">
-            © {siteName}
-          </div>
-        </footer>
-      </div>
-    </ThemeProvider>
+    <TerminalShell
+      homeTo="/"
+      navItems={NAV_ITEMS}
+      paletteRows={paletteRows}
+      palettePlaceholder="search posts, tags, pages…"
+    >
+      <Outlet />
+    </TerminalShell>
   );
 }

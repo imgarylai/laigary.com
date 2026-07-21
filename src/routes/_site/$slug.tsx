@@ -1,7 +1,9 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { pageDataFn } from "@/server/public";
+import { PromptLine } from "@/components/terminal/ui";
+import { FS_BLOG } from "@/lib/fsmap";
 
-// Catch-all for DB-backed content pages (e.g. /now, /about). Matches last, so
+// Catch-all for DB-backed content pages (e.g. /about, /now). Matches last, so
 // concrete routes like /posts and /tags take precedence.
 export const Route = createFileRoute("/_site/$slug")({
   loader: async ({ params }) => {
@@ -16,12 +18,14 @@ function PagePage() {
   const { page, html } = Route.useLoaderData();
 
   return (
-    <article className="space-y-6">
-      <h1 className="text-3xl font-bold tracking-tight">{page.title}</h1>
-      <div
-        className="prose prose-sm max-w-none dark:prose-invert"
-        dangerouslySetInnerHTML={{ __html: html }}
-      />
+    <article className="tm-page-narrow">
+      <PromptLine style={{ margin: "0 0 16px" }}>
+        {FS_BLOG.page.prompt({ slug: page.slug })}
+      </PromptLine>
+      <h1 style={{ fontSize: 20, fontWeight: 700, margin: "0 0 18px", lineHeight: 1.35 }}>
+        {page.title}
+      </h1>
+      <div className="tm-prose" dangerouslySetInnerHTML={{ __html: html }} />
     </article>
   );
 }
