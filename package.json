@@ -35,6 +35,7 @@
     "@tanstack/react-router-devtools": "1.167.0",
     "@tanstack/react-router-ssr-query": "1.167.1",
     "@tanstack/react-start": "1.168.30",
+    "@tanstack/react-table": "8.21.3",
     "@tanstack/router-plugin": "1.132.0",
     "@tiptap/extension-character-count": "3.27.3",
     "@tiptap/extension-code-block-lowlight": "3.27.3",
