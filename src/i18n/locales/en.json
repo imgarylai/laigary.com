@@ -221,5 +221,24 @@
     "saving": "Saving…",
     "createTitle": "New tag",
     "editTitle": "Edit tag"
+  },
+  "pageList": {
+    "title": "Title",
+    "slug": "Slug",
+    "updated": "Updated",
+    "actions": "Actions",
+    "view": "View",
+    "searchPlaceholder": "Search pages…",
+    "newPage": "New page"
+  },
+  "pageForm": {
+    "title": "Title",
+    "titlePlaceholder": "Page title",
+    "slug": "Slug",
+    "slugPlaceholder": "page-slug",
+    "create": "Create",
+    "update": "Update",
+    "cancel": "Cancel",
+    "saving": "Saving…"
   }
 }

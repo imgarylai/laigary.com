@@ -221,5 +221,24 @@
     "saving": "儲存中…",
     "createTitle": "新增標籤",
     "editTitle": "編輯標籤"
+  },
+  "pageList": {
+    "title": "標題",
+    "slug": "Slug",
+    "updated": "更新時間",
+    "actions": "操作",
+    "view": "檢視",
+    "searchPlaceholder": "搜尋頁面…",
+    "newPage": "新增頁面"
+  },
+  "pageForm": {
+    "title": "標題",
+    "titlePlaceholder": "頁面標題",
+    "slug": "Slug",
+    "slugPlaceholder": "page-slug",
+    "create": "建立",
+    "update": "更新",
+    "cancel": "取消",
+    "saving": "儲存中…"
   }
 }
