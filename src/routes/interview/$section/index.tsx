@@ -1,11 +1,19 @@
-import { createFileRoute, notFound } from "@tanstack/react-router";
+import { createFileRoute, notFound, useNavigate } from "@tanstack/react-router";
 import { sectionDataFn } from "@/server/public";
 import { AsciiRule, PromptLine } from "@/components/terminal/ui";
 import { TmPage, TmEmpty, TmRowLink, TmRowCells } from "@/components/terminal/layout";
+import { TmPager } from "@/components/terminal/Pager";
 import { useI18n } from "@/i18n/I18nProvider";
 import { FS_INTERVIEW } from "@/lib/fsmap";
 
+const PAGE_SIZE = 20;
+
+type SectionSearch = { page?: number };
+
 export const Route = createFileRoute("/interview/$section/")({
+  validateSearch: (search: Record<string, unknown>): SectionSearch => ({
+    page: Number(search.page) > 1 ? Math.floor(Number(search.page)) : undefined,
+  }),
   loader: async ({ params }) => {
     const data = await sectionDataFn({ data: { slug: params.section } });
     if (!data) throw notFound();
@@ -16,12 +24,29 @@ export const Route = createFileRoute("/interview/$section/")({
 
 function SectionPage() {
   const { section, notes } = Route.useLoaderData();
+  const { page } = Route.useSearch();
+  const navigate = useNavigate();
   const { t } = useI18n();
+
+  const totalPages = Math.max(1, Math.ceil(notes.length / PAGE_SIZE));
+  const safePage = Math.min(page ?? 1, totalPages);
+  const start = (safePage - 1) * PAGE_SIZE;
+  const pageItems = notes.slice(start, start + PAGE_SIZE);
+
+  const goPage = (n: number) => {
+    navigate({
+      to: "/interview/$section",
+      params: { section: section.slug },
+      search: { page: n > 1 ? n : undefined },
+    });
+    window.scrollTo({ top: 0 });
+  };
 
   return (
     <TmPage>
       <PromptLine className="mb-1.5">
         {FS_INTERVIEW.section.prompt({ sect: section.slug })}
+        {totalPages > 1 ? ` | sed -n '${start + 1},${start + pageItems.length}p'` : ""}
       </PromptLine>
       <h1 className="mb-1.5 text-lg">{section.label}</h1>
       {section.blurb && (
@@ -33,7 +58,7 @@ function SectionPage() {
         <TmEmpty>{t("blog.interview.noneYet")}</TmEmpty>
       ) : (
         <div className="flex flex-col">
-          {notes.map((n) => (
+          {pageItems.map((n) => (
             <TmRowLink
               key={n.slug}
               to="/interview/$section/$slug"
@@ -44,6 +69,15 @@ function SectionPage() {
           ))}
         </div>
       )}
+
+      <TmPager
+        current={safePage}
+        totalPages={totalPages}
+        from={start + 1}
+        to={start + pageItems.length}
+        total={notes.length}
+        onPage={goPage}
+      />
     </TmPage>
   );
 }
