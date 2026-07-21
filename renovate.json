@@ -1,0 +1,69 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", ":automergeMinor", ":automergeDigest", "schedule:weekends"],
+  "labels": ["dependencies"],
+  "rangeStrategy": "pin",
+  "minimumReleaseAge": "3 days",
+  "packageRules": [
+    {
+      "description": "Group all non-major dependencies",
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "non-major dependencies",
+      "groupSlug": "non-major",
+      "automerge": true
+    },
+    {
+      "description": "Group TanStack packages",
+      "matchPackageNames": ["@tanstack/**"],
+      "groupName": "tanstack",
+      "automerge": true
+    },
+    {
+      "description": "Group Cloudflare packages",
+      "matchPackageNames": ["@cloudflare/**", "wrangler", "alchemy"],
+      "groupName": "cloudflare",
+      "automerge": true
+    },
+    {
+      "description": "Group Drizzle packages",
+      "matchPackageNames": [
+        "drizzle-orm",
+        "drizzle-kit",
+        "better-sqlite3",
+        "@types/better-sqlite3"
+      ],
+      "groupName": "drizzle",
+      "automerge": true
+    },
+    {
+      "description": "Group Tailwind packages",
+      "matchPackageNames": ["tailwindcss", "@tailwindcss/**", "tw-animate-css", "tailwind-merge"],
+      "groupName": "tailwind",
+      "automerge": true
+    },
+    {
+      "description": "Group React packages",
+      "matchPackageNames": ["react", "react-dom", "@types/react", "@types/react-dom"],
+      "groupName": "react",
+      "automerge": true
+    },
+    {
+      "description": "Group lint/format tools",
+      "matchPackageNames": ["oxlint", "oxfmt"],
+      "groupName": "oxc-tools",
+      "automerge": true
+    },
+    {
+      "description": "Group test tools",
+      "matchPackageNames": ["vitest", "@vitest/**", "@testing-library/**", "jsdom"],
+      "groupName": "testing",
+      "automerge": true
+    },
+    {
+      "description": "Major updates need manual review",
+      "matchUpdateTypes": ["major"],
+      "automerge": false,
+      "labels": ["dependencies", "major"]
+    }
+  ]
+}
