@@ -140,6 +140,14 @@ export const editNoteDataFn = createServerFn({ method: "GET" })
     },
   );
 
+// Site settings key/value map for the settings form.
+export const getSettingsFn = createServerFn({ method: "GET" }).handler(
+  async (): Promise<Record<string, string>> => {
+    const { getSiteSettings } = await import("@/db/queries");
+    return getSiteSettings();
+  },
+);
+
 // Pages admin list.
 export const listPagesFn = createServerFn({ method: "GET" }).handler(
   async (): Promise<PageListItem[]> => {
