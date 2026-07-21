@@ -9,6 +9,7 @@ export {
   getPublishedPosts,
   getPostBySlug,
   getAdminPosts,
+  getAllAdminPosts,
   getAdminPostById,
   getTagsWithCounts,
   createPost,

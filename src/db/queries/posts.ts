@@ -255,6 +255,22 @@ export async function getAdminPostById(id: string): Promise<AdminPostDetail | nu
   };
 }
 
+// Every post (all statuses) for the admin list, newest first. The admin table
+// searches / sorts / paginates client-side, so it takes the full set.
+export async function getAllAdminPosts(): Promise<AdminPost[]> {
+  const db = await getDb();
+  return db
+    .select({
+      id: posts.id,
+      slug: posts.slug,
+      title: posts.title,
+      status: posts.status,
+      updatedAt: posts.updatedAt,
+    })
+    .from(posts)
+    .orderBy(desc(posts.updatedAt));
+}
+
 export async function getAdminPosts(opts?: {
   q?: string;
   status?: "draft" | "published";
