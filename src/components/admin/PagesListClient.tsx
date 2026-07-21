@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, getRouteApi } from "@tanstack/react-router";
 import { ArrowSquareOutIcon } from "@phosphor-icons/react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
@@ -13,8 +13,12 @@ type Page = {
   updatedAt: number;
 };
 
+const route = getRouteApi("/admin/pages/");
+
 export function PagesListClient({ pages }: { pages: Page[] }) {
   const { t, locale } = useI18n();
+  const { q } = route.useSearch();
+  const navigate = route.useNavigate();
 
   const columns = useMemo<ColumnDef<Page, unknown>[]>(() => {
     function formatDate(ts: number): string {
@@ -85,6 +89,10 @@ export function PagesListClient({ pages }: { pages: Page[] }) {
       searchPlaceholder={t("pageList.searchPlaceholder")}
       toolbar={<Button render={<Link to="/admin/pages/new" />}>{t("pageList.newPage")}</Button>}
       emptyMessage={t("admin.noPages")}
+      globalFilter={q ?? ""}
+      onGlobalFilterChange={(v) =>
+        navigate({ search: (prev) => ({ ...prev, q: v || undefined }), replace: true })
+      }
     />
   );
 }

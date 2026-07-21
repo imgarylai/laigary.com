@@ -1,9 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { listTagsFn } from "@/server/admin/reads";
+import { parseListSearch } from "@/components/admin/list-search";
 import { TagsListClient } from "@/components/admin/TagsListClient";
 import { useI18n } from "@/i18n/I18nProvider";
 
 export const Route = createFileRoute("/admin/tags")({
+  validateSearch: parseListSearch,
   loader: () => listTagsFn(),
   component: TagsPage,
 });

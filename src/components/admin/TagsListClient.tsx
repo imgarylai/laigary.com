@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { getRouteApi } from "@tanstack/react-router";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "./DataTable";
 import { TagFormDialog } from "./TagFormDialog";
@@ -14,8 +15,12 @@ type Tag = {
   usedBy: { type: "post" | "note"; title: string; slug: string }[];
 };
 
+const route = getRouteApi("/admin/tags");
+
 export function TagsListClient({ tags }: { tags: Tag[] }) {
   const { t } = useI18n();
+  const { q } = route.useSearch();
+  const navigate = route.useNavigate();
 
   const columns = useMemo<ColumnDef<Tag, unknown>[]>(
     () => [
@@ -59,6 +64,10 @@ export function TagsListClient({ tags }: { tags: Tag[] }) {
       searchPlaceholder={t("tagList.searchPlaceholder")}
       toolbar={<TagFormDialog />}
       emptyMessage={t("admin.noTags")}
+      globalFilter={q ?? ""}
+      onGlobalFilterChange={(v) =>
+        navigate({ search: (prev) => ({ ...prev, q: v || undefined }), replace: true })
+      }
     />
   );
 }

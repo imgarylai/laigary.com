@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { useMemo } from "react";
+import { Link, getRouteApi } from "@tanstack/react-router";
 import { ArrowSquareOutIcon } from "@phosphor-icons/react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DataTable } from "./DataTable";
+import type { PostStatus } from "./list-search";
 import { DeletePostButton } from "./DeletePostButton";
 import { useI18n } from "@/i18n/I18nProvider";
 
@@ -23,11 +24,16 @@ type Post = {
   updatedAt: number;
 };
 
+const route = getRouteApi("/admin/posts/");
+
 export function PostsListClient({ posts }: { posts: Post[] }) {
   const { t, locale } = useI18n();
-  const [status, setStatus] = useState("all");
+  // Filters live in the URL (see list-search.ts) so leaving the list and
+  // coming back — or reloading — restores the filtered view.
+  const { q, status } = route.useSearch();
+  const navigate = route.useNavigate();
 
-  const data = status === "all" ? posts : posts.filter((p) => p.status === status);
+  const data = status === undefined ? posts : posts.filter((p) => p.status === status);
 
   const columns = useMemo<ColumnDef<Post, unknown>[]>(() => {
     function formatDate(ts: number): string {
@@ -103,7 +109,15 @@ export function PostsListClient({ posts }: { posts: Post[] }) {
 
   const toolbar = (
     <>
-      <Select value={status} onValueChange={(v) => setStatus(v as string)}>
+      <Select
+        value={status ?? "all"}
+        onValueChange={(v) =>
+          navigate({
+            search: (prev) => ({ ...prev, status: v === "all" ? undefined : (v as PostStatus) }),
+            replace: true,
+          })
+        }
+      >
         <SelectTrigger className="w-[140px]">
           <SelectValue />
         </SelectTrigger>
@@ -124,6 +138,10 @@ export function PostsListClient({ posts }: { posts: Post[] }) {
       searchPlaceholder={t("postList.searchPlaceholder")}
       toolbar={toolbar}
       emptyMessage={t("common.noPostsFound")}
+      globalFilter={q ?? ""}
+      onGlobalFilterChange={(v) =>
+        navigate({ search: (prev) => ({ ...prev, q: v || undefined }), replace: true })
+      }
     />
   );
 }

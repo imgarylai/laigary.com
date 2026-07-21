@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, getRouteApi } from "@tanstack/react-router";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,8 +15,12 @@ type Note = {
   sectionLabel: string;
 };
 
+const route = getRouteApi("/admin/interview/");
+
 export function NotesListClient({ notes }: { notes: Note[] }) {
   const { t } = useI18n();
+  const { q } = route.useSearch();
+  const navigate = route.useNavigate();
 
   const columns = useMemo<ColumnDef<Note, unknown>[]>(
     () => [
@@ -67,6 +71,10 @@ export function NotesListClient({ notes }: { notes: Note[] }) {
         <Button render={<Link to="/admin/interview/notes/new" />}>{t("noteList.newNote")}</Button>
       }
       emptyMessage={t("admin.noNotes")}
+      globalFilter={q ?? ""}
+      onGlobalFilterChange={(v) =>
+        navigate({ search: (prev) => ({ ...prev, q: v || undefined }), replace: true })
+      }
     />
   );
 }
