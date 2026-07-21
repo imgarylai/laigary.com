@@ -137,6 +137,16 @@
   }
 }
 
+/* Tailwind Typography draws decorative backticks around inline code via
+   code::before/::after pseudo-elements. Inside the markdown editor (and its
+   preview) they read as real, undeletable ` characters (#52) — and the code
+   chip styling already marks the text as code. Disable them everywhere prose
+   is used so editor, preview, and the public frontend stay consistent. */
+.prose code::before,
+.prose code::after {
+  content: none;
+}
+
 /* Tiptap editor styles */
 
 /* Placeholder */
