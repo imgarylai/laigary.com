@@ -17,6 +17,8 @@ export function AdminHeader() {
     "/admin/tags": t("admin.tags"),
     "/admin/settings": t("admin.settings"),
     "/admin/interview": t("admin.interview"),
+    "/admin/interview/notes": t("admin.interviewNotes"),
+    "/admin/interview/sections": t("admin.interviewSections"),
   };
 
   let breadcrumb = breadcrumbMap[pathname] ?? "";
@@ -24,7 +26,7 @@ export function AdminHeader() {
     breadcrumb = t("admin.editPost");
   } else if (pathname.startsWith("/admin/pages/")) {
     breadcrumb = t("admin.editPage");
-  } else if (pathname.startsWith("/admin/interview/notes/")) {
+  } else if (!breadcrumb && pathname.startsWith("/admin/interview/notes/")) {
     breadcrumb = t("admin.editNote");
   }
 

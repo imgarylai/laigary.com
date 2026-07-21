@@ -15,7 +15,7 @@ type Note = {
   sectionLabel: string;
 };
 
-const route = getRouteApi("/admin/interview/");
+const route = getRouteApi("/admin/interview/notes/");
 
 export function NotesListClient({ notes }: { notes: Note[] }) {
   const { t } = useI18n();

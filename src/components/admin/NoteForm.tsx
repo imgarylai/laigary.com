@@ -227,7 +227,7 @@ export function NoteForm({
         <Button
           type="button"
           variant="outline"
-          onClick={() => navigate({ to: "/admin/interview" })}
+          onClick={() => navigate({ to: "/admin/interview/notes" })}
         >
           {t("noteForm.cancel")}
         </Button>
