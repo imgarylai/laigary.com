@@ -1,7 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { createTag, updateTag, deleteTag } from "@/db/queries";
 import { toFailure, type ActionResult } from "./_shared";
+
+// Queries are loaded via dynamic import inside each Impl (never a static
+// top-level import) so these client-imported server functions don't pull the
+// D1/`cloudflare:workers` query modules into the client bundle.
 
 export const tagCreateSchema = z.object({
   name: z.string().min(1),
@@ -20,6 +23,7 @@ export const tagIdSchema = z.object({ id: z.string().min(1) });
 
 export async function createTagImpl(input: TagCreateInput): Promise<ActionResult> {
   try {
+    const { createTag } = await import("@/db/queries");
     await createTag(input);
     return { ok: true };
   } catch (err) {
@@ -29,6 +33,7 @@ export async function createTagImpl(input: TagCreateInput): Promise<ActionResult
 
 export async function updateTagImpl(input: TagUpdateInput): Promise<ActionResult> {
   try {
+    const { updateTag } = await import("@/db/queries");
     await updateTag(input.id, { name: input.name });
     return { ok: true };
   } catch (err) {
@@ -38,6 +43,7 @@ export async function updateTagImpl(input: TagUpdateInput): Promise<ActionResult
 
 export async function deleteTagImpl(input: { id: string }): Promise<ActionResult> {
   try {
+    const { deleteTag } = await import("@/db/queries");
     await deleteTag(input.id);
     return { ok: true };
   } catch (err) {

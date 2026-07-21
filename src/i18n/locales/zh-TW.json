@@ -198,5 +198,28 @@
   "dataTable": {
     "searchPlaceholder": "搜尋…",
     "empty": "沒有資料。"
+  },
+  "tagList": {
+    "name": "名稱",
+    "slug": "Slug",
+    "used": "使用",
+    "actions": "操作",
+    "edit": "編輯",
+    "delete": "刪除",
+    "deleting": "刪除中…",
+    "newTag": "新增標籤",
+    "searchPlaceholder": "搜尋標籤…"
+  },
+  "tagForm": {
+    "name": "名稱",
+    "namePlaceholder": "標籤名稱",
+    "slug": "Slug",
+    "slugPlaceholder": "tag-slug",
+    "create": "建立",
+    "update": "更新",
+    "cancel": "取消",
+    "saving": "儲存中…",
+    "createTitle": "新增標籤",
+    "editTitle": "編輯標籤"
   }
 }

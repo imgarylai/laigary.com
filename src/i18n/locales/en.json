@@ -198,5 +198,28 @@
   "dataTable": {
     "searchPlaceholder": "Search…",
     "empty": "No results."
+  },
+  "tagList": {
+    "name": "Name",
+    "slug": "Slug",
+    "used": "Used",
+    "actions": "Actions",
+    "edit": "Edit",
+    "delete": "Delete",
+    "deleting": "Deleting…",
+    "newTag": "New tag",
+    "searchPlaceholder": "Search tags…"
+  },
+  "tagForm": {
+    "name": "Name",
+    "namePlaceholder": "Tag name",
+    "slug": "Slug",
+    "slugPlaceholder": "tag-slug",
+    "create": "Create",
+    "update": "Update",
+    "cancel": "Cancel",
+    "saving": "Saving…",
+    "createTitle": "New tag",
+    "editTitle": "Edit tag"
   }
 }

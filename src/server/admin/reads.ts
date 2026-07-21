@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import type { AdminPost, AdminPostDetail, Tag } from "@/db/queries";
+import type { AdminPost, AdminPostDetail, Tag, TagWithUsage } from "@/db/queries";
 
 // Read-side server functions the admin route loaders call. Reads must run on the
 // server (D1 binding), so the query layer is loaded with a dynamic import INSIDE
@@ -27,6 +27,14 @@ export const listPostsFn = createServerFn({ method: "GET" }).handler(
   async (): Promise<AdminPost[]> => {
     const { getAllAdminPosts } = await import("@/db/queries");
     return getAllAdminPosts();
+  },
+);
+
+// Tags admin list — every tag with its usage counts + what uses it.
+export const listTagsFn = createServerFn({ method: "GET" }).handler(
+  async (): Promise<TagWithUsage[]> => {
+    const { getTagsWithUsage } = await import("@/db/queries");
+    return getTagsWithUsage();
   },
 );
 
