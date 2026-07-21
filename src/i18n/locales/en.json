@@ -9,7 +9,10 @@
     "search": "Search",
     "menu": "Menu",
     "siteName": "Psychedelic Engineer",
-    "siteDescription": "Refactoring self-awareness with engineering mindset"
+    "siteDescription": "Refactoring self-awareness with engineering mindset",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeSystem": "System"
   },
   "admin": {
     "admin": "Admin",
