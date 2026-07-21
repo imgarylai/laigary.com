@@ -23,13 +23,19 @@ const TTF_FORCING_UA =
   "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_8; de-at) AppleWebKit/533.21.1 (KHTML, like Gecko) Version/5.0.5 Safari/533.21.1";
 
 /**
- * Every non-printable-ASCII glyph appearing anywhere in the node tree, deduped.
- * JSON.stringify escapes control characters, so what remains outside the
- * printable ASCII range is exactly the set of glyphs needing the CJK fallback.
+ * Every glyph appearing in the node tree that needs the CJK fallback font,
+ * deduped. JSON.stringify escapes control characters, so what remains outside
+ * printable ASCII is the non-ASCII set; box-drawing characters (U+2500–U+257F,
+ * e.g. the `─` / `═` ASCII rules) are dropped because JetBrains Mono already
+ * covers them — only the CJK-and-friends glyphs actually need Noto Sans TC.
  */
 export function collectNonAsciiGlyphs(node: OgNode): string {
   const matches = JSON.stringify(node).match(/[^ -~]/g) ?? [];
-  return [...new Set(matches)].join("");
+  const needsCjk = matches.filter((c) => {
+    const cp = c.codePointAt(0) ?? 0;
+    return cp < 0x2500 || cp > 0x257f;
+  });
+  return [...new Set(needsCjk)].join("");
 }
 
 export function buildGoogleFontsCssUrl(family: string, weight: 400 | 700, text: string): string {

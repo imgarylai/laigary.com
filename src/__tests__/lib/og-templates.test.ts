@@ -76,14 +76,22 @@ describe("articleTemplate", () => {
   it("should shrink the title font when the title exceeds 40 characters", () => {
     const short = articleTemplate({ ...base, title: "short" });
     const long = articleTemplate({ ...base, title: "x".repeat(41) });
-    const fontSizeOf = (node: OgNode): number => {
-      const children = node.props.children as OgNode[];
-      const titleNode = children.find((c) => flattenText(c).length > 0);
-      if (!titleNode) throw new Error("title node not found");
-      return (titleNode.props.style as { fontSize: number }).fontSize;
+    // Recursively find the node rendering the title text and read its font size
+    // (the title is nested under the body wrapper in the terminal layout).
+    const titleFontSize = (node: unknown, title: string): number | null => {
+      if (node === null || typeof node !== "object" || !("props" in node)) return null;
+      const n = node as OgNode;
+      const size = (n.props.style as { fontSize?: number } | undefined)?.fontSize;
+      if (typeof size === "number" && size >= 40 && flattenText(n) === title) return size;
+      const kids = n.props.children;
+      for (const c of Array.isArray(kids) ? kids : [kids]) {
+        const found = titleFontSize(c, title);
+        if (found !== null) return found;
+      }
+      return null;
     };
-    expect(fontSizeOf(short)).toBe(60);
-    expect(fontSizeOf(long)).toBe(48);
+    expect(titleFontSize(short, "short")).toBe(60);
+    expect(titleFontSize(long, "x".repeat(41))).toBe(48);
   });
 
   it("should render the date label when one is provided", () => {
