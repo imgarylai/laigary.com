@@ -9,7 +9,10 @@
     "search": "搜尋",
     "menu": "選單",
     "siteName": "啟靈工程師",
-    "siteDescription": "工程思維重構自我意識"
+    "siteDescription": "工程思維重構自我意識",
+    "themeLight": "淺色",
+    "themeDark": "深色",
+    "themeSystem": "跟隨系統"
   },
   "admin": {
     "admin": "管理",

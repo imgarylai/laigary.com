@@ -1,17 +1,9 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { useTheme } from "next-themes";
-import {
-  ListIcon,
-  MagnifyingGlassIcon,
-  MonitorIcon,
-  MoonIcon,
-  SunIcon,
-  TranslateIcon,
-  XIcon,
-} from "@phosphor-icons/react";
+import { ListIcon, MagnifyingGlassIcon, TranslateIcon, XIcon } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Kbd } from "@/components/ui/kbd";
+import { ThemeMenu } from "@/components/ThemeMenu";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/i18n/I18nProvider";
 import { breadcrumbForPath } from "@/lib/fsmap";
@@ -19,10 +11,6 @@ import { breadcrumbForPath } from "@/lib/fsmap";
 export type NavItem = { label: string; to: string; params?: Record<string, string> };
 
 const ICON = 15;
-
-// Theme is a 3-state cycle: system → light → dark → system.
-const THEME_ORDER = ["system", "light", "dark"] as const;
-const THEME_ICON = { system: MonitorIcon, light: SunIcon, dark: MoonIcon };
 
 // Is a nav item the active route? Exact match always counts; prefix match only
 // for non-root, non-home, non-parameterised items (so "/" and the namespace
@@ -44,20 +32,11 @@ export function TmHeader({
   onOpenPalette: () => void;
 }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const { theme, setTheme } = useTheme();
   const { locale, setLocale, t } = useI18n();
-  const [mounted, setMounted] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
-  useEffect(() => setMounted(true), []);
   useEffect(() => setMenuOpen(false), [pathname]);
 
-  // Until mounted, render the neutral "system" icon to avoid a hydration
-  // mismatch (the resolved theme isn't known during SSR).
-  const mode = mounted ? ((theme ?? "system") as (typeof THEME_ORDER)[number]) : "system";
-  const cycleTheme = () =>
-    setTheme(THEME_ORDER[(THEME_ORDER.indexOf(mode) + 1) % THEME_ORDER.length]);
-  const ThemeIcon = THEME_ICON[mode] ?? MonitorIcon;
   const toggleLocale = () => setLocale(locale === "zh-TW" ? "en" : "zh-TW");
   const localeLabel = locale === "zh-TW" ? "zh" : "en";
 
@@ -120,16 +99,7 @@ export function TmHeader({
         >
           <TranslateIcon size={ICON} /> {localeLabel}
         </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="tm-btn"
-          onClick={cycleTheme}
-          title={`${t("common.toggleTheme")}: ${mode}`}
-        >
-          <ThemeIcon size={ICON} />
-        </Button>
+        <ThemeMenu variant="outline" size="sm" className="tm-btn" />
       </nav>
 
       {/* Mobile controls */}
@@ -144,16 +114,7 @@ export function TmHeader({
         >
           <MagnifyingGlassIcon size={ICON} />
         </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          className="tm-btn"
-          onClick={cycleTheme}
-          title={`${t("common.toggleTheme")}: ${mode}`}
-        >
-          <ThemeIcon size={ICON} />
-        </Button>
+        <ThemeMenu variant="outline" size="icon" className="tm-btn" />
         <Button
           type="button"
           variant="outline"
