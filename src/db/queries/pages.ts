@@ -13,6 +13,16 @@ export async function getAllPages() {
   return db.select().from(pages);
 }
 
+export type PageListItem = { id: string; slug: string; title: string; updatedAt: number };
+
+// Lean list for the pages admin table — no content_md (which can be large).
+export async function getPagesList(): Promise<PageListItem[]> {
+  const db = await getDb();
+  return db
+    .select({ id: pages.id, slug: pages.slug, title: pages.title, updatedAt: pages.updatedAt })
+    .from(pages);
+}
+
 export async function upsertPage(
   slug: string,
   input: { title?: string; contentMd?: string },

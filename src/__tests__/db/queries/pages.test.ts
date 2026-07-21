@@ -58,3 +58,16 @@ describe("getPageBySlug", () => {
     expect(await getPageBySlug("missing")).toBeNull();
   });
 });
+
+describe("getPagesList", () => {
+  it("returns lean rows (id/slug/title/updatedAt) without content_md", async () => {
+    const { upsertPage, getPagesList } = await import("@/db/queries");
+    await upsertPage("now", { title: "Now", contentMd: "body" });
+    await upsertPage("about", { title: "About", contentMd: "body2" });
+
+    const rows = await getPagesList();
+    expect(rows).toHaveLength(2);
+    expect(Object.keys(rows[0]).sort()).toEqual(["id", "slug", "title", "updatedAt"]);
+    expect(rows.map((r) => r.slug).sort()).toEqual(["about", "now"]);
+  });
+});

@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import type { AdminPost, AdminPostDetail, Tag, TagWithUsage } from "@/db/queries";
+import type { AdminPost, AdminPostDetail, PageListItem, Tag, TagWithUsage } from "@/db/queries";
+
+type PageDetail = { id: string; slug: string; title: string; contentMd: string } | null;
 
 // Read-side server functions the admin route loaders call. Reads must run on the
 // server (D1 binding), so the query layer is loaded with a dynamic import INSIDE
@@ -37,6 +39,25 @@ export const listTagsFn = createServerFn({ method: "GET" }).handler(
     return getTagsWithUsage();
   },
 );
+
+// Pages admin list.
+export const listPagesFn = createServerFn({ method: "GET" }).handler(
+  async (): Promise<PageListItem[]> => {
+    const { getPagesList } = await import("@/db/queries");
+    return getPagesList();
+  },
+);
+
+// Single page for the edit form (null when the slug doesn't exist).
+export const getPageFn = createServerFn({ method: "GET" })
+  .inputValidator((data: unknown) => z.object({ slug: z.string().min(1) }).parse(data))
+  .handler(async ({ data }): Promise<PageDetail> => {
+    const { getPageBySlug } = await import("@/db/queries");
+    const page = await getPageBySlug(data.slug);
+    return page
+      ? { id: page.id, slug: page.slug, title: page.title, contentMd: page.contentMd }
+      : null;
+  });
 
 // New-post form: available tags + the OG brand line.
 export const newPostDataFn = createServerFn({ method: "GET" }).handler(

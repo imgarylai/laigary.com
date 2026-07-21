@@ -1,6 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { upsertPage } from "@/db/queries";
 import { type ActionResult } from "./_shared";
 
 // Pages are keyed by slug and upserted (insert-or-update); there is no conflict
@@ -14,6 +13,9 @@ export type PageUpsertInput = z.infer<typeof pageUpsertSchema>;
 
 export async function upsertPageImpl(input: PageUpsertInput): Promise<ActionResult> {
   const { slug, ...rest } = input;
+  // Dynamic import keeps the D1 query layer out of the client bundle (the page
+  // form imports this server function).
+  const { upsertPage } = await import("@/db/queries");
   await upsertPage(slug, rest);
   return { ok: true };
 }

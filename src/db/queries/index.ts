@@ -53,7 +53,7 @@ export {
   NoteNotFoundError,
 } from "./interview";
 
-export { getPageBySlug, getAllPages, upsertPage } from "./pages";
+export { getPageBySlug, getAllPages, getPagesList, upsertPage, type PageListItem } from "./pages";
 
 export { getSiteSettings, getSiteSetting, updateSiteSettings } from "./site";
 

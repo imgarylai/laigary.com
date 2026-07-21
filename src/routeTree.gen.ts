@@ -13,11 +13,13 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteRouteImport } from './routes/admin/route'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminInterviewRouteImport } from './routes/admin/interview'
-import { Route as AdminPagesRouteImport } from './routes/admin/pages'
 import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
 import { Route as AdminTagsRouteImport } from './routes/admin/tags'
+import { Route as AdminPagesIndexRouteImport } from './routes/admin/pages/index'
+import { Route as AdminPagesNewRouteImport } from './routes/admin/pages/new'
 import { Route as AdminPostsIndexRouteImport } from './routes/admin/posts/index'
 import { Route as AdminPostsNewRouteImport } from './routes/admin/posts/new'
+import { Route as AdminPagesSlugEditRouteImport } from './routes/admin/pages/$slug/edit'
 import { Route as AdminPostsPostIdEditRouteImport } from './routes/admin/posts/$postId/edit'
 
 const IndexRoute = IndexRouteImport.update({
@@ -40,11 +42,6 @@ const AdminInterviewRoute = AdminInterviewRouteImport.update({
   path: '/interview',
   getParentRoute: () => AdminRouteRoute,
 } as any)
-const AdminPagesRoute = AdminPagesRouteImport.update({
-  id: '/pages',
-  path: '/pages',
-  getParentRoute: () => AdminRouteRoute,
-} as any)
 const AdminSettingsRoute = AdminSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -53,6 +50,16 @@ const AdminSettingsRoute = AdminSettingsRouteImport.update({
 const AdminTagsRoute = AdminTagsRouteImport.update({
   id: '/tags',
   path: '/tags',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminPagesIndexRoute = AdminPagesIndexRouteImport.update({
+  id: '/pages/',
+  path: '/pages/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminPagesNewRoute = AdminPagesNewRouteImport.update({
+  id: '/pages/new',
+  path: '/pages/new',
   getParentRoute: () => AdminRouteRoute,
 } as any)
 const AdminPostsIndexRoute = AdminPostsIndexRouteImport.update({
@@ -65,6 +72,11 @@ const AdminPostsNewRoute = AdminPostsNewRouteImport.update({
   path: '/posts/new',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const AdminPagesSlugEditRoute = AdminPagesSlugEditRouteImport.update({
+  id: '/pages/$slug/edit',
+  path: '/pages/$slug/edit',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const AdminPostsPostIdEditRoute = AdminPostsPostIdEditRouteImport.update({
   id: '/posts/$postId/edit',
   path: '/posts/$postId/edit',
@@ -75,23 +87,27 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteRouteWithChildren
   '/admin/interview': typeof AdminInterviewRoute
-  '/admin/pages': typeof AdminPagesRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/tags': typeof AdminTagsRoute
   '/admin/': typeof AdminIndexRoute
+  '/admin/pages/new': typeof AdminPagesNewRoute
   '/admin/posts/new': typeof AdminPostsNewRoute
+  '/admin/pages/': typeof AdminPagesIndexRoute
   '/admin/posts/': typeof AdminPostsIndexRoute
+  '/admin/pages/$slug/edit': typeof AdminPagesSlugEditRoute
   '/admin/posts/$postId/edit': typeof AdminPostsPostIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin/interview': typeof AdminInterviewRoute
-  '/admin/pages': typeof AdminPagesRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/tags': typeof AdminTagsRoute
   '/admin': typeof AdminIndexRoute
+  '/admin/pages/new': typeof AdminPagesNewRoute
   '/admin/posts/new': typeof AdminPostsNewRoute
+  '/admin/pages': typeof AdminPagesIndexRoute
   '/admin/posts': typeof AdminPostsIndexRoute
+  '/admin/pages/$slug/edit': typeof AdminPagesSlugEditRoute
   '/admin/posts/$postId/edit': typeof AdminPostsPostIdEditRoute
 }
 export interface FileRoutesById {
@@ -99,12 +115,14 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteRouteWithChildren
   '/admin/interview': typeof AdminInterviewRoute
-  '/admin/pages': typeof AdminPagesRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/tags': typeof AdminTagsRoute
   '/admin/': typeof AdminIndexRoute
+  '/admin/pages/new': typeof AdminPagesNewRoute
   '/admin/posts/new': typeof AdminPostsNewRoute
+  '/admin/pages/': typeof AdminPagesIndexRoute
   '/admin/posts/': typeof AdminPostsIndexRoute
+  '/admin/pages/$slug/edit': typeof AdminPagesSlugEditRoute
   '/admin/posts/$postId/edit': typeof AdminPostsPostIdEditRoute
 }
 export interface FileRouteTypes {
@@ -113,35 +131,41 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/admin/interview'
-    | '/admin/pages'
     | '/admin/settings'
     | '/admin/tags'
     | '/admin/'
+    | '/admin/pages/new'
     | '/admin/posts/new'
+    | '/admin/pages/'
     | '/admin/posts/'
+    | '/admin/pages/$slug/edit'
     | '/admin/posts/$postId/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/admin/interview'
-    | '/admin/pages'
     | '/admin/settings'
     | '/admin/tags'
     | '/admin'
+    | '/admin/pages/new'
     | '/admin/posts/new'
+    | '/admin/pages'
     | '/admin/posts'
+    | '/admin/pages/$slug/edit'
     | '/admin/posts/$postId/edit'
   id:
     | '__root__'
     | '/'
     | '/admin'
     | '/admin/interview'
-    | '/admin/pages'
     | '/admin/settings'
     | '/admin/tags'
     | '/admin/'
+    | '/admin/pages/new'
     | '/admin/posts/new'
+    | '/admin/pages/'
     | '/admin/posts/'
+    | '/admin/pages/$slug/edit'
     | '/admin/posts/$postId/edit'
   fileRoutesById: FileRoutesById
 }
@@ -180,13 +204,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminInterviewRouteImport
       parentRoute: typeof AdminRouteRoute
     }
-    '/admin/pages': {
-      id: '/admin/pages'
-      path: '/pages'
-      fullPath: '/admin/pages'
-      preLoaderRoute: typeof AdminPagesRouteImport
-      parentRoute: typeof AdminRouteRoute
-    }
     '/admin/settings': {
       id: '/admin/settings'
       path: '/settings'
@@ -199,6 +216,20 @@ declare module '@tanstack/react-router' {
       path: '/tags'
       fullPath: '/admin/tags'
       preLoaderRoute: typeof AdminTagsRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/pages/': {
+      id: '/admin/pages/'
+      path: '/pages'
+      fullPath: '/admin/pages/'
+      preLoaderRoute: typeof AdminPagesIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/pages/new': {
+      id: '/admin/pages/new'
+      path: '/pages/new'
+      fullPath: '/admin/pages/new'
+      preLoaderRoute: typeof AdminPagesNewRouteImport
       parentRoute: typeof AdminRouteRoute
     }
     '/admin/posts/': {
@@ -215,6 +246,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPostsNewRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/admin/pages/$slug/edit': {
+      id: '/admin/pages/$slug/edit'
+      path: '/pages/$slug/edit'
+      fullPath: '/admin/pages/$slug/edit'
+      preLoaderRoute: typeof AdminPagesSlugEditRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/admin/posts/$postId/edit': {
       id: '/admin/posts/$postId/edit'
       path: '/posts/$postId/edit'
@@ -227,23 +265,27 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteRouteChildren {
   AdminInterviewRoute: typeof AdminInterviewRoute
-  AdminPagesRoute: typeof AdminPagesRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
   AdminTagsRoute: typeof AdminTagsRoute
   AdminIndexRoute: typeof AdminIndexRoute
+  AdminPagesNewRoute: typeof AdminPagesNewRoute
   AdminPostsNewRoute: typeof AdminPostsNewRoute
+  AdminPagesIndexRoute: typeof AdminPagesIndexRoute
   AdminPostsIndexRoute: typeof AdminPostsIndexRoute
+  AdminPagesSlugEditRoute: typeof AdminPagesSlugEditRoute
   AdminPostsPostIdEditRoute: typeof AdminPostsPostIdEditRoute
 }
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminInterviewRoute: AdminInterviewRoute,
-  AdminPagesRoute: AdminPagesRoute,
   AdminSettingsRoute: AdminSettingsRoute,
   AdminTagsRoute: AdminTagsRoute,
   AdminIndexRoute: AdminIndexRoute,
+  AdminPagesNewRoute: AdminPagesNewRoute,
   AdminPostsNewRoute: AdminPostsNewRoute,
+  AdminPagesIndexRoute: AdminPagesIndexRoute,
   AdminPostsIndexRoute: AdminPostsIndexRoute,
+  AdminPagesSlugEditRoute: AdminPagesSlugEditRoute,
   AdminPostsPostIdEditRoute: AdminPostsPostIdEditRoute,
 }
 
