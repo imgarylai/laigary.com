@@ -220,6 +220,41 @@ export type AdminPost = {
   updatedAt: number;
 };
 
+export type AdminPostDetail = {
+  id: string;
+  title: string;
+  slug: string;
+  contentMd: string;
+  excerpt: string | null;
+  coverImageUrl: string | null;
+  status: "draft" | "published";
+  tagIds: string[];
+};
+
+// Full editable post for the admin edit form: raw fields (any status) plus the
+// selected tag ids. Returns null when the id doesn't exist.
+export async function getAdminPostById(id: string): Promise<AdminPostDetail | null> {
+  const db = await getDb();
+  const [post] = await db.select().from(posts).where(eq(posts.id, id));
+  if (!post) return null;
+
+  const tagRows = await db
+    .select({ tagId: postTags.tagId })
+    .from(postTags)
+    .where(eq(postTags.postId, id));
+
+  return {
+    id: post.id,
+    title: post.title,
+    slug: post.slug,
+    contentMd: post.contentMd,
+    excerpt: post.excerpt,
+    coverImageUrl: post.coverImageUrl,
+    status: post.status as "draft" | "published",
+    tagIds: tagRows.map((r) => r.tagId),
+  };
+}
+
 export async function getAdminPosts(opts?: {
   q?: string;
   status?: "draft" | "published";

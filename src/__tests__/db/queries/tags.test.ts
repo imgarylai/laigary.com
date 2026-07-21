@@ -76,3 +76,15 @@ describe("tags queries", () => {
     await expect(deleteTag("does-not-exist")).rejects.toBeInstanceOf(TagNotFoundError);
   });
 });
+
+describe("getAllTags", () => {
+  it("returns id/name/slug for every tag, sorted by name", async () => {
+    const { createTag, getAllTags } = await import("@/db/queries");
+    await createTag({ name: "Zeta", slug: "zeta" });
+    await createTag({ name: "Alpha", slug: "alpha" });
+
+    const all = await getAllTags();
+    expect(all.map((t) => t.name)).toEqual(["Alpha", "Zeta"]);
+    expect(all[0]).toEqual({ id: expect.any(String), name: "Alpha", slug: "alpha" });
+  });
+});

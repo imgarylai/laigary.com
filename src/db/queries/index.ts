@@ -4,11 +4,12 @@
 
 export type { PostTag } from "./_tags";
 
-export type { PublicPost, PublicPostDetail, AdminPost } from "./posts";
+export type { PublicPost, PublicPostDetail, AdminPost, AdminPostDetail } from "./posts";
 export {
   getPublishedPosts,
   getPostBySlug,
   getAdminPosts,
+  getAdminPostById,
   getTagsWithCounts,
   createPost,
   updatePost,
@@ -20,6 +21,7 @@ export {
 export type { Tag, TagWithUsage, UsedByItem } from "./tags";
 export {
   getTagsWithUsage,
+  getAllTags,
   createTag,
   updateTag,
   deleteTag,
