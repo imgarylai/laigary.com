@@ -146,6 +146,9 @@ importers:
       input-otp:
         specifier: ^1.4.2
         version: 1.4.2(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      katex:
+        specifier: 0.16.47
+        version: 0.16.47
       lowlight:
         specifier: 3.3.0
         version: 3.3.0
