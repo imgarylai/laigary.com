@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { createContext, useContext, useState, useCallback } from "react";
 import { type Locale, defaultLocale, getTranslation } from "./index";
 
 type I18nContextValue = {
@@ -13,21 +13,28 @@ const I18nContext = createContext<I18nContextValue>({
   t: (key) => key,
 });
 
-export function I18nProvider({ children }: { children: React.ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>(defaultLocale);
-
-  useEffect(() => {
-    const saved = localStorage.getItem("locale") as Locale | null;
-    if (saved && (saved === "en" || saved === "zh-TW")) {
-      setLocaleState(saved);
-    } else if (navigator.language.startsWith("zh")) {
-      setLocaleState("zh-TW");
-    }
-  }, []);
+// `initialLocale` is resolved on the server (cookie → Accept-Language → default)
+// and passed in from the root, so SSR renders in the right language with no
+// first-paint flash. Toggling writes a `locale` cookie (read next SSR) plus
+// localStorage (back-compat); there is no client read-effect, so the SSR and
+// first client render always agree.
+export function I18nProvider({
+  children,
+  initialLocale = defaultLocale,
+}: {
+  children: React.ReactNode;
+  initialLocale?: Locale;
+}) {
+  const [locale, setLocaleState] = useState<Locale>(initialLocale);
 
   const setLocale = useCallback((newLocale: Locale) => {
     setLocaleState(newLocale);
-    localStorage.setItem("locale", newLocale);
+    try {
+      document.cookie = `locale=${newLocale}; path=/; max-age=31536000; samesite=lax`;
+      localStorage.setItem("locale", newLocale);
+    } catch {
+      // ignore storage failures (private mode etc.)
+    }
   }, []);
 
   const t = useCallback(
