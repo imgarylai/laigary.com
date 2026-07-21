@@ -57,8 +57,21 @@ export default function TiptapEditorImpl({
 
   if (!editor) return null;
 
+  // The admin sidebar (shadcn) binds Cmd/Ctrl+B on `window` to toggle itself.
+  // That collides with Tiptap's bold shortcut: typing Cmd/Ctrl+B inside the
+  // editor would both bold the text and toggle the sidebar. ProseMirror handles
+  // the key on the editable element first (bold applies), so stopping the event
+  // here — as it bubbles out of the editor — keeps bold working while preventing
+  // it from ever reaching the sidebar's window listener. Scoped to the editor,
+  // so Cmd/Ctrl+B still toggles the sidebar everywhere else.
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "b") {
+      e.stopPropagation();
+    }
+  }
+
   return (
-    <div className="space-y-2">
+    <div className="space-y-2" onKeyDown={handleKeyDown}>
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium">{t("postForm.content")}</span>
         <Button

@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 /**
  * Tiptap (with all its extensions and KaTeX) is heavy enough that bundling it
@@ -10,11 +11,7 @@ import { lazy, Suspense, useEffect, useState } from "react";
  */
 const TiptapEditorImpl = lazy(() => import("./TiptapEditorImpl"));
 
-const fallback = (
-  <div className="min-h-[500px] rounded-md border p-4 text-sm text-muted-foreground">
-    Loading editor…
-  </div>
-);
+const fallback = <Skeleton className="min-h-[500px] w-full rounded-md border" />;
 
 export function TiptapEditor(props: { value: string; onChange: (value: string) => void }) {
   const [mounted, setMounted] = useState(false);
