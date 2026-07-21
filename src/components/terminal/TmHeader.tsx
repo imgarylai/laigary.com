@@ -1,11 +1,22 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
+import {
+  ListIcon,
+  MagnifyingGlassIcon,
+  MoonIcon,
+  SunIcon,
+  TranslateIcon,
+  XIcon,
+} from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Kbd } from "@/components/ui/kbd";
+import { useI18n } from "@/i18n/I18nProvider";
 import { breadcrumbForPath } from "@/lib/fsmap";
 
 export type NavItem = { label: string; to: string; params?: Record<string, string> };
+
+const ICON = 15;
 
 // Is a nav item the active route? Exact match always counts; prefix match only
 // for non-root, non-home, non-parameterised items (so "/" and the namespace
@@ -28,6 +39,7 @@ export function TmHeader({
 }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { resolvedTheme, setTheme } = useTheme();
+  const { locale, setLocale, t } = useI18n();
   const [mounted, setMounted] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -35,9 +47,11 @@ export function TmHeader({
   useEffect(() => setMenuOpen(false), [pathname]);
 
   const isDark = resolvedTheme !== "light";
-  const themeIcon = mounted ? (isDark ? "☀" : "☾") : "☀";
   const toggleTheme = () => setTheme(isDark ? "light" : "dark");
-  const themeTitle = isDark ? "light mode" : "dark mode";
+  const toggleLocale = () => setLocale(locale === "zh-TW" ? "en" : "zh-TW");
+  const localeLabel = locale === "zh-TW" ? "zh" : "en";
+  // Render a stable icon until mounted to avoid a hydration mismatch.
+  const ThemeIcon = mounted && !isDark ? MoonIcon : SunIcon;
 
   return (
     <header className="tm-header">
@@ -78,7 +92,17 @@ export function TmHeader({
           className="tm-btn"
           onClick={onOpenPalette}
         >
-          ⌕ <Kbd className="tm-btn--kbd">⌘K</Kbd>
+          <MagnifyingGlassIcon size={ICON} /> <Kbd className="tm-btn--kbd">⌘K</Kbd>
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="tm-btn"
+          onClick={toggleLocale}
+          title={t("common.language")}
+        >
+          <TranslateIcon size={ICON} /> {localeLabel}
         </Button>
         <Button
           type="button"
@@ -86,10 +110,9 @@ export function TmHeader({
           size="sm"
           className="tm-btn"
           onClick={toggleTheme}
-          title={themeTitle}
-          suppressHydrationWarning
+          title={t("common.toggleTheme")}
         >
-          {themeIcon}
+          <ThemeIcon size={ICON} />
         </Button>
       </nav>
 
@@ -101,9 +124,9 @@ export function TmHeader({
           size="icon"
           className="tm-btn"
           onClick={onOpenPalette}
-          title="search (⌘K)"
+          title={t("common.search")}
         >
-          ⌕
+          <MagnifyingGlassIcon size={ICON} />
         </Button>
         <Button
           type="button"
@@ -111,10 +134,9 @@ export function TmHeader({
           size="icon"
           className="tm-btn"
           onClick={toggleTheme}
-          title={themeTitle}
-          suppressHydrationWarning
+          title={t("common.toggleTheme")}
         >
-          {themeIcon}
+          <ThemeIcon size={ICON} />
         </Button>
         <Button
           type="button"
@@ -122,9 +144,9 @@ export function TmHeader({
           size="icon"
           className="tm-btn"
           onClick={() => setMenuOpen((v) => !v)}
-          title="menu"
+          title={t("common.menu")}
         >
-          {menuOpen ? "✕" : "≡"}
+          {menuOpen ? <XIcon size={ICON} /> : <ListIcon size={ICON} />}
         </Button>
       </div>
 
@@ -135,6 +157,9 @@ export function TmHeader({
               $ cd ./{item.label === "~" ? "" : item.label}
             </Link>
           ))}
+          <button type="button" className="tm-drawer__link" onClick={toggleLocale}>
+            $ locale --set {locale === "zh-TW" ? "en" : "zh-TW"}
+          </button>
         </div>
       )}
     </header>

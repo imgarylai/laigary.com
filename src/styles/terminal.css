@@ -236,12 +236,17 @@
   padding: 10px 14px;
 }
 .tm-drawer__link {
+  width: 100%;
   padding: 10px 4px;
   text-align: left;
+  font-family: inherit;
   font-size: 13px;
   text-decoration: none;
   color: var(--tm-fg);
+  background: transparent;
+  border: 0;
   border-bottom: 1px dashed var(--tm-border);
+  cursor: pointer;
 }
 
 /* ── Listing rows ──────────────────────────────────────────────────────── */

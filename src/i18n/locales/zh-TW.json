@@ -5,6 +5,9 @@
     "noPostsYet": "目前沒有文章。",
     "noPostsFound": "找不到文章。",
     "toggleTheme": "切換主題",
+    "language": "語言",
+    "search": "搜尋",
+    "menu": "選單",
     "siteName": "啟靈工程師",
     "siteDescription": "工程思維重構自我意識"
   },
@@ -298,5 +301,51 @@
     "update": "更新",
     "cancel": "取消",
     "saving": "儲存中…"
+  },
+  "blog": {
+    "search": {
+      "placeholder": "搜尋文章、標籤、頁面…",
+      "placeholderInterview": "搜尋筆記、分類…",
+      "pages": "頁面",
+      "content": "內容",
+      "noMatches": "沒有符合的結果。"
+    },
+    "home": {
+      "descPosts": "生活筆記與隨筆",
+      "descTags": "依主題瀏覽",
+      "descInterview": "面試準備筆記",
+      "descAbout": "關於我與聯絡方式",
+      "postsUnit": "篇文章",
+      "tagsUnit": "個標籤",
+      "updated": "更新於 {date}",
+      "cta": "  — 直接開始讀"
+    },
+    "archive": {
+      "filteredBy": "篩選",
+      "clear": "清除 ✕",
+      "noMatch": "// 沒有符合的文章。",
+      "page": "第 {current}/{total} 頁",
+      "showing": " · 顯示 {from}–{to}，共 {total}",
+      "newer": "← 較新",
+      "older": "較舊 →"
+    },
+    "post": {
+      "toc": "// 目錄",
+      "tagsLabel": "--標籤",
+      "back": "  — 回到所有文章"
+    },
+    "tags": {
+      "noneYet": "// 還沒有標籤。",
+      "postsUnit": "篇"
+    },
+    "interview": {
+      "title": "./interview/ — 面試準備筆記",
+      "lead": "我自己準備工程師面試的過程中累積的筆記。",
+      "notesUnit": "則筆記",
+      "sectionsUnit": "個分類",
+      "notesArrow": "{count} 則筆記 →",
+      "noneYet": "// 還沒有筆記。",
+      "minRead": "{min} 分鐘閱讀"
+    }
   }
 }

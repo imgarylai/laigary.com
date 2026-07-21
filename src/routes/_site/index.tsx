@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { homeDataFn } from "@/server/public";
 import { AsciiRule, PromptLine } from "@/components/terminal/ui";
+import { useI18n } from "@/i18n/I18nProvider";
 import { FS_BLOG } from "@/lib/fsmap";
 import { fmtDate } from "@/lib/date";
 
@@ -19,14 +20,25 @@ type DirEntry = {
 
 function Home() {
   const { whoami, intro, postCount, tagCount, latestDate } = Route.useLoaderData();
+  const { t } = useI18n();
 
   const dirs: DirEntry[] = [
-    { label: "./posts/", desc: "生活筆記與隨筆", meta: `${postCount} posts`, to: "/posts" },
-    { label: "./tags/", desc: "依主題瀏覽", meta: `${tagCount} tags`, to: "/tags" },
-    { label: "./interview/", desc: "面試準備筆記", meta: "→", to: "/interview" },
+    {
+      label: "./posts/",
+      desc: t("blog.home.descPosts"),
+      meta: `${postCount} ${t("blog.home.postsUnit")}`,
+      to: "/posts",
+    },
+    {
+      label: "./tags/",
+      desc: t("blog.home.descTags"),
+      meta: `${tagCount} ${t("blog.home.tagsUnit")}`,
+      to: "/tags",
+    },
+    { label: "./interview/", desc: t("blog.home.descInterview"), meta: "→", to: "/interview" },
     {
       label: "./about.md",
-      desc: "關於我與聯絡方式",
+      desc: t("blog.home.descAbout"),
       meta: "→",
       to: "/$slug",
       params: { slug: "about" },
@@ -41,13 +53,17 @@ function Home() {
 
       <AsciiRule className="tm-rule--pre" />
       <div className="tm-meta">
-        <span>{postCount} posts</span>
+        <span>
+          {postCount} {t("blog.home.postsUnit")}
+        </span>
         <span>·</span>
-        <span>{tagCount} tags</span>
+        <span>
+          {tagCount} {t("blog.home.tagsUnit")}
+        </span>
         {latestDate && (
           <>
             <span>·</span>
-            <span>updated {fmtDate(latestDate.slice(0, 10))}</span>
+            <span>{t("blog.home.updated", { date: fmtDate(latestDate.slice(0, 10)) })}</span>
           </>
         )}
       </div>
@@ -68,7 +84,7 @@ function Home() {
         <Link to="/posts" className="tm-cta__link">
           $ cd ./posts
         </Link>
-        {"  — 直接開始讀 / jump straight to the writing"}
+        {t("blog.home.cta")}
       </p>
     </div>
   );

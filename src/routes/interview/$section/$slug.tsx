@@ -1,6 +1,7 @@
 import { createFileRoute, notFound, Link } from "@tanstack/react-router";
 import { noteDataFn } from "@/server/public";
 import { AsciiRule, PromptLine, ReadingProgress } from "@/components/terminal/ui";
+import { useI18n } from "@/i18n/I18nProvider";
 import { FS_INTERVIEW } from "@/lib/fsmap";
 
 export const Route = createFileRoute("/interview/$section/$slug")({
@@ -14,6 +15,7 @@ export const Route = createFileRoute("/interview/$section/$slug")({
 
 function NotePage() {
   const { note, html } = Route.useLoaderData();
+  const { t } = useI18n();
 
   return (
     <>
@@ -27,7 +29,9 @@ function NotePage() {
           <span className="tm-noterow__dot">·</span>
           <span className="tm-noterow__meta">{note.date}</span>
           <span className="tm-noterow__dot">·</span>
-          <span className="tm-noterow__meta">{note.minutes} min read</span>
+          <span className="tm-noterow__meta">
+            {t("blog.interview.minRead", { min: String(note.minutes) })}
+          </span>
         </div>
 
         <h1 className="tm-title tm-title--sm">{note.title}</h1>
@@ -37,7 +41,7 @@ function NotePage() {
 
         {note.tags.length > 0 && (
           <div className="tm-tags">
-            <span className="tm-tags__label">--tags</span>
+            <span className="tm-tags__label">{t("blog.post.tagsLabel")}</span>
             {note.tags.map((tag) => (
               <span key={tag} className="tm-tag">
                 #{tag}

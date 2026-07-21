@@ -1,6 +1,7 @@
 import { createFileRoute, notFound, Link } from "@tanstack/react-router";
 import { postDataFn } from "@/server/public";
 import { AsciiRule, PromptLine, ReadingProgress } from "@/components/terminal/ui";
+import { useI18n } from "@/i18n/I18nProvider";
 import { FS_BLOG } from "@/lib/fsmap";
 
 export const Route = createFileRoute("/_site/posts/$slug")({
@@ -14,6 +15,7 @@ export const Route = createFileRoute("/_site/posts/$slug")({
 
 function PostPage() {
   const { post, html, toc } = Route.useLoaderData();
+  const { t } = useI18n();
 
   return (
     <>
@@ -35,7 +37,7 @@ function PostPage() {
 
         {toc.length > 0 && (
           <div className="tm-toc">
-            <div className="tm-toc__head">// table of contents</div>
+            <div className="tm-toc__head">{t("blog.post.toc")}</div>
             {toc.map((h, i) => (
               <div key={i} className="tm-toc__row">
                 <span className="tm-toc__num">{String(i + 1).padStart(2, "0")}</span>
@@ -49,7 +51,7 @@ function PostPage() {
 
         {post.tags.length > 0 && (
           <div className="tm-tags">
-            <span className="tm-tags__label">--tags</span>
+            <span className="tm-tags__label">{t("blog.post.tagsLabel")}</span>
             {post.tags.map((t) => (
               <Link key={t.slug} to="/posts" search={{ tag: t.slug }} className="tm-tag">
                 #{t.name}
@@ -63,7 +65,7 @@ function PostPage() {
           <Link to="/posts" className="tm-cta__link">
             $ cd ..
           </Link>
-          {"  — back to all posts"}
+          {t("blog.post.back")}
         </p>
       </article>
     </>

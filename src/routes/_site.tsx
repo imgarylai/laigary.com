@@ -4,6 +4,7 @@ import { blogShellFn } from "@/server/public";
 import { TerminalShell } from "@/components/terminal/TerminalShell";
 import type { NavItem } from "@/components/terminal/TmHeader";
 import type { PaletteRow } from "@/components/terminal/CommandPalette";
+import { useI18n } from "@/i18n/I18nProvider";
 import { FS_BLOG, FS_INTERVIEW, fsCmd } from "@/lib/fsmap";
 
 // Blog main-site shell (pathless layout). Terminal aesthetic; the interview
@@ -27,6 +28,7 @@ const NAV_ITEMS: NavItem[] = [
 function SiteLayout() {
   const { posts } = Route.useLoaderData();
   const navigate = useNavigate();
+  const { t } = useI18n();
 
   const paletteRows = useMemo<PaletteRow[]>(() => {
     const pages: PaletteRow[] = [
@@ -76,7 +78,7 @@ function SiteLayout() {
       homeTo="/"
       navItems={NAV_ITEMS}
       paletteRows={paletteRows}
-      palettePlaceholder="search posts, tags, pages…"
+      palettePlaceholder={t("blog.search.placeholder")}
     >
       <Outlet />
     </TerminalShell>

@@ -4,6 +4,7 @@ import { interviewShellFn } from "@/server/public";
 import { TerminalShell } from "@/components/terminal/TerminalShell";
 import type { NavItem } from "@/components/terminal/TmHeader";
 import type { PaletteRow } from "@/components/terminal/CommandPalette";
+import { useI18n } from "@/i18n/I18nProvider";
 import { FS_INTERVIEW, fsCmd } from "@/lib/fsmap";
 
 // Interview sub-site shell. Fully independent from the blog: its own header
@@ -15,6 +16,7 @@ export const Route = createFileRoute("/interview")({
 
 function InterviewLayout() {
   const { sections, notes } = Route.useLoaderData();
+  const { t } = useI18n();
   const navigate = useNavigate();
 
   const navItems: NavItem[] = [
@@ -68,7 +70,7 @@ function InterviewLayout() {
       homeTo="/interview"
       navItems={navItems}
       paletteRows={paletteRows}
-      palettePlaceholder="search notes, sections…"
+      palettePlaceholder={t("blog.search.placeholderInterview")}
     >
       <Outlet />
     </TerminalShell>
