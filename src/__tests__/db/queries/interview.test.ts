@@ -322,3 +322,26 @@ describe("getTagsInSection", () => {
     expect(tags.map((t) => t.slug).sort()).toEqual(["a", "b"]);
   });
 });
+
+describe("getAllAdminInterviewNotes", () => {
+  it("should include note slug and section slug when listing for the admin table", async () => {
+    const { createNote, getAllAdminInterviewNotes } = await import("@/db/queries");
+    const section = await seedSection();
+    await createNote({
+      slug: "two-sum",
+      sectionId: section.id,
+      title: "Two Sum",
+      status: "published",
+    });
+
+    const notes = await getAllAdminInterviewNotes();
+    expect(notes).toHaveLength(1);
+    // slug pair feeds the admin table's view-live-page link (/interview/$sect/$slug)
+    expect(notes[0]).toMatchObject({
+      slug: "two-sum",
+      sectionSlug: "leetcode",
+      sectionLabel: "LeetCode",
+      status: "published",
+    });
+  });
+});

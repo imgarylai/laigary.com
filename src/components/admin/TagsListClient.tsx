@@ -1,6 +1,8 @@
 import { useMemo } from "react";
 import { getRouteApi } from "@tanstack/react-router";
+import { ArrowSquareOutIcon } from "@phosphor-icons/react";
 import type { ColumnDef } from "@tanstack/react-table";
+import { Button } from "@/components/ui/button";
 import { DataTable } from "./DataTable";
 import { TagFormDialog } from "./TagFormDialog";
 import { DeleteTagButton } from "./DeleteTagButton";
@@ -46,6 +48,22 @@ export function TagsListClient({ tags }: { tags: Tag[] }) {
         meta: { headClassName: "text-right", cellClassName: "text-right" },
         cell: ({ row }) => (
           <div className="flex items-center justify-end gap-2">
+            {/* View the live tag page — plain anchor since the public tags
+                route lands in the frontend phase. */}
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              render={
+                <a
+                  href={`/tags/${row.original.slug}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  title={t("tagList.view")}
+                />
+              }
+            >
+              <ArrowSquareOutIcon className="size-4" />
+            </Button>
             <TagFormDialog
               tag={{ id: row.original.id, name: row.original.name, slug: row.original.slug }}
             />

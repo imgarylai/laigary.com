@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { Link, getRouteApi } from "@tanstack/react-router";
+import { ArrowSquareOutIcon } from "@phosphor-icons/react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,10 +10,12 @@ import { useI18n } from "@/i18n/I18nProvider";
 
 type Note = {
   id: string;
+  slug: string;
   title: string;
   status: string;
   sectionId: string;
   sectionLabel: string;
+  sectionSlug: string;
 };
 
 const route = getRouteApi("/admin/interview/notes/");
@@ -53,7 +56,25 @@ export function NotesListClient({ notes }: { notes: Note[] }) {
         enableSorting: false,
         meta: { headClassName: "text-right", cellClassName: "text-right" },
         cell: ({ row }) => (
-          <div className="flex items-center justify-end">
+          <div className="flex items-center justify-end gap-2">
+            {/* View the live page — plain anchor since the public interview
+                route lands in the frontend phase; drafts have no public page. */}
+            {row.original.status === "published" && (
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                render={
+                  <a
+                    href={`/interview/${row.original.sectionSlug}/${row.original.slug}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    title={t("noteList.view")}
+                  />
+                }
+              >
+                <ArrowSquareOutIcon className="size-4" />
+              </Button>
+            )}
             <DeleteNoteButton noteId={row.original.id} noteTitle={row.original.title} />
           </div>
         ),
