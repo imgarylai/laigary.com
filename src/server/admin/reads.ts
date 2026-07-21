@@ -40,6 +40,37 @@ export const listTagsFn = createServerFn({ method: "GET" }).handler(
   },
 );
 
+type SectionRow = {
+  id: string;
+  slug: string;
+  label: string;
+  blurb: string;
+  icon: string;
+  sortOrder: number;
+  noteCount: number;
+};
+
+// Interview sections + how many notes each holds (deleting a section cascades to
+// its notes, so the list surfaces the count as a warning).
+export const listSectionsFn = createServerFn({ method: "GET" }).handler(
+  async (): Promise<SectionRow[]> => {
+    const { getInterviewSections, getInterviewNoteCountsBySection } = await import("@/db/queries");
+    const [sections, counts] = await Promise.all([
+      getInterviewSections(),
+      getInterviewNoteCountsBySection(),
+    ]);
+    return sections.map((s) => ({
+      id: s.id,
+      slug: s.slug,
+      label: s.label,
+      blurb: s.blurb,
+      icon: s.icon,
+      sortOrder: s.sortOrder,
+      noteCount: counts.get(s.id) ?? 0,
+    }));
+  },
+);
+
 // Pages admin list.
 export const listPagesFn = createServerFn({ method: "GET" }).handler(
   async (): Promise<PageListItem[]> => {
