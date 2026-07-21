@@ -4,6 +4,38 @@
 export const SITE_ORIGIN = "https://laigary.com";
 const AUTHOR = { "@type": "Person", name: "Gary Lai", url: SITE_ORIGIN } as const;
 
+/** Home page: the site and its author as schema.org entities. */
+export function webSiteLd(siteName: string): Record<string, unknown> {
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: siteName,
+    url: SITE_ORIGIN,
+    inLanguage: "zh-TW",
+    author: AUTHOR,
+  };
+}
+
+export interface BreadcrumbItem {
+  name: string;
+  /** Site-relative path, e.g. `/posts` — omitted on the final (current) crumb. */
+  path?: string;
+}
+
+/** Search-result breadcrumb trail. The last item is the current page. */
+export function breadcrumbLd(items: BreadcrumbItem[]): Record<string, unknown> {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((item, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: item.name,
+      ...(item.path ? { item: `${SITE_ORIGIN}${item.path}` } : {}),
+    })),
+  };
+}
+
 export interface PostLdInput {
   slug: string;
   title: string;
