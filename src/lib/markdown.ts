@@ -43,7 +43,16 @@ const processor = unified()
   .use(remarkMath)
   .use(remarkRehype, remarkRehypeOptions)
   .use(rehypeRaw)
-  .use(rehypeHighlight)
+  // detect: fences without a language get auto-detected within `subset` (the
+  // languages this blog actually uses), so untagged code still gets colors.
+  // Content that must stay uncolored (example output, ASCII diagrams) opts out
+  // with ```text — the established convention in the note corpus.
+  .use(rehypeHighlight, {
+    detect: true,
+    // no cpp: the author doesn't write it, and its grammar loves to claim
+    // python snippets (both corpus "cpp" detections were actually python).
+    subset: ["python", "javascript", "typescript", "java", "go", "sql", "bash", "json", "yaml"],
+  })
   .use(rehypeStringify, { allowDangerousHtml: true });
 
 export async function renderMarkdown(markdown: string): Promise<string> {

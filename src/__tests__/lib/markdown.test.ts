@@ -77,3 +77,21 @@ describe("renderMarkdown", () => {
     expect(html).toContain('<div class="custom">hi</div>');
   });
 });
+
+describe("code highlighting", () => {
+  it("should highlight fenced code when the language is tagged", async () => {
+    const html = await renderMarkdown("```python\ndef solve(arr):\n    return arr\n```");
+    expect(html).toContain("hljs");
+    expect(html).toContain("language-python");
+  });
+
+  it("should auto-detect the language when the fence is bare", async () => {
+    const html = await renderMarkdown("```\ndef solve(arr):\n    return sorted(arr)[0]\n```");
+    expect(html).toContain("hljs");
+  });
+
+  it("should leave text-tagged fences uncolored when rendering", async () => {
+    const html = await renderMarkdown("```text\nnums = [1,7,3,6,5,6]\n```");
+    expect(html).not.toContain("hljs-");
+  });
+});
