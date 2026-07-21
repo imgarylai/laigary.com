@@ -179,6 +179,24 @@ export async function getAdminInterviewNotes(opts?: {
   return { items: rows, total };
 }
 
+// Every note (all sections/statuses) for the admin table, newest first. The
+// admin table searches / sorts / paginates client-side, so it takes the full
+// set — same pattern as posts.
+export async function getAllAdminInterviewNotes(): Promise<AdminInterviewNote[]> {
+  const db = await getDb();
+  return db
+    .select({
+      id: interviewNotes.id,
+      title: interviewNotes.title,
+      status: interviewNotes.status,
+      sectionId: interviewNotes.sectionId,
+      sectionLabel: interviewSections.label,
+    })
+    .from(interviewNotes)
+    .innerJoin(interviewSections, eq(interviewSections.id, interviewNotes.sectionId))
+    .orderBy(desc(interviewNotes.updatedAt));
+}
+
 export class SectionConflictError extends Error {
   constructor(message = "Section slug already exists") {
     super(message);

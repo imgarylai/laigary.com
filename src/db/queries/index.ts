@@ -39,6 +39,7 @@ export {
   getInterviewNotesBySection,
   getTagsInSection,
   getAdminInterviewNotes,
+  getAllAdminInterviewNotes,
   getInterviewNote,
   getInterviewNoteById,
   createSection,

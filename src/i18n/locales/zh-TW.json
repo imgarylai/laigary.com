@@ -269,5 +269,30 @@
     "saving": "儲存中…",
     "createTitle": "新增分類",
     "editTitle": "編輯分類"
+  },
+  "noteList": {
+    "title": "標題",
+    "section": "分類",
+    "status": "狀態",
+    "actions": "操作",
+    "delete": "刪除",
+    "deleting": "刪除中…",
+    "newNote": "新增筆記",
+    "searchPlaceholder": "搜尋筆記…",
+    "deleteTitle": "刪除筆記？",
+    "deleteConfirm": "確定刪除「{title}」？此動作無法復原。",
+    "deleteFailed": "刪除筆記失敗"
+  },
+  "noteForm": {
+    "title": "標題",
+    "slug": "Slug",
+    "section": "分類",
+    "sectionPlaceholder": "選擇分類",
+    "status": "狀態",
+    "tags": "標籤",
+    "create": "建立",
+    "update": "更新",
+    "cancel": "取消",
+    "saving": "儲存中…"
   }
 }
