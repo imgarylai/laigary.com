@@ -52,7 +52,7 @@ export const postsDataFn = createServerFn({ method: "GET" }).handler(async () =>
 });
 
 export const postDataFn = createServerFn({ method: "GET" })
-  .inputValidator(slugInput)
+  .validator(slugInput)
   .handler(async ({ data }) => {
     const { getPostBySlug } = await import("@/db/queries");
     const post = await getPostBySlug(data.slug);
@@ -66,7 +66,7 @@ export const tagsDataFn = createServerFn({ method: "GET" }).handler(async () => 
 });
 
 export const tagDataFn = createServerFn({ method: "GET" })
-  .inputValidator(slugInput)
+  .validator(slugInput)
   .handler(async ({ data }) => {
     const { getPublishedPosts } = await import("@/db/queries");
     const { posts } = await getPublishedPosts({ tag: data.slug, limit: 100 });
@@ -83,7 +83,7 @@ export const interviewDataFn = createServerFn({ method: "GET" }).handler(async (
 });
 
 export const sectionDataFn = createServerFn({ method: "GET" })
-  .inputValidator(slugInput)
+  .validator(slugInput)
   .handler(async ({ data }) => {
     const { getInterviewSectionBySlug, getInterviewNotesBySection } = await import("@/db/queries");
     const section = await getInterviewSectionBySlug(data.slug);
@@ -93,7 +93,7 @@ export const sectionDataFn = createServerFn({ method: "GET" })
   });
 
 export const noteDataFn = createServerFn({ method: "GET" })
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z.object({ section: z.string().min(1), slug: z.string().min(1) }).parse(data),
   )
   .handler(async ({ data }) => {
@@ -104,7 +104,7 @@ export const noteDataFn = createServerFn({ method: "GET" })
   });
 
 export const pageDataFn = createServerFn({ method: "GET" })
-  .inputValidator(slugInput)
+  .validator(slugInput)
   .handler(async ({ data }) => {
     const { getPageBySlug } = await import("@/db/queries");
     const page = await getPageBySlug(data.slug);

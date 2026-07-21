@@ -13,7 +13,7 @@ const searchSchema = z.object({
 });
 
 export const searchPostsFn = createServerFn({ method: "GET" })
-  .inputValidator((data: unknown) => searchSchema.parse(data ?? {}))
+  .validator((data: unknown) => searchSchema.parse(data ?? {}))
   .handler(async ({ data }): Promise<{ posts: PublicPost[]; total: number }> => {
     const { getPublishedPosts } = await import("@/db/queries");
     return getPublishedPosts({

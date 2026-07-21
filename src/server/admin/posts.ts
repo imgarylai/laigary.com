@@ -74,13 +74,13 @@ export async function deletePostImpl(input: { id: string }): Promise<ActionResul
 }
 
 export const createPostFn = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => postCreateSchema.parse(data))
+  .validator((data: unknown) => postCreateSchema.parse(data))
   .handler(({ data }) => createPostImpl(data));
 
 export const updatePostFn = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => postUpdateSchema.parse(data))
+  .validator((data: unknown) => postUpdateSchema.parse(data))
   .handler(({ data }) => updatePostImpl(data));
 
 export const deletePostFn = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => postIdSchema.parse(data))
+  .validator((data: unknown) => postIdSchema.parse(data))
   .handler(({ data }) => deletePostImpl(data));
