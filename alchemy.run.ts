@@ -19,6 +19,13 @@ import { CloudflareStateStore } from "alchemy/state";
 //     state worker; one worker, one token for the whole account.)
 //   - Local: default file-system state store (.alchemy/).
 const app = await alchemy("laigary", {
+  // Encryption password for `alchemy.secret()` values (the R2 presign creds
+  // bound to the worker, added in #41). Without it, Alchemy can't serialize the
+  // secrets into state and every deploy dies with "Cannot serialize secret
+  // without password". Reuse ALCHEMY_STATE_TOKEN — it's a strong secret already
+  // present in every real deploy context (CI forwards it), so no extra secret is
+  // needed. (Local deploys touching the R2 secrets need it set locally too.)
+  password: process.env.ALCHEMY_STATE_TOKEN,
   stateStore: process.env.CI ? (scope) => new CloudflareStateStore(scope) : undefined,
 });
 
