@@ -33,6 +33,15 @@ function SectionPage() {
   const start = (safePage - 1) * PAGE_SIZE;
   const pageItems = notes.slice(start, start + PAGE_SIZE);
 
+  // Year sections over the current page, same shape as the posts archive
+  // (design: Blog.html TmArchive — `./{year}/` accent headers).
+  const byYear = new Map<string, typeof pageItems>();
+  for (const n of pageItems) {
+    const y = n.date.slice(0, 4);
+    (byYear.get(y) ?? byYear.set(y, []).get(y)!).push(n);
+  }
+  const years = [...byYear.keys()].sort().reverse();
+
   const goPage = (n: number) => {
     navigate({
       to: "/interview/$section",
@@ -57,17 +66,20 @@ function SectionPage() {
       {notes.length === 0 ? (
         <TmEmpty>{t("blog.interview.noneYet")}</TmEmpty>
       ) : (
-        <div className="flex flex-col">
-          {pageItems.map((n) => (
-            <TmRowLink
-              key={n.slug}
-              to="/interview/$section/$slug"
-              params={{ section: section.slug, slug: n.slug }}
-            >
-              <TmRowCells date={n.date.slice(5)} title={n.title} read={`${n.minutes}m`} />
-            </TmRowLink>
-          ))}
-        </div>
+        years.map((y) => (
+          <section key={y}>
+            <pre className="mt-7 mb-1.5 text-xs text-tm-accent">./{y}/</pre>
+            {byYear.get(y)!.map((n) => (
+              <TmRowLink
+                key={n.slug}
+                to="/interview/$section/$slug"
+                params={{ section: section.slug, slug: n.slug }}
+              >
+                <TmRowCells date={n.date.slice(5)} title={n.title} read={`${n.minutes}m`} />
+              </TmRowLink>
+            ))}
+          </section>
+        ))
       )}
 
       <TmPager
