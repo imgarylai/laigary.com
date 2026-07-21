@@ -68,9 +68,15 @@ function NotePage() {
           <div className="mt-8 border-t border-dashed border-tm-border pt-4">
             <span className="mr-2.5 text-[11px] text-tm-muted">{t("blog.post.tagsLabel")}</span>
             {note.tags.map((tag) => (
-              <span key={tag} className="mr-2.5 text-[11.5px] text-tm-accent">
+              <Link
+                key={tag}
+                to="/interview/$section"
+                params={{ section: note.section }}
+                search={{ tag }}
+                className="mr-2.5 text-[11.5px] text-tm-accent no-underline"
+              >
                 #{tag}
-              </span>
+              </Link>
             ))}
           </div>
         )}

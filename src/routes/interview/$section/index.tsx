@@ -1,4 +1,4 @@
-import { createFileRoute, notFound, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, notFound, useNavigate, Link } from "@tanstack/react-router";
 import { sectionDataFn } from "@/server/public";
 import { AsciiRule, PromptLine } from "@/components/terminal/ui";
 import { TmPage, TmEmpty, TmRowLink, TmRowCells } from "@/components/terminal/layout";
@@ -8,11 +8,12 @@ import { FS_INTERVIEW } from "@/lib/fsmap";
 
 const PAGE_SIZE = 20;
 
-type SectionSearch = { page?: number };
+type SectionSearch = { page?: number; tag?: string };
 
 export const Route = createFileRoute("/interview/$section/")({
   validateSearch: (search: Record<string, unknown>): SectionSearch => ({
     page: Number(search.page) > 1 ? Math.floor(Number(search.page)) : undefined,
+    tag: typeof search.tag === "string" && search.tag ? search.tag : undefined,
   }),
   loader: async ({ params }) => {
     const data = await sectionDataFn({ data: { slug: params.section } });
@@ -24,14 +25,16 @@ export const Route = createFileRoute("/interview/$section/")({
 
 function SectionPage() {
   const { section, notes } = Route.useLoaderData();
-  const { page } = Route.useSearch();
+  const { page, tag } = Route.useSearch();
   const navigate = useNavigate();
   const { t } = useI18n();
 
-  const totalPages = Math.max(1, Math.ceil(notes.length / PAGE_SIZE));
+  // Note tags carry names (no separate slug is surfaced), so filter by name.
+  const filtered = tag ? notes.filter((n) => n.tags.includes(tag)) : notes;
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page ?? 1, totalPages);
   const start = (safePage - 1) * PAGE_SIZE;
-  const pageItems = notes.slice(start, start + PAGE_SIZE);
+  const pageItems = filtered.slice(start, start + PAGE_SIZE);
 
   // Year sections over the current page, same shape as the posts archive
   // (design: Blog.html TmArchive — `./{year}/` accent headers).
@@ -46,7 +49,7 @@ function SectionPage() {
     navigate({
       to: "/interview/$section",
       params: { section: section.slug },
-      search: { page: n > 1 ? n : undefined },
+      search: { page: n > 1 ? n : undefined, tag },
     });
     window.scrollTo({ top: 0 });
   };
@@ -63,7 +66,22 @@ function SectionPage() {
       )}
       <AsciiRule className="mt-2 mb-5" />
 
-      {notes.length === 0 ? (
+      {tag && (
+        <div className="mb-5 flex items-center gap-2 text-[11.5px] text-tm-muted">
+          <span>
+            {t("blog.archive.filteredBy")} <span className="text-tm-accent">#{tag}</span>
+          </span>
+          <Link
+            to="/interview/$section"
+            params={{ section: section.slug }}
+            className="border border-tm-border px-[7px] py-0.5 text-[10.5px] text-tm-muted no-underline"
+          >
+            {t("blog.archive.clear")}
+          </Link>
+        </div>
+      )}
+
+      {filtered.length === 0 ? (
         <TmEmpty>{t("blog.interview.noneYet")}</TmEmpty>
       ) : (
         years.map((y) => (
@@ -87,7 +105,7 @@ function SectionPage() {
         totalPages={totalPages}
         from={start + 1}
         to={start + pageItems.length}
-        total={notes.length}
+        total={filtered.length}
         onPage={goPage}
       />
     </TmPage>
