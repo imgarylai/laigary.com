@@ -70,6 +70,33 @@ export const FS_INTERVIEW = {
 export type BlogRoute = keyof typeof FS_BLOG;
 export type InterviewRoute = keyof typeof FS_INTERVIEW;
 
+function truncateSlug(slug: string): string {
+  return slug.length > 22 ? slug.slice(0, 20) + "…" : slug;
+}
+
+// Header breadcrumb (the `~/…` text after the macOS dots) for a router pathname,
+// following the fsmap conventions. Kept here so the presentation strings live in
+// one place rather than being reconstructed inside the header component.
+export function breadcrumbForPath(pathname: string): string {
+  const seg = pathname
+    .replace(/^\/+|\/+$/g, "")
+    .split("/")
+    .filter(Boolean);
+  if (seg[0] === "interview") {
+    if (seg.length === 1) return FS_INTERVIEW.home.crumb();
+    if (seg.length === 2) return FS_INTERVIEW.section.crumb({ sect: seg[1] });
+    return FS_INTERVIEW.note.crumb({ sect: seg[1], slug: truncateSlug(seg[2]) });
+  }
+  if (seg.length === 0) return FS_BLOG.home.crumb();
+  if (seg[0] === "posts") {
+    return seg.length === 1
+      ? FS_BLOG.archive.crumb()
+      : FS_BLOG.post.crumb({ slug: truncateSlug(seg[1]) });
+  }
+  if (seg[0] === "tags") return FS_BLOG.tags.crumb();
+  return FS_BLOG.page.crumb({ slug: truncateSlug(seg[0]) });
+}
+
 // Command-palette label — `cd ./dir` for dirs, `cat ./file` for files.
 export function fsCmd(node: FsNode, ctx: FsCtx = {}): string {
   const rel = node.path

@@ -35,23 +35,12 @@ function Home() {
 
   return (
     <div className="tm-page">
-      <pre style={{ margin: 0, color: "var(--tm-muted)", fontSize: 11.5, lineHeight: 1.5 }}>
-        {`$ whoami\n${whoami || "gary lai"}\n$ cat ./README.md`}
-      </pre>
+      <pre className="tm-whoami">{`$ whoami\n${whoami || "gary lai"}\n$ cat ./README.md`}</pre>
 
-      {intro && <p style={{ margin: "14px 0 12px", fontSize: 14, lineHeight: 1.8 }}>{intro}</p>}
+      {intro && <p className="tm-intro">{intro}</p>}
 
-      <AsciiRule style={{ margin: "18px 0 4px" }} />
-      <div
-        style={{
-          display: "flex",
-          gap: 16,
-          fontSize: 12,
-          color: "var(--tm-muted)",
-          margin: "4px 0",
-          flexWrap: "wrap",
-        }}
-      >
+      <AsciiRule className="tm-rule--pre" />
+      <div className="tm-meta">
         <span>{postCount} posts</span>
         <span>·</span>
         <span>{tagCount} tags</span>
@@ -62,39 +51,25 @@ function Home() {
           </>
         )}
       </div>
-      <AsciiRule style={{ margin: "4px 0 24px" }} />
+      <AsciiRule className="tm-rule--post" />
 
-      <PromptLine style={{ margin: "0 0 10px" }}>{FS_BLOG.home.prompt()}</PromptLine>
-      <div style={{ display: "flex", flexDirection: "column", marginBottom: 32 }}>
+      <PromptLine>{FS_BLOG.home.prompt()}</PromptLine>
+      <div className="tm-dirlist">
         {dirs.map((d) => (
-          <Link
-            key={d.label}
-            to={d.to}
-            params={d.params}
-            className="tm-home-dir"
-            style={{
-              width: "100%",
-              padding: "14px 8px",
-              borderBottom: "1px dashed var(--tm-border)",
-              color: "var(--tm-fg)",
-              textDecoration: "none",
-            }}
-          >
-            <span style={{ color: "var(--tm-accent)", fontSize: 13.5 }}>{d.label}</span>
-            <span style={{ fontSize: 13, color: "var(--tm-fg)" }}>{d.desc}</span>
-            <span style={{ color: "var(--tm-muted)", fontSize: 11, whiteSpace: "nowrap" }}>
-              {d.meta}
-            </span>
+          <Link key={d.label} to={d.to} params={d.params} className="tm-home-dir">
+            <span className="tm-home-dir__label">{d.label}</span>
+            <span className="tm-home-dir__desc">{d.desc}</span>
+            <span className="tm-home-dir__meta">{d.meta}</span>
           </Link>
         ))}
       </div>
 
-      <div style={{ fontSize: 12, color: "var(--tm-muted)", lineHeight: 1.8 }}>
-        <Link to="/posts" style={{ color: "var(--tm-accent)", textDecoration: "none" }}>
+      <p className="tm-cta">
+        <Link to="/posts" className="tm-cta__link">
           $ cd ./posts
         </Link>
         {"  — 直接開始讀 / jump straight to the writing"}
-      </div>
+      </p>
     </div>
   );
 }

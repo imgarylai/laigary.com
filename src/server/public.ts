@@ -28,25 +28,6 @@ export function mapInterviewSections(sections: InterviewSectionRow[], counts: Ma
   }));
 }
 
-// Extract level-2 ATX headings (`## …`) from markdown for the post table of
-// contents. Fenced code blocks are skipped so `## ` inside a snippet is ignored.
-// Exported for testing.
-export function extractToc(markdown: string): string[] {
-  const out: string[] = [];
-  let inFence = false;
-  for (const raw of markdown.split("\n")) {
-    const line = raw.trimEnd();
-    if (/^\s*(```|~~~)/.test(line)) {
-      inFence = !inFence;
-      continue;
-    }
-    if (inFence) continue;
-    const m = /^##\s+(.+?)\s*#*\s*$/.exec(line);
-    if (m) out.push(m[1]);
-  }
-  return out;
-}
-
 // ── Blog main site ──────────────────────────────────────────────────────
 
 // Per-navigation shell data: brand name + a lightweight post index the command
@@ -95,6 +76,7 @@ export const postDataFn = createServerFn({ method: "GET" })
   .validator(slugInput)
   .handler(async ({ data }) => {
     const { getPostBySlug } = await import("@/db/queries");
+    const { extractToc } = await import("@/lib/toc");
     const post = await getPostBySlug(data.slug);
     if (!post) return null;
     return { post, html: await renderMd(post.contentMd), toc: extractToc(post.contentMd) };

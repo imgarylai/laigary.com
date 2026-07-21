@@ -1,11 +1,12 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
+import { useHotkeys } from "react-hotkeys-hook";
 import { TmHeader, type NavItem } from "./TmHeader";
 import { CommandPalette, type PaletteRow } from "./CommandPalette";
 
 // Root wrapper for a terminal namespace (blog or interview). Owns the ⌘K state
-// and the global key listener; renders header + content + palette. Nav items
-// and palette rows are supplied by the layout route so each namespace keeps its
-// own header and search index.
+// (bound once via react-hotkeys-hook — the app's single hotkey registry) and
+// renders header + content + palette. Nav items and palette rows are supplied by
+// the layout route so each namespace keeps its own header and search index.
 export function TerminalShell({
   homeTo,
   navItems,
@@ -21,18 +22,14 @@ export function TerminalShell({
 }) {
   const [cmdOpen, setCmdOpen] = useState(false);
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
-        e.preventDefault();
-        setCmdOpen((v) => !v);
-      } else if (e.key === "Escape") {
-        setCmdOpen(false);
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  useHotkeys(
+    "mod+k",
+    (e) => {
+      e.preventDefault();
+      setCmdOpen((v) => !v);
+    },
+    { enableOnFormTags: true, enableOnContentEditable: true },
+  );
 
   return (
     <div className="tm-root">
@@ -40,7 +37,7 @@ export function TerminalShell({
       <main>{children}</main>
       <CommandPalette
         open={cmdOpen}
-        onClose={() => setCmdOpen(false)}
+        onOpenChange={setCmdOpen}
         rows={paletteRows}
         placeholder={palettePlaceholder}
       />

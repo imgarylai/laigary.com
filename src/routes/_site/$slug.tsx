@@ -18,13 +18,9 @@ function PagePage() {
   const { page, html } = Route.useLoaderData();
 
   return (
-    <article className="tm-page-narrow">
-      <PromptLine style={{ margin: "0 0 16px" }}>
-        {FS_BLOG.page.prompt({ slug: page.slug })}
-      </PromptLine>
-      <h1 style={{ fontSize: 20, fontWeight: 700, margin: "0 0 18px", lineHeight: 1.35 }}>
-        {page.title}
-      </h1>
+    <article className="tm-page--narrow">
+      <PromptLine className="tm-prompt--pad">{FS_BLOG.page.prompt({ slug: page.slug })}</PromptLine>
+      <h1 className="tm-title tm-title--sm">{page.title}</h1>
       <div className="tm-prose" dangerouslySetInnerHTML={{ __html: html }} />
     </article>
   );
