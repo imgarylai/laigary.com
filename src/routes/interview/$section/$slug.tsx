@@ -1,5 +1,6 @@
 import { createFileRoute, notFound, Link } from "@tanstack/react-router";
 import { noteDataFn } from "@/server/public";
+import { serializeJsonLd, techArticleLd } from "@/lib/json-ld";
 import { AsciiRule, PromptLine, ReadingProgress } from "@/components/terminal/ui";
 import { TmPage } from "@/components/terminal/layout";
 import { useI18n } from "@/i18n/I18nProvider";
@@ -11,6 +12,11 @@ export const Route = createFileRoute("/interview/$section/$slug")({
     if (!data) throw notFound();
     return data;
   },
+  head: ({ loaderData }) => ({
+    scripts: loaderData
+      ? [{ type: "application/ld+json", children: serializeJsonLd(techArticleLd(loaderData.note)) }]
+      : [],
+  }),
   component: NotePage,
 });
 

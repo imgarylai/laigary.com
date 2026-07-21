@@ -1,5 +1,6 @@
 import { createFileRoute, notFound, Link } from "@tanstack/react-router";
 import { postDataFn } from "@/server/public";
+import { blogPostingLd, serializeJsonLd } from "@/lib/json-ld";
 import { AsciiRule, PromptLine, ReadingProgress } from "@/components/terminal/ui";
 import { TmPage } from "@/components/terminal/layout";
 import { useI18n } from "@/i18n/I18nProvider";
@@ -11,6 +12,21 @@ export const Route = createFileRoute("/_site/posts/$slug")({
     if (!data) throw notFound();
     return data;
   },
+  head: ({ loaderData }) => ({
+    scripts: loaderData
+      ? [
+          {
+            type: "application/ld+json",
+            children: serializeJsonLd(
+              blogPostingLd({
+                ...loaderData.post,
+                tags: loaderData.post.tags.map((tag) => tag.name),
+              }),
+            ),
+          },
+        ]
+      : [],
+  }),
   component: PostPage,
 });
 
