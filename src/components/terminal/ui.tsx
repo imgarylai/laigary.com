@@ -1,6 +1,5 @@
-import { useState, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import { useReadingProgress } from "@/hooks/use-reading-progress";
 
 // Small terminal primitives. Styling lives entirely in terminal.css; these just
@@ -20,25 +19,6 @@ export function AsciiRule({ thick = false, className }: { thick?: boolean; class
 // A `$ ...` prompt line shown above page content.
 export function PromptLine({ children, className }: { children: ReactNode; className?: string }) {
   return <pre className={cn("tm-prompt", className)}>{children}</pre>;
-}
-
-export function CopyButton({ text }: { text: string }) {
-  const [copied, setCopied] = useState(false);
-  return (
-    <Button
-      type="button"
-      variant="outline"
-      size="sm"
-      className="tm-btn"
-      onClick={() => {
-        navigator.clipboard?.writeText(text);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 1400);
-      }}
-    >
-      {copied ? "copied ✓" : "copy"}
-    </Button>
-  );
 }
 
 // Top reading-progress bar tied to document scroll.

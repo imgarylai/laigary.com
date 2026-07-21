@@ -5,6 +5,9 @@
     "noPostsYet": "No posts yet.",
     "noPostsFound": "No posts found.",
     "toggleTheme": "Toggle theme",
+    "language": "Language",
+    "search": "Search",
+    "menu": "Menu",
     "siteName": "Psychedelic Engineer",
     "siteDescription": "Refactoring self-awareness with engineering mindset"
   },
@@ -295,5 +298,51 @@
     "update": "Update",
     "cancel": "Cancel",
     "saving": "Saving…"
+  },
+  "blog": {
+    "search": {
+      "placeholder": "search posts, tags, pages…",
+      "placeholderInterview": "search notes, sections…",
+      "pages": "pages",
+      "content": "content",
+      "noMatches": "no matches."
+    },
+    "home": {
+      "descPosts": "life notes & essays",
+      "descTags": "browse by topic",
+      "descInterview": "interview prep notes",
+      "descAbout": "about & contact",
+      "postsUnit": "posts",
+      "tagsUnit": "tags",
+      "updated": "updated {date}",
+      "cta": "  — jump straight to the writing"
+    },
+    "archive": {
+      "filteredBy": "filtered by",
+      "clear": "clear ✕",
+      "noMatch": "// no posts match.",
+      "page": "page {current}/{total}",
+      "showing": " · showing {from}–{to} of {total}",
+      "newer": "← newer",
+      "older": "older →"
+    },
+    "post": {
+      "toc": "// table of contents",
+      "tagsLabel": "--tags",
+      "back": "  — back to all posts"
+    },
+    "tags": {
+      "noneYet": "// no tags yet.",
+      "postsUnit": "posts"
+    },
+    "interview": {
+      "title": "./interview/ — interview prep notes",
+      "lead": "Notes I built up preparing for software engineering interviews.",
+      "notesUnit": "notes",
+      "sectionsUnit": "sections",
+      "notesArrow": "{count} notes →",
+      "noneYet": "// no notes yet.",
+      "minRead": "{min} min read"
+    }
   }
 }

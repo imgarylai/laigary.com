@@ -1,6 +1,7 @@
 import { createFileRoute, notFound, Link } from "@tanstack/react-router";
 import { sectionDataFn } from "@/server/public";
 import { AsciiRule, PromptLine } from "@/components/terminal/ui";
+import { useI18n } from "@/i18n/I18nProvider";
 import { FS_INTERVIEW } from "@/lib/fsmap";
 
 export const Route = createFileRoute("/interview/$section/")({
@@ -14,6 +15,7 @@ export const Route = createFileRoute("/interview/$section/")({
 
 function SectionPage() {
   const { section, notes } = Route.useLoaderData();
+  const { t } = useI18n();
 
   return (
     <div className="tm-page">
@@ -25,7 +27,7 @@ function SectionPage() {
       <AsciiRule className="tm-rule--sep" />
 
       {notes.length === 0 ? (
-        <div className="tm-empty">// no notes yet.</div>
+        <div className="tm-empty">{t("blog.interview.noneYet")}</div>
       ) : (
         <div className="tm-rows">
           {notes.map((n) => (

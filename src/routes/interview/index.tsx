@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { interviewDataFn } from "@/server/public";
 import { AsciiRule, PromptLine } from "@/components/terminal/ui";
+import { useI18n } from "@/i18n/I18nProvider";
 
 export const Route = createFileRoute("/interview/")({
   loader: () => interviewDataFn(),
@@ -9,22 +10,27 @@ export const Route = createFileRoute("/interview/")({
 
 function InterviewHome() {
   const { sections, recent } = Route.useLoaderData();
+  const { t } = useI18n();
   const totalNotes = sections.reduce((n, s) => n + s.count, 0);
 
   return (
     <div className="tm-page">
-      <h1 className="tm-ivhome__title">./interview/ — 面試準備筆記</h1>
-      <p className="tm-ivhome__lead">我自己準備工程師面試的過程中累積的筆記。</p>
+      <h1 className="tm-ivhome__title">{t("blog.interview.title")}</h1>
+      <p className="tm-ivhome__lead">{t("blog.interview.lead")}</p>
 
       <AsciiRule className="tm-rule--pre" />
       <div className="tm-meta">
-        <span>{totalNotes} notes</span>
+        <span>
+          {totalNotes} {t("blog.interview.notesUnit")}
+        </span>
         <span>·</span>
-        <span>{sections.length} sections</span>
+        <span>
+          {sections.length} {t("blog.interview.sectionsUnit")}
+        </span>
         {recent[0] && (
           <>
             <span>·</span>
-            <span>updated {recent[0].date}</span>
+            <span>{t("blog.home.updated", { date: recent[0].date })}</span>
           </>
         )}
       </div>
@@ -41,7 +47,9 @@ function InterviewHome() {
           >
             <span className="tm-home-dir__label">./{s.slug}</span>
             <span className="tm-home-dir__desc">{s.blurb}</span>
-            <span className="tm-home-dir__meta">{s.count} notes →</span>
+            <span className="tm-home-dir__meta">
+              {t("blog.interview.notesArrow", { count: String(s.count) })}
+            </span>
           </Link>
         ))}
       </div>

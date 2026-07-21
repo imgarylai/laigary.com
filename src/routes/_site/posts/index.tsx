@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { postsDataFn } from "@/server/public";
 import { Button } from "@/components/ui/button";
 import { AsciiRule, PromptLine } from "@/components/terminal/ui";
+import { useI18n } from "@/i18n/I18nProvider";
 import { FS_BLOG } from "@/lib/fsmap";
 
 const PAGE_SIZE = 8;
@@ -21,6 +22,7 @@ function Archive() {
   const posts = Route.useLoaderData();
   const { tag, page } = Route.useSearch();
   const navigate = useNavigate();
+  const { t } = useI18n();
 
   const filtered = tag ? posts.filter((p) => p.tags.some((t) => t.slug === tag)) : posts;
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
@@ -50,10 +52,10 @@ function Archive() {
       {tag && (
         <div className="tm-filter">
           <span>
-            filtered by <span className="tm-filter__tag">#{tag}</span>
+            {t("blog.archive.filteredBy")} <span className="tm-filter__tag">#{tag}</span>
           </span>
           <Link to="/posts" className="tm-clear">
-            clear ✕
+            {t("blog.archive.clear")}
           </Link>
         </div>
       )}
@@ -76,17 +78,20 @@ function Archive() {
         </section>
       ))}
 
-      {filtered.length === 0 && <div className="tm-empty">// no posts match.</div>}
+      {filtered.length === 0 && <div className="tm-empty">{t("blog.archive.noMatch")}</div>}
 
       {totalPages > 1 && (
         <div className="tm-pager">
           <AsciiRule className="tm-prompt--pad" />
           <div className="tm-pager__bar">
             <span className="tm-pager__status">
-              page {safePage}/{totalPages}
+              {t("blog.archive.page", { current: String(safePage), total: String(totalPages) })}
               <span className="tm-pager__status-dim">
-                {" "}
-                · showing {start + 1}–{start + pageItems.length} of {filtered.length}
+                {t("blog.archive.showing", {
+                  from: String(start + 1),
+                  to: String(start + pageItems.length),
+                  total: String(filtered.length),
+                })}
               </span>
             </span>
             <div className="tm-pager__group">
@@ -98,7 +103,7 @@ function Archive() {
                 disabled={safePage === 1}
                 onClick={() => goPage(safePage - 1)}
               >
-                ← newer
+                {t("blog.archive.newer")}
               </Button>
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
                 <Button
@@ -122,7 +127,7 @@ function Archive() {
                 disabled={safePage === totalPages}
                 onClick={() => goPage(safePage + 1)}
               >
-                older →
+                {t("blog.archive.older")}
               </Button>
             </div>
           </div>

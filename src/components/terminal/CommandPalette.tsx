@@ -6,6 +6,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import { useI18n } from "@/i18n/I18nProvider";
 
 export type PaletteRow = {
   kind: "page" | "content";
@@ -30,6 +31,7 @@ export function CommandPalette({
   rows: PaletteRow[];
   placeholder: string;
 }) {
+  const { t } = useI18n();
   const pages = rows.filter((r) => r.kind === "page");
   const content = rows.filter((r) => r.kind === "content");
 
@@ -59,10 +61,12 @@ export function CommandPalette({
     >
       <CommandInput placeholder={placeholder} />
       <CommandList>
-        <CommandEmpty>no matches.</CommandEmpty>
-        {pages.length > 0 && <CommandGroup heading="pages">{pages.map(renderItem)}</CommandGroup>}
+        <CommandEmpty>{t("blog.search.noMatches")}</CommandEmpty>
+        {pages.length > 0 && (
+          <CommandGroup heading={t("blog.search.pages")}>{pages.map(renderItem)}</CommandGroup>
+        )}
         {content.length > 0 && (
-          <CommandGroup heading="content">{content.map(renderItem)}</CommandGroup>
+          <CommandGroup heading={t("blog.search.content")}>{content.map(renderItem)}</CommandGroup>
         )}
       </CommandList>
     </CommandDialog>
