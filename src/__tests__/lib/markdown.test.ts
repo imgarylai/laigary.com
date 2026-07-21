@@ -57,6 +57,15 @@ describe("renderMarkdown", () => {
     expect(html).toContain("math-display");
   });
 
+  it("should render math containing comparison operators when given clean markdown", async () => {
+    // Regression guard for the LaTeX issue: as long as stored markdown keeps
+    // raw `>` (never `&gt;` — see the editor's inline-math markdown mapping),
+    // temml renders it without a ParseError.
+    const html = await renderMarkdown("$(fast - slow) - max_count > k$");
+    expect(html).toContain("math-inline");
+    expect(html).not.toContain("ParseError");
+  });
+
   it("falls back to math-error span for invalid LaTeX", async () => {
     const html = await renderMarkdown("$\\invalid{");
     // temml is permissive; this just guards that the pipeline doesn't throw
