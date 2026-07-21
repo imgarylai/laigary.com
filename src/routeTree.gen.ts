@@ -15,12 +15,15 @@ import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminInterviewRouteImport } from './routes/admin/interview'
 import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
 import { Route as AdminTagsRouteImport } from './routes/admin/tags'
+import { Route as ApiOgRouteImport } from './routes/api/og'
 import { Route as AdminPagesIndexRouteImport } from './routes/admin/pages/index'
 import { Route as AdminPagesNewRouteImport } from './routes/admin/pages/new'
 import { Route as AdminPostsIndexRouteImport } from './routes/admin/posts/index'
 import { Route as AdminPostsNewRouteImport } from './routes/admin/posts/new'
 import { Route as AdminPagesSlugEditRouteImport } from './routes/admin/pages/$slug/edit'
 import { Route as AdminPostsPostIdEditRouteImport } from './routes/admin/posts/$postId/edit'
+import { Route as ApiOgPostsSlugRouteImport } from './routes/api/og.posts.$slug'
+import { Route as ApiOgInterviewSectSlugRouteImport } from './routes/api/og.interview.$sect.$slug'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -52,6 +55,11 @@ const AdminTagsRoute = AdminTagsRouteImport.update({
   path: '/tags',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const ApiOgRoute = ApiOgRouteImport.update({
+  id: '/api/og',
+  path: '/api/og',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminPagesIndexRoute = AdminPagesIndexRouteImport.update({
   id: '/pages/',
   path: '/pages/',
@@ -82,6 +90,16 @@ const AdminPostsPostIdEditRoute = AdminPostsPostIdEditRouteImport.update({
   path: '/posts/$postId/edit',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const ApiOgPostsSlugRoute = ApiOgPostsSlugRouteImport.update({
+  id: '/posts/$slug',
+  path: '/posts/$slug',
+  getParentRoute: () => ApiOgRoute,
+} as any)
+const ApiOgInterviewSectSlugRoute = ApiOgInterviewSectSlugRouteImport.update({
+  id: '/interview/$sect/$slug',
+  path: '/interview/$sect/$slug',
+  getParentRoute: () => ApiOgRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -89,6 +107,7 @@ export interface FileRoutesByFullPath {
   '/admin/interview': typeof AdminInterviewRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/tags': typeof AdminTagsRoute
+  '/api/og': typeof ApiOgRouteWithChildren
   '/admin/': typeof AdminIndexRoute
   '/admin/pages/new': typeof AdminPagesNewRoute
   '/admin/posts/new': typeof AdminPostsNewRoute
@@ -96,12 +115,15 @@ export interface FileRoutesByFullPath {
   '/admin/posts/': typeof AdminPostsIndexRoute
   '/admin/pages/$slug/edit': typeof AdminPagesSlugEditRoute
   '/admin/posts/$postId/edit': typeof AdminPostsPostIdEditRoute
+  '/api/og/posts/$slug': typeof ApiOgPostsSlugRoute
+  '/api/og/interview/$sect/$slug': typeof ApiOgInterviewSectSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin/interview': typeof AdminInterviewRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/tags': typeof AdminTagsRoute
+  '/api/og': typeof ApiOgRouteWithChildren
   '/admin': typeof AdminIndexRoute
   '/admin/pages/new': typeof AdminPagesNewRoute
   '/admin/posts/new': typeof AdminPostsNewRoute
@@ -109,6 +131,8 @@ export interface FileRoutesByTo {
   '/admin/posts': typeof AdminPostsIndexRoute
   '/admin/pages/$slug/edit': typeof AdminPagesSlugEditRoute
   '/admin/posts/$postId/edit': typeof AdminPostsPostIdEditRoute
+  '/api/og/posts/$slug': typeof ApiOgPostsSlugRoute
+  '/api/og/interview/$sect/$slug': typeof ApiOgInterviewSectSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -117,6 +141,7 @@ export interface FileRoutesById {
   '/admin/interview': typeof AdminInterviewRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/tags': typeof AdminTagsRoute
+  '/api/og': typeof ApiOgRouteWithChildren
   '/admin/': typeof AdminIndexRoute
   '/admin/pages/new': typeof AdminPagesNewRoute
   '/admin/posts/new': typeof AdminPostsNewRoute
@@ -124,6 +149,8 @@ export interface FileRoutesById {
   '/admin/posts/': typeof AdminPostsIndexRoute
   '/admin/pages/$slug/edit': typeof AdminPagesSlugEditRoute
   '/admin/posts/$postId/edit': typeof AdminPostsPostIdEditRoute
+  '/api/og/posts/$slug': typeof ApiOgPostsSlugRoute
+  '/api/og/interview/$sect/$slug': typeof ApiOgInterviewSectSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -133,6 +160,7 @@ export interface FileRouteTypes {
     | '/admin/interview'
     | '/admin/settings'
     | '/admin/tags'
+    | '/api/og'
     | '/admin/'
     | '/admin/pages/new'
     | '/admin/posts/new'
@@ -140,12 +168,15 @@ export interface FileRouteTypes {
     | '/admin/posts/'
     | '/admin/pages/$slug/edit'
     | '/admin/posts/$postId/edit'
+    | '/api/og/posts/$slug'
+    | '/api/og/interview/$sect/$slug'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/admin/interview'
     | '/admin/settings'
     | '/admin/tags'
+    | '/api/og'
     | '/admin'
     | '/admin/pages/new'
     | '/admin/posts/new'
@@ -153,6 +184,8 @@ export interface FileRouteTypes {
     | '/admin/posts'
     | '/admin/pages/$slug/edit'
     | '/admin/posts/$postId/edit'
+    | '/api/og/posts/$slug'
+    | '/api/og/interview/$sect/$slug'
   id:
     | '__root__'
     | '/'
@@ -160,6 +193,7 @@ export interface FileRouteTypes {
     | '/admin/interview'
     | '/admin/settings'
     | '/admin/tags'
+    | '/api/og'
     | '/admin/'
     | '/admin/pages/new'
     | '/admin/posts/new'
@@ -167,11 +201,14 @@ export interface FileRouteTypes {
     | '/admin/posts/'
     | '/admin/pages/$slug/edit'
     | '/admin/posts/$postId/edit'
+    | '/api/og/posts/$slug'
+    | '/api/og/interview/$sect/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRouteRoute: typeof AdminRouteRouteWithChildren
+  ApiOgRoute: typeof ApiOgRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -218,6 +255,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminTagsRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/api/og': {
+      id: '/api/og'
+      path: '/api/og'
+      fullPath: '/api/og'
+      preLoaderRoute: typeof ApiOgRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/pages/': {
       id: '/admin/pages/'
       path: '/pages'
@@ -260,6 +304,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPostsPostIdEditRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/api/og/posts/$slug': {
+      id: '/api/og/posts/$slug'
+      path: '/posts/$slug'
+      fullPath: '/api/og/posts/$slug'
+      preLoaderRoute: typeof ApiOgPostsSlugRouteImport
+      parentRoute: typeof ApiOgRoute
+    }
+    '/api/og/interview/$sect/$slug': {
+      id: '/api/og/interview/$sect/$slug'
+      path: '/interview/$sect/$slug'
+      fullPath: '/api/og/interview/$sect/$slug'
+      preLoaderRoute: typeof ApiOgInterviewSectSlugRouteImport
+      parentRoute: typeof ApiOgRoute
+    }
   }
 }
 
@@ -293,19 +351,23 @@ const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(
   AdminRouteRouteChildren,
 )
 
+interface ApiOgRouteChildren {
+  ApiOgPostsSlugRoute: typeof ApiOgPostsSlugRoute
+  ApiOgInterviewSectSlugRoute: typeof ApiOgInterviewSectSlugRoute
+}
+
+const ApiOgRouteChildren: ApiOgRouteChildren = {
+  ApiOgPostsSlugRoute: ApiOgPostsSlugRoute,
+  ApiOgInterviewSectSlugRoute: ApiOgInterviewSectSlugRoute,
+}
+
+const ApiOgRouteWithChildren = ApiOgRoute._addFileChildren(ApiOgRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRouteRoute: AdminRouteRouteWithChildren,
+  ApiOgRoute: ApiOgRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
