@@ -58,7 +58,10 @@ function CommandDialog({
         )}
         showCloseButton={showCloseButton}
       >
-        {children}
+        {/* Command is the cmdk root that provides the store consumed by
+            CommandInput/List/Item — without it they crash on mount
+            ("Cannot read properties of undefined (reading 'subscribe')"). */}
+        <Command>{children}</Command>
       </DialogContent>
     </Dialog>
   )
