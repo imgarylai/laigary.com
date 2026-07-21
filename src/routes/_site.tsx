@@ -27,6 +27,7 @@ const NAV_ITEMS: NavItem[] = [
 ];
 
 function SiteLayout() {
+  const { siteName, social } = Route.useLoaderData();
   const navigate = useNavigate();
   const { t } = useI18n();
 
@@ -89,6 +90,8 @@ function SiteLayout() {
       palettePages={palettePages}
       paletteSearch={paletteSearch}
       palettePlaceholder={t("blog.search.placeholder")}
+      siteName={siteName}
+      social={social}
     >
       <Outlet />
     </TerminalShell>

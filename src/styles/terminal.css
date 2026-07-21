@@ -38,7 +38,9 @@
   color: var(--tm-fg);
   font-size: 13px;
   line-height: 1.65;
-  min-height: 100vh;
+  /* dvh, not vh: with the sticky-footer flex layout, vh on mobile Safari
+     overshoots the visible viewport and pushes the status bar below the fold. */
+  min-height: 100dvh;
 }
 .tm-root ::selection {
   background: var(--tm-accent);

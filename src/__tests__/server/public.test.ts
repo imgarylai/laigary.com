@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { mapInterviewSections, DEFAULT_SITE_NAME } from "@/server/public";
+import { mapInterviewSections, pickSocial, DEFAULT_SITE_NAME } from "@/server/public";
 
 describe("mapInterviewSections", () => {
   const sections = [
@@ -27,6 +27,28 @@ describe("mapInterviewSections", () => {
       blurb: "",
       count: 0,
     });
+  });
+});
+
+describe("pickSocial", () => {
+  it("resolves stored handles to absolute profile urls and email to mailto", () => {
+    expect(
+      pickSocial({
+        author_github: "imgarylai",
+        author_twitter: "imgarylai",
+        author_linkedin: "imgarylai",
+        author_email: "gary@example.com",
+      }),
+    ).toEqual({
+      github: "https://github.com/imgarylai",
+      twitter: "https://x.com/imgarylai",
+      linkedin: "https://linkedin.com/in/imgarylai",
+      email: "mailto:gary@example.com",
+    });
+  });
+
+  it("maps unset settings to null", () => {
+    expect(pickSocial({})).toEqual({ github: null, twitter: null, linkedin: null, email: null });
   });
 });
 
