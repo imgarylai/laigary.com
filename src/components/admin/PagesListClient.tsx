@@ -66,8 +66,9 @@ export function PagesListClient({ pages }: { pages: Page[] }) {
               variant="ghost"
               size="icon-sm"
               render={
-                <a
-                  href={`/${row.original.slug}`}
+                <Link
+                  to="/$slug"
+                  params={{ slug: row.original.slug }}
                   target="_blank"
                   rel="noreferrer"
                   title={t("pageList.view")}

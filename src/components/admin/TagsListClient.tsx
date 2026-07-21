@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { getRouteApi } from "@tanstack/react-router";
+import { Link, getRouteApi } from "@tanstack/react-router";
 import { ArrowSquareOutIcon } from "@phosphor-icons/react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
@@ -48,14 +48,15 @@ export function TagsListClient({ tags }: { tags: Tag[] }) {
         meta: { headClassName: "text-right", cellClassName: "text-right" },
         cell: ({ row }) => (
           <div className="flex items-center justify-end gap-2">
-            {/* View the live tag page — plain anchor since the public tags
-                route lands in the frontend phase. */}
+            {/* View the tag's filtered post archive in a new tab — the frontend
+                has no per-tag page; /tags links to /posts?tag=<slug> too. */}
             <Button
               variant="ghost"
               size="icon-sm"
               render={
-                <a
-                  href={`/tags/${row.original.slug}`}
+                <Link
+                  to="/posts"
+                  search={{ tag: row.original.slug }}
                   target="_blank"
                   rel="noreferrer"
                   title={t("tagList.view")}
