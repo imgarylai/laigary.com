@@ -58,4 +58,6 @@ export { getPageBySlug, getAllPages, getPagesList, upsertPage, type PageListItem
 
 export { getSiteSettings, getSiteSetting, updateSiteSettings } from "./site";
 
+export { getSitemapData, type SitemapData } from "./sitemap";
+
 export { recordUpload, UploadConflictError, type UploadInput } from "./uploads";
