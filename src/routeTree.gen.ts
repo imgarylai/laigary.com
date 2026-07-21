@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SiteRouteImport } from './routes/_site'
 import { Route as AdminRouteRouteImport } from './routes/admin/route'
+import { Route as DesignSystemRouteImport } from './routes/design-system'
 import { Route as FeedDotxmlRouteImport } from './routes/feed[.]xml'
 import { Route as InterviewRouteImport } from './routes/interview'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
@@ -47,6 +48,11 @@ const SiteRoute = SiteRouteImport.update({
 const AdminRouteRoute = AdminRouteRouteImport.update({
   id: '/admin',
   path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DesignSystemRoute = DesignSystemRouteImport.update({
+  id: '/design-system',
+  path: '/design-system',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FeedDotxmlRoute = FeedDotxmlRouteImport.update({
@@ -195,6 +201,7 @@ const ApiOgInterviewSectSlugRoute = ApiOgInterviewSectSlugRouteImport.update({
 export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteRouteWithChildren
   '/': typeof SiteIndexRoute
+  '/design-system': typeof DesignSystemRoute
   '/feed.xml': typeof FeedDotxmlRoute
   '/interview': typeof InterviewRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -224,6 +231,7 @@ export interface FileRoutesByFullPath {
   '/api/og/interview/$sect/$slug': typeof ApiOgInterviewSectSlugRoute
 }
 export interface FileRoutesByTo {
+  '/design-system': typeof DesignSystemRoute
   '/feed.xml': typeof FeedDotxmlRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/$slug': typeof SiteSlugRoute
@@ -256,6 +264,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/admin': typeof AdminRouteRouteWithChildren
   '/_site': typeof SiteRouteWithChildren
+  '/design-system': typeof DesignSystemRoute
   '/feed.xml': typeof FeedDotxmlRoute
   '/interview': typeof InterviewRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -290,6 +299,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/admin'
     | '/'
+    | '/design-system'
     | '/feed.xml'
     | '/interview'
     | '/sitemap.xml'
@@ -319,6 +329,7 @@ export interface FileRouteTypes {
     | '/api/og/interview/$sect/$slug'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/design-system'
     | '/feed.xml'
     | '/sitemap.xml'
     | '/$slug'
@@ -350,6 +361,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/admin'
     | '/_site'
+    | '/design-system'
     | '/feed.xml'
     | '/interview'
     | '/sitemap.xml'
@@ -383,6 +395,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   AdminRouteRoute: typeof AdminRouteRouteWithChildren
   SiteRoute: typeof SiteRouteWithChildren
+  DesignSystemRoute: typeof DesignSystemRoute
   FeedDotxmlRoute: typeof FeedDotxmlRoute
   InterviewRoute: typeof InterviewRouteWithChildren
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
@@ -403,6 +416,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AdminRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/design-system': {
+      id: '/design-system'
+      path: '/design-system'
+      fullPath: '/design-system'
+      preLoaderRoute: typeof DesignSystemRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/feed.xml': {
@@ -691,6 +711,7 @@ const ApiOgRouteWithChildren = ApiOgRoute._addFileChildren(ApiOgRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   AdminRouteRoute: AdminRouteRouteWithChildren,
   SiteRoute: SiteRouteWithChildren,
+  DesignSystemRoute: DesignSystemRoute,
   FeedDotxmlRoute: FeedDotxmlRoute,
   InterviewRoute: InterviewRouteWithChildren,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
