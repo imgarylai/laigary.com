@@ -35,13 +35,22 @@ export default function TiptapEditorImpl({
     },
   });
 
-  // Sync external value changes (e.g. form reset)
+  // Sync external value changes (e.g. form reset) back into the editor.
   useEffect(() => {
-    if (!editor) return;
+    if (!editor || editor.isDestroyed) return;
+    // Never rebuild the document while an IME composition is in flight (CJK —
+    // 注音/拼音/かな). setContent tears down and re-parses the whole doc, which
+    // aborts the composition mid-selection: that's the "cursor jumps / the
+    // character gets typed twice / lag" behaviour. When composition ends the
+    // effect runs again with the committed text, so nothing is dropped.
+    if (editor.view.composing) return;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const currentMd = (editor.storage as any).markdown.getMarkdown();
+    // Only sync genuine external changes; our own onUpdate echoes back an equal
+    // value, so this skips the self-inflicted round-trip. emitUpdate: false
+    // keeps an external set from bouncing another onChange back to the parent.
     if (value !== currentMd) {
-      editor.commands.setContent(value);
+      editor.commands.setContent(value, { emitUpdate: false });
     }
   }, [value, editor]);
 
