@@ -32,7 +32,17 @@ export function createExtensions({ placeholder }: { placeholder: string }) {
     Image,
     Markdown.configure({ transformPastedText: true, transformCopiedText: true }),
     Placeholder.configure({ placeholder }),
-    Typography,
+    // Keep the harmless typographic replacements (em-dash, ellipsis, arrows, …)
+    // but turn OFF smart quotes. Straight ' and " were being auto-rewritten to
+    // paired curly quotes ('…' / "…"), which changes the character you typed and
+    // leaks U+2018/2019/201C/201D into the Markdown output — undesirable in a
+    // Markdown/dev editor where quotes often sit inside code or technical text.
+    Typography.configure({
+      openSingleQuote: false,
+      closeSingleQuote: false,
+      openDoubleQuote: false,
+      closeDoubleQuote: false,
+    }),
     Highlight,
     Subscript,
     Superscript,
