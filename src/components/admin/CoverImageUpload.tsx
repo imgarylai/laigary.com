@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useReducer, useRef } from "react";
 import { ImageIcon, SpinnerIcon, TrashIcon } from "@phosphor-icons/react";
 import ReactCrop, { centerCrop, makeAspectCrop, type Crop, type PixelCrop } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
@@ -22,6 +22,67 @@ function centerAspectCrop(mediaWidth: number, mediaHeight: number) {
     mediaWidth,
     mediaHeight,
   );
+}
+
+// The dialog's file / preview / crop / upload flags all reset together, so a
+// reducer keeps those transitions in one place instead of a stack of useState
+// setters that must be cleared in lockstep (mirrors ImageUploadDialog).
+type CoverState = {
+  open: boolean;
+  file: File | null;
+  preview: string | null;
+  crop: Crop | undefined;
+  completedCrop: PixelCrop | undefined;
+  uploading: boolean;
+  error: string | null;
+};
+
+const initialState: CoverState = {
+  open: false,
+  file: null,
+  preview: null,
+  crop: undefined,
+  completedCrop: undefined,
+  uploading: false,
+  error: null,
+};
+
+type CoverAction =
+  | { type: "open" }
+  | { type: "close" }
+  | { type: "selectFile"; file: File | null; preview: string | null }
+  | { type: "setCrop"; crop: Crop }
+  | { type: "setCompletedCrop"; completedCrop: PixelCrop }
+  | { type: "uploadStart" }
+  | { type: "uploadError"; error: string };
+
+function reducer(state: CoverState, action: CoverAction): CoverState {
+  switch (action.type) {
+    case "open":
+      return { ...state, open: true };
+    case "close":
+      // Full reset on close or after a successful upload.
+      return initialState;
+    case "selectFile":
+      return {
+        ...state,
+        file: action.file,
+        preview: action.preview,
+        error: null,
+        crop: undefined,
+        completedCrop: undefined,
+      };
+    case "setCrop":
+      return { ...state, crop: action.crop };
+    case "setCompletedCrop":
+      return { ...state, completedCrop: action.completedCrop };
+    case "uploadStart":
+      return { ...state, uploading: true, error: null };
+    case "uploadError":
+      return { ...state, uploading: false, error: action.error };
+    default:
+      return state;
+  }
 }
 
 // `brand` is the OG image's footer line — passed in from site_settings (via the
@@ -54,55 +115,45 @@ export function CoverImageUpload({
   ogBrand: string;
 }) {
   const { t } = useI18n();
-  const [open, setOpen] = useState(false);
-  const [file, setFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
-  const [crop, setCrop] = useState<Crop>();
-  const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
-  const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [state, dispatch] = useReducer(reducer, initialState);
   const inputRef = useRef<HTMLInputElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
+  const { open, file, preview, crop, completedCrop, uploading, error } = state;
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const selected = e.target.files?.[0] ?? null;
-    setFile(selected);
-    setError(null);
-    setCrop(undefined);
-    setCompletedCrop(undefined);
-    setPreview(selected ? URL.createObjectURL(selected) : null);
+    dispatch({
+      type: "selectFile",
+      file: selected,
+      preview: selected ? URL.createObjectURL(selected) : null,
+    });
   }
 
-  const onImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
+  function onImageLoad(e: React.SyntheticEvent<HTMLImageElement>) {
     const { width, height } = e.currentTarget;
-    setCrop(centerAspectCrop(width, height));
-  }, []);
+    dispatch({ type: "setCrop", crop: centerAspectCrop(width, height) });
+  }
 
-  function reset() {
-    setFile(null);
-    setPreview(null);
-    setError(null);
-    setUploading(false);
-    setCrop(undefined);
-    setCompletedCrop(undefined);
+  function close() {
     if (inputRef.current) inputRef.current.value = "";
+    dispatch({ type: "close" });
   }
 
   async function handleUpload() {
     if (!file || !completedCrop || !imgRef.current) return;
-    setUploading(true);
-    setError(null);
+    dispatch({ type: "uploadStart" });
     try {
       const blob = await getCroppedBlob(imgRef.current, completedCrop);
       const croppedFile = new File([blob], file.name, { type: "image/jpeg" });
       const compressed = await compressImage(croppedFile);
       const url = await uploadFile(compressed);
       onChange(url);
-      reset();
-      setOpen(false);
+      close();
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("editor.uploadFailed"));
-      setUploading(false);
+      dispatch({
+        type: "uploadError",
+        error: err instanceof Error ? err.message : t("editor.uploadFailed"),
+      });
     }
   }
 
@@ -113,7 +164,7 @@ export function CoverImageUpload({
           type="button"
           variant="outline"
           className="flex aspect-video h-auto flex-col items-center justify-center gap-1 border-dashed"
-          onClick={() => setOpen(true)}
+          onClick={() => dispatch({ type: "open" })}
         >
           <ImageIcon className="size-6 text-muted-foreground" />
           <span className="text-sm text-muted-foreground">
@@ -141,13 +192,7 @@ export function CoverImageUpload({
         </div>
       </div>
 
-      <Dialog
-        open={open}
-        onOpenChange={(v) => {
-          setOpen(v);
-          if (!v) reset();
-        }}
-      >
+      <Dialog open={open} onOpenChange={(v) => (v ? dispatch({ type: "open" }) : close())}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>{t("postForm.coverImage")}</DialogTitle>
@@ -163,8 +208,8 @@ export function CoverImageUpload({
             <div className="max-h-80 overflow-auto rounded-none border p-2">
               <ReactCrop
                 crop={crop}
-                onChange={setCrop}
-                onComplete={setCompletedCrop}
+                onChange={(c) => dispatch({ type: "setCrop", crop: c })}
+                onComplete={(c) => dispatch({ type: "setCompletedCrop", completedCrop: c })}
                 aspect={ASPECT_RATIO}
               >
                 <img
@@ -179,12 +224,7 @@ export function CoverImageUpload({
           )}
           {error && <p className="text-sm text-destructive">{error}</p>}
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setOpen(false)}
-              disabled={uploading}
-            >
+            <Button type="button" variant="outline" onClick={close} disabled={uploading}>
               {t("postForm.cancel")}
             </Button>
             <Button type="button" onClick={handleUpload} disabled={!completedCrop || uploading}>
