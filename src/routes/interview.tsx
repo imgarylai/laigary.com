@@ -15,7 +15,7 @@ export const Route = createFileRoute("/interview")({
 });
 
 function InterviewLayout() {
-  const { sections } = Route.useLoaderData();
+  const { sections, siteName, social } = Route.useLoaderData();
   const { t } = useI18n();
   const navigate = useNavigate();
 
@@ -81,6 +81,8 @@ function InterviewLayout() {
       palettePages={palettePages}
       paletteSearch={paletteSearch}
       palettePlaceholder={t("blog.search.placeholderInterview")}
+      siteName={siteName}
+      social={social}
     >
       <Outlet />
     </TerminalShell>

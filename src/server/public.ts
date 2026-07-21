@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { socialUrl } from "@/lib/social";
 
 // Public (frontend) read server functions. Route loaders call these; queries
 // and the markdown renderer are loaded via dynamic import inside each handler so
@@ -30,13 +31,26 @@ export function mapInterviewSections(sections: InterviewSectionRow[], counts: Ma
 
 // ── Blog main site ──────────────────────────────────────────────────────
 
-// Per-navigation shell data: just the brand name. The command palette used to
-// receive the whole post index here (pre-loaded on every navigation); it now
-// searches posts on demand via `searchPostsFn`, so the shell stays lightweight.
+// Footer social links resolved to absolute hrefs via lib/social (settings
+// store bare handles; unset ones come through as null and drop out in the
+// footer). Exported for testing.
+export function pickSocial(settings: Record<string, string>) {
+  return {
+    github: socialUrl("author_github", settings.author_github ?? ""),
+    twitter: socialUrl("author_twitter", settings.author_twitter ?? ""),
+    linkedin: socialUrl("author_linkedin", settings.author_linkedin ?? ""),
+    email: settings.author_email ? `mailto:${settings.author_email}` : null,
+  };
+}
+
+// Per-navigation shell data: brand name + footer social links. The command
+// palette used to receive the whole post index here (pre-loaded on every
+// navigation); it now searches posts on demand via `searchPostsFn`, so the
+// shell stays lightweight.
 export const blogShellFn = createServerFn({ method: "GET" }).handler(async () => {
   const { getSiteSettings } = await import("@/db/queries");
   const settings = await getSiteSettings();
-  return { siteName: settings.site_name || DEFAULT_SITE_NAME };
+  return { siteName: settings.site_name || DEFAULT_SITE_NAME, social: pickSocial(settings) };
 });
 
 // Home: whoami/intro from settings + headline counts and latest-post date.
@@ -50,12 +64,10 @@ export const homeDataFn = createServerFn({ method: "GET" }).handler(async () => 
   const whoami = [settings.author_name, settings.author_role, settings.author_location]
     .filter(Boolean)
     .join(" · ");
-  const { socialUrl } = await import("@/lib/social");
-  const socialUrls = [
-    socialUrl("author_github", settings.author_github ?? ""),
-    socialUrl("author_twitter", settings.author_twitter ?? ""),
-    socialUrl("author_linkedin", settings.author_linkedin ?? ""),
-  ].filter((u): u is string => u !== null);
+  const social = pickSocial(settings);
+  const socialUrls = [social.github, social.twitter, social.linkedin].filter(
+    (u): u is string => u !== null,
+  );
 
   return {
     siteName: settings.site_name || DEFAULT_SITE_NAME,
@@ -103,13 +115,17 @@ export const pageDataFn = createServerFn({ method: "GET" })
 
 // ── Interview sub-site ──────────────────────────────────────────────────
 
-// Per-navigation shell data for the interview namespace: just the section list
-// (drives the header nav + palette page rows). Notes are searched on demand via
-// `searchInterviewNotesFn` rather than pre-loaded on every navigation.
+// Per-navigation shell data for the interview namespace: the section list
+// (drives the header nav + palette page rows) plus footer branding. Notes are
+// searched on demand via `searchInterviewNotesFn` rather than pre-loaded.
 export const interviewShellFn = createServerFn({ method: "GET" }).handler(async () => {
-  const { getInterviewSections } = await import("@/db/queries");
-  const sections = await getInterviewSections();
-  return { sections: sections.map((s) => ({ slug: s.slug, label: s.label })) };
+  const { getInterviewSections, getSiteSettings } = await import("@/db/queries");
+  const [sections, settings] = await Promise.all([getInterviewSections(), getSiteSettings()]);
+  return {
+    sections: sections.map((s) => ({ slug: s.slug, label: s.label })),
+    siteName: settings.site_name || DEFAULT_SITE_NAME,
+    social: pickSocial(settings),
+  };
 });
 
 // On-demand note search for the interview ⌘K palette (title match across all
