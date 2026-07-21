@@ -87,9 +87,9 @@ export async function confirmUploadImpl(input: ConfirmInput): Promise<ActionResu
 }
 
 export const presignUploadFn = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => presignSchema.parse(data))
+  .validator((data: unknown) => presignSchema.parse(data))
   .handler(({ data }) => presignUploadImpl(data));
 
 export const confirmUploadFn = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => confirmSchema.parse(data))
+  .validator((data: unknown) => confirmSchema.parse(data))
   .handler(({ data }) => confirmUploadImpl(data));

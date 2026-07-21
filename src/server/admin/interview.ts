@@ -119,25 +119,25 @@ export async function deleteNoteImpl(input: { id: string }): Promise<ActionResul
 }
 
 export const createSectionFn = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => sectionCreateSchema.parse(data))
+  .validator((data: unknown) => sectionCreateSchema.parse(data))
   .handler(({ data }) => createSectionImpl(data));
 
 export const updateSectionFn = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => sectionUpdateSchema.parse(data))
+  .validator((data: unknown) => sectionUpdateSchema.parse(data))
   .handler(({ data }) => updateSectionImpl(data));
 
 export const deleteSectionFn = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => idSchema.parse(data))
+  .validator((data: unknown) => idSchema.parse(data))
   .handler(({ data }) => deleteSectionImpl(data));
 
 export const createNoteFn = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => noteCreateSchema.parse(data))
+  .validator((data: unknown) => noteCreateSchema.parse(data))
   .handler(({ data }) => createNoteImpl(data));
 
 export const updateNoteFn = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => noteUpdateSchema.parse(data))
+  .validator((data: unknown) => noteUpdateSchema.parse(data))
   .handler(({ data }) => updateNoteImpl(data));
 
 export const deleteNoteFn = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => idSchema.parse(data))
+  .validator((data: unknown) => idSchema.parse(data))
   .handler(({ data }) => deleteNoteImpl(data));

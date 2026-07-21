@@ -108,7 +108,7 @@ export const newNoteDataFn = createServerFn({ method: "GET" }).handler(
 
 // Edit-note form: the note (with its tag ids resolved) + sections + tags.
 export const editNoteDataFn = createServerFn({ method: "GET" })
-  .inputValidator((data: unknown) => z.object({ id: z.string().min(1) }).parse(data))
+  .validator((data: unknown) => z.object({ id: z.string().min(1) }).parse(data))
   .handler(
     async ({ data }): Promise<{ note: NoteDetail; sections: SectionOption[]; tags: Tag[] }> => {
       const { getInterviewNoteById, getInterviewSections, getAllTags } =
@@ -158,7 +158,7 @@ export const listPagesFn = createServerFn({ method: "GET" }).handler(
 
 // Single page for the edit form (null when the slug doesn't exist).
 export const getPageFn = createServerFn({ method: "GET" })
-  .inputValidator((data: unknown) => z.object({ slug: z.string().min(1) }).parse(data))
+  .validator((data: unknown) => z.object({ slug: z.string().min(1) }).parse(data))
   .handler(async ({ data }): Promise<PageDetail> => {
     const { getPageBySlug } = await import("@/db/queries");
     const page = await getPageBySlug(data.slug);
@@ -178,7 +178,7 @@ export const newPostDataFn = createServerFn({ method: "GET" }).handler(
 
 // Edit-post form: the post being edited (null when missing) + tags + OG brand.
 export const editPostDataFn = createServerFn({ method: "GET" })
-  .inputValidator((data: unknown) => z.object({ id: z.string().min(1) }).parse(data))
+  .validator((data: unknown) => z.object({ id: z.string().min(1) }).parse(data))
   .handler(
     async ({ data }): Promise<{ post: AdminPostDetail | null; tags: Tag[]; ogBrand: string }> => {
       const { getAdminPostById, getAllTags, getSiteSettings } = await import("@/db/queries");

@@ -21,5 +21,5 @@ export async function upsertPageImpl(input: PageUpsertInput): Promise<ActionResu
 }
 
 export const upsertPageFn = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => pageUpsertSchema.parse(data))
+  .validator((data: unknown) => pageUpsertSchema.parse(data))
   .handler(({ data }) => upsertPageImpl(data));

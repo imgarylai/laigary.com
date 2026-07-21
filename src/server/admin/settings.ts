@@ -15,5 +15,5 @@ export async function updateSettingsImpl(values: SettingsInput): Promise<ActionR
 }
 
 export const updateSettingsFn = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => settingsSchema.parse(data))
+  .validator((data: unknown) => settingsSchema.parse(data))
   .handler(({ data }) => updateSettingsImpl(data));

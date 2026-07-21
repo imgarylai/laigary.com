@@ -52,13 +52,13 @@ export async function deleteTagImpl(input: { id: string }): Promise<ActionResult
 }
 
 export const createTagFn = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => tagCreateSchema.parse(data))
+  .validator((data: unknown) => tagCreateSchema.parse(data))
   .handler(({ data }) => createTagImpl(data));
 
 export const updateTagFn = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => tagUpdateSchema.parse(data))
+  .validator((data: unknown) => tagUpdateSchema.parse(data))
   .handler(({ data }) => updateTagImpl(data));
 
 export const deleteTagFn = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => tagIdSchema.parse(data))
+  .validator((data: unknown) => tagIdSchema.parse(data))
   .handler(({ data }) => deleteTagImpl(data));
