@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { homeDataFn } from "@/server/public";
 import { AsciiRule, PromptLine } from "@/components/terminal/ui";
+import { TmPage, TmMeta, TmDirLink, TmDirCells } from "@/components/terminal/layout";
 import { useI18n } from "@/i18n/I18nProvider";
 import { FS_BLOG } from "@/lib/fsmap";
 import { fmtDate } from "@/lib/date";
@@ -46,13 +47,15 @@ function Home() {
   ];
 
   return (
-    <div className="tm-page">
-      <pre className="tm-whoami">{`$ whoami\n${whoami || "gary lai"}\n$ cat ./README.md`}</pre>
+    <TmPage>
+      <pre className="m-0 text-[11.5px] leading-[1.5] text-tm-muted">
+        {`$ whoami\n${whoami || "gary lai"}\n$ cat ./README.md`}
+      </pre>
 
-      {intro && <p className="tm-intro">{intro}</p>}
+      {intro && <p className="mt-3.5 mb-3 text-sm leading-[1.8]">{intro}</p>}
 
-      <AsciiRule className="tm-rule--pre" />
-      <div className="tm-meta">
+      <AsciiRule className="mt-[18px] mb-1" />
+      <TmMeta>
         <span>
           {postCount} {t("blog.home.postsUnit")}
         </span>
@@ -66,26 +69,24 @@ function Home() {
             <span>{t("blog.home.updated", { date: fmtDate(latestDate.slice(0, 10)) })}</span>
           </>
         )}
-      </div>
-      <AsciiRule className="tm-rule--post" />
+      </TmMeta>
+      <AsciiRule className="mt-1 mb-6" />
 
       <PromptLine>{FS_BLOG.home.prompt()}</PromptLine>
-      <div className="tm-dirlist">
+      <div className="mb-8 flex flex-col">
         {dirs.map((d) => (
-          <Link key={d.label} to={d.to} params={d.params} className="tm-home-dir">
-            <span className="tm-home-dir__label">{d.label}</span>
-            <span className="tm-home-dir__desc">{d.desc}</span>
-            <span className="tm-home-dir__meta">{d.meta}</span>
-          </Link>
+          <TmDirLink key={d.label} to={d.to} params={d.params}>
+            <TmDirCells label={d.label} desc={d.desc} meta={d.meta} />
+          </TmDirLink>
         ))}
       </div>
 
-      <p className="tm-cta">
-        <Link to="/posts" className="tm-cta__link">
+      <p className="text-xs leading-[1.8] text-tm-muted">
+        <Link to="/posts" className="text-tm-accent no-underline">
           $ cd ./posts
         </Link>
         {t("blog.home.cta")}
       </p>
-    </div>
+    </TmPage>
   );
 }

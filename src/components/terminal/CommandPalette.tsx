@@ -44,10 +44,10 @@ export function CommandPalette({
         onOpenChange(false);
       }}
     >
-      <span className={row.kind === "content" ? "tm-cmd-label--content" : "tm-cmd-label"}>
+      <span className={row.kind === "content" ? "shrink-0 text-tm-muted" : "shrink-0 text-tm-fg"}>
         {row.label}
       </span>
-      {row.sub && <span className="tm-cmd-sub">{row.sub}</span>}
+      {row.sub && <span className="truncate text-tm-fg">{row.sub}</span>}
     </CommandItem>
   );
 
