@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useReducer, useRef } from "react";
 import type { Editor } from "@tiptap/react";
 import { ImageIcon, SpinnerIcon, CropIcon } from "@phosphor-icons/react";
 import ReactCrop, { type Crop, type PixelCrop } from "react-image-crop";
@@ -16,84 +16,154 @@ import { Button } from "@/components/ui/button";
 import { useI18n } from "@/i18n/I18nProvider";
 import { uploadFile, getCroppedBlob, compressImage } from "@/lib/upload-client";
 
+// The dialog juggles file selection, an optional crop step, and the async
+// upload — a handful of interdependent flags that are clearer as one state
+// object driven by a reducer than as a pile of useState calls that have to be
+// reset in lockstep.
+type UploadState = {
+  open: boolean;
+  file: File | null;
+  preview: string | null;
+  cropping: boolean;
+  aspectRatio: number | undefined;
+  crop: Crop | undefined;
+  completedCrop: PixelCrop | undefined;
+  uploading: boolean;
+  error: string | null;
+};
+
+const initialState: UploadState = {
+  open: false,
+  file: null,
+  preview: null,
+  cropping: false,
+  aspectRatio: undefined,
+  crop: undefined,
+  completedCrop: undefined,
+  uploading: false,
+  error: null,
+};
+
+type UploadAction =
+  | { type: "open" }
+  | { type: "close" }
+  | { type: "selectFile"; file: File | null; preview: string | null }
+  | { type: "resetCrop" }
+  | { type: "startCrop" }
+  | { type: "cancelCrop" }
+  | { type: "setAspect"; aspectRatio: number | undefined }
+  | { type: "setCrop"; crop: Crop }
+  | { type: "setCompletedCrop"; completedCrop: PixelCrop }
+  | { type: "uploadStart" }
+  | { type: "uploadError"; error: string };
+
+function reducer(state: UploadState, action: UploadAction): UploadState {
+  switch (action.type) {
+    case "open":
+      return { ...state, open: true };
+    case "close":
+      // Fully reset when the dialog closes (or after a successful upload).
+      return initialState;
+    case "selectFile":
+      return {
+        ...state,
+        file: action.file,
+        preview: action.preview,
+        error: null,
+        cropping: false,
+        crop: undefined,
+        completedCrop: undefined,
+      };
+    case "resetCrop":
+      return { ...state, crop: undefined, completedCrop: undefined };
+    case "startCrop":
+      return { ...state, cropping: true };
+    case "cancelCrop":
+      return {
+        ...state,
+        cropping: false,
+        aspectRatio: undefined,
+        crop: undefined,
+        completedCrop: undefined,
+      };
+    case "setAspect":
+      return {
+        ...state,
+        aspectRatio: action.aspectRatio,
+        crop: undefined,
+        completedCrop: undefined,
+      };
+    case "setCrop":
+      return { ...state, crop: action.crop };
+    case "setCompletedCrop":
+      return { ...state, completedCrop: action.completedCrop };
+    case "uploadStart":
+      return { ...state, uploading: true, error: null };
+    case "uploadError":
+      return { ...state, uploading: false, error: action.error };
+    default:
+      return state;
+  }
+}
+
+const ASPECT_PRESETS = [
+  { label: "free", value: undefined },
+  { label: "1:1", value: 1 },
+  { label: "16:9", value: 16 / 9 },
+  { label: "4:3", value: 4 / 3 },
+] as const;
+
 export function ImageUploadDialog({ editor }: { editor: Editor }) {
   const { t } = useI18n();
-  const [open, setOpen] = useState(false);
-  const [file, setFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
-  const [cropping, setCropping] = useState(false);
-  const [aspectRatio, setAspectRatio] = useState<number | undefined>(undefined);
-  const [crop, setCrop] = useState<Crop>();
-  const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
-  const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [state, dispatch] = useReducer(reducer, initialState);
   const inputRef = useRef<HTMLInputElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const selected = e.target.files?.[0] ?? null;
-    setFile(selected);
-    setError(null);
-    setCropping(false);
-    setCrop(undefined);
-    setCompletedCrop(undefined);
-    if (selected) {
-      const url = URL.createObjectURL(selected);
-      setPreview(url);
-    } else {
-      setPreview(null);
-    }
+    dispatch({
+      type: "selectFile",
+      file: selected,
+      preview: selected ? URL.createObjectURL(selected) : null,
+    });
   }
-
-  function reset() {
-    setFile(null);
-    setPreview(null);
-    setError(null);
-    setUploading(false);
-    setCropping(false);
-    setAspectRatio(undefined);
-    setCrop(undefined);
-    setCompletedCrop(undefined);
-    if (inputRef.current) inputRef.current.value = "";
-  }
-
-  const onImageLoad = useCallback(() => {
-    // Reset crop when new image loads
-    setCrop(undefined);
-    setCompletedCrop(undefined);
-  }, []);
 
   async function handleUpload() {
-    if (!file) return;
-    setUploading(true);
-    setError(null);
+    if (!state.file) return;
+    dispatch({ type: "uploadStart" });
     try {
       let fileToUpload: File;
-
-      if (cropping && completedCrop && imgRef.current) {
-        const blob = await getCroppedBlob(imgRef.current, completedCrop);
-        const croppedFile = new File([blob], file.name, { type: "image/jpeg" });
+      if (state.cropping && state.completedCrop && imgRef.current) {
+        const blob = await getCroppedBlob(imgRef.current, state.completedCrop);
+        const croppedFile = new File([blob], state.file.name, { type: "image/jpeg" });
         fileToUpload = await compressImage(croppedFile);
       } else {
-        fileToUpload = await compressImage(file);
+        fileToUpload = await compressImage(state.file);
       }
-
       const url = await uploadFile(fileToUpload);
       editor.chain().focus().setImage({ src: url }).run();
-      reset();
-      setOpen(false);
+      if (inputRef.current) inputRef.current.value = "";
+      dispatch({ type: "close" });
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("editor.uploadFailed"));
-      setUploading(false);
+      dispatch({
+        type: "uploadError",
+        error: err instanceof Error ? err.message : t("editor.uploadFailed"),
+      });
     }
   }
+
+  const { open, file, preview, cropping, aspectRatio, crop, uploading, error } = state;
 
   return (
     <Dialog
       open={open}
       onOpenChange={(v) => {
-        setOpen(v);
-        if (!v) reset();
+        if (v) {
+          dispatch({ type: "open" });
+        } else {
+          if (inputRef.current) inputRef.current.value = "";
+          dispatch({ type: "close" });
+        }
       }}
     >
       <DialogTrigger
@@ -126,15 +196,15 @@ export function ImageUploadDialog({ editor }: { editor: Editor }) {
               {cropping ? (
                 <ReactCrop
                   crop={crop}
-                  onChange={setCrop}
-                  onComplete={setCompletedCrop}
+                  onChange={(c) => dispatch({ type: "setCrop", crop: c })}
+                  onComplete={(c) => dispatch({ type: "setCompletedCrop", completedCrop: c })}
                   aspect={aspectRatio}
                 >
                   <img
                     ref={imgRef}
                     src={preview}
                     alt="Crop"
-                    onLoad={onImageLoad}
+                    onLoad={() => dispatch({ type: "resetCrop" })}
                     className="max-w-full"
                   />
                 </ReactCrop>
@@ -145,39 +215,23 @@ export function ImageUploadDialog({ editor }: { editor: Editor }) {
             <div className="flex items-center gap-1">
               {cropping ? (
                 <>
-                  {(
-                    [
-                      { label: t("editor.cropFree"), value: undefined },
-                      { label: "1:1", value: 1 },
-                      { label: "16:9", value: 16 / 9 },
-                      { label: "4:3", value: 4 / 3 },
-                    ] as const
-                  ).map((preset) => (
+                  {ASPECT_PRESETS.map((preset) => (
                     <Button
                       key={preset.label}
                       type="button"
                       variant={aspectRatio === preset.value ? "secondary" : "outline"}
                       size="sm"
-                      onClick={() => {
-                        setAspectRatio(preset.value);
-                        setCrop(undefined);
-                        setCompletedCrop(undefined);
-                      }}
+                      onClick={() => dispatch({ type: "setAspect", aspectRatio: preset.value })}
                       disabled={uploading}
                     >
-                      {preset.label}
+                      {preset.label === "free" ? t("editor.cropFree") : preset.label}
                     </Button>
                   ))}
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
-                    onClick={() => {
-                      setCropping(false);
-                      setAspectRatio(undefined);
-                      setCrop(undefined);
-                      setCompletedCrop(undefined);
-                    }}
+                    onClick={() => dispatch({ type: "cancelCrop" })}
                     disabled={uploading}
                   >
                     {t("editor.cancelCrop")}
@@ -188,7 +242,7 @@ export function ImageUploadDialog({ editor }: { editor: Editor }) {
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => setCropping(true)}
+                  onClick={() => dispatch({ type: "startCrop" })}
                   disabled={uploading}
                 >
                   <CropIcon className="mr-1.5 size-4" />
@@ -203,7 +257,7 @@ export function ImageUploadDialog({ editor }: { editor: Editor }) {
           <Button
             type="button"
             variant="outline"
-            onClick={() => setOpen(false)}
+            onClick={() => dispatch({ type: "close" })}
             disabled={uploading}
           >
             {t("postForm.cancel")}
