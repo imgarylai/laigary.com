@@ -12,6 +12,7 @@ import {
 } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Kbd } from "@/components/ui/kbd";
+import { cn } from "@/lib/utils";
 import { useI18n } from "@/i18n/I18nProvider";
 import { breadcrumbForPath } from "@/lib/fsmap";
 
@@ -60,38 +61,46 @@ export function TmHeader({
   const toggleLocale = () => setLocale(locale === "zh-TW" ? "en" : "zh-TW");
   const localeLabel = locale === "zh-TW" ? "zh" : "en";
 
+  const drawerLink =
+    "w-full border-b border-dashed border-tm-border px-1 py-2.5 text-left text-[13px] text-tm-fg no-underline";
+
   return (
-    <header className="tm-header">
-      <div className="tm-header__left">
-        <Link to={homeTo} title="cd ~" className="tm-brand">
-          <span className="tm-dots">
-            <span className="tm-dot tm-dot--red" />
-            <span className="tm-dot tm-dot--yellow" />
-            <span className="tm-dot tm-dot--green" />
+    <header className="sticky top-0 z-20 flex h-14 items-center justify-between whitespace-nowrap border-b border-tm-border bg-tm-bg">
+      <div className="flex min-w-0 items-center gap-3 overflow-hidden px-3.5">
+        <Link
+          to={homeTo}
+          title="cd ~"
+          className="flex shrink-0 items-center gap-[9px] text-tm-fg no-underline"
+        >
+          <span className="flex shrink-0 gap-1.5">
+            <span className="size-2.5 rounded-full bg-[#ff5f57]" />
+            <span className="size-2.5 rounded-full bg-[#febc2e]" />
+            <span className="size-2.5 rounded-full bg-[#28c840]" />
           </span>
-          <span className="tm-brand__name">@laigary.com</span>
+          <span className="text-xs max-sm:hidden">@laigary.com</span>
         </Link>
-        <span className="tm-crumb">~/{breadcrumbForPath(pathname)}</span>
-        <span className="tm-sigil">$</span>
+        <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-xs text-tm-accent">
+          ~/{breadcrumbForPath(pathname)}
+        </span>
+        <span className="shrink-0 text-xs text-tm-dim">$</span>
       </div>
 
       {/* Desktop nav */}
-      <nav className="tm-nav">
+      <nav className="hidden items-center gap-3.5 whitespace-nowrap px-6 md:flex">
         {navItems.map((item) => (
           <Link
             key={item.label}
             to={item.to}
             params={item.params}
-            className={
-              isActive(pathname, item, homeTo)
-                ? "tm-nav__link tm-nav__link--active"
-                : "tm-nav__link"
-            }
+            className={cn(
+              "text-xs no-underline",
+              isActive(pathname, item, homeTo) ? "text-tm-accent" : "text-tm-muted",
+            )}
           >
             {item.label}
           </Link>
         ))}
-        <span className="tm-nav__sep" />
+        <span className="h-3.5 w-px bg-tm-border" />
         <Button
           type="button"
           variant="outline"
@@ -99,7 +108,7 @@ export function TmHeader({
           className="tm-btn"
           onClick={onOpenPalette}
         >
-          <MagnifyingGlassIcon size={ICON} /> <Kbd className="tm-btn--kbd">⌘K</Kbd>
+          <MagnifyingGlassIcon size={ICON} /> <Kbd className="text-tm-dim">⌘K</Kbd>
         </Button>
         <Button
           type="button"
@@ -124,7 +133,7 @@ export function TmHeader({
       </nav>
 
       {/* Mobile controls */}
-      <div className="tm-controls">
+      <div className="flex items-center gap-2 px-3.5 md:hidden">
         <Button
           type="button"
           variant="outline"
@@ -158,13 +167,17 @@ export function TmHeader({
       </div>
 
       {menuOpen && (
-        <div className="tm-drawer">
+        <div className="absolute inset-x-0 top-14 z-[9] flex flex-col border-b border-tm-border bg-tm-bg px-3.5 py-2.5">
           {navItems.map((item) => (
-            <Link key={item.label} to={item.to} params={item.params} className="tm-drawer__link">
+            <Link key={item.label} to={item.to} params={item.params} className={drawerLink}>
               $ cd ./{item.label === "~" ? "" : item.label}
             </Link>
           ))}
-          <button type="button" className="tm-drawer__link" onClick={toggleLocale}>
+          <button
+            type="button"
+            className={cn(drawerLink, "cursor-pointer bg-transparent")}
+            onClick={toggleLocale}
+          >
             $ locale --set {locale === "zh-TW" ? "en" : "zh-TW"}
           </button>
         </div>

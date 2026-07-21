@@ -1,6 +1,7 @@
-import { createFileRoute, notFound, Link } from "@tanstack/react-router";
+import { createFileRoute, notFound } from "@tanstack/react-router";
 import { sectionDataFn } from "@/server/public";
 import { AsciiRule, PromptLine } from "@/components/terminal/ui";
+import { TmPage, TmEmpty, TmRowLink, TmRowCells } from "@/components/terminal/layout";
 import { useI18n } from "@/i18n/I18nProvider";
 import { FS_INTERVIEW } from "@/lib/fsmap";
 
@@ -18,32 +19,31 @@ function SectionPage() {
   const { t } = useI18n();
 
   return (
-    <div className="tm-page">
-      <PromptLine className="tm-prompt--tight">
+    <TmPage>
+      <PromptLine className="mb-1.5">
         {FS_INTERVIEW.section.prompt({ sect: section.slug })}
       </PromptLine>
-      <h1 className="tm-section__title">{section.label}</h1>
-      {section.blurb && <p className="tm-section__lead">{section.blurb}</p>}
-      <AsciiRule className="tm-rule--sep" />
+      <h1 className="mb-1.5 text-lg">{section.label}</h1>
+      {section.blurb && (
+        <p className="mb-2 text-[12.5px] leading-[1.7] text-tm-muted">{section.blurb}</p>
+      )}
+      <AsciiRule className="mt-2 mb-5" />
 
       {notes.length === 0 ? (
-        <div className="tm-empty">{t("blog.interview.noneYet")}</div>
+        <TmEmpty>{t("blog.interview.noneYet")}</TmEmpty>
       ) : (
-        <div className="tm-rows">
+        <div className="flex flex-col">
           {notes.map((n) => (
-            <Link
+            <TmRowLink
               key={n.slug}
               to="/interview/$section/$slug"
               params={{ section: section.slug, slug: n.slug }}
-              className="tm-archive-row"
             >
-              <span className="tm-archive-row__date">{n.date.slice(5)}</span>
-              <span>{n.title}</span>
-              <span className="tm-archive-row__read">{n.minutes}m</span>
-            </Link>
+              <TmRowCells date={n.date.slice(5)} title={n.title} read={`${n.minutes}m`} />
+            </TmRowLink>
           ))}
         </div>
       )}
-    </div>
+    </TmPage>
   );
 }

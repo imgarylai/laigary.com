@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { tagsDataFn } from "@/server/public";
 import { PromptLine } from "@/components/terminal/ui";
+import { TmPage, TmEmpty } from "@/components/terminal/layout";
 import { useI18n } from "@/i18n/I18nProvider";
 import { FS_BLOG } from "@/lib/fsmap";
 
@@ -14,25 +15,30 @@ function TagsPage() {
   const { t } = useI18n();
 
   return (
-    <div className="tm-page--narrow">
-      <PromptLine className="tm-prompt--pad">{FS_BLOG.tags.prompt()}</PromptLine>
+    <TmPage narrow>
+      <PromptLine className="mb-4">{FS_BLOG.tags.prompt()}</PromptLine>
       {tags.length === 0 ? (
-        <div className="tm-empty">{t("blog.tags.noneYet")}</div>
+        <TmEmpty>{t("blog.tags.noneYet")}</TmEmpty>
       ) : (
-        <div className="tm-taglist">
+        <div className="flex flex-col">
           {tags.map((tag) => (
-            <Link key={tag.slug} to="/posts" search={{ tag: tag.slug }} className="tm-taglist__row">
+            <Link
+              key={tag.slug}
+              to="/posts"
+              search={{ tag: tag.slug }}
+              className="flex items-center justify-between border-b border-dashed border-tm-border px-1 py-2 text-[13px] text-tm-fg no-underline"
+            >
               <span>
-                <span className="tm-taglist__hash">#</span>
+                <span className="text-tm-accent">#</span>
                 {tag.name}
               </span>
-              <span className="tm-taglist__count">
+              <span className="text-[11px] text-tm-muted">
                 {tag.count} {t("blog.tags.postsUnit")}
               </span>
             </Link>
           ))}
         </div>
       )}
-    </div>
+    </TmPage>
   );
 }

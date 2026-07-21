@@ -8,6 +8,19 @@
 @plugin "@tailwindcss/typography";
 
 @theme inline {
+  /* Terminal palette exposed as Tailwind color utilities (bg-tm-bg,
+     text-tm-accent, border-tm-border, …). The values resolve through the live
+     `--tm-*` vars in terminal.css, so utilities stay theme-reactive. */
+  --color-tm-bg: var(--tm-bg);
+  --color-tm-fg: var(--tm-fg);
+  --color-tm-muted: var(--tm-muted);
+  --color-tm-subtle: var(--tm-subtle);
+  --color-tm-border: var(--tm-border);
+  --color-tm-accent: var(--tm-accent);
+  --color-tm-dim: var(--tm-dim);
+  --color-tm-warn: var(--tm-warn);
+  --color-tm-soft: var(--tm-soft);
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);

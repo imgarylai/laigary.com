@@ -1,6 +1,7 @@
 import { createFileRoute, notFound, Link } from "@tanstack/react-router";
 import { postDataFn } from "@/server/public";
 import { AsciiRule, PromptLine, ReadingProgress } from "@/components/terminal/ui";
+import { TmPage } from "@/components/terminal/layout";
 import { useI18n } from "@/i18n/I18nProvider";
 import { FS_BLOG } from "@/lib/fsmap";
 
@@ -20,27 +21,27 @@ function PostPage() {
   return (
     <>
       <ReadingProgress />
-      <article className="tm-page--narrow">
-        <Link to="/posts" className="tm-back">
+      <TmPage narrow>
+        <Link to="/posts" className="mb-[18px] inline-block text-xs text-tm-accent no-underline">
           $ cd ..
         </Link>
 
-        <PromptLine className="tm-prompt--tight">
-          {FS_BLOG.post.prompt({ slug: post.slug })}
-        </PromptLine>
-        <pre className="tm-frontmatter">
-          {`---\ntitle:   "${post.title}"\ndate:    ${post.date.slice(0, 10)}\nreading: ${post.readingTime} min\ntags:    [${post.tags.map((t) => t.name).join(", ")}]\n---`}
+        <PromptLine className="mb-1.5">{FS_BLOG.post.prompt({ slug: post.slug })}</PromptLine>
+        <pre className="m-0 mb-2 text-[11px] text-tm-muted">
+          {`---\ntitle:   "${post.title}"\ndate:    ${post.date.slice(0, 10)}\nreading: ${post.readingTime} min\ntags:    [${post.tags.map((tg) => tg.name).join(", ")}]\n---`}
         </pre>
 
-        <h1 className="tm-title">{post.title}</h1>
-        <AsciiRule className="tm-rule--head" />
+        <h1 className="mt-5 mb-2.5 text-[22px] font-bold leading-[1.35] tracking-[-0.01em]">
+          {post.title}
+        </h1>
+        <AsciiRule className="mb-[22px]" />
 
         {toc.length > 0 && (
-          <div className="tm-toc">
-            <div className="tm-toc__head">{t("blog.post.toc")}</div>
+          <div className="mb-[26px] border border-dashed border-tm-border px-3.5 py-2.5 text-[11.5px]">
+            <div className="mb-1 text-tm-muted">{t("blog.post.toc")}</div>
             {toc.map((h, i) => (
-              <div key={i} className="tm-toc__row">
-                <span className="tm-toc__num">{String(i + 1).padStart(2, "0")}</span>
+              <div key={i} className="text-tm-fg">
+                <span className="mr-2 text-tm-dim">{String(i + 1).padStart(2, "0")}</span>
                 {h}
               </div>
             ))}
@@ -50,24 +51,29 @@ function PostPage() {
         <div className="tm-prose" dangerouslySetInnerHTML={{ __html: html }} />
 
         {post.tags.length > 0 && (
-          <div className="tm-tags">
-            <span className="tm-tags__label">{t("blog.post.tagsLabel")}</span>
-            {post.tags.map((t) => (
-              <Link key={t.slug} to="/posts" search={{ tag: t.slug }} className="tm-tag">
-                #{t.name}
+          <div className="mt-8 border-t border-dashed border-tm-border pt-4">
+            <span className="mr-2.5 text-[11px] text-tm-muted">{t("blog.post.tagsLabel")}</span>
+            {post.tags.map((tg) => (
+              <Link
+                key={tg.slug}
+                to="/posts"
+                search={{ tag: tg.slug }}
+                className="mr-2.5 text-[11.5px] text-tm-accent no-underline"
+              >
+                #{tg.name}
               </Link>
             ))}
           </div>
         )}
 
-        <AsciiRule className="tm-rule--foot" />
-        <p className="tm-cta">
-          <Link to="/posts" className="tm-cta__link">
+        <AsciiRule className="mt-10 mb-3" />
+        <p className="text-xs leading-[1.7] text-tm-muted">
+          <Link to="/posts" className="text-tm-accent no-underline">
             $ cd ..
           </Link>
           {t("blog.post.back")}
         </p>
-      </article>
+      </TmPage>
     </>
   );
 }

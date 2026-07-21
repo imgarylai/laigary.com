@@ -2,6 +2,8 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { postsDataFn } from "@/server/public";
 import { Button } from "@/components/ui/button";
 import { AsciiRule, PromptLine } from "@/components/terminal/ui";
+import { TmPage, TmEmpty, TmRowLink, TmRowCells } from "@/components/terminal/layout";
+import { cn } from "@/lib/utils";
 import { useI18n } from "@/i18n/I18nProvider";
 import { FS_BLOG } from "@/lib/fsmap";
 
@@ -24,7 +26,7 @@ function Archive() {
   const navigate = useNavigate();
   const { t } = useI18n();
 
-  const filtered = tag ? posts.filter((p) => p.tags.some((t) => t.slug === tag)) : posts;
+  const filtered = tag ? posts.filter((p) => p.tags.some((pt) => pt.slug === tag)) : posts;
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page ?? 1, totalPages);
   const start = (safePage - 1) * PAGE_SIZE;
@@ -43,18 +45,21 @@ function Archive() {
   };
 
   return (
-    <div className="tm-page">
+    <TmPage>
       <PromptLine>
         {FS_BLOG.archive.prompt()}
         {totalPages > 1 ? ` | sed -n '${start + 1},${start + pageItems.length}p'` : ""}
       </PromptLine>
 
       {tag && (
-        <div className="tm-filter">
+        <div className="mb-5 flex items-center gap-2 text-[11.5px] text-tm-muted">
           <span>
-            {t("blog.archive.filteredBy")} <span className="tm-filter__tag">#{tag}</span>
+            {t("blog.archive.filteredBy")} <span className="text-tm-accent">#{tag}</span>
           </span>
-          <Link to="/posts" className="tm-clear">
+          <Link
+            to="/posts"
+            className="border border-tm-border px-[7px] py-0.5 text-[10.5px] text-tm-muted no-underline"
+          >
             {t("blog.archive.clear")}
           </Link>
         </div>
@@ -62,31 +67,24 @@ function Archive() {
 
       {years.map((y) => (
         <section key={y}>
-          <pre className="tm-year">./{y}/</pre>
+          <pre className="mt-7 mb-1.5 text-xs text-tm-accent">./{y}/</pre>
           {byYear.get(y)!.map((p) => (
-            <Link
-              key={p.slug}
-              to="/posts/$slug"
-              params={{ slug: p.slug }}
-              className="tm-archive-row"
-            >
-              <span className="tm-archive-row__date">{p.date.slice(5, 10)}</span>
-              <span>{p.title}</span>
-              <span className="tm-archive-row__read">{p.readingTime}m</span>
-            </Link>
+            <TmRowLink key={p.slug} to="/posts/$slug" params={{ slug: p.slug }}>
+              <TmRowCells date={p.date.slice(5, 10)} title={p.title} read={`${p.readingTime}m`} />
+            </TmRowLink>
           ))}
         </section>
       ))}
 
-      {filtered.length === 0 && <div className="tm-empty">{t("blog.archive.noMatch")}</div>}
+      {filtered.length === 0 && <TmEmpty>{t("blog.archive.noMatch")}</TmEmpty>}
 
       {totalPages > 1 && (
-        <div className="tm-pager">
-          <AsciiRule className="tm-prompt--pad" />
-          <div className="tm-pager__bar">
-            <span className="tm-pager__status">
+        <div className="mt-9">
+          <AsciiRule className="mb-4" />
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <span className="text-[11px] text-tm-muted">
               {t("blog.archive.page", { current: String(safePage), total: String(totalPages) })}
-              <span className="tm-pager__status-dim">
+              <span className="text-tm-dim">
                 {t("blog.archive.showing", {
                   from: String(start + 1),
                   to: String(start + pageItems.length),
@@ -94,7 +92,7 @@ function Archive() {
                 })}
               </span>
             </span>
-            <div className="tm-pager__group">
+            <div className="flex items-center gap-1.5">
               <Button
                 type="button"
                 variant="outline"
@@ -106,18 +104,17 @@ function Archive() {
                 {t("blog.archive.newer")}
               </Button>
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
-                <Button
+                <button
                   key={n}
                   type="button"
-                  variant="ghost"
-                  size="sm"
-                  className={
-                    n === safePage ? "tm-pager__num tm-pager__num--active" : "tm-pager__num"
-                  }
                   onClick={() => goPage(n)}
+                  className={cn(
+                    "min-w-[26px] cursor-pointer border border-transparent px-2 py-[3px] text-xs",
+                    n === safePage ? "border-tm-accent text-tm-accent" : "text-tm-muted",
+                  )}
                 >
                   {n}
-                </Button>
+                </button>
               ))}
               <Button
                 type="button"
@@ -133,6 +130,6 @@ function Archive() {
           </div>
         </div>
       )}
-    </div>
+    </TmPage>
   );
 }
