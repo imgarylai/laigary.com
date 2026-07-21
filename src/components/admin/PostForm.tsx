@@ -1,11 +1,11 @@
 import { useForm } from "react-hook-form";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useNavigate, useRouter } from "@tanstack/react-router";
-import { toWadeGiles } from "use-wg";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/i18n/I18nProvider";
 import { useSaveShortcut } from "@/hooks/use-save-shortcut";
+import { slugify } from "@/lib/slug";
 import { createPostFn, updatePostFn } from "@/server/admin/posts";
 import {
   postFormSchema,
@@ -19,10 +19,6 @@ import {
   CoverImageField,
 } from "./form-fields";
 import type { TagOption } from "./TagsCombobox";
-
-function slugify(text: string): string {
-  return toWadeGiles(text, { urlSafe: true }).text;
-}
 
 export function PostForm({
   initialData,
