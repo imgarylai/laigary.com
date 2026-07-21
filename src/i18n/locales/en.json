@@ -311,7 +311,9 @@
       "placeholderInterview": "search notes, sections…",
       "pages": "pages",
       "content": "content",
-      "noMatches": "no matches."
+      "noMatches": "no matches.",
+      "typeToSearch": "type to search…",
+      "searching": "searching…"
     },
     "home": {
       "descPosts": "life notes & essays",

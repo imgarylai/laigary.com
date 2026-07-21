@@ -1,6 +1,7 @@
 import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { blogShellFn } from "@/server/public";
+import { searchPostsFn } from "@/server/posts";
 import { TerminalShell } from "@/components/terminal/TerminalShell";
 import type { NavItem } from "@/components/terminal/TmHeader";
 import type { PaletteRow } from "@/components/terminal/CommandPalette";
@@ -26,12 +27,12 @@ const NAV_ITEMS: NavItem[] = [
 ];
 
 function SiteLayout() {
-  const { posts } = Route.useLoaderData();
   const navigate = useNavigate();
   const { t } = useI18n();
 
-  const paletteRows = useMemo<PaletteRow[]>(() => {
-    const pages: PaletteRow[] = [
+  // Static routes only — pre-loaded and filtered locally in the palette.
+  const palettePages = useMemo<PaletteRow[]>(
+    () => [
       {
         kind: "page",
         label: fsCmd(FS_BLOG.home),
@@ -62,22 +63,31 @@ function SiteLayout() {
         haystack: "about contact",
         onSelect: () => navigate({ to: "/$slug", params: { slug: "about" } }),
       },
-    ];
-    const postRows: PaletteRow[] = posts.map((p) => ({
-      kind: "content",
-      label: fsCmd(FS_BLOG.post, { slug: p.slug }),
-      sub: p.title,
-      haystack: `${p.title} ${p.slug} ${p.tags.join(" ")}`,
-      onSelect: () => navigate({ to: "/posts/$slug", params: { slug: p.slug } }),
-    }));
-    return [...pages, ...postRows];
-  }, [posts, navigate]);
+    ],
+    [navigate],
+  );
+
+  // Posts are searched on demand (title match) — never pre-loaded.
+  const paletteSearch = useCallback(
+    async (query: string): Promise<PaletteRow[]> => {
+      const { posts } = await searchPostsFn({ data: { q: query, limit: 20 } });
+      return posts.map((p) => ({
+        kind: "content",
+        label: fsCmd(FS_BLOG.post, { slug: p.slug }),
+        sub: p.title,
+        haystack: `${p.title} ${p.slug}`,
+        onSelect: () => navigate({ to: "/posts/$slug", params: { slug: p.slug } }),
+      }));
+    },
+    [navigate],
+  );
 
   return (
     <TerminalShell
       homeTo="/"
       navItems={NAV_ITEMS}
-      paletteRows={paletteRows}
+      palettePages={palettePages}
+      paletteSearch={paletteSearch}
       palettePlaceholder={t("blog.search.placeholder")}
     >
       <Outlet />

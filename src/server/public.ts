@@ -30,18 +30,13 @@ export function mapInterviewSections(sections: InterviewSectionRow[], counts: Ma
 
 // ── Blog main site ──────────────────────────────────────────────────────
 
-// Per-navigation shell data: brand name + a lightweight post index the command
-// palette searches (slug / title / tags only — no bodies).
+// Per-navigation shell data: just the brand name. The command palette used to
+// receive the whole post index here (pre-loaded on every navigation); it now
+// searches posts on demand via `searchPostsFn`, so the shell stays lightweight.
 export const blogShellFn = createServerFn({ method: "GET" }).handler(async () => {
-  const { getSiteSettings, getPublishedPosts } = await import("@/db/queries");
-  const [settings, { posts }] = await Promise.all([
-    getSiteSettings(),
-    getPublishedPosts({ limit: 500 }),
-  ]);
-  return {
-    siteName: settings.site_name || DEFAULT_SITE_NAME,
-    posts: posts.map((p) => ({ slug: p.slug, title: p.title, tags: p.tags.map((t) => t.name) })),
-  };
+  const { getSiteSettings } = await import("@/db/queries");
+  const settings = await getSiteSettings();
+  return { siteName: settings.site_name || DEFAULT_SITE_NAME };
 });
 
 // Home: whoami/intro from settings + headline counts and latest-post date.
@@ -99,19 +94,24 @@ export const pageDataFn = createServerFn({ method: "GET" })
 
 // ── Interview sub-site ──────────────────────────────────────────────────
 
-// Per-navigation shell data for the interview namespace: a note index the
-// interview command palette searches.
+// Per-navigation shell data for the interview namespace: just the section list
+// (drives the header nav + palette page rows). Notes are searched on demand via
+// `searchInterviewNotesFn` rather than pre-loaded on every navigation.
 export const interviewShellFn = createServerFn({ method: "GET" }).handler(async () => {
-  const { getInterviewSections, getInterviewNotesBySection } = await import("@/db/queries");
+  const { getInterviewSections } = await import("@/db/queries");
   const sections = await getInterviewSections();
-  const perSection = await Promise.all(
-    sections.map((s) => getInterviewNotesBySection(s.slug, { limit: 500 })),
-  );
-  const notes = sections.flatMap((s, i) =>
-    perSection[i].notes.map((n) => ({ slug: n.slug, section: s.slug, title: n.title })),
-  );
-  return { sections: sections.map((s) => ({ slug: s.slug, label: s.label })), notes };
+  return { sections: sections.map((s) => ({ slug: s.slug, label: s.label })) };
 });
+
+// On-demand note search for the interview ⌘K palette (title match across all
+// sections). Called only after the user types (and, for IME input, after the
+// composition commits) — see CommandPalette.
+export const searchInterviewNotesFn = createServerFn({ method: "GET" })
+  .validator((data: unknown) => z.object({ q: z.string().min(1) }).parse(data))
+  .handler(async ({ data }) => {
+    const { searchPublishedInterviewNotes } = await import("@/db/queries");
+    return searchPublishedInterviewNotes(data.q, 20);
+  });
 
 export const interviewDataFn = createServerFn({ method: "GET" }).handler(async () => {
   const { getInterviewSections, getInterviewNoteCountsBySection, getRecentInterviewNotes } =

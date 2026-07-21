@@ -1,4 +1,4 @@
-import { eq, desc, count, and, asc } from "drizzle-orm";
+import { eq, desc, count, and, asc, like } from "drizzle-orm";
 import { interviewSections, interviewNotes, interviewNoteTags, tags } from "@/db/schema";
 import { getDb, inClause, type Db } from "./_db";
 import { fetchTagsByParentIds, type PostTag } from "./_tags";
@@ -126,6 +126,27 @@ export async function getInterviewNotesBySection(
 
   const notes = await attachTags(db, rows);
   return { notes, total };
+}
+
+// Cross-section title search for published notes — backs the ⌘K palette's
+// on-demand content search (the palette no longer pre-loads every note). Title
+// only, matching the posts search; ordered newest-first, capped by `limit`.
+export async function searchPublishedInterviewNotes(
+  query: string,
+  limit = 20,
+): Promise<{ slug: string; section: string; title: string }[]> {
+  const db = await getDb();
+  return db
+    .select({
+      slug: interviewNotes.slug,
+      title: interviewNotes.title,
+      section: interviewSections.slug,
+    })
+    .from(interviewNotes)
+    .innerJoin(interviewSections, eq(interviewSections.id, interviewNotes.sectionId))
+    .where(and(eq(interviewNotes.status, "published"), like(interviewNotes.title, `%${query}%`)))
+    .orderBy(desc(interviewNotes.createdAt))
+    .limit(limit);
 }
 
 export async function getTagsInSection(
