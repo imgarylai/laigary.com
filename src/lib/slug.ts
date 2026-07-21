@@ -9,6 +9,10 @@ import { toWadeGiles } from "use-wg";
  * leaves punctuation (". + , &" …) intact, so "1. Test" would become "1.-test"
  * and fail validation. Collapsing every run of non-alphanumerics into a single
  * hyphen (and trimming the ends) fixes that: "1. Test" → "1-test".
+ *
+ * The extra cleanup is a workaround for use-wg's urlSafe leaving punctuation in:
+ * https://github.com/imgarylai/use-wg/issues/33 — once that lands, this can go
+ * back to just `toWadeGiles(text, { urlSafe: true }).text`.
  */
 export function slugify(text: string): string {
   return toWadeGiles(text, { urlSafe: true })
