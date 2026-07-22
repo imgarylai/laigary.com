@@ -19,14 +19,17 @@ function InterviewLayout() {
   const { t } = useI18n();
   const navigate = useNavigate();
 
+  // Drawer commands mirror the palette labels (fsCmd), so the back-to-blog
+  // item reads `cd ../blog` instead of the nonsensical `cd ./← blog`.
   const navItems: NavItem[] = [
-    { label: "~", to: "/interview" },
+    { label: "~", to: "/interview", cmd: fsCmd(FS_INTERVIEW.home) },
     ...sections.map((s) => ({
       label: s.slug,
       to: "/interview/$section",
       params: { section: s.slug },
+      cmd: fsCmd(FS_INTERVIEW.section, { sect: s.slug }),
     })),
-    { label: "← blog", to: "/" },
+    { label: "← blog", to: "/", cmd: "cd ../blog" },
   ];
 
   // Sections + fixed routes only — pre-loaded and filtered locally.

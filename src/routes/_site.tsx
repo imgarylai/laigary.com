@@ -18,12 +18,19 @@ export const Route = createFileRoute("/_site")({
   component: SiteLayout,
 });
 
+// Drawer commands come from fsmap (fsCmd) so files render as `cat` — the
+// about page is `cat ./about.md`, not `cd ./about`.
 const NAV_ITEMS: NavItem[] = [
-  { label: "~", to: "/" },
-  { label: "posts", to: "/posts" },
-  { label: "tags", to: "/tags" },
-  { label: "interview", to: "/interview" },
-  { label: "about", to: "/$slug", params: { slug: "about" } },
+  { label: "~", to: "/", cmd: fsCmd(FS_BLOG.home) },
+  { label: "posts", to: "/posts", cmd: fsCmd(FS_BLOG.archive) },
+  { label: "tags", to: "/tags", cmd: fsCmd(FS_BLOG.tags) },
+  { label: "interview", to: "/interview", cmd: fsCmd(FS_INTERVIEW.home) },
+  {
+    label: "about",
+    to: "/$slug",
+    params: { slug: "about" },
+    cmd: fsCmd(FS_BLOG.page, { slug: "about" }),
+  },
 ];
 
 function SiteLayout() {
