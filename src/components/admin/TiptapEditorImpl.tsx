@@ -12,6 +12,7 @@ import { useI18n } from "@/i18n/I18nProvider";
 import { createExtensions } from "./editor/extensions";
 import { Toolbar } from "./editor/Toolbar";
 import { CharacterCount } from "./editor/CharacterCount";
+import { LinkDialog } from "./editor/LinkDialog";
 
 export default function TiptapEditorImpl({
   value,
@@ -23,6 +24,7 @@ export default function TiptapEditorImpl({
   const { t } = useI18n();
   const [showPreview, setShowPreview] = useState(true);
   const [previewHtml, setPreviewHtml] = useState("");
+  const [linkOpen, setLinkOpen] = useState(false);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -75,6 +77,12 @@ export default function TiptapEditorImpl({
     if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "b") {
       e.stopPropagation();
     }
+    // ⌘K / Ctrl+K → link dialog (paste a URL or search posts/notes by title).
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+      e.preventDefault();
+      e.stopPropagation();
+      setLinkOpen(true);
+    }
   }
 
   return (
@@ -92,7 +100,8 @@ export default function TiptapEditorImpl({
         </Button>
       </div>
 
-      <Toolbar editor={editor} />
+      <Toolbar editor={editor} onOpenLink={() => setLinkOpen(true)} />
+      <LinkDialog editor={editor} open={linkOpen} onOpenChange={setLinkOpen} />
 
       <div className={showPreview ? "grid grid-cols-2 gap-4" : ""}>
         <div className="rounded-md border">

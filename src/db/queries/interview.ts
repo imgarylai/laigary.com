@@ -149,6 +149,27 @@ export async function searchPublishedInterviewNotes(
     .limit(limit);
 }
 
+// Admin title search across every section and status (the editor's link
+// dialog links to drafts too — the UI badges them). Newest-edited first.
+export async function searchAdminInterviewNotes(
+  query: string,
+  limit = 10,
+): Promise<{ slug: string; title: string; status: string; sectionSlug: string }[]> {
+  const db = await getDb();
+  return db
+    .select({
+      slug: interviewNotes.slug,
+      title: interviewNotes.title,
+      status: interviewNotes.status,
+      sectionSlug: interviewSections.slug,
+    })
+    .from(interviewNotes)
+    .innerJoin(interviewSections, eq(interviewSections.id, interviewNotes.sectionId))
+    .where(like(interviewNotes.title, `%${query}%`))
+    .orderBy(desc(interviewNotes.updatedAt))
+    .limit(limit);
+}
+
 export async function getTagsInSection(
   sectionSlug: string,
 ): Promise<{ name: string; slug: string }[]> {

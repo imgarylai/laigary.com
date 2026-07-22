@@ -34,15 +34,8 @@ import { ColorPickerPopover } from "./ColorPickerPopover";
 import { YouTubeDialog } from "./YouTubeDialog";
 import { ImageUploadDialog } from "./ImageUploadDialog";
 
-export function Toolbar({ editor }: { editor: Editor }) {
+export function Toolbar({ editor, onOpenLink }: { editor: Editor; onOpenLink: () => void }) {
   const { t } = useI18n();
-
-  function addLink() {
-    const url = window.prompt("URL");
-    if (url) {
-      editor.chain().focus().setLink({ href: url }).run();
-    }
-  }
 
   return (
     <div className="flex flex-wrap items-center gap-0.5 rounded-md border p-1">
@@ -147,7 +140,11 @@ export function Toolbar({ editor }: { editor: Editor }) {
       <Separator orientation="vertical" className="mx-0.5 h-5" />
 
       {/* Code */}
-      <ToolbarButton onClick={addLink} isActive={editor.isActive("link")} title={t("editor.link")}>
+      <ToolbarButton
+        onClick={onOpenLink}
+        isActive={editor.isActive("link")}
+        title={`${t("editor.link")} (⌘K)`}
+      >
         <LinkIcon className="size-4" />
       </ToolbarButton>
       <ToolbarButton
