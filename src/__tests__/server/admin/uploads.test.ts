@@ -104,6 +104,12 @@ describe("confirmUploadImpl", () => {
     const res = await confirmUploadImpl(confirmInput);
     expect(res.ok).toBe(false);
   });
+
+  it("rethrows non-conflict record errors untouched", async () => {
+    mockHead(true);
+    vi.mocked(queries.recordUpload).mockRejectedValue(new Error("disk I/O error"));
+    await expect(confirmUploadImpl(confirmInput)).rejects.toThrow("disk I/O error");
+  });
 });
 
 describe("upload schemas", () => {
