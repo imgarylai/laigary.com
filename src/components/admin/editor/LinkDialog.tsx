@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useReducer, useRef } from "react";
 import type { Editor } from "@tiptap/react";
 import { ArrowBendDownLeftIcon, FileTextIcon, LinkIcon, NoteIcon } from "@phosphor-icons/react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -17,6 +17,64 @@ export function isUrlLike(value: string): boolean {
   return /^(https?:\/\/|\/|#|mailto:)/i.test(value.trim());
 }
 
+// Dialog state lives in one reducer so multi-field transitions (a search
+// resolving, the dialog reopening) stay atomic instead of being spread across
+// half a dozen setState calls.
+type State = {
+  query: string;
+  committed: string;
+  composing: boolean;
+  results: LinkTarget[];
+  loading: boolean;
+  active: number;
+};
+
+type Action =
+  | { type: "reset"; query: string }
+  | { type: "typed"; query: string }
+  | { type: "composing"; composing: boolean }
+  | { type: "committed"; committed: string }
+  | { type: "searchStarted" }
+  | { type: "searchResolved"; results: LinkTarget[] }
+  | { type: "searchCleared" }
+  | { type: "activeMoved"; delta: number }
+  | { type: "activeSet"; index: number };
+
+const initialState: State = {
+  query: "",
+  committed: "",
+  composing: false,
+  results: [],
+  loading: false,
+  active: 0,
+};
+
+export function linkDialogReducer(state: State, action: Action): State {
+  switch (action.type) {
+    case "reset":
+      return { ...initialState, query: action.query };
+    case "typed":
+      return { ...state, query: action.query };
+    case "composing":
+      return { ...state, composing: action.composing };
+    case "committed":
+      return { ...state, committed: action.committed };
+    case "searchStarted":
+      return { ...state, loading: true };
+    case "searchResolved":
+      return { ...state, results: action.results, loading: false, active: 0 };
+    case "searchCleared":
+      return { ...state, results: [], loading: false, active: 0 };
+    case "activeMoved":
+      return {
+        ...state,
+        active: Math.min(Math.max(state.active + action.delta, 0), state.results.length - 1),
+      };
+    case "activeSet":
+      return { ...state, active: action.index };
+  }
+}
+
 // Insert-or-edit link dialog (⌘K in the editor, or the toolbar link button).
 // One input, two modes: paste a URL, or type to search posts & notes by title
 // and link to the picked article. Search is debounced and IME-safe — nothing
@@ -31,12 +89,8 @@ export function LinkDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const { t } = useI18n();
-  const [query, setQuery] = useState("");
-  const [committed, setCommitted] = useState("");
-  const [composing, setComposing] = useState(false);
-  const [results, setResults] = useState<LinkTarget[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [active, setActive] = useState(0);
+  const [state, dispatch] = useReducer(linkDialogReducer, initialState);
+  const { query, committed, composing, results, loading, active } = state;
   const requestId = useRef(0);
 
   const editingExisting = open && editor.isActive("link");
@@ -45,42 +99,33 @@ export function LinkDialog({
   // (edit mode); otherwise start clean.
   useEffect(() => {
     if (!open) return;
-    const href: string = editor.getAttributes("link").href ?? "";
-    setQuery(href);
-    setCommitted("");
-    setResults([]);
-    setActive(0);
-    setLoading(false);
-    // The dialog animates in; focus + select once the input exists.
+    dispatch({ type: "reset", query: editor.getAttributes("link").href ?? "" });
   }, [open, editor]);
 
   // Debounce query → committed, gated on IME composition.
   useEffect(() => {
     if (!open || composing) return;
-    const id = setTimeout(() => setCommitted(query.trim()), DEBOUNCE_MS);
+    const id = setTimeout(
+      () => dispatch({ type: "committed", committed: query.trim() }),
+      DEBOUNCE_MS,
+    );
     return () => clearTimeout(id);
   }, [query, composing, open]);
 
   // Title search for non-URL queries.
   useEffect(() => {
     if (!committed || isUrlLike(committed)) {
-      setResults([]);
-      setLoading(false);
+      dispatch({ type: "searchCleared" });
       return;
     }
     const id = ++requestId.current;
-    setLoading(true);
+    dispatch({ type: "searchStarted" });
     searchLinkTargetsFn({ data: { q: committed } })
       .then((rows) => {
-        if (id !== requestId.current) return;
-        setResults(rows);
-        setActive(0);
+        if (id === requestId.current) dispatch({ type: "searchResolved", results: rows });
       })
       .catch(() => {
-        if (id === requestId.current) setResults([]);
-      })
-      .finally(() => {
-        if (id === requestId.current) setLoading(false);
+        if (id === requestId.current) dispatch({ type: "searchResolved", results: [] });
       });
   }, [committed]);
 
@@ -119,14 +164,15 @@ export function LinkDialog({
       else if (results[active]) apply(results[active].url, results[active].title);
     } else if (e.key === "ArrowDown") {
       e.preventDefault();
-      setActive((i) => Math.min(i + 1, results.length - 1));
+      dispatch({ type: "activeMoved", delta: 1 });
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      setActive((i) => Math.max(i - 1, 0));
+      dispatch({ type: "activeMoved", delta: -1 });
     }
   }
 
   const showEmpty = committed && !urlMode && !loading && results.length === 0;
+  const rowClass = "h-auto w-full justify-start gap-2 rounded-none px-3 py-2 text-sm font-normal";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -138,37 +184,36 @@ export function LinkDialog({
         <Input
           autoFocus
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onCompositionStart={() => setComposing(true)}
-          onCompositionEnd={() => setComposing(false)}
+          onChange={(e) => dispatch({ type: "typed", query: e.target.value })}
+          onCompositionStart={() => dispatch({ type: "composing", composing: true })}
+          onCompositionEnd={() => dispatch({ type: "composing", composing: false })}
           onKeyDown={handleKeyDown}
           placeholder={t("editor.linkDialogPlaceholder")}
         />
 
         {urlMode && query.trim() && (
-          <button
+          <Button
             type="button"
+            variant="ghost"
             onClick={() => apply(query.trim(), query.trim())}
-            className="flex w-full items-center gap-2 rounded-md border px-3 py-2 text-left text-sm hover:bg-muted"
+            className={cn(rowClass, "rounded-md border")}
           >
             <LinkIcon className="size-4 shrink-0 text-muted-foreground" />
             <span className="truncate">{query.trim()}</span>
             <ArrowBendDownLeftIcon className="ml-auto size-3.5 shrink-0 text-muted-foreground" />
-          </button>
+          </Button>
         )}
 
         {!urlMode && (loading || results.length > 0 || showEmpty) && (
           <div className="max-h-64 overflow-y-auto rounded-md border">
             {results.map((r, i) => (
-              <button
+              <Button
                 key={r.url}
                 type="button"
+                variant="ghost"
                 onClick={() => apply(r.url, r.title)}
-                onMouseEnter={() => setActive(i)}
-                className={cn(
-                  "flex w-full items-center gap-2 border-b px-3 py-2 text-left text-sm last:border-b-0",
-                  i === active && "bg-muted",
-                )}
+                onMouseEnter={() => dispatch({ type: "activeSet", index: i })}
+                className={cn(rowClass, "border-b last:border-b-0", i === active && "bg-muted")}
               >
                 {r.type === "post" ? (
                   <FileTextIcon className="size-4 shrink-0 text-muted-foreground" />
@@ -186,7 +231,7 @@ export function LinkDialog({
                     {r.type === "post" ? t("editor.linkPostBadge") : r.context}
                   </Badge>
                 </span>
-              </button>
+              </Button>
             ))}
             {loading && results.length === 0 && (
               <div className="px-3 py-4 text-center text-sm text-muted-foreground">
