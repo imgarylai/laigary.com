@@ -6,12 +6,10 @@ import {
   loadCjkSubset,
   loadOgFonts,
   parseTruetypeUrl,
-  resetBundledFontsCache,
 } from "@/lib/og/fonts";
 import { siteTemplate } from "@/lib/og/templates";
 
 afterEach(() => {
-  resetBundledFontsCache();
   vi.restoreAllMocks();
 });
 
@@ -90,31 +88,17 @@ describe("loadCjkSubset", () => {
 });
 
 describe("loadBundledFonts", () => {
-  it("should fetch regular and bold from the given origin when called", async () => {
-    const fetchFn = vi.fn(async () => okResponse(ttfBytes()));
-    const fonts = await loadBundledFonts("https://example.com", fetchFn);
+  it("should decode both weights from the inlined assets when called", () => {
+    const fonts = loadBundledFonts();
     expect(fonts.map((f) => f.weight)).toEqual([400, 700]);
-    const urls = fetchFn.mock.calls.map((c) => c[0]);
-    expect(urls).toContain("https://example.com/fonts/JetBrainsMono-Regular.ttf");
-    expect(urls).toContain("https://example.com/fonts/JetBrainsMono-Bold.ttf");
+    // real TTFs: sfnt version 0x00010000 in the first four bytes
+    const head = new Uint8Array(fonts[0].data.slice(0, 4));
+    expect([...head]).toEqual([0, 1, 0, 0]);
+    expect(fonts[0].data.byteLength).toBeGreaterThan(100_000);
   });
 
-  it("should reuse the cached fonts when called twice", async () => {
-    const fetchFn = vi.fn(async () => okResponse(ttfBytes()));
-    await loadBundledFonts("https://example.com", fetchFn);
-    await loadBundledFonts("https://example.com", fetchFn);
-    expect(fetchFn).toHaveBeenCalledTimes(2);
-  });
-
-  it("should retry after a failure when the first load rejects", async () => {
-    const fetchFn = vi
-      .fn(async () => okResponse(ttfBytes()))
-      .mockResolvedValueOnce(new Response("nope", { status: 404 }));
-    await expect(loadBundledFonts("https://example.com", fetchFn)).rejects.toThrow(
-      "Failed to load bundled font",
-    );
-    const fonts = await loadBundledFonts("https://example.com", fetchFn);
-    expect(fonts).toHaveLength(2);
+  it("should return the same cached array when called twice", () => {
+    expect(loadBundledFonts()).toBe(loadBundledFonts());
   });
 });
 
@@ -122,8 +106,9 @@ describe("loadOgFonts", () => {
   it("should skip cjk fonts when the tree is ascii-only", async () => {
     const fetchFn = vi.fn(async () => okResponse(ttfBytes()));
     const node = siteTemplate({ siteName: "a", description: "b", siteUrl: "c" });
-    const fonts = await loadOgFonts("https://example.com", node, fetchFn);
+    const fonts = await loadOgFonts(node, fetchFn);
     expect(fonts.map((f) => f.name)).toEqual(["JetBrains Mono", "JetBrains Mono"]);
+    expect(fetchFn).not.toHaveBeenCalled();
   });
 
   it("should append cjk subsets when the tree contains cjk glyphs", async () => {
@@ -133,7 +118,7 @@ describe("loadOgFonts", () => {
         : okResponse(ttfBytes()),
     );
     const node = siteTemplate({ siteName: "啟靈", description: "b", siteUrl: "c" });
-    const fonts = await loadOgFonts("https://example.com", node, fetchFn);
+    const fonts = await loadOgFonts(node, fetchFn);
     expect(fonts.map((f) => f.name)).toEqual([
       "JetBrains Mono",
       "JetBrains Mono",
