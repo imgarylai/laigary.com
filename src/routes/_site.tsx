@@ -20,7 +20,7 @@ export const Route = createFileRoute("/_site")({
 
 const NAV_ITEMS: NavItem[] = [
   { label: "~", to: "/" },
-  { label: "archive", to: "/posts" },
+  { label: "posts", to: "/posts" },
   { label: "tags", to: "/tags" },
   { label: "interview", to: "/interview" },
   { label: "about", to: "/$slug", params: { slug: "about" } },
