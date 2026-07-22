@@ -37,3 +37,16 @@ describe("ogMeta", () => {
     expect(tags.some((t) => t.property === "og:description")).toBe(false);
   });
 });
+
+describe("og:image dimensions", () => {
+  it("should declare 1200x630 when the image is an own og endpoint", () => {
+    const tags = ogMeta(base);
+    expect(find(tags, "content", "og:image:width")).toBe("1200");
+    expect(find(tags, "content", "og:image:height")).toBe("630");
+  });
+
+  it("should omit dimensions when the image is an external cover", () => {
+    const tags = ogMeta({ ...base, image: "https://assets.laigary.com/cover.png" });
+    expect(tags.some((t) => t.property === "og:image:width")).toBe(false);
+  });
+});
