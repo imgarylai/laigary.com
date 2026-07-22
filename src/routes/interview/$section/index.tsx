@@ -3,6 +3,8 @@ import { sectionDataFn } from "@/server/public";
 import { AsciiRule, PromptLine } from "@/components/terminal/ui";
 import { TmPage, TmEmpty, TmRowLink, TmRowCells } from "@/components/terminal/layout";
 import { TmPager } from "@/components/terminal/Pager";
+import { SITE_ORIGIN } from "@/lib/json-ld";
+import { ogMeta } from "@/lib/og-meta";
 import { useI18n } from "@/i18n/I18nProvider";
 import { FS_INTERVIEW } from "@/lib/fsmap";
 
@@ -21,7 +23,18 @@ export const Route = createFileRoute("/interview/$section/")({
     return data;
   },
   head: ({ loaderData }) => ({
-    meta: loaderData ? [{ title: loaderData.pageTitle }] : [],
+    meta: loaderData
+      ? [
+          { title: loaderData.pageTitle },
+          ...ogMeta({
+            title: loaderData.section.label,
+            siteName: loaderData.siteName,
+            url: `${SITE_ORIGIN}/interview/${loaderData.section.slug}`,
+            image: `${SITE_ORIGIN}/api/og`,
+            type: "website",
+          }),
+        ]
+      : [],
   }),
   component: SectionPage,
 });

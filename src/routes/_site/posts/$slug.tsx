@@ -1,6 +1,7 @@
 import { createFileRoute, notFound, Link } from "@tanstack/react-router";
 import { postDataFn } from "@/server/public";
-import { blogPostingLd, breadcrumbLd, serializeJsonLd } from "@/lib/json-ld";
+import { SITE_ORIGIN, blogPostingLd, breadcrumbLd, serializeJsonLd } from "@/lib/json-ld";
+import { ogMeta } from "@/lib/og-meta";
 import { AsciiRule, PromptLine, ReadingProgress } from "@/components/terminal/ui";
 import { TmPage } from "@/components/terminal/layout";
 import { useI18n } from "@/i18n/I18nProvider";
@@ -13,7 +14,21 @@ export const Route = createFileRoute("/_site/posts/$slug")({
     return data;
   },
   head: ({ loaderData }) => ({
-    meta: loaderData ? [{ title: loaderData.pageTitle }] : [],
+    meta: loaderData
+      ? [
+          { title: loaderData.pageTitle },
+          ...ogMeta({
+            title: loaderData.post.title,
+            siteName: loaderData.siteName,
+            url: `${SITE_ORIGIN}/posts/${loaderData.post.slug}`,
+            image:
+              loaderData.post.coverImageUrl ??
+              `${SITE_ORIGIN}/api/og/posts/${loaderData.post.slug}`,
+            type: "article",
+            description: loaderData.post.excerpt ?? undefined,
+          }),
+        ]
+      : [],
     scripts: loaderData
       ? [
           {
