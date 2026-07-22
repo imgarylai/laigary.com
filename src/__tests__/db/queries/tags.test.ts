@@ -2,6 +2,7 @@
 
 import { describe, it, expect } from "vitest";
 import { setupTestDb } from "../helpers/test-db";
+import { seedNote, seedSection } from "../../factories";
 
 setupTestDb();
 
@@ -64,5 +65,42 @@ describe("getAllTags", () => {
     const all = await getAllTags();
     expect(all.map((t) => t.name)).toEqual(["Alpha", "Zeta"]);
     expect(all[0]).toEqual({ id: expect.any(String), name: "Alpha", slug: "alpha" });
+  });
+});
+
+describe("tag branch gaps", () => {
+  it("getTagsWithUsage includes note usage alongside post usage", async () => {
+    const { createTag, getTagsWithUsage } = await import("@/db/queries");
+    const tag = await createTag({ name: "DP", slug: "dp" });
+    const section = await seedSection();
+    await seedNote(section.id, { title: "Knapsack", slug: "knapsack", tagIds: [tag.id] });
+
+    const [usage] = await getTagsWithUsage();
+    expect(usage.noteCount).toBe(1);
+    expect(usage.postCount).toBe(0);
+    expect(usage.usedBy).toEqual([{ type: "note", title: "Knapsack", slug: "knapsack" }]);
+  });
+
+  it("createTag rethrows non-conflict errors untouched", async () => {
+    const { createTag, TagConflictError } = await import("@/db/queries");
+    // NOT NULL violation — must NOT be converted into a TagConflictError.
+    const err = await createTag({ name: undefined as never, slug: "x" }).catch((e) => e);
+    expect(err).toBeInstanceOf(Error);
+    expect(err).not.toBeInstanceOf(TagConflictError);
+  });
+
+  it("updateTag throws TagConflictError when renaming onto an existing name", async () => {
+    const { createTag, updateTag, TagConflictError } = await import("@/db/queries");
+    await createTag({ name: "Taken", slug: "taken" });
+    const mine = await createTag({ name: "Mine", slug: "mine" });
+    await expect(updateTag(mine.id, { name: "Taken" })).rejects.toBeInstanceOf(TagConflictError);
+  });
+
+  it("updateTag rethrows non-conflict errors untouched", async () => {
+    const { createTag, updateTag, TagConflictError } = await import("@/db/queries");
+    const tag = await createTag({ name: "A", slug: "a" });
+    const err = await updateTag(tag.id, { name: undefined as never }).catch((e) => e);
+    expect(err).toBeInstanceOf(Error);
+    expect(err).not.toBeInstanceOf(TagConflictError);
   });
 });

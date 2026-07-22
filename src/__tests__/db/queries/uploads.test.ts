@@ -37,3 +37,14 @@ describe("recordUpload", () => {
     await expect(recordUpload({ ...input, id: "u2" })).rejects.toBeInstanceOf(UploadConflictError);
   });
 });
+
+describe("recordUpload branch gaps", () => {
+  it("rethrows non-UNIQUE errors untouched", async () => {
+    const { recordUpload, UploadConflictError } = await import("@/db/queries");
+    const err = await recordUpload({ ...input, id: "u2", r2Key: undefined as never }).catch(
+      (e) => e,
+    );
+    expect(err).toBeInstanceOf(Error);
+    expect(err).not.toBeInstanceOf(UploadConflictError);
+  });
+});

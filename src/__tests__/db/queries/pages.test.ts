@@ -64,3 +64,15 @@ describe("getPagesList", () => {
     expect(rows.map((r) => r.slug).sort()).toEqual(["about", "now"]);
   });
 });
+
+describe("upsertPage partial updates", () => {
+  it("keeps the existing title when only contentMd is provided", async () => {
+    const { upsertPage, getPageBySlug } = await import("@/db/queries");
+    await upsertPage("now", { title: "Now", contentMd: "v1" });
+    await upsertPage("now", { contentMd: "v2" });
+
+    const page = await getPageBySlug("now");
+    expect(page?.title).toBe("Now");
+    expect(page?.contentMd).toBe("v2");
+  });
+});
