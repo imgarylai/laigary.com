@@ -26,3 +26,19 @@ describe("settingsSchema", () => {
     expect(() => settingsSchema.parse({ a: 1 })).toThrow();
   });
 });
+
+describe("updateSettingsImpl social normalization", () => {
+  it("normalizes social keys to bare handles and leaves other keys untouched", async () => {
+    vi.mocked(queries.updateSiteSettings).mockResolvedValue(undefined);
+    await updateSettingsImpl({
+      author_twitter: "https://x.com/@imgarylai/",
+      author_github: "@imgarylai",
+      site_name: "Unconstrained",
+    });
+    expect(queries.updateSiteSettings).toHaveBeenCalledWith({
+      author_twitter: "imgarylai",
+      author_github: "imgarylai",
+      site_name: "Unconstrained",
+    });
+  });
+});

@@ -99,3 +99,59 @@ describe("CommandPalette", () => {
     await waitFor(() => expect(searchContent).toHaveBeenCalledWith("貪心"));
   });
 });
+
+describe("CommandPalette lifecycle branches", () => {
+  it("resets query and content when the dialog closes", async () => {
+    const searchContent = vi.fn(async () => [contentRow]);
+    const { rerender } = render(
+      <CommandPalette
+        open
+        onOpenChange={() => {}}
+        pages={pages}
+        searchContent={searchContent}
+        placeholder="search"
+      />,
+    );
+    fireEvent.change(screen.getByPlaceholderText("search"), { target: { value: "two" } });
+    expect(await screen.findByText("Two Sum")).toBeDefined();
+
+    rerender(
+      <CommandPalette
+        open={false}
+        onOpenChange={() => {}}
+        pages={pages}
+        searchContent={searchContent}
+        placeholder="search"
+      />,
+    );
+    rerender(
+      <CommandPalette
+        open
+        onOpenChange={() => {}}
+        pages={pages}
+        searchContent={searchContent}
+        placeholder="search"
+      />,
+    );
+    const input = screen.getByPlaceholderText("search") as HTMLInputElement;
+    expect(input.value).toBe("");
+    expect(screen.queryByText("Two Sum")).toBeNull();
+  });
+
+  it("shows no matches when the content search fails", async () => {
+    const searchContent = vi.fn(async () => {
+      throw new Error("boom");
+    });
+    render(
+      <CommandPalette
+        open
+        onOpenChange={() => {}}
+        pages={[]}
+        searchContent={searchContent}
+        placeholder="search"
+      />,
+    );
+    fireEvent.change(screen.getByPlaceholderText("search"), { target: { value: "zzz" } });
+    expect(await screen.findByText("blog.search.noMatches")).toBeDefined();
+  });
+});

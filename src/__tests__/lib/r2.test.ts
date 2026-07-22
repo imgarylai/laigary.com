@@ -1,5 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { validateUpload, sanitizeFilename, generateR2Key } from "@/lib/r2";
+import {
+  validateUpload,
+  sanitizeFilename,
+  generateR2Key,
+  createR2Client,
+  createPresignedUploadUrl,
+} from "@/lib/r2";
 
 describe("validateUpload", () => {
   it("returns null for allowed types under size limit", () => {
@@ -56,5 +62,27 @@ describe("generateR2Key", () => {
     const a = generateR2Key("a.png").id;
     const b = generateR2Key("b.png").id;
     expect(a).not.toBe(b);
+  });
+});
+
+describe("createPresignedUploadUrl", () => {
+  it("signs a PUT url carrying bucket, key, expiry and signature", async () => {
+    const client = createR2Client({
+      R2_S3_ENDPOINT: "https://acc.r2.cloudflarestorage.com",
+      R2_ACCESS_KEY_ID: "test-key",
+      R2_SECRET_ACCESS_KEY: "test-secret",
+    });
+    const url = await createPresignedUploadUrl(
+      client,
+      "https://acc.r2.cloudflarestorage.com",
+      "assets",
+      "uploads/2026/07/id-photo.png",
+      "image/png",
+    );
+    const parsed = new URL(url);
+    expect(parsed.pathname).toBe("/assets/uploads/2026/07/id-photo.png");
+    expect(parsed.searchParams.get("X-Amz-Expires")).toBe("600");
+    expect(parsed.searchParams.get("X-Amz-Signature")).toBeTruthy();
+    expect(parsed.searchParams.get("X-Amz-Credential")).toContain("test-key");
   });
 });

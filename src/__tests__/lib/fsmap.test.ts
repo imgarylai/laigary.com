@@ -41,3 +41,31 @@ describe("fsCmd", () => {
     );
   });
 });
+
+describe("prompt lines", () => {
+  it("derives the blog prompts from fsmap nodes", () => {
+    expect(FS_BLOG.home.prompt()).toBe("$ ls .");
+    expect(FS_BLOG.archive.prompt()).toBe("$ ls -R ./posts/");
+    expect(FS_BLOG.tags.prompt()).toBe("$ ls ./tags/");
+    expect(FS_BLOG.post.prompt({ slug: "hello" })).toBe("$ cat ./posts/hello.md");
+    expect(FS_BLOG.page.prompt({ slug: "about" })).toBe("$ cat ./about.md");
+  });
+
+  it("derives the interview prompts namespace-relative", () => {
+    expect(FS_INTERVIEW.home.prompt()).toBe("$ ls .");
+    expect(FS_INTERVIEW.section.prompt({ sect: "coding" })).toBe("$ cat ./coding/README.md");
+    expect(FS_INTERVIEW.note.prompt({ sect: "coding", slug: "gas" })).toBe("$ cat ./coding/gas.md");
+  });
+});
+
+describe("fsCmd cmd kind", () => {
+  it("falls back to the raw path for non-dir non-file nodes", () => {
+    const node = {
+      kind: "cmd" as const,
+      path: "man theme",
+      crumb: () => "",
+      prompt: () => "",
+    };
+    expect(fsCmd(node)).toBe("man theme");
+  });
+});
