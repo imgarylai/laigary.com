@@ -40,7 +40,7 @@ export async function serveOgImage(
   if (cached) return cached;
 
   const node = await buildNode(await getSiteBranding());
-  const fonts = await loadOgFonts(new URL(request.url).origin, node);
+  const fonts = await loadOgFonts(node);
   const png = await renderOgPng(node, fonts);
 
   const response = new Response(png as unknown as BodyInit, {

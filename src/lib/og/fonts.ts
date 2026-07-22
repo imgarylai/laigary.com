@@ -1,11 +1,15 @@
 // Font loading for OG images.
 //
-// JetBrains Mono ships as static TTFs under public/fonts/ and is fetched from
-// our own origin once per isolate (satori cannot parse the variable woff2 that
-// @fontsource-variable provides). CJK glyphs are not in JetBrains Mono at all,
-// so a per-request Noto Sans TC subset covering exactly the rendered glyphs is
-// fetched from the Google Fonts css2 API.
+// JetBrains Mono is inlined into the worker bundle at build time (Vite
+// `?inline` -> base64) and decoded once per isolate — a self-fetch of the
+// site's own origin 522s in production, so the bytes must not come from the
+// network. satori cannot parse the variable woff2 that @fontsource-variable
+// provides, hence the static TTFs. CJK glyphs are not in JetBrains Mono at
+// all, so a per-request Noto Sans TC subset covering exactly the rendered
+// glyphs is fetched from the Google Fonts css2 API.
 
+import jbmRegularInline from "./fonts/JetBrainsMono-Regular.ttf?inline";
+import jbmBoldInline from "./fonts/JetBrainsMono-Bold.ttf?inline";
 import type { OgNode } from "./templates";
 
 export interface OgFont {
@@ -69,50 +73,31 @@ export async function loadCjkSubset(
   return { name: "Noto Sans TC", data: await fontRes.arrayBuffer(), weight, style: "normal" };
 }
 
-const BUNDLED_FONT_PATHS: ReadonlyArray<{ path: string; weight: 400 | 700 }> = [
-  { path: "/fonts/JetBrainsMono-Regular.ttf", weight: 400 },
-  { path: "/fonts/JetBrainsMono-Bold.ttf", weight: 700 },
-];
-
-let bundledFontsPromise: Promise<OgFont[]> | null = null;
-
-/**
- * JetBrains Mono from our own static assets, cached per isolate. `origin` is
- * taken from the incoming request so this works in dev and production alike.
- */
-export function loadBundledFonts(origin: string, fetchFn: FetchFn = fetch): Promise<OgFont[]> {
-  bundledFontsPromise ??= Promise.all(
-    BUNDLED_FONT_PATHS.map(async ({ path, weight }): Promise<OgFont> => {
-      const res = await fetchFn(new URL(path, origin).toString());
-      if (!res.ok) {
-        throw new Error(`Failed to load bundled font ${path}: ${res.status}`);
-      }
-      return { name: "JetBrains Mono", data: await res.arrayBuffer(), weight, style: "normal" };
-    }),
-  ).catch((error: unknown) => {
-    // Reset so a transient asset failure does not poison the isolate cache.
-    bundledFontsPromise = null;
-    throw error;
-  });
-  return bundledFontsPromise;
+function decodeDataUri(uri: string): ArrayBuffer {
+  const base64 = uri.slice(uri.indexOf(",") + 1);
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes.buffer;
 }
 
-/** Test hook: clear the per-isolate bundled-font cache. */
-export function resetBundledFontsCache(): void {
-  bundledFontsPromise = null;
+let bundledFonts: OgFont[] | null = null;
+
+/** JetBrains Mono decoded from the inlined build-time assets, once per isolate. */
+export function loadBundledFonts(): OgFont[] {
+  bundledFonts ??= [
+    { name: "JetBrains Mono", data: decodeDataUri(jbmRegularInline), weight: 400, style: "normal" },
+    { name: "JetBrains Mono", data: decodeDataUri(jbmBoldInline), weight: 700, style: "normal" },
+  ];
+  return bundledFonts;
 }
 
 /** The full font set for one render: bundled mono + CJK subsets for `text`. */
-export async function loadOgFonts(
-  origin: string,
-  node: OgNode,
-  fetchFn: FetchFn = fetch,
-): Promise<OgFont[]> {
+export async function loadOgFonts(node: OgNode, fetchFn: FetchFn = fetch): Promise<OgFont[]> {
   const glyphs = collectNonAsciiGlyphs(node);
-  const [bundled, cjkRegular, cjkBold] = await Promise.all([
-    loadBundledFonts(origin, fetchFn),
+  const [cjkRegular, cjkBold] = await Promise.all([
     loadCjkSubset(glyphs, 400, fetchFn),
     loadCjkSubset(glyphs, 700, fetchFn),
   ]);
-  return [...bundled, ...[cjkRegular, cjkBold].filter((f): f is OgFont => f !== null)];
+  return [...loadBundledFonts(), ...[cjkRegular, cjkBold].filter((f): f is OgFont => f !== null)];
 }

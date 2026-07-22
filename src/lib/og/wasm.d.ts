@@ -5,3 +5,9 @@ declare module "*.wasm" {
   const module: WebAssembly.Module;
   export default module;
 }
+
+// Vite `?inline` imports resolve to a base64 data URI string.
+declare module "*.ttf?inline" {
+  const dataUri: string;
+  export default dataUri;
+}
