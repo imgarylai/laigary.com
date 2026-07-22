@@ -70,6 +70,9 @@ export const FS_INTERVIEW = {
 export type BlogRoute = keyof typeof FS_BLOG;
 export type InterviewRoute = keyof typeof FS_INTERVIEW;
 
+// Namespace base for commands rendered inside the interview sub-site.
+export const INTERVIEW_BASE = FS_INTERVIEW.home.path;
+
 function truncateSlug(slug: string): string {
   return slug.length > 22 ? slug.slice(0, 20) + "…" : slug;
 }
@@ -97,13 +100,14 @@ export function breadcrumbForPath(pathname: string): string {
   return FS_BLOG.page.crumb({ slug: truncateSlug(seg[0]) });
 }
 
-// Command-palette label — `cd ./dir` for dirs, `cat ./file` for files.
-export function fsCmd(node: FsNode, ctx: FsCtx = {}): string {
-  const rel = node.path
-    .replace(/^~\/?/, "./")
-    .replace(/<sect>/g, ctx.sect ?? "")
-    .replace(/<slug>/g, ctx.slug ?? "")
-    .replace(/^\.\/$/, "~");
+// Command label (palette + drawer) — `cd ./dir` for dirs, `cat ./file` for
+// files. `base` is the namespace the command is rendered inside (`~` for the
+// blog, `~/interview` for the interview sub-site): paths are shown relative to
+// it, and the base itself renders as `cd ~` — so inside /interview, `cd ~`
+// means the interview home, matching the namespace-relative prompt lines.
+export function fsCmd(node: FsNode, ctx: FsCtx = {}, base = "~"): string {
+  const filled = node.path.replace(/<sect>/g, ctx.sect ?? "").replace(/<slug>/g, ctx.slug ?? "");
+  const rel = filled === base ? "~" : "./" + filled.slice(base.length + 1);
   if (node.kind === "dir") return `cd ${rel}`;
   if (node.kind === "file") return `cat ${rel}`;
   return node.path;
