@@ -3,10 +3,10 @@
 // `@` article mention: picking a result must replace the typed `@query` with a
 // plain markdown link (title as text) plus an unlinked trailing space — no
 // custom node types in the stored content.
-import { createRef } from "react";
+import { createRef, useEffect } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, render, screen, fireEvent } from "@testing-library/react";
-import { Editor } from "@tiptap/react";
+import { act, cleanup, render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { Editor, EditorContent, useEditor } from "@tiptap/react";
 import { createExtensions } from "@/components/admin/editor/extensions";
 import {
   insertArticleLink,
@@ -97,5 +97,87 @@ describe("LinkSuggestionList", () => {
   it("shows the type-to-search hint before any query", () => {
     render(<LinkSuggestionList items={[]} loading={false} query="" command={() => {}} />);
     expect(screen.getByText("editor.linkSuggestHint")).toBeDefined();
+  });
+});
+
+describe("LinkSuggestion integration", () => {
+  /** Simulate real typing through ProseMirror's input pipeline. */
+  function type(editor: Editor, text: string): void {
+    for (const char of text) {
+      const view = editor.view;
+      const { from, to } = view.state.selection;
+      const handled = view.someProp("handleTextInput", (f) =>
+        f(view, from, to, char, () => view.state.tr.insertText(char, from, to)),
+      );
+      if (!handled) {
+        view.dispatch(view.state.tr.insertText(char, from, to));
+      }
+    }
+  }
+
+  function MountedEditor({ onReady }: { onReady: (editor: Editor) => void }) {
+    const editor = useEditor({
+      immediatelyRender: true,
+      extensions: createExtensions({ placeholder: "" }),
+      content: "",
+      contentType: "markdown",
+    });
+    useEffect(() => {
+      if (editor) onReady(editor);
+    }, [editor, onReady]);
+    return <EditorContent editor={editor} />;
+  }
+
+  it("typing @query pops the list and picking inserts a markdown link", async () => {
+    const { searchLinkTargetsFn } = await import("@/server/admin/reads");
+    (searchLinkTargetsFn as unknown as ReturnType<typeof vi.fn>).mockResolvedValue([gasStation]);
+
+    let editor: Editor | null = null;
+    render(<MountedEditor onReady={(e) => (editor = e)} />);
+    await waitFor(() => expect(editor).not.toBeNull());
+
+    act(() => type(editor!, "@gas"));
+
+    // Plugin debounce is 250ms; the popup then renders via ReactRenderer.
+    const row = await screen.findByText("134. Gas Station", undefined, { timeout: 3000 });
+    fireEvent.click(row);
+
+    await waitFor(() =>
+      expect(editor!.getMarkdown()).toBe("[134. Gas Station](/interview/coding/134-gas-station) "),
+    );
+  });
+
+  it("dismisses the popup on Escape without inserting a link", async () => {
+    const { searchLinkTargetsFn } = await import("@/server/admin/reads");
+    (searchLinkTargetsFn as unknown as ReturnType<typeof vi.fn>).mockResolvedValue([gasStation]);
+
+    let editor: Editor | null = null;
+    render(<MountedEditor onReady={(e) => (editor = e)} />);
+    await waitFor(() => expect(editor).not.toBeNull());
+
+    act(() => type(editor!, "@gas"));
+    await screen.findByText("134. Gas Station", undefined, { timeout: 3000 });
+
+    // Escape goes through the plugin's handleKeyDown → onExit (popup gone).
+    fireEvent.keyDown(editor!.view.dom, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByText("134. Gas Station")).toBeNull());
+    // The typed text stays; no link was inserted.
+    expect(editor!.getMarkdown()).toBe("@gas");
+  });
+
+  it("does not search while an IME composition is in flight", async () => {
+    const { searchLinkTargetsFn } = await import("@/server/admin/reads");
+    const mock = searchLinkTargetsFn as unknown as ReturnType<typeof vi.fn>;
+    mock.mockResolvedValue([]);
+
+    let editor: Editor | null = null;
+    render(<MountedEditor onReady={(e) => (editor = e)} />);
+    await waitFor(() => expect(editor).not.toBeNull());
+
+    Object.defineProperty(editor!.view, "composing", { get: () => true, configurable: true });
+    mock.mockClear();
+    act(() => type(editor!, "@ㄍㄚ"));
+    await new Promise((r) => setTimeout(r, 400));
+    expect(mock).not.toHaveBeenCalled();
   });
 });

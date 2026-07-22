@@ -95,3 +95,94 @@ describe("LinkDialog", () => {
     await waitFor(() => expect(searchLinkTargetsFn).toHaveBeenCalledWith({ data: { q: "貪心" } }));
   });
 });
+
+const targets = [
+  {
+    type: "note",
+    title: "134. Gas Station",
+    url: "/interview/coding/134-gas-station",
+    status: "published",
+    context: "coding",
+  },
+  {
+    type: "post",
+    title: "Gas prices",
+    url: "/posts/gas-prices",
+    status: "draft",
+    context: "post",
+  },
+];
+
+describe("LinkDialog interaction branches", () => {
+  it("navigates results with arrows and picks the active one with Enter", async () => {
+    searchLinkTargetsFn.mockResolvedValue(targets);
+    const editor = makeEditor("");
+    render(<LinkDialog editor={editor} open onOpenChange={() => {}} />);
+    const input = screen.getByPlaceholderText("editor.linkDialogPlaceholder");
+    fireEvent.change(input, { target: { value: "gas" } });
+    await screen.findByText("134. Gas Station");
+
+    fireEvent.keyDown(input, { key: "ArrowDown" });
+    fireEvent.keyDown(input, { key: "ArrowUp" });
+    fireEvent.keyDown(input, { key: "ArrowDown" });
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(editor.getMarkdown()).toBe("[Gas prices](/posts/gas-prices)");
+  });
+
+  it("applies the URL by clicking the url-mode row", () => {
+    const editor = makeEditor("hi");
+    editor.commands.setTextSelection({ from: 1, to: 3 });
+    render(<LinkDialog editor={editor} open onOpenChange={() => {}} />);
+    const input = screen.getByPlaceholderText("editor.linkDialogPlaceholder");
+    fireEvent.change(input, { target: { value: "/posts/hello" } });
+    fireEvent.click(screen.getByText("/posts/hello"));
+    expect(editor.getMarkdown()).toBe("[hi](/posts/hello)");
+  });
+
+  it("moves the active row on hover", async () => {
+    searchLinkTargetsFn.mockResolvedValue(targets);
+    const editor = makeEditor("");
+    render(<LinkDialog editor={editor} open onOpenChange={() => {}} />);
+    const input = screen.getByPlaceholderText("editor.linkDialogPlaceholder");
+    fireEvent.change(input, { target: { value: "gas" } });
+    const second = await screen.findByText("Gas prices");
+
+    fireEvent.mouseEnter(second.closest("button")!);
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(editor.getMarkdown()).toBe("[Gas prices](/posts/gas-prices)");
+  });
+
+  it("prefills an existing link's href and can remove the link", () => {
+    const editor = makeEditor("[hello](https://old.example) world");
+    // Put the caret inside the linked text.
+    editor.commands.setTextSelection(3);
+    const onOpenChange = vi.fn();
+    render(<LinkDialog editor={editor} open onOpenChange={onOpenChange} />);
+
+    const input = screen.getByPlaceholderText("editor.linkDialogPlaceholder") as HTMLInputElement;
+    expect(input.value).toBe("https://old.example");
+
+    fireEvent.click(screen.getByText("editor.linkRemove"));
+    expect(editor.getMarkdown()).toBe("hello world");
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it("edits an existing link across its whole mark range", () => {
+    const editor = makeEditor("[hello](https://old.example) world");
+    editor.commands.setTextSelection(3);
+    render(<LinkDialog editor={editor} open onOpenChange={() => {}} />);
+    const input = screen.getByPlaceholderText("editor.linkDialogPlaceholder");
+    fireEvent.change(input, { target: { value: "https://new.example" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(editor.getMarkdown()).toBe("[hello](https://new.example) world");
+  });
+
+  it("shows no matches when the search fails", async () => {
+    searchLinkTargetsFn.mockRejectedValue(new Error("boom"));
+    const editor = makeEditor("");
+    render(<LinkDialog editor={editor} open onOpenChange={() => {}} />);
+    const input = screen.getByPlaceholderText("editor.linkDialogPlaceholder");
+    fireEvent.change(input, { target: { value: "gas" } });
+    expect(await screen.findByText("editor.linkNoResults")).toBeDefined();
+  });
+});
