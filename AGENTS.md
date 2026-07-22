@@ -65,6 +65,12 @@ Local D1 schema: `npx wrangler d1 migrations apply laigary-db --local`.
   the in-memory DB and wires truncate/close. `cloudflare:workers` is stubbed
   via vitest alias. Mock server functions in component tests — no network, no
   real D1.
+- Server functions are tested through their exported `*Impl` functions
+  (`server/public/*`, `server/admin/*`), never by calling the `createServerFn`
+  wrapper: without the Start vite plugin's compile step the wrapper's server
+  handler isn't wired and the return value is lost. New server fns follow the
+  same split — logic in an exported Impl, wrapper as the one-line validated
+  boundary.
 - Seed rows through `src/__tests__/factories.ts` (`seedPost`, `seedTag`,
   `seedSection`, `seedNote`, `seedPage`, `seedUpload`) instead of hand-written
   literals; spell out only the fields the test asserts on.
@@ -81,9 +87,16 @@ Local D1 schema: `npx wrangler d1 migrations apply laigary-db --local`.
   every other test in the file stays on the real database. Never mock to
   fabricate errors the public API can already produce (NOT NULL, UNIQUE —
   trigger those for real).
-- Coverage: `pnpm test:coverage` (v8). Excluded as not-our-unit-to-test:
+- Coverage: `pnpm test:coverage` (v8, lcov → Codecov in CI's Test leg; every
+  PR gets a diff-coverage comment). Excluded as not-our-unit-to-test:
   `components/ui/**` (vendored), `db/schema/**` (declarative),
-  `routeTree.gen.ts` (generated).
+  `routeTree.gen.ts` (generated), `src/__tests__/**` (test infra),
+  `src/hooks/**` + `i18n/I18nProvider.tsx` (DOM glue, deliberately untested).
+  The `createServerFn` wrapper arrows stay in-file and uncovered — they're the
+  RPC boundary, a few lines each, and uncoverable without the Start plugin.
+  Don't chase the last percent: a branch only reachable by mocking what the
+  public API can't produce is left uncovered (or, for transient errors, tested
+  per the rule above).
 
 ## TanStack reference (tool-managed)
 
