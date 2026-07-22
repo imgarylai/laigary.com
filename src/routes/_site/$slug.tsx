@@ -1,6 +1,7 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { pageDataFn } from "@/server/public";
-import { breadcrumbLd, serializeJsonLd, webPageLd } from "@/lib/json-ld";
+import { SITE_ORIGIN, breadcrumbLd, serializeJsonLd, webPageLd } from "@/lib/json-ld";
+import { ogMeta } from "@/lib/og-meta";
 import { PromptLine } from "@/components/terminal/ui";
 import { TmPage } from "@/components/terminal/layout";
 import { FS_BLOG } from "@/lib/fsmap";
@@ -14,7 +15,18 @@ export const Route = createFileRoute("/_site/$slug")({
     return data;
   },
   head: ({ loaderData }) => ({
-    meta: loaderData ? [{ title: loaderData.pageTitle }] : [],
+    meta: loaderData
+      ? [
+          { title: loaderData.pageTitle },
+          ...ogMeta({
+            title: loaderData.page.title,
+            siteName: loaderData.siteName,
+            url: `${SITE_ORIGIN}/${loaderData.page.slug}`,
+            image: `${SITE_ORIGIN}/api/og/pages/${loaderData.page.slug}`,
+            type: "website",
+          }),
+        ]
+      : [],
     scripts: loaderData
       ? [
           {

@@ -13,15 +13,16 @@ async function renderMd(md: string): Promise<string> {
   return renderMarkdown(md);
 }
 
-// Browser-tab title for a content page, honoring the `title_template` setting
-// (`%s | Site` style — see lib/site-title). Fetches settings itself so detail
-// server fns can build the final string in one place.
-async function pageTitle(title: string): Promise<string> {
+// Head chrome for a content page: the browser-tab title (honoring the
+// `title_template` setting — see lib/site-title) plus the site name for
+// og:site_name. Fetches settings itself so detail server fns can build both
+// in one place.
+async function pageChrome(title: string): Promise<{ pageTitle: string; siteName: string }> {
   const { getSiteSettings } = await import("@/db/queries");
   const { formatPageTitle } = await import("@/lib/site-title");
   const settings = await getSiteSettings();
   const siteName = settings.site_name || DEFAULT_SITE_NAME;
-  return formatPageTitle(settings.title_template ?? "", title, siteName);
+  return { pageTitle: formatPageTitle(settings.title_template ?? "", title, siteName), siteName };
 }
 
 // Default brand name when site_name is unset. Exported for testing.
@@ -111,7 +112,7 @@ export const postDataFn = createServerFn({ method: "GET" })
       post,
       html: await renderMd(post.contentMd),
       toc: extractToc(post.contentMd),
-      pageTitle: await pageTitle(post.title),
+      ...(await pageChrome(post.title)),
     };
   });
 
@@ -129,7 +130,7 @@ export const pageDataFn = createServerFn({ method: "GET" })
     return {
       page: { slug: page.slug, title: page.title },
       html: await renderMd(page.contentMd),
-      pageTitle: await pageTitle(page.title),
+      ...(await pageChrome(page.title)),
     };
   });
 
@@ -192,7 +193,7 @@ export const sectionDataFn = createServerFn({ method: "GET" })
     if (!section) return null;
     const { notes } = await getInterviewNotesBySection(data.slug, { limit: 500 });
     return {
-      pageTitle: await pageTitle(section.label),
+      ...(await pageChrome(section.label)),
       section: { slug: section.slug, label: section.label, blurb: section.blurb },
       notes: notes.map((n) => ({
         slug: n.slug,
@@ -225,6 +226,6 @@ export const noteDataFn = createServerFn({ method: "GET" })
         tags: note.tags.map((t) => t.name),
       },
       html: await renderMd(note.contentMd),
-      pageTitle: await pageTitle(note.title),
+      ...(await pageChrome(note.title)),
     };
   });
