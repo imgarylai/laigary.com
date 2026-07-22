@@ -91,7 +91,9 @@ Local D1 schema: `npx wrangler d1 migrations apply laigary-db --local`.
   PR gets a diff-coverage comment). Excluded as not-our-unit-to-test:
   `components/ui/**` (vendored), `db/schema/**` (declarative),
   `routeTree.gen.ts` (generated), `src/__tests__/**` (test infra),
-  `src/hooks/**` + `i18n/I18nProvider.tsx` (DOM glue, deliberately untested).
+  `i18n/I18nProvider.tsx` (context glue, deliberately untested). Hooks ARE
+  tested (jsdom `renderHook` + stubbed rAF/matchMedia — see
+  `__tests__/hooks/`); their listener math and cleanup regress like any code.
   The `createServerFn` wrapper arrows stay in-file and uncovered — they're the
   RPC boundary, a few lines each, and uncoverable without the Start plugin.
   Don't chase the last percent: a branch only reachable by mocking what the
