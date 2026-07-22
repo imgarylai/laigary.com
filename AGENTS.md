@@ -60,9 +60,23 @@ Local D1 schema: `npx wrangler d1 migrations apply laigary-db --local`.
 - Tests live in `src/__tests__/`, named `should <behavior> when <condition>`.
 - Default vitest environment is node; component tests opt into jsdom with a
   `// @vitest-environment jsdom` first-line directive.
-- Query-layer tests run against a real better-sqlite3 DB (`helpers/test-db`)
-  with `drizzle-orm/d1` mocked; `cloudflare:workers` is stubbed via vitest
-  alias. Mock server functions in component tests — no network, no real D1.
+- Query-layer tests run against a real better-sqlite3 DB: call `setupTestDb()`
+  from `helpers/test-db` at file top level — it redirects `drizzle-orm/d1` at
+  the in-memory DB and wires truncate/close. `cloudflare:workers` is stubbed
+  via vitest alias. Mock server functions in component tests — no network, no
+  real D1.
+- Seed rows through `src/__tests__/factories.ts` (`seedPost`, `seedTag`,
+  `seedSection`, `seedNote`, `seedPage`, `seedUpload`) instead of hand-written
+  literals; spell out only the fields the test asserts on.
+- Structure per describe block: happy-path setup and test first, then the
+  error/throw paths (mock one dependency at a time), then isolated helper-fn
+  tests for remaining branches.
+- Assertion depth: assert the outcome that matters (status, message, `ok`,
+  row count, the computed field) — not deep-equals of whole payloads, unless
+  computing that value is the function's job.
+- Coverage: `pnpm test:coverage` (v8). Excluded as not-our-unit-to-test:
+  `components/ui/**` (vendored), `db/schema/**` (declarative),
+  `routeTree.gen.ts` (generated).
 
 ## TanStack reference (tool-managed)
 
