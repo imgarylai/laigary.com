@@ -16,6 +16,7 @@ name: CI
 #                            `alchemy-state-service` worker).
 #   R2_ACCESS_KEY_ID       — R2 S3 API access key id (for presigned uploads, #28).
 #   R2_SECRET_ACCESS_KEY   — R2 S3 API secret access key.
+#   CODECOV_TOKEN          — Codecov upload token (coverage from the Test leg).
 on:
   push:
     branches: [main]
@@ -39,7 +40,7 @@ jobs:
           - name: Format
             command: pnpm format:check
           - name: Test
-            command: pnpm test
+            command: pnpm test:coverage
           - name: Build
             command: pnpm build
     steps:
@@ -51,6 +52,12 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: ${{ matrix.command }}
+      - name: Upload coverage to Codecov
+        if: matrix.name == 'Test'
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage/lcov.info
 
   deploy:
     name: Deploy

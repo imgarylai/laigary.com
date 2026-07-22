@@ -19,6 +19,8 @@ export default defineConfig({
     environment: "node",
     include: ["src/**/*.test.{ts,tsx}"],
     coverage: {
+      // text for the terminal summary, lcov for the Codecov upload in CI.
+      reporter: ["text", "lcov"],
       // Keep coverage about code we author and can meaningfully test:
       //   - components/ui: shadcn/Base UI vendored primitives
       //   - db/schema: declarative Drizzle table definitions, no logic
