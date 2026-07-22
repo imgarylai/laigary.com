@@ -230,3 +230,33 @@ describe("getAdminPostById", () => {
     expect(await getAdminPostById("nope")).toBeNull();
   });
 });
+
+describe("post branch gaps", () => {
+  it("getPublishedPosts filters by title query", async () => {
+    const { createPost, getPublishedPosts } = await import("@/db/queries");
+    await createPost({ title: "Gas Station", slug: "gas", contentMd: "x", status: "published" });
+    await createPost({ title: "Two Sum", slug: "two", contentMd: "x", status: "published" });
+
+    const { posts, total } = await getPublishedPosts({ query: "Gas" });
+    expect(posts.map((p) => p.slug)).toEqual(["gas"]);
+    expect(total).toBe(1);
+  });
+
+  it("createPost rethrows non-UNIQUE errors untouched", async () => {
+    const { createPost, PostConflictError } = await import("@/db/queries");
+    const err = await createPost({
+      title: undefined as never,
+      slug: "x",
+      contentMd: "x",
+    }).catch((e) => e);
+    expect(err).toBeInstanceOf(Error);
+    expect(err).not.toBeInstanceOf(PostConflictError);
+  });
+
+  it("updatePost throws PostConflictError when the new slug is taken", async () => {
+    const { createPost, updatePost, PostConflictError } = await import("@/db/queries");
+    await createPost({ title: "A", slug: "taken", contentMd: "x" });
+    const { id } = await createPost({ title: "B", slug: "free", contentMd: "x" });
+    await expect(updatePost(id, { slug: "taken" })).rejects.toBeInstanceOf(PostConflictError);
+  });
+});

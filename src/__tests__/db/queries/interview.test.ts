@@ -2,7 +2,7 @@
 
 import { describe, it, expect } from "vitest";
 import { setupTestDb } from "../helpers/test-db";
-import { seedSection as seedSectionRow } from "../../factories";
+import { seedNote, seedSection as seedSectionRow } from "../../factories";
 
 setupTestDb();
 
@@ -367,5 +367,49 @@ describe("getAllAdminInterviewNotes", () => {
       sectionLabel: "LeetCode",
       status: "published",
     });
+  });
+});
+
+describe("getAdminInterviewNotes", () => {
+  it("returns a page of notes with section metadata and the full total", async () => {
+    const { getAdminInterviewNotes } = await import("@/db/queries");
+    const section = await seedSection();
+    await seedNote(section.id, { slug: "a" });
+    await seedNote(section.id, { slug: "b" });
+    await seedNote(section.id, { slug: "c", status: "draft" });
+
+    const all = await getAdminInterviewNotes();
+    expect(all.total).toBe(3);
+    expect(all.items[0].sectionSlug).toBe("leetcode");
+
+    const page = await getAdminInterviewNotes({ limit: 2, offset: 2 });
+    expect(page.items).toHaveLength(1);
+    expect(page.total).toBe(3);
+  });
+});
+
+describe("non-conflict error rethrow", () => {
+  it("createSection rethrows non-UNIQUE errors untouched", async () => {
+    const { createSection, SectionConflictError } = await import("@/db/queries");
+    const err = await createSection({
+      slug: "x",
+      label: undefined as never,
+      blurb: "",
+      icon: "",
+    }).catch((e) => e);
+    expect(err).toBeInstanceOf(Error);
+    expect(err).not.toBeInstanceOf(SectionConflictError);
+  });
+
+  it("createNote rethrows non-UNIQUE errors untouched", async () => {
+    const { createNote, NoteConflictError } = await import("@/db/queries");
+    const section = await seedSection();
+    const err = await createNote({
+      slug: "x",
+      sectionId: section.id,
+      title: undefined as never,
+    }).catch((e) => e);
+    expect(err).toBeInstanceOf(Error);
+    expect(err).not.toBeInstanceOf(NoteConflictError);
   });
 });
