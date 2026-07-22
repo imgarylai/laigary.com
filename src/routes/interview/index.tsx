@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { interviewDataFn } from "@/server/public";
+import { SITE_ORIGIN } from "@/lib/json-ld";
+import { ogMeta } from "@/lib/og-meta";
 import { AsciiRule, PromptLine } from "@/components/terminal/ui";
 import {
   TmPage,
@@ -13,6 +15,20 @@ import { useI18n } from "@/i18n/I18nProvider";
 
 export const Route = createFileRoute("/interview/")({
   loader: () => interviewDataFn(),
+  head: ({ loaderData }) => ({
+    meta: loaderData
+      ? [
+          { title: loaderData.pageTitle },
+          ...ogMeta({
+            title: "Interview",
+            siteName: loaderData.siteName,
+            url: `${SITE_ORIGIN}/interview`,
+            image: `${SITE_ORIGIN}/api/og`,
+            type: "website",
+          }),
+        ]
+      : [],
+  }),
   component: InterviewHome,
 });
 
