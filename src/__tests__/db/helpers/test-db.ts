@@ -6,6 +6,7 @@ import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { afterAll, beforeEach, vi } from "vitest";
 
 const MIGRATIONS_DIR = join(process.cwd(), "migrations");
 
@@ -43,4 +44,26 @@ export function createTestDb() {
       sqlite.pragma("foreign_keys = ON");
     },
   };
+}
+
+// One-call harness for query-layer test files: creates the in-memory DB,
+// redirects `drizzle-orm/d1` at it (vi.doMock — registered at file-eval time,
+// before the tests' dynamic `await import("@/db/queries")`), and wires the
+// truncate/close lifecycle. Call at the top level of the test file.
+export function setupTestDb() {
+  const harness = createTestDb();
+
+  vi.doMock("drizzle-orm/d1", () => ({
+    drizzle: () => harness.db,
+  }));
+
+  beforeEach(() => {
+    harness.truncateAll();
+  });
+
+  afterAll(() => {
+    harness.close();
+  });
+
+  return harness;
 }

@@ -1,16 +1,9 @@
 // @vitest-environment node
 
-import { describe, it, expect, beforeEach, afterAll, vi } from "vitest";
-import { createTestDb } from "../helpers/test-db";
+import { describe, it, expect } from "vitest";
+import { setupTestDb } from "../helpers/test-db";
 
-const harness = createTestDb();
-
-vi.mock("drizzle-orm/d1", () => ({
-  drizzle: () => harness.db,
-}));
-
-beforeEach(() => harness.truncateAll());
-afterAll(() => harness.close());
+setupTestDb();
 
 describe("upsertPage", () => {
   it("inserts when slug doesn't exist", async () => {

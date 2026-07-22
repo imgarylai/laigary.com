@@ -1,21 +1,13 @@
 // @vitest-environment node
 
-import { describe, it, expect, beforeEach, afterAll, vi } from "vitest";
-import { createTestDb } from "../helpers/test-db";
+import { describe, it, expect } from "vitest";
+import { setupTestDb } from "../helpers/test-db";
+import { seedSection as seedSectionRow } from "../../factories";
 
-const harness = createTestDb();
+setupTestDb();
 
-vi.mock("drizzle-orm/d1", () => ({
-  drizzle: () => harness.db,
-}));
-
-beforeEach(() => harness.truncateAll());
-afterAll(() => harness.close());
-
-async function seedSection(slug = "leetcode", label = "LeetCode") {
-  const { createSection } = await import("@/db/queries");
-  return createSection({ slug, label, blurb: "...", icon: "[#]", sortOrder: 0 });
-}
+const seedSection = (slug = "leetcode", label = "LeetCode") =>
+  seedSectionRow({ slug, label, blurb: "...", icon: "[#]", sortOrder: 0 });
 
 describe("createSection", () => {
   it("inserts a new section", async () => {

@@ -1,21 +1,12 @@
 // @vitest-environment node
 
-import { describe, it, expect, beforeEach, afterAll, vi } from "vitest";
-import { createTestDb } from "../helpers/test-db";
+import { describe, it, expect } from "vitest";
+import { setupTestDb } from "../helpers/test-db";
+import { seedTag as seedTagRow } from "../../factories";
 
-const harness = createTestDb();
+setupTestDb();
 
-vi.mock("drizzle-orm/d1", () => ({
-  drizzle: () => harness.db,
-}));
-
-beforeEach(() => harness.truncateAll());
-afterAll(() => harness.close());
-
-async function seedTag(name: string, slug: string) {
-  const { createTag } = await import("@/db/queries");
-  return createTag({ name, slug });
-}
+const seedTag = (name: string, slug: string) => seedTagRow({ name, slug });
 
 describe("createPost", () => {
   it("inserts a draft by default with no publishedAt", async () => {

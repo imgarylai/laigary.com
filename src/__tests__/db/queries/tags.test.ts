@@ -1,31 +1,9 @@
 // @vitest-environment node
 
-import { describe, it, expect, beforeAll, beforeEach, afterAll, vi } from "vitest";
-import { createTestDb } from "../helpers/test-db";
+import { describe, it, expect } from "vitest";
+import { setupTestDb } from "../helpers/test-db";
 
-const harness = createTestDb();
-
-vi.mock("@opennextjs/cloudflare", () => ({
-  // _db.ts only uses env.DB to construct drizzle. Returning a stub keeps
-  // getDb() callable; the line below replaces drizzle so the stub is unused.
-  getCloudflareContext: vi.fn(async () => ({ env: { DB: {} } })),
-}));
-
-vi.mock("drizzle-orm/d1", () => ({
-  drizzle: () => harness.db,
-}));
-
-beforeAll(() => {
-  // Just to anchor harness lifetime to this file.
-});
-
-beforeEach(() => {
-  harness.truncateAll();
-});
-
-afterAll(() => {
-  harness.close();
-});
+setupTestDb();
 
 describe("tags queries", () => {
   it("createTag inserts a new row", async () => {

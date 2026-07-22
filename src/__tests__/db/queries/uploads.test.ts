@@ -1,17 +1,10 @@
 // @vitest-environment node
 
-import { describe, it, expect, beforeEach, afterAll, vi } from "vitest";
-import { createTestDb } from "../helpers/test-db";
+import { describe, it, expect } from "vitest";
+import { setupTestDb } from "../helpers/test-db";
 import { uploads } from "@/db/schema";
 
-const harness = createTestDb();
-
-vi.mock("drizzle-orm/d1", () => ({
-  drizzle: () => harness.db,
-}));
-
-beforeEach(() => harness.truncateAll());
-afterAll(() => harness.close());
+const harness = setupTestDb();
 
 const input = {
   id: "u1",
