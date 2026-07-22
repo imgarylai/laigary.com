@@ -1,5 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { tagsDataFn } from "@/server/public";
+import { SITE_ORIGIN } from "@/lib/json-ld";
+import { ogMeta } from "@/lib/og-meta";
 import { PromptLine } from "@/components/terminal/ui";
 import { TmPage, TmEmpty } from "@/components/terminal/layout";
 import { useI18n } from "@/i18n/I18nProvider";
@@ -7,11 +9,25 @@ import { FS_BLOG } from "@/lib/fsmap";
 
 export const Route = createFileRoute("/_site/tags/")({
   loader: () => tagsDataFn(),
+  head: ({ loaderData }) => ({
+    meta: loaderData
+      ? [
+          { title: loaderData.pageTitle },
+          ...ogMeta({
+            title: "Tags",
+            siteName: loaderData.siteName,
+            url: `${SITE_ORIGIN}/tags`,
+            image: `${SITE_ORIGIN}/api/og`,
+            type: "website",
+          }),
+        ]
+      : [],
+  }),
   component: TagsPage,
 });
 
 function TagsPage() {
-  const tags = Route.useLoaderData();
+  const { tags } = Route.useLoaderData();
   const { t } = useI18n();
 
   return (

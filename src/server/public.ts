@@ -98,7 +98,7 @@ export const homeDataFn = createServerFn({ method: "GET" }).handler(async () => 
 export const postsDataFn = createServerFn({ method: "GET" }).handler(async () => {
   const { getPublishedPosts } = await import("@/db/queries");
   const { posts } = await getPublishedPosts({ limit: 500 });
-  return posts;
+  return { posts, ...(await pageChrome("Posts")) };
 });
 
 export const postDataFn = createServerFn({ method: "GET" })
@@ -118,7 +118,7 @@ export const postDataFn = createServerFn({ method: "GET" })
 
 export const tagsDataFn = createServerFn({ method: "GET" }).handler(async () => {
   const { getTagsWithCounts } = await import("@/db/queries");
-  return getTagsWithCounts();
+  return { tags: await getTagsWithCounts(), ...(await pageChrome("Tags")) };
 });
 
 export const pageDataFn = createServerFn({ method: "GET" })
@@ -169,6 +169,7 @@ export const interviewDataFn = createServerFn({ method: "GET" }).handler(async (
     getRecentInterviewNotes(5),
   ]);
   return {
+    ...(await pageChrome("Interview")),
     sections: mapInterviewSections(sections, counts).map((s, i) => ({
       ...s,
       icon: sections[i].icon,

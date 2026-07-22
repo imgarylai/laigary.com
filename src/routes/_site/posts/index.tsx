@@ -1,5 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { postsDataFn } from "@/server/public";
+import { SITE_ORIGIN } from "@/lib/json-ld";
+import { ogMeta } from "@/lib/og-meta";
 import { PromptLine } from "@/components/terminal/ui";
 import { TmPage, TmEmpty, TmRowLink, TmRowCells } from "@/components/terminal/layout";
 import { TmPager } from "@/components/terminal/Pager";
@@ -16,11 +18,25 @@ export const Route = createFileRoute("/_site/posts/")({
     page: Number(search.page) > 1 ? Math.floor(Number(search.page)) : undefined,
   }),
   loader: () => postsDataFn(),
+  head: ({ loaderData }) => ({
+    meta: loaderData
+      ? [
+          { title: loaderData.pageTitle },
+          ...ogMeta({
+            title: "Posts",
+            siteName: loaderData.siteName,
+            url: `${SITE_ORIGIN}/posts`,
+            image: `${SITE_ORIGIN}/api/og`,
+            type: "website",
+          }),
+        ]
+      : [],
+  }),
   component: Archive,
 });
 
 function Archive() {
-  const posts = Route.useLoaderData();
+  const { posts } = Route.useLoaderData();
   const { tag, page } = Route.useSearch();
   const navigate = useNavigate();
   const { t } = useI18n();
