@@ -5,8 +5,14 @@ import { socialUrl } from "@/lib/social";
 // Public (frontend) read server functions. Route loaders call these; queries
 // and the markdown renderer are loaded via dynamic import inside each handler so
 // none of that server code reaches the client bundle.
+//
+// Same split as the admin mutations: the exported `*Impl` functions hold the
+// logic and are unit-tested against the better-sqlite3 harness; the
+// createServerFn wrappers below them are the thin validated RPC boundary the
+// route loaders call.
 
-const slugInput = (data: unknown) => z.object({ slug: z.string().min(1) }).parse(data);
+// Exported for testing.
+export const slugInput = (data: unknown) => z.object({ slug: z.string().min(1) }).parse(data);
 
 async function renderMd(md: string): Promise<string> {
   const { renderMarkdown } = await import("@/lib/markdown");
@@ -16,8 +22,8 @@ async function renderMd(md: string): Promise<string> {
 // Head chrome for a content page: the browser-tab title (honoring the
 // `title_template` setting — see lib/site-title) plus the site name for
 // og:site_name. Fetches settings itself so detail server fns can build both
-// in one place.
-async function pageChrome(title: string): Promise<{ pageTitle: string; siteName: string }> {
+// in one place. Exported for testing.
+export async function pageChrome(title: string): Promise<{ pageTitle: string; siteName: string }> {
   const { getSiteSettings } = await import("@/db/queries");
   const { formatPageTitle } = await import("@/lib/site-title");
   const settings = await getSiteSettings();
@@ -59,14 +65,16 @@ export function pickSocial(settings: Record<string, string>) {
 // palette used to receive the whole post index here (pre-loaded on every
 // navigation); it now searches posts on demand via `searchPostsFn`, so the
 // shell stays lightweight.
-export const blogShellFn = createServerFn({ method: "GET" }).handler(async () => {
+export async function blogShellImpl() {
   const { getSiteSettings } = await import("@/db/queries");
   const settings = await getSiteSettings();
   return { siteName: settings.site_name || DEFAULT_SITE_NAME, social: pickSocial(settings) };
-});
+}
+
+export const blogShellFn = createServerFn({ method: "GET" }).handler(blogShellImpl);
 
 // Home: whoami/intro from settings + headline counts and latest-post date.
-export const homeDataFn = createServerFn({ method: "GET" }).handler(async () => {
+export async function homeDataImpl() {
   const { getSiteSettings, getPublishedPosts, getTagsWithCounts } = await import("@/db/queries");
   const [settings, { posts, total }, tags] = await Promise.all([
     getSiteSettings(),
@@ -91,55 +99,65 @@ export const homeDataFn = createServerFn({ method: "GET" }).handler(async () => 
     // Absolute profile URLs for the home page's JSON-LD Person.sameAs.
     socialUrls,
   };
-});
+}
+
+export const homeDataFn = createServerFn({ method: "GET" }).handler(homeDataImpl);
 
 // Archive: full published list (blog scale is small); the client paginates and
 // applies the `?tag=` filter from typed search params.
-export const postsDataFn = createServerFn({ method: "GET" }).handler(async () => {
+export async function postsDataImpl() {
   const { getPublishedPosts } = await import("@/db/queries");
   const { posts } = await getPublishedPosts({ limit: 500 });
   return { posts, ...(await pageChrome("Posts")) };
-});
+}
+
+export const postsDataFn = createServerFn({ method: "GET" }).handler(postsDataImpl);
+
+export async function postDataImpl(data: { slug: string }) {
+  const { getPostBySlug } = await import("@/db/queries");
+  const { extractToc } = await import("@/lib/toc");
+  const post = await getPostBySlug(data.slug);
+  if (!post) return null;
+  return {
+    post,
+    html: await renderMd(post.contentMd),
+    toc: extractToc(post.contentMd),
+    ...(await pageChrome(post.title)),
+  };
+}
 
 export const postDataFn = createServerFn({ method: "GET" })
   .validator(slugInput)
-  .handler(async ({ data }) => {
-    const { getPostBySlug } = await import("@/db/queries");
-    const { extractToc } = await import("@/lib/toc");
-    const post = await getPostBySlug(data.slug);
-    if (!post) return null;
-    return {
-      post,
-      html: await renderMd(post.contentMd),
-      toc: extractToc(post.contentMd),
-      ...(await pageChrome(post.title)),
-    };
-  });
+  .handler(({ data }) => postDataImpl(data));
 
-export const tagsDataFn = createServerFn({ method: "GET" }).handler(async () => {
+export async function tagsDataImpl() {
   const { getTagsWithCounts } = await import("@/db/queries");
   return { tags: await getTagsWithCounts(), ...(await pageChrome("Tags")) };
-});
+}
+
+export const tagsDataFn = createServerFn({ method: "GET" }).handler(tagsDataImpl);
+
+export async function pageDataImpl(data: { slug: string }) {
+  const { getPageBySlug } = await import("@/db/queries");
+  const page = await getPageBySlug(data.slug);
+  if (!page) return null;
+  return {
+    page: { slug: page.slug, title: page.title },
+    html: await renderMd(page.contentMd),
+    ...(await pageChrome(page.title)),
+  };
+}
 
 export const pageDataFn = createServerFn({ method: "GET" })
   .validator(slugInput)
-  .handler(async ({ data }) => {
-    const { getPageBySlug } = await import("@/db/queries");
-    const page = await getPageBySlug(data.slug);
-    if (!page) return null;
-    return {
-      page: { slug: page.slug, title: page.title },
-      html: await renderMd(page.contentMd),
-      ...(await pageChrome(page.title)),
-    };
-  });
+  .handler(({ data }) => pageDataImpl(data));
 
 // ── Interview sub-site ──────────────────────────────────────────────────
 
 // Per-navigation shell data for the interview namespace: the section list
 // (drives the header nav + palette page rows) plus footer branding. Notes are
 // searched on demand via `searchInterviewNotesFn` rather than pre-loaded.
-export const interviewShellFn = createServerFn({ method: "GET" }).handler(async () => {
+export async function interviewShellImpl() {
   const { getInterviewSections, getSiteSettings } = await import("@/db/queries");
   const [sections, settings] = await Promise.all([getInterviewSections(), getSiteSettings()]);
   return {
@@ -147,19 +165,23 @@ export const interviewShellFn = createServerFn({ method: "GET" }).handler(async 
     siteName: settings.site_name || DEFAULT_SITE_NAME,
     social: pickSocial(settings),
   };
-});
+}
+
+export const interviewShellFn = createServerFn({ method: "GET" }).handler(interviewShellImpl);
 
 // On-demand note search for the interview ⌘K palette (title match across all
 // sections). Called only after the user types (and, for IME input, after the
 // composition commits) — see CommandPalette.
+export async function searchInterviewNotesImpl(data: { q: string }) {
+  const { searchPublishedInterviewNotes } = await import("@/db/queries");
+  return searchPublishedInterviewNotes(data.q, 20);
+}
+
 export const searchInterviewNotesFn = createServerFn({ method: "GET" })
   .validator((data: unknown) => z.object({ q: z.string().min(1) }).parse(data))
-  .handler(async ({ data }) => {
-    const { searchPublishedInterviewNotes } = await import("@/db/queries");
-    return searchPublishedInterviewNotes(data.q, 20);
-  });
+  .handler(({ data }) => searchInterviewNotesImpl(data));
 
-export const interviewDataFn = createServerFn({ method: "GET" }).handler(async () => {
+export async function interviewDataImpl() {
   const { getInterviewSections, getInterviewNoteCountsBySection, getRecentInterviewNotes } =
     await import("@/db/queries");
   const { unixToIso, computeReadingTime } = await import("@/lib/date");
@@ -183,57 +205,63 @@ export const interviewDataFn = createServerFn({ method: "GET" }).handler(async (
       tags: n.tags.map((t) => t.name),
     })),
   };
-});
+}
+
+export const interviewDataFn = createServerFn({ method: "GET" }).handler(interviewDataImpl);
+
+export async function sectionDataImpl(data: { slug: string }) {
+  const { getInterviewSectionBySlug, getInterviewNotesBySection, getTagsInSection } =
+    await import("@/db/queries");
+  const { unixToIso, computeReadingTime } = await import("@/lib/date");
+  const section = await getInterviewSectionBySlug(data.slug);
+  if (!section) return null;
+  const [{ notes }, sectionTags] = await Promise.all([
+    getInterviewNotesBySection(data.slug, { limit: 500 }),
+    getTagsInSection(data.slug),
+  ]);
+  return {
+    ...(await pageChrome(section.label)),
+    section: { slug: section.slug, label: section.label, blurb: section.blurb },
+    // Tag names drive the `--filter` chip row; notes carry names too, so the
+    // `?tag=` filter matches by name (consistent with note-detail tag links).
+    tags: sectionTags.map((t) => t.name),
+    notes: notes.map((n) => ({
+      slug: n.slug,
+      title: n.title,
+      date: unixToIso(n.createdAt),
+      minutes: computeReadingTime(n.contentMd),
+      tags: n.tags.map((t) => t.name),
+    })),
+  };
+}
 
 export const sectionDataFn = createServerFn({ method: "GET" })
   .validator(slugInput)
-  .handler(async ({ data }) => {
-    const { getInterviewSectionBySlug, getInterviewNotesBySection, getTagsInSection } =
-      await import("@/db/queries");
-    const { unixToIso, computeReadingTime } = await import("@/lib/date");
-    const section = await getInterviewSectionBySlug(data.slug);
-    if (!section) return null;
-    const [{ notes }, sectionTags] = await Promise.all([
-      getInterviewNotesBySection(data.slug, { limit: 500 }),
-      getTagsInSection(data.slug),
-    ]);
-    return {
-      ...(await pageChrome(section.label)),
-      section: { slug: section.slug, label: section.label, blurb: section.blurb },
-      // Tag names drive the `--filter` chip row; notes carry names too, so the
-      // `?tag=` filter matches by name (consistent with note-detail tag links).
-      tags: sectionTags.map((t) => t.name),
-      notes: notes.map((n) => ({
-        slug: n.slug,
-        title: n.title,
-        date: unixToIso(n.createdAt),
-        minutes: computeReadingTime(n.contentMd),
-        tags: n.tags.map((t) => t.name),
-      })),
-    };
-  });
+  .handler(({ data }) => sectionDataImpl(data));
+
+export async function noteDataImpl(data: { section: string; slug: string }) {
+  const { getInterviewNote, getInterviewSectionBySlug } = await import("@/db/queries");
+  const { unixToIso, computeReadingTime } = await import("@/lib/date");
+  const note = await getInterviewNote(data.section, data.slug);
+  if (!note) return null;
+  const section = await getInterviewSectionBySlug(data.section);
+  return {
+    note: {
+      slug: note.slug,
+      section: data.section,
+      sectionLabel: section?.label ?? data.section,
+      title: note.title,
+      date: unixToIso(note.createdAt),
+      minutes: computeReadingTime(note.contentMd),
+      tags: note.tags.map((t) => t.name),
+    },
+    html: await renderMd(note.contentMd),
+    ...(await pageChrome(note.title)),
+  };
+}
 
 export const noteDataFn = createServerFn({ method: "GET" })
   .validator((data: unknown) =>
     z.object({ section: z.string().min(1), slug: z.string().min(1) }).parse(data),
   )
-  .handler(async ({ data }) => {
-    const { getInterviewNote, getInterviewSectionBySlug } = await import("@/db/queries");
-    const { unixToIso, computeReadingTime } = await import("@/lib/date");
-    const note = await getInterviewNote(data.section, data.slug);
-    if (!note) return null;
-    const section = await getInterviewSectionBySlug(data.section);
-    return {
-      note: {
-        slug: note.slug,
-        section: data.section,
-        sectionLabel: section?.label ?? data.section,
-        title: note.title,
-        date: unixToIso(note.createdAt),
-        minutes: computeReadingTime(note.contentMd),
-        tags: note.tags.map((t) => t.name),
-      },
-      html: await renderMd(note.contentMd),
-      ...(await pageChrome(note.title)),
-    };
-  });
+  .handler(({ data }) => noteDataImpl(data));
