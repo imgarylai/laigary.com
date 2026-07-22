@@ -1,4 +1,5 @@
 import { createFileRoute, notFound, useNavigate, Link } from "@tanstack/react-router";
+import { cn } from "@/lib/utils";
 import { sectionDataFn } from "@/server/public";
 import { AsciiRule, PromptLine } from "@/components/terminal/ui";
 import { TmPage, TmEmpty, TmRowLink, TmRowCells } from "@/components/terminal/layout";
@@ -40,7 +41,7 @@ export const Route = createFileRoute("/interview/$section/")({
 });
 
 function SectionPage() {
-  const { section, notes } = Route.useLoaderData();
+  const { section, notes, tags } = Route.useLoaderData();
   const { page, tag } = Route.useSearch();
   const navigate = useNavigate();
   const { t } = useI18n();
@@ -82,18 +83,40 @@ function SectionPage() {
       )}
       <AsciiRule className="mt-2 mb-5" />
 
-      {tag && (
-        <div className="mb-5 flex items-center gap-2 text-[11.5px] text-tm-muted">
-          <span>
-            {t("blog.archive.filteredBy")} <span className="text-tm-accent">#{tag}</span>
-          </span>
+      {/* Tag filter chips (design: interview/app.jsx `--filter` row). Chips
+          carry tag names — the same value note rows and detail links filter
+          by — with `all` clearing the filter. */}
+      {tags.length > 0 && (
+        <div className="mb-[22px] flex flex-wrap items-baseline gap-1.5">
+          <span className="mr-1.5 text-[11px] text-tm-muted">--filter</span>
           <Link
             to="/interview/$section"
             params={{ section: section.slug }}
-            className="border border-tm-border px-[7px] py-0.5 text-[10.5px] text-tm-muted no-underline"
+            className={cn(
+              "border px-2.5 py-[3px] text-[11px] no-underline",
+              tag
+                ? "border-tm-border text-tm-muted"
+                : "border-tm-accent bg-tm-subtle text-tm-accent",
+            )}
           >
-            {t("blog.archive.clear")}
+            all
           </Link>
+          {tags.map((name) => (
+            <Link
+              key={name}
+              to="/interview/$section"
+              params={{ section: section.slug }}
+              search={{ tag: name }}
+              className={cn(
+                "border px-2.5 py-[3px] text-[11px] no-underline",
+                tag === name
+                  ? "border-tm-accent bg-tm-subtle text-tm-accent"
+                  : "border-tm-border text-tm-muted",
+              )}
+            >
+              #{name}
+            </Link>
+          ))}
         </div>
       )}
 

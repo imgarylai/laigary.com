@@ -188,14 +188,21 @@ export const interviewDataFn = createServerFn({ method: "GET" }).handler(async (
 export const sectionDataFn = createServerFn({ method: "GET" })
   .validator(slugInput)
   .handler(async ({ data }) => {
-    const { getInterviewSectionBySlug, getInterviewNotesBySection } = await import("@/db/queries");
+    const { getInterviewSectionBySlug, getInterviewNotesBySection, getTagsInSection } =
+      await import("@/db/queries");
     const { unixToIso, computeReadingTime } = await import("@/lib/date");
     const section = await getInterviewSectionBySlug(data.slug);
     if (!section) return null;
-    const { notes } = await getInterviewNotesBySection(data.slug, { limit: 500 });
+    const [{ notes }, sectionTags] = await Promise.all([
+      getInterviewNotesBySection(data.slug, { limit: 500 }),
+      getTagsInSection(data.slug),
+    ]);
     return {
       ...(await pageChrome(section.label)),
       section: { slug: section.slug, label: section.label, blurb: section.blurb },
+      // Tag names drive the `--filter` chip row; notes carry names too, so the
+      // `?tag=` filter matches by name (consistent with note-detail tag links).
+      tags: sectionTags.map((t) => t.name),
       notes: notes.map((n) => ({
         slug: n.slug,
         title: n.title,
