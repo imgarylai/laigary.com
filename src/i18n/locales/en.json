@@ -181,7 +181,14 @@
     "horizontalRule": "Horizontal rule",
     "characters": "characters",
     "words": "words",
-    "placeholder": "Start writing..."
+    "placeholder": "Start writing...",
+    "linkDialogTitle": "Insert link",
+    "linkDialogPlaceholder": "Paste a URL, or type to search posts & notes…",
+    "linkSearching": "Searching…",
+    "linkNoResults": "No matches.",
+    "linkRemove": "Remove link",
+    "linkPostBadge": "post",
+    "linkDraftBadge": "draft"
   },
   "tagsCombobox": {
     "placeholder": "Select tags...",

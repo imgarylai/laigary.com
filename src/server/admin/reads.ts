@@ -140,6 +140,45 @@ export const editNoteDataFn = createServerFn({ method: "GET" })
     },
   );
 
+// A link target the editor's link dialog can point at: internal URL plus the
+// bits the result list renders (type badge, section, draft marker).
+export type LinkTarget = {
+  type: "post" | "note";
+  title: string;
+  url: string;
+  status: string;
+  // Badge context: "post" for posts, the section slug for notes.
+  context: string;
+};
+
+// Title search across posts AND interview notes for the editor's link dialog.
+// Drafts are included (the author may link ahead of publishing) and badged.
+export const searchLinkTargetsFn = createServerFn({ method: "GET" })
+  .validator((data: unknown) => z.object({ q: z.string().min(1) }).parse(data))
+  .handler(async ({ data }): Promise<LinkTarget[]> => {
+    const { getAdminPosts, searchAdminInterviewNotes } = await import("@/db/queries");
+    const [{ items: posts }, notes] = await Promise.all([
+      getAdminPosts({ q: data.q, limit: 8 }),
+      searchAdminInterviewNotes(data.q, 8),
+    ]);
+    return [
+      ...posts.map<LinkTarget>((p) => ({
+        type: "post",
+        title: p.title,
+        url: `/posts/${p.slug}`,
+        status: p.status,
+        context: "post",
+      })),
+      ...notes.map<LinkTarget>((n) => ({
+        type: "note",
+        title: n.title,
+        url: `/interview/${n.sectionSlug}/${n.slug}`,
+        status: n.status,
+        context: n.sectionSlug,
+      })),
+    ];
+  });
+
 // Site settings key/value map for the settings form.
 export const getSettingsFn = createServerFn({ method: "GET" }).handler(
   async (): Promise<Record<string, string>> => {

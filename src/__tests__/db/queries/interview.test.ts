@@ -288,6 +288,38 @@ describe("getInterviewNotesBySection", () => {
   });
 });
 
+describe("searchAdminInterviewNotes", () => {
+  it("matches titles across sections and statuses, with the section slug", async () => {
+    const { createNote, searchAdminInterviewNotes } = await import("@/db/queries");
+    const lc = await seedSection();
+    const sd = await seedSection("system-design", "System Design");
+
+    await createNote({ slug: "two-sum", sectionId: lc.id, title: "Two Sum", status: "published" });
+    await createNote({ slug: "sum-types", sectionId: sd.id, title: "Sum Types" });
+    await createNote({ slug: "bfs", sectionId: lc.id, title: "BFS Template", status: "published" });
+
+    const hits = await searchAdminInterviewNotes("Sum");
+    expect(hits.map((h) => h.slug).sort()).toEqual(["sum-types", "two-sum"]);
+    expect(hits.find((h) => h.slug === "two-sum")).toMatchObject({
+      sectionSlug: "leetcode",
+      status: "published",
+    });
+    expect(hits.find((h) => h.slug === "sum-types")).toMatchObject({
+      sectionSlug: "system-design",
+      status: "draft",
+    });
+  });
+
+  it("caps results at the limit", async () => {
+    const { createNote, searchAdminInterviewNotes } = await import("@/db/queries");
+    const section = await seedSection();
+    for (let i = 0; i < 4; i++) {
+      await createNote({ slug: `note-${i}`, sectionId: section.id, title: `Graph ${i}` });
+    }
+    expect(await searchAdminInterviewNotes("Graph", 2)).toHaveLength(2);
+  });
+});
+
 describe("getTagsInSection", () => {
   it("returns distinct tags from published notes only", async () => {
     const { createNote, createTag, getTagsInSection } = await import("@/db/queries");

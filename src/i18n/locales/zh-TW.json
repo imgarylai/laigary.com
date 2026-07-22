@@ -181,7 +181,14 @@
     "horizontalRule": "分隔線",
     "characters": "字元",
     "words": "字數",
-    "placeholder": "開始撰寫..."
+    "placeholder": "開始撰寫...",
+    "linkDialogTitle": "插入連結",
+    "linkDialogPlaceholder": "貼上網址,或輸入文字搜尋文章與筆記…",
+    "linkSearching": "搜尋中…",
+    "linkNoResults": "沒有符合的結果。",
+    "linkRemove": "移除連結",
+    "linkPostBadge": "文章",
+    "linkDraftBadge": "草稿"
   },
   "tagsCombobox": {
     "placeholder": "選擇標籤...",
