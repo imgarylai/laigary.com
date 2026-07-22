@@ -74,6 +74,13 @@ Local D1 schema: `npx wrangler d1 migrations apply laigary-db --local`.
 - Assertion depth: assert the outcome that matters (status, message, `ok`,
   row count, the computed field) — not deep-equals of whole payloads, unless
   computing that value is the function's job.
+- Transient errors (disk I/O, lost connection, disk full — environmental
+  failures the public API cannot produce) are the one sanctioned reason to
+  mock inside the real-DB harness: `vi.spyOn(harness.db, …)` with
+  `mockImplementationOnce` that throws, then `mockRestore()` — one call fails,
+  every other test in the file stays on the real database. Never mock to
+  fabricate errors the public API can already produce (NOT NULL, UNIQUE —
+  trigger those for real).
 - Coverage: `pnpm test:coverage` (v8). Excluded as not-our-unit-to-test:
   `components/ui/**` (vendored), `db/schema/**` (declarative),
   `routeTree.gen.ts` (generated).

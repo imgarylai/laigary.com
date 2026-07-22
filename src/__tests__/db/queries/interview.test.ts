@@ -1,10 +1,10 @@
 // @vitest-environment node
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { setupTestDb } from "../helpers/test-db";
 import { seedNote, seedSection as seedSectionRow } from "../../factories";
 
-setupTestDb();
+const harness = setupTestDb();
 
 const seedSection = (slug = "leetcode", label = "LeetCode") =>
   seedSectionRow({ slug, label, blurb: "...", icon: "[#]", sortOrder: 0 });
@@ -399,6 +399,26 @@ describe("non-conflict error rethrow", () => {
     }).catch((e) => e);
     expect(err).toBeInstanceOf(Error);
     expect(err).not.toBeInstanceOf(SectionConflictError);
+  });
+
+  it("updateNote rethrows transient (non-UNIQUE) errors untouched", async () => {
+    const { createNote, updateNote, NoteConflictError } = await import("@/db/queries");
+    const section = await seedSection();
+    const { id } = await createNote({ slug: "n", sectionId: section.id, title: "T" });
+
+    // A transient failure (disk I/O) can't be produced through the public API
+    // — every field has a ?? fallback and the schema has no CHECK constraints
+    // — so this is the sanctioned transient-error mock (see AGENTS.md): throw
+    // once from the harness db, everything else stays on the real database.
+    const spy = vi.spyOn(harness.db, "update").mockImplementationOnce(() => {
+      throw new Error("disk I/O error");
+    });
+
+    const err = await updateNote(id, { title: "T2" }).catch((e) => e);
+    spy.mockRestore();
+    expect(err).toBeInstanceOf(Error);
+    expect((err as Error).message).toBe("disk I/O error");
+    expect(err).not.toBeInstanceOf(NoteConflictError);
   });
 
   it("createNote rethrows non-UNIQUE errors untouched", async () => {
