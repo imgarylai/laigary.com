@@ -8,7 +8,14 @@ import { cn } from "@/lib/utils";
 import { useI18n } from "@/i18n/I18nProvider";
 import { breadcrumbForPath } from "@/lib/fsmap";
 
-export type NavItem = { label: string; to: string; params?: Record<string, string> };
+export type NavItem = {
+  label: string;
+  to: string;
+  params?: Record<string, string>;
+  // Command shown in the mobile drawer (derive via fsCmd — `cd` for dirs,
+  // `cat` for files). Falls back to `cd ./{label}` when unset.
+  cmd?: string;
+};
 
 const ICON = 15;
 
@@ -131,7 +138,7 @@ export function TmHeader({
         <div className="absolute inset-x-0 top-14 z-[9] flex flex-col border-b border-tm-border bg-tm-bg px-3.5 py-2.5">
           {navItems.map((item) => (
             <Link key={item.label} to={item.to} params={item.params} className={drawerLink}>
-              $ cd ./{item.label === "~" ? "" : item.label}
+              $ {item.cmd ?? `cd ./${item.label === "~" ? "" : item.label}`}
             </Link>
           ))}
           <button
