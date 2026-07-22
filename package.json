@@ -63,6 +63,7 @@
     "@tiptap/pm": "3.28.0",
     "@tiptap/react": "3.28.0",
     "@tiptap/starter-kit": "3.28.0",
+    "@tiptap/suggestion": "3.28.0",
     "aws4fetch": "1.0.20",
     "browser-image-compression": "2.0.2",
     "class-variance-authority": "0.7.1",

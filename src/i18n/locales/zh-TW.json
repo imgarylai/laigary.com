@@ -188,7 +188,8 @@
     "linkNoResults": "沒有符合的結果。",
     "linkRemove": "移除連結",
     "linkPostBadge": "文章",
-    "linkDraftBadge": "草稿"
+    "linkDraftBadge": "草稿",
+    "linkSuggestHint": "輸入文字搜尋文章與筆記…"
   },
   "tagsCombobox": {
     "placeholder": "選擇標籤...",
