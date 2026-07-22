@@ -19,6 +19,7 @@ import { TextStyle } from "@tiptap/extension-text-style";
 import Color from "@tiptap/extension-color";
 import Focus from "@tiptap/extension-focus";
 import { InlineMath } from "./inline-math";
+import { LinkSuggestion } from "./link-suggestion";
 import { common, createLowlight } from "lowlight";
 
 const lowlight = createLowlight(common);
@@ -58,6 +59,8 @@ export function createExtensions({ placeholder }: { placeholder: string }) {
     TextStyle,
     Color,
     Focus.configure({ className: "has-focus", mode: "deepest" }),
+    // `@` article mention → inserts a plain markdown link (see link-suggestion.tsx).
+    LinkSuggestion,
     // InlineMath = @aarkue InlineMathNode + markdown mapping (see inline-math.ts).
     // Registered directly instead of via MathExtension, which is only a thin
     // wrapper that would add the unextended node.

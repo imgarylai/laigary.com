@@ -188,7 +188,8 @@
     "linkNoResults": "No matches.",
     "linkRemove": "Remove link",
     "linkPostBadge": "post",
-    "linkDraftBadge": "draft"
+    "linkDraftBadge": "draft",
+    "linkSuggestHint": "Type to search posts & notes…"
   },
   "tagsCombobox": {
     "placeholder": "Select tags...",
