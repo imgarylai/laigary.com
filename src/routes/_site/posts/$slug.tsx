@@ -26,7 +26,7 @@ export const Route = createFileRoute("/_site/posts/$slug")({
               loaderData.post.coverImageUrl ??
               `${SITE_ORIGIN}/api/og/posts/${loaderData.post.slug}`,
             type: "article",
-            description: loaderData.post.excerpt ?? undefined,
+            description: loaderData.description || undefined,
             publishedTime: loaderData.post.date,
             modifiedTime: loaderData.post.updatedAt,
           }),
