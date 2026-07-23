@@ -14,6 +14,14 @@ export interface OgMetaInput {
   description?: string;
 }
 
+// The canonical <link> entry for a public route's head() links. Search engines
+// honor this — not og:url — for canonicalization. Routes pass the same clean
+// absolute URL they give ogMeta; search params (?tag, ?page) never leak in
+// because head() doesn't depend on them.
+export function canonicalLink(url: string): Array<Record<string, string>> {
+  return [{ rel: "canonical", href: url }];
+}
+
 export function ogMeta(input: OgMetaInput): Array<Record<string, string>> {
   // Our /api/og* endpoints always render 1200×630. Explicit dimensions let
   // crawlers show the card on the very first share, before the image has been

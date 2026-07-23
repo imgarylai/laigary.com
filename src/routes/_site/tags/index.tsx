@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { tagsDataFn } from "@/server/public";
 import { SITE_ORIGIN } from "@/lib/json-ld";
-import { ogMeta } from "@/lib/og-meta";
+import { canonicalLink, ogMeta } from "@/lib/og-meta";
 import { PromptLine } from "@/components/terminal/ui";
 import { TmPage, TmEmpty } from "@/components/terminal/layout";
 import { useI18n } from "@/i18n/I18nProvider";
@@ -22,6 +22,7 @@ export const Route = createFileRoute("/_site/tags/")({
           }),
         ]
       : [],
+    links: canonicalLink(`${SITE_ORIGIN}/tags`),
   }),
   component: TagsPage,
 });

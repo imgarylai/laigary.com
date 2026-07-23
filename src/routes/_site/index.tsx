@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { homeDataFn } from "@/server/public";
 import { SITE_ORIGIN, serializeJsonLd, webSiteLd } from "@/lib/json-ld";
-import { ogMeta } from "@/lib/og-meta";
+import { canonicalLink, ogMeta } from "@/lib/og-meta";
 import { AsciiRule, PromptLine } from "@/components/terminal/ui";
 import { TmPage, TmMeta, TmDirLink, TmDirCells } from "@/components/terminal/layout";
 import { useI18n } from "@/i18n/I18nProvider";
@@ -21,6 +21,7 @@ export const Route = createFileRoute("/_site/")({
           description: loaderData.intro || undefined,
         })
       : [],
+    links: canonicalLink(`${SITE_ORIGIN}/`),
     scripts: loaderData
       ? [
           {

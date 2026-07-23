@@ -5,7 +5,7 @@ import { AsciiRule, PromptLine } from "@/components/terminal/ui";
 import { TmPage, TmEmpty, TmRowLink, TmRowCells } from "@/components/terminal/layout";
 import { TmPager } from "@/components/terminal/Pager";
 import { SITE_ORIGIN } from "@/lib/json-ld";
-import { ogMeta } from "@/lib/og-meta";
+import { canonicalLink, ogMeta } from "@/lib/og-meta";
 import { useI18n } from "@/i18n/I18nProvider";
 import { FS_INTERVIEW } from "@/lib/fsmap";
 
@@ -36,6 +36,7 @@ export const Route = createFileRoute("/interview/$section/")({
           }),
         ]
       : [],
+    links: loaderData ? canonicalLink(`${SITE_ORIGIN}/interview/${loaderData.section.slug}`) : [],
   }),
   component: SectionPage,
 });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ogMeta } from "@/lib/og-meta";
+import { canonicalLink, ogMeta } from "@/lib/og-meta";
 
 const base = {
   title: "Two Sum",
@@ -48,5 +48,13 @@ describe("og:image dimensions", () => {
   it("should omit dimensions when the image is an external cover", () => {
     const tags = ogMeta({ ...base, image: "https://assets.laigary.com/cover.png" });
     expect(tags.some((t) => t.property === "og:image:width")).toBe(false);
+  });
+});
+
+describe("canonicalLink", () => {
+  it("should produce a single rel=canonical entry when given a URL", () => {
+    expect(canonicalLink("https://laigary.com/posts")).toEqual([
+      { rel: "canonical", href: "https://laigary.com/posts" },
+    ]);
   });
 });
