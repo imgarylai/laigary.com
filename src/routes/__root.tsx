@@ -54,6 +54,19 @@ export const Route = createRootRoute({
         href: "/favicon.svg",
         type: "image/svg+xml",
       },
+      // PNG fallback for anything that doesn't render SVG favicons.
+      {
+        rel: "icon",
+        href: "/favicon-32.png",
+        type: "image/png",
+        sizes: "32x32",
+      },
+      // iOS "Add to Home Screen" tile (Safari ignores the manifest icons).
+      {
+        rel: "apple-touch-icon",
+        href: "/apple-touch-icon.png",
+        sizes: "180x180",
+      },
       {
         rel: "manifest",
         href: "/manifest.json",
