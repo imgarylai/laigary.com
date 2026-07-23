@@ -14,6 +14,7 @@ import { Route as AdminRouteRouteImport } from './routes/admin/route'
 import { Route as DesignSystemRouteImport } from './routes/design-system'
 import { Route as FeedDotxmlRouteImport } from './routes/feed[.]xml'
 import { Route as InterviewRouteImport } from './routes/interview'
+import { Route as LlmsDottxtRouteImport } from './routes/llms[.]txt'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SiteIndexRouteImport } from './routes/_site/index'
@@ -65,6 +66,11 @@ const FeedDotxmlRoute = FeedDotxmlRouteImport.update({
 const InterviewRoute = InterviewRouteImport.update({
   id: '/interview',
   path: '/interview',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LlmsDottxtRoute = LlmsDottxtRouteImport.update({
+  id: '/llms.txt',
+  path: '/llms.txt',
   getParentRoute: () => rootRouteImport,
 } as any)
 const McpRoute = McpRouteImport.update({
@@ -216,6 +222,7 @@ export interface FileRoutesByFullPath {
   '/design-system': typeof DesignSystemRoute
   '/feed.xml': typeof FeedDotxmlRoute
   '/interview': typeof InterviewRouteWithChildren
+  '/llms.txt': typeof LlmsDottxtRoute
   '/mcp': typeof McpRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/$slug': typeof SiteSlugRoute
@@ -247,6 +254,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/design-system': typeof DesignSystemRoute
   '/feed.xml': typeof FeedDotxmlRoute
+  '/llms.txt': typeof LlmsDottxtRoute
   '/mcp': typeof McpRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/$slug': typeof SiteSlugRoute
@@ -283,6 +291,7 @@ export interface FileRoutesById {
   '/design-system': typeof DesignSystemRoute
   '/feed.xml': typeof FeedDotxmlRoute
   '/interview': typeof InterviewRouteWithChildren
+  '/llms.txt': typeof LlmsDottxtRoute
   '/mcp': typeof McpRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_site/$slug': typeof SiteSlugRoute
@@ -320,6 +329,7 @@ export interface FileRouteTypes {
     | '/design-system'
     | '/feed.xml'
     | '/interview'
+    | '/llms.txt'
     | '/mcp'
     | '/sitemap.xml'
     | '/$slug'
@@ -351,6 +361,7 @@ export interface FileRouteTypes {
   to:
     | '/design-system'
     | '/feed.xml'
+    | '/llms.txt'
     | '/mcp'
     | '/sitemap.xml'
     | '/$slug'
@@ -386,6 +397,7 @@ export interface FileRouteTypes {
     | '/design-system'
     | '/feed.xml'
     | '/interview'
+    | '/llms.txt'
     | '/mcp'
     | '/sitemap.xml'
     | '/_site/$slug'
@@ -422,6 +434,7 @@ export interface RootRouteChildren {
   DesignSystemRoute: typeof DesignSystemRoute
   FeedDotxmlRoute: typeof FeedDotxmlRoute
   InterviewRoute: typeof InterviewRouteWithChildren
+  LlmsDottxtRoute: typeof LlmsDottxtRoute
   McpRoute: typeof McpRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiOgRoute: typeof ApiOgRouteWithChildren
@@ -462,6 +475,13 @@ declare module '@tanstack/react-router' {
       path: '/interview'
       fullPath: '/interview'
       preLoaderRoute: typeof InterviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/llms.txt': {
+      id: '/llms.txt'
+      path: '/llms.txt'
+      fullPath: '/llms.txt'
+      preLoaderRoute: typeof LlmsDottxtRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/mcp': {
@@ -755,6 +775,7 @@ const rootRouteChildren: RootRouteChildren = {
   DesignSystemRoute: DesignSystemRoute,
   FeedDotxmlRoute: FeedDotxmlRoute,
   InterviewRoute: InterviewRouteWithChildren,
+  LlmsDottxtRoute: LlmsDottxtRoute,
   McpRoute: McpRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiOgRoute: ApiOgRouteWithChildren,
@@ -762,12 +783,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}

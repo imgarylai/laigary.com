@@ -31,10 +31,15 @@ export {
   TagNotFoundError,
 } from "./tags";
 
-export type { InterviewNoteWithTags, AdminInterviewNote } from "./interview";
+export type {
+  InterviewNoteWithTags,
+  AdminInterviewNote,
+  PublishedNoteIndexEntry,
+} from "./interview";
 export {
   getInterviewSections,
   getInterviewSectionBySlug,
+  getPublishedNoteIndex,
   getInterviewNoteCountsBySection,
   getRecentInterviewNotes,
   getInterviewNotesBySection,
