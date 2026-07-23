@@ -62,14 +62,19 @@ export async function postDataImpl(data: { slug: string }) {
   const { getPostBySlug, getAdjacentPosts, getSiteSettings } = await import("@/db/queries");
   const { extractToc } = await import("@/lib/toc");
   const { giscusFromSettings } = await import("@/lib/giscus");
+  const { plainTextSummary, META_SUMMARY_MAX } = await import("@/lib/summary");
   const post = await getPostBySlug(data.slug);
   if (!post) return null;
+  const html = await renderMd(post.contentMd);
   return {
     post,
-    html: await renderMd(post.contentMd),
+    html,
     toc: extractToc(post.contentMd),
     adjacent: await getAdjacentPosts(data.slug),
     giscus: giscusFromSettings(await getSiteSettings()),
+    // Meta/OG description: the excerpt, or a plain-text cut of the body so no
+    // post ships without one.
+    description: post.excerpt || plainTextSummary(html, META_SUMMARY_MAX),
     ...(await pageChrome(post.title)),
   };
 }
@@ -106,11 +111,14 @@ export const tagDataFn = createServerFn({ method: "GET" })
 
 export async function pageDataImpl(data: { slug: string }) {
   const { getPageBySlug } = await import("@/db/queries");
+  const { plainTextSummary, META_SUMMARY_MAX } = await import("@/lib/summary");
   const page = await getPageBySlug(data.slug);
   if (!page) return null;
+  const html = await renderMd(page.contentMd);
   return {
     page: { slug: page.slug, title: page.title },
-    html: await renderMd(page.contentMd),
+    html,
+    description: plainTextSummary(html, META_SUMMARY_MAX),
     ...(await pageChrome(page.title)),
   };
 }

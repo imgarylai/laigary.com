@@ -82,6 +82,8 @@ describe("postDataImpl", () => {
     expect(data?.pageTitle).toBe("Hello | Blog");
     // Lone post: both chronological neighbors are open.
     expect(data?.adjacent).toEqual({ prev: null, next: null });
+    // No excerpt on the seed → description falls back to the body text.
+    expect(data?.description).toBe("Section A some bold");
   });
 
   it("returns null for a missing or draft slug", async () => {

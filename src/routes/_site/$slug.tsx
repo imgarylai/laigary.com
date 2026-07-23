@@ -24,6 +24,7 @@ export const Route = createFileRoute("/_site/$slug")({
             url: `${SITE_ORIGIN}/${loaderData.page.slug}`,
             image: `${SITE_ORIGIN}/api/og/pages/${loaderData.page.slug}`,
             type: "website",
+            description: loaderData.description || undefined,
           }),
         ]
       : [],

@@ -1,27 +1,17 @@
 import { getFeedPosts, getSiteSettings } from "@/db/queries";
 import { renderMarkdown } from "@/lib/markdown";
+import { FEED_SUMMARY_MAX, plainTextSummary } from "@/lib/summary";
 
 // Server-only: builds the RSS feed XML from the latest published posts. Imported
 // by the /feed.xml server route (never bundled to the client).
 
 const DEFAULT_SITE_URL = "https://laigary.com";
 const FEED_LIMIT = 50;
-const DESCRIPTION_MAX = 280;
 
 // A `]]>` inside content would close the CDATA section early; split it across
 // two sections so the payload survives verbatim.
 function cdata(value: string): string {
   return `<![CDATA[${value.replaceAll("]]>", "]]]]><![CDATA[>")}]]>`;
-}
-
-// Fallback description when a post has no excerpt: the rendered body with tags
-// stripped and whitespace collapsed, truncated.
-function plainTextSummary(html: string): string {
-  const text = html
-    .replace(/<[^>]+>/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-  return text.length > DESCRIPTION_MAX ? `${text.slice(0, DESCRIPTION_MAX)}…` : text;
 }
 
 export async function buildFeedXml(): Promise<string> {
@@ -33,7 +23,7 @@ export async function buildFeedXml(): Promise<string> {
       const pubDate = new Date(post.date).toUTCString();
       const link = `${base}/posts/${post.slug}`;
       const html = await renderMarkdown(post.contentMd);
-      const description = post.excerpt || plainTextSummary(html);
+      const description = post.excerpt || plainTextSummary(html, FEED_SUMMARY_MAX);
       return `    <item>
       <title>${cdata(post.title)}</title>
       <link>${link}</link>
