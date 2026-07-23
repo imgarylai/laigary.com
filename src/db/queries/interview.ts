@@ -53,6 +53,24 @@ export async function getInterviewSections() {
   return db.select().from(interviewSections).orderBy(asc(interviewSections.sortOrder));
 }
 
+export type PublishedNoteIndexEntry = { slug: string; sectionSlug: string; title: string };
+
+// Flat title index of every published note (section order, newest first inside
+// a section) — backs the /llms.txt content map.
+export async function getPublishedNoteIndex(): Promise<PublishedNoteIndexEntry[]> {
+  const db = await getDb();
+  return db
+    .select({
+      slug: interviewNotes.slug,
+      sectionSlug: interviewSections.slug,
+      title: interviewNotes.title,
+    })
+    .from(interviewNotes)
+    .innerJoin(interviewSections, eq(interviewSections.id, interviewNotes.sectionId))
+    .where(eq(interviewNotes.status, "published"))
+    .orderBy(asc(interviewSections.sortOrder), desc(interviewNotes.createdAt));
+}
+
 export async function getInterviewSectionBySlug(slug: string) {
   const db = await getDb();
   const [section] = await db

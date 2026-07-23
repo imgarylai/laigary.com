@@ -280,6 +280,18 @@ describe("getInterviewNotesBySection", () => {
   });
 });
 
+describe("getPublishedNoteIndex", () => {
+  it("should list published notes with their section slug when called", async () => {
+    const { getPublishedNoteIndex } = await import("@/db/queries");
+    const section = await seedSection("coding");
+    await seedNote(section.id, { slug: "two-sum", title: "Two Sum", status: "published" });
+    await seedNote(section.id, { slug: "hidden", title: "Hidden", status: "draft" });
+
+    const index = await getPublishedNoteIndex();
+    expect(index).toEqual([{ slug: "two-sum", sectionSlug: "coding", title: "Two Sum" }]);
+  });
+});
+
 describe("searchAdminInterviewNotes", () => {
   it("matches titles across sections and statuses, with the section slug", async () => {
     const { createNote, searchAdminInterviewNotes } = await import("@/db/queries");
