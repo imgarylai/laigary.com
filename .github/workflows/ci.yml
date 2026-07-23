@@ -17,6 +17,8 @@ name: CI
 #   R2_ACCESS_KEY_ID       — R2 S3 API access key id (for presigned uploads, #28).
 #   R2_SECRET_ACCESS_KEY   — R2 S3 API secret access key.
 #   CODECOV_TOKEN          — Codecov upload token (coverage from the Test leg).
+#   MCP_ADMIN_TOKEN        — bearer token for the MCP write tools (/mcp). Optional:
+#                            without it the MCP server runs read-only.
 on:
   push:
     branches: [main]
@@ -87,3 +89,4 @@ jobs:
           # R2 S3 presign credentials, baked into the worker via alchemy.secret (#28).
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          MCP_ADMIN_TOKEN: ${{ secrets.MCP_ADMIN_TOKEN }}

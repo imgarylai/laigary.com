@@ -14,6 +14,7 @@ import { Route as AdminRouteRouteImport } from './routes/admin/route'
 import { Route as DesignSystemRouteImport } from './routes/design-system'
 import { Route as FeedDotxmlRouteImport } from './routes/feed[.]xml'
 import { Route as InterviewRouteImport } from './routes/interview'
+import { Route as McpRouteImport } from './routes/mcp'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SiteIndexRouteImport } from './routes/_site/index'
 import { Route as SiteSlugRouteImport } from './routes/_site/$slug'
@@ -64,6 +65,11 @@ const FeedDotxmlRoute = FeedDotxmlRouteImport.update({
 const InterviewRoute = InterviewRouteImport.update({
   id: '/interview',
   path: '/interview',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const McpRoute = McpRouteImport.update({
+  id: '/mcp',
+  path: '/mcp',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -210,6 +216,7 @@ export interface FileRoutesByFullPath {
   '/design-system': typeof DesignSystemRoute
   '/feed.xml': typeof FeedDotxmlRoute
   '/interview': typeof InterviewRouteWithChildren
+  '/mcp': typeof McpRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/$slug': typeof SiteSlugRoute
   '/admin/settings': typeof AdminSettingsRoute
@@ -240,6 +247,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/design-system': typeof DesignSystemRoute
   '/feed.xml': typeof FeedDotxmlRoute
+  '/mcp': typeof McpRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/$slug': typeof SiteSlugRoute
   '/admin/settings': typeof AdminSettingsRoute
@@ -275,6 +283,7 @@ export interface FileRoutesById {
   '/design-system': typeof DesignSystemRoute
   '/feed.xml': typeof FeedDotxmlRoute
   '/interview': typeof InterviewRouteWithChildren
+  '/mcp': typeof McpRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_site/$slug': typeof SiteSlugRoute
   '/admin/settings': typeof AdminSettingsRoute
@@ -311,6 +320,7 @@ export interface FileRouteTypes {
     | '/design-system'
     | '/feed.xml'
     | '/interview'
+    | '/mcp'
     | '/sitemap.xml'
     | '/$slug'
     | '/admin/settings'
@@ -341,6 +351,7 @@ export interface FileRouteTypes {
   to:
     | '/design-system'
     | '/feed.xml'
+    | '/mcp'
     | '/sitemap.xml'
     | '/$slug'
     | '/admin/settings'
@@ -375,6 +386,7 @@ export interface FileRouteTypes {
     | '/design-system'
     | '/feed.xml'
     | '/interview'
+    | '/mcp'
     | '/sitemap.xml'
     | '/_site/$slug'
     | '/admin/settings'
@@ -410,6 +422,7 @@ export interface RootRouteChildren {
   DesignSystemRoute: typeof DesignSystemRoute
   FeedDotxmlRoute: typeof FeedDotxmlRoute
   InterviewRoute: typeof InterviewRouteWithChildren
+  McpRoute: typeof McpRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiOgRoute: typeof ApiOgRouteWithChildren
 }
@@ -449,6 +462,13 @@ declare module '@tanstack/react-router' {
       path: '/interview'
       fullPath: '/interview'
       preLoaderRoute: typeof InterviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mcp': {
+      id: '/mcp'
+      path: '/mcp'
+      fullPath: '/mcp'
+      preLoaderRoute: typeof McpRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sitemap.xml': {
@@ -735,6 +755,7 @@ const rootRouteChildren: RootRouteChildren = {
   DesignSystemRoute: DesignSystemRoute,
   FeedDotxmlRoute: FeedDotxmlRoute,
   InterviewRoute: InterviewRouteWithChildren,
+  McpRoute: McpRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiOgRoute: ApiOgRouteWithChildren,
 }

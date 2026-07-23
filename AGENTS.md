@@ -37,6 +37,11 @@ Local D1 schema: `npx wrangler d1 migrations apply laigary-db --local`.
 - Data flow: route `loader` → `createServerFn` (`src/server/public.ts`, admin
   mutations in `src/server/admin/`) → query layer (`src/db/queries/`, Drizzle on
   `env.DB` from `cloudflare:workers`).
+- MCP endpoint (`/mcp`, `src/server/mcp/` + `src/routes/mcp.ts`): stateless
+  Streamable HTTP JSON-RPC for AI clients. Read tools are public; write tools
+  need `Authorization: Bearer <MCP_ADMIN_TOKEN>` (wrangler secret; unset =
+  read-only). New tools go in `src/server/mcp/tools.ts` with a zod validator +
+  JSON Schema pair.
 - Markdown rendering (`src/lib/markdown.ts`): unified with remark-math → temml
   (MathML, no KaTeX client JS) and rehype-highlight (auto-detect within a
   language subset; ```text marks blocks that must stay uncolored — the corpus

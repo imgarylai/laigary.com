@@ -74,6 +74,12 @@ export const worker = await TanStackStart("laigary-web", {
           R2_SECRET_ACCESS_KEY: alchemy.secret(process.env.R2_SECRET_ACCESS_KEY),
         }
       : {}),
+    // Bearer token gating the MCP write tools (/mcp endpoint). Guarded the
+    // same way: without the secret the deploy still succeeds and the MCP
+    // server runs read-only.
+    ...(process.env.MCP_ADMIN_TOKEN
+      ? { MCP_ADMIN_TOKEN: alchemy.secret(process.env.MCP_ADMIN_TOKEN) }
+      : {}),
   },
 });
 
