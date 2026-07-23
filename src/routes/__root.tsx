@@ -58,6 +58,13 @@ export const Route = createRootRoute({
         rel: "manifest",
         href: "/manifest.json",
       },
+      // Feed auto-discovery: RSS readers resolve /feed.xml from any page URL.
+      {
+        rel: "alternate",
+        type: "application/rss+xml",
+        title: "Unconstrained",
+        href: "/feed.xml",
+      },
     ],
   }),
   shellComponent: RootDocument,

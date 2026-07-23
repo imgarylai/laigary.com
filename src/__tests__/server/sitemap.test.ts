@@ -14,6 +14,22 @@ vi.mock("@/db/queries", () => ({
     posts: [{ slug: "hello", title: "Hi", excerpt: "x", date: "2020-01-01T00:00:00.000Z" }],
     total: 1,
   })),
+  getFeedPosts: vi.fn(async () => [
+    {
+      slug: "hello",
+      title: "Hi",
+      excerpt: "x",
+      contentMd: "# Heading\n\nBody with `]]>` inside.",
+      date: "2020-01-01T00:00:00.000Z",
+    },
+    {
+      slug: "raw",
+      title: "No excerpt",
+      excerpt: null,
+      contentMd: "Just a plain paragraph.",
+      date: "2020-01-02T00:00:00.000Z",
+    },
+  ]),
   getSiteSettings: vi.fn(async () => ({
     site_url: "https://ex.com",
     site_name: "Ex",
@@ -41,13 +57,32 @@ describe("buildSitemapXml", () => {
 });
 
 describe("buildFeedXml", () => {
-  it("renders an RSS channel with post items", async () => {
+  it("should render an RSS channel with post items when posts exist", async () => {
     const xml = await buildFeedXml();
     expect(xml).toContain("<rss");
+    expect(xml).toContain('xmlns:content="http://purl.org/rss/1.0/modules/content/"');
     expect(xml).toContain("<title>Ex</title>");
     expect(xml).toContain("<link>https://ex.com</link>");
     expect(xml).toContain("https://ex.com/posts/hello");
     expect(xml).toContain("<![CDATA[Hi]]>");
     expect(xml).toContain("<language>en</language>");
+  });
+
+  it("should embed the full rendered body as content:encoded when building items", async () => {
+    const xml = await buildFeedXml();
+    expect(xml).toContain("<content:encoded>");
+    expect(xml).toContain("<h1>Heading</h1>");
+  });
+
+  it("should split CDATA when the rendered content contains ]]>", async () => {
+    const xml = await buildFeedXml();
+    // The raw `]]>` from the markdown never appears unescaped inside a CDATA
+    // payload — it's split into `]]]]><![CDATA[>`.
+    expect(xml).toContain("]]]]><![CDATA[>");
+  });
+
+  it("should fall back to a plain-text summary when a post has no excerpt", async () => {
+    const xml = await buildFeedXml();
+    expect(xml).toContain("<description><![CDATA[Just a plain paragraph.]]></description>");
   });
 });

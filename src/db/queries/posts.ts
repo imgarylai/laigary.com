@@ -87,6 +87,41 @@ export async function getPublishedPosts(opts?: {
   };
 }
 
+export type FeedPost = {
+  slug: string;
+  title: string;
+  excerpt: string | null;
+  contentMd: string;
+  date: string;
+};
+
+// Published posts with their full markdown body, newest first — the RSS feed
+// renders these to HTML. Separate from getPublishedPosts, which deliberately
+// drops content_md to keep the archive payload small.
+export async function getFeedPosts(limit: number): Promise<FeedPost[]> {
+  const db = await getDb();
+  const rows = await db
+    .select({
+      slug: posts.slug,
+      title: posts.title,
+      excerpt: posts.excerpt,
+      contentMd: posts.contentMd,
+      publishedAt: posts.publishedAt,
+    })
+    .from(posts)
+    .where(eq(posts.status, "published"))
+    .orderBy(desc(posts.publishedAt))
+    .limit(limit);
+
+  return rows.map((r) => ({
+    slug: r.slug,
+    title: r.title,
+    excerpt: r.excerpt,
+    contentMd: r.contentMd,
+    date: r.publishedAt ? unixToIso(r.publishedAt) : unixToIso(0),
+  }));
+}
+
 export class PostConflictError extends Error {
   constructor(message = "Slug already exists") {
     super(message);
