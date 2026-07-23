@@ -15,6 +15,11 @@ describe("breadcrumbForPath", () => {
     expect(FS_BLOG.tag.prompt({ slug: "life" })).toBe('$ grep -rl "#life" ./posts/');
   });
 
+  it("falls back to an empty slug when the tag node is called with no context", () => {
+    expect(FS_BLOG.tag.crumb()).toBe("tags/");
+    expect(FS_BLOG.tag.prompt()).toBe('$ grep -rl "#" ./posts/');
+  });
+
   it("maps interview routes to the interview namespace", () => {
     expect(breadcrumbForPath("/interview")).toBe("interview");
     expect(breadcrumbForPath("/interview/leetcode")).toBe("interview/leetcode");
