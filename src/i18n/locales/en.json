@@ -347,6 +347,10 @@
       "tagsLabel": "--tags",
       "back": "  — back to all posts"
     },
+    "notFound": {
+      "hint": "// 404 — this path does not exist.",
+      "back": "  — back to home"
+    },
     "tags": {
       "noneYet": "// no tags yet.",
       "postsUnit": "posts"
