@@ -7,7 +7,12 @@ describe("breadcrumbForPath", () => {
     expect(breadcrumbForPath("/posts")).toBe("posts");
     expect(breadcrumbForPath("/posts/hello-world")).toBe("posts/hello-world.md");
     expect(breadcrumbForPath("/tags")).toBe("tags");
+    expect(breadcrumbForPath("/tags/life")).toBe("tags/life");
     expect(breadcrumbForPath("/about")).toBe("about.md");
+  });
+
+  it("renders the tag topic page prompt as a grep over posts", () => {
+    expect(FS_BLOG.tag.prompt({ slug: "life" })).toBe('$ grep -rl "#life" ./posts/');
   });
 
   it("maps interview routes to the interview namespace", () => {

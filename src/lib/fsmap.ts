@@ -102,7 +102,11 @@ export function breadcrumbForPath(pathname: string): string {
       ? FS_BLOG.archive.crumb()
       : FS_BLOG.post.crumb({ slug: truncateSlug(seg[1]) });
   }
-  if (seg[0] === "tags") return FS_BLOG.tags.crumb();
+  if (seg[0] === "tags") {
+    return seg.length === 1
+      ? FS_BLOG.tags.crumb()
+      : FS_BLOG.tag.crumb({ slug: truncateSlug(seg[1]) });
+  }
   return FS_BLOG.page.crumb({ slug: truncateSlug(seg[0]) });
 }
 
