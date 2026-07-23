@@ -23,6 +23,8 @@ export const Route = createFileRoute("/interview/$section/$slug")({
             url: `${SITE_ORIGIN}/interview/${loaderData.note.section}/${loaderData.note.slug}`,
             image: `${SITE_ORIGIN}/api/og/interview/${loaderData.note.section}/${loaderData.note.slug}`,
             type: "article",
+            publishedTime: loaderData.note.date,
+            modifiedTime: loaderData.note.updatedAt,
           }),
         ]
       : [],

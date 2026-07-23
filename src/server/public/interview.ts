@@ -115,6 +115,7 @@ export async function noteDataImpl(data: { section: string; slug: string }) {
       sectionLabel: section?.label ?? data.section,
       title: note.title,
       date: unixToIso(note.createdAt),
+      updatedAt: unixToIso(note.updatedAt),
       minutes: computeReadingTime(note.contentMd),
       tags: note.tags.map((t) => t.name),
     },

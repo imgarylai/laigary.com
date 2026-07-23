@@ -12,6 +12,10 @@ export interface OgMetaInput {
   image: string;
   type: "website" | "article";
   description?: string;
+  /** ISO publish date; emitted as article:published_time for articles. */
+  publishedTime?: string;
+  /** ISO last-edit date; emitted as article:modified_time for articles. */
+  modifiedTime?: string;
 }
 
 // The canonical <link> entry for a public route's head() links. Search engines
@@ -40,6 +44,14 @@ export function ogMeta(input: OgMetaInput): Array<Record<string, string>> {
         ]
       : []),
     { property: "og:type", content: input.type },
+    // Content locale (matches the JSON-LD inLanguage declaration).
+    { property: "og:locale", content: "zh_TW" },
+    ...(input.type === "article" && input.publishedTime
+      ? [{ property: "article:published_time", content: input.publishedTime }]
+      : []),
+    ...(input.type === "article" && input.modifiedTime
+      ? [{ property: "article:modified_time", content: input.modifiedTime }]
+      : []),
     { name: "twitter:card", content: "summary_large_image" },
     { name: "twitter:title", content: input.title },
     { name: "twitter:image", content: input.image },

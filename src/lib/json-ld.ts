@@ -60,6 +60,8 @@ export interface PostLdInput {
   title: string;
   excerpt: string | null;
   date: string;
+  /** Last-edit ISO date; emitted as dateModified when present. */
+  updatedAt?: string;
   tags: string[];
   coverImageUrl: string | null;
 }
@@ -72,6 +74,7 @@ export function blogPostingLd(post: PostLdInput): Record<string, unknown> {
     headline: post.title,
     ...(post.excerpt ? { description: post.excerpt } : {}),
     datePublished: post.date,
+    ...(post.updatedAt ? { dateModified: post.updatedAt } : {}),
     url,
     mainEntityOfPage: url,
     ...(post.tags.length > 0 ? { keywords: post.tags.join(", ") } : {}),
@@ -87,6 +90,8 @@ export interface NoteLdInput {
   sectionLabel: string;
   title: string;
   date: string;
+  /** Last-edit ISO date; emitted as dateModified when present. */
+  updatedAt?: string;
   tags: string[];
 }
 
@@ -97,6 +102,7 @@ export function techArticleLd(note: NoteLdInput): Record<string, unknown> {
     "@type": "TechArticle",
     headline: note.title,
     datePublished: note.date,
+    ...(note.updatedAt ? { dateModified: note.updatedAt } : {}),
     url,
     mainEntityOfPage: url,
     articleSection: note.sectionLabel,
