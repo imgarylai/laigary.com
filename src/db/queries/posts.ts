@@ -16,6 +16,7 @@ export type PublicPost = {
 
 export type PublicPostDetail = PublicPost & {
   contentMd: string;
+  updatedAt: string;
 };
 
 export async function getPublishedPosts(opts?: {
@@ -273,6 +274,7 @@ export async function getPostBySlug(slug: string): Promise<PublicPostDetail | nu
     coverImageUrl: post.coverImageUrl,
     contentMd: post.contentMd,
     date: post.publishedAt ? unixToIso(post.publishedAt) : unixToIso(0),
+    updatedAt: unixToIso(post.updatedAt),
     readingTime: computeReadingTime(post.contentMd),
     tags: tagMap.get(post.id) ?? [],
   };

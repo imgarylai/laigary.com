@@ -58,3 +58,20 @@ describe("canonicalLink", () => {
     ]);
   });
 });
+
+describe("article timestamps and locale", () => {
+  it("should emit og:locale on every page", () => {
+    expect(find(ogMeta(base), "content", "og:locale")).toBe("zh_TW");
+  });
+
+  it("should emit article times when the type is article and dates are given", () => {
+    const tags = ogMeta({ ...base, publishedTime: "2026-07-19", modifiedTime: "2026-07-22" });
+    expect(find(tags, "content", "article:published_time")).toBe("2026-07-19");
+    expect(find(tags, "content", "article:modified_time")).toBe("2026-07-22");
+  });
+
+  it("should omit article times when the type is website", () => {
+    const tags = ogMeta({ ...base, type: "website", publishedTime: "2026-07-19" });
+    expect(tags.some((t) => t.property === "article:published_time")).toBe(false);
+  });
+});

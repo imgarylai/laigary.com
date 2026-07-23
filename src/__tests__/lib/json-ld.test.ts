@@ -38,6 +38,11 @@ describe("blogPostingLd", () => {
     expect("description" in ld).toBe(false);
     expect("keywords" in ld).toBe(false);
   });
+
+  it("should emit dateModified when updatedAt is present and omit it otherwise", () => {
+    expect(blogPostingLd({ ...base, updatedAt: "2026-07-22" }).dateModified).toBe("2026-07-22");
+    expect("dateModified" in blogPostingLd(base)).toBe(false);
+  });
 });
 
 describe("techArticleLd", () => {
