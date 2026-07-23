@@ -6,15 +6,22 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render } from "@testing-library/react";
 import { Comments } from "@/components/Comments";
 
+let mockLocale = "zh-TW";
+let mockTheme: string | undefined = "dark";
+
 vi.mock("@/i18n/I18nProvider", () => ({
-  useI18n: () => ({ t: (key: string) => key, locale: "zh-TW" }),
+  useI18n: () => ({ t: (key: string) => key, locale: mockLocale }),
 }));
 
 vi.mock("@/components/ThemeProvider", () => ({
-  useTheme: () => ({ resolvedTheme: "dark" }),
+  useTheme: () => ({ resolvedTheme: mockTheme }),
 }));
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  mockLocale = "zh-TW";
+  mockTheme = "dark";
+});
 
 const config = {
   repo: "imgarylai/laigary.com",
@@ -46,5 +53,28 @@ describe("Comments", () => {
     expect(container.querySelector("script")).toBeTruthy();
     unmount();
     expect(container.querySelector("script")).toBeNull();
+  });
+
+  it("should pass the light theme and english locale when the site uses them", () => {
+    mockLocale = "en";
+    mockTheme = "light";
+    const { container } = render(<Comments config={config} />);
+    const script = container.querySelector("script");
+    expect(script?.getAttribute("data-theme")).toBe("light");
+    expect(script?.getAttribute("data-lang")).toBe("en");
+  });
+
+  it("should push the theme to a live giscus iframe when rendering", () => {
+    const iframe = document.createElement("iframe");
+    iframe.className = "giscus-frame";
+    document.body.appendChild(iframe);
+    const post = vi.spyOn(iframe.contentWindow as Window, "postMessage");
+
+    render(<Comments config={config} />);
+    expect(post).toHaveBeenCalledWith(
+      { giscus: { setConfig: { theme: "dark" } } },
+      "https://giscus.app",
+    );
+    iframe.remove();
   });
 });
