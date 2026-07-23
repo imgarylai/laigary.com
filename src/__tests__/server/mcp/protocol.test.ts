@@ -190,3 +190,54 @@ describe("write tools", () => {
     expect(result.isError).toBe(true);
   });
 });
+
+describe("remaining protocol + read tools", () => {
+  it("answers ping and rejects tools/call without a name", async () => {
+    expect(((await rpc("ping")).body as RpcBody).result).toEqual({});
+    const noName = await rpc("tools/call", { arguments: {} });
+    expect((noName.body as RpcBody).error?.code).toBe(-32602);
+  });
+
+  it("runTool rejects unknown tool names", async () => {
+    const result = await callTool("no_such_tool", {});
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain("Unknown tool");
+  });
+
+  it("get_site_info returns the settings subset", async () => {
+    const { updateSiteSettings } = await import("@/db/queries");
+    await updateSiteSettings({ site_name: "Unconstrained", author_github: "imgarylai" });
+    const info = parseText(await callTool("get_site_info", {}));
+    expect(info.siteName).toBe("Unconstrained");
+    expect(info.github).toBe("imgarylai");
+  });
+
+  it("list_tags returns usage counts", async () => {
+    const tag = await seedTag({ name: "Life", slug: "life" });
+    await seedPost({ tagIds: [tag.id] });
+    const tags = parseText(await callTool("list_tags", {}));
+    expect(tags).toEqual([{ name: "Life", slug: "life", count: 1 }]);
+  });
+
+  it("list_interview_sections returns note counts", async () => {
+    const section = await seedSection({ slug: "coding", label: "Coding" });
+    await seedNote(section.id);
+    const sections = parseText(await callTool("list_interview_sections", {}));
+    expect(sections).toEqual([expect.objectContaining({ slug: "coding", noteCount: 1 })]);
+  });
+
+  it("search_interview_notes matches published titles", async () => {
+    const section = await seedSection({ slug: "coding" });
+    await seedNote(section.id, { title: "Gas Station", slug: "gas" });
+    const hits = parseText(await callTool("search_interview_notes", { query: "Gas" }));
+    expect(hits.map((h: { slug: string }) => h.slug)).toEqual(["gas"]);
+  });
+
+  it("search_posts honours the tag filter and limit", async () => {
+    const tag = await seedTag({ name: "Life", slug: "life" });
+    await seedPost({ slug: "tagged", tagIds: [tag.id] });
+    await seedPost({ slug: "untagged" });
+    const result = parseText(await callTool("search_posts", { tag: "life", limit: 5 }));
+    expect(result.posts.map((p: { slug: string }) => p.slug)).toEqual(["tagged"]);
+  });
+});
