@@ -1,11 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import {
-  CommandDialog,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
+import { CommandDialog, CommandGroup, CommandInput, CommandItem, CommandList } from "./CommandMenu";
 import { useI18n } from "@/i18n/I18nProvider";
 
 export type PaletteRow = {
@@ -129,7 +123,6 @@ export function CommandPalette({
     <CommandDialog
       open={open}
       onOpenChange={onOpenChange}
-      className="tm-cmd"
       title="Command palette"
       description={placeholder}
       shouldFilter={false}

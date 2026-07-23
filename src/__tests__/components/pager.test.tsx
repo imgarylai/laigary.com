@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { TmPager, pageWindow } from "@/components/terminal/Pager";
+import { TmPager, pageWindow } from "@/features/terminal/Pager";
 
 vi.mock("@/i18n/I18nProvider", () => ({
   useI18n: () => ({ t: (key: string) => key, locale: "en" }),

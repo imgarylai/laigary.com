@@ -5,7 +5,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { TmNotFound } from "@/components/terminal/NotFound";
+import { TmNotFound } from "@/features/terminal/NotFound";
 
 vi.mock("@/i18n/I18nProvider", () => ({
   useI18n: () => ({ t: (key: string) => key, locale: "en" }),

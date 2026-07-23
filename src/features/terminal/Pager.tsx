@@ -1,5 +1,5 @@
-import { Button } from "@/components/ui/button";
-import { AsciiRule } from "@/components/terminal/ui";
+import { TmButton } from "./Button";
+import { AsciiRule } from "./ui";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/i18n/I18nProvider";
 
@@ -54,16 +54,14 @@ export function TmPager({
           </span>
         </span>
         <div className="flex items-center gap-1.5">
-          <Button
+          <TmButton
             type="button"
-            variant="outline"
             size="sm"
-            className="tm-btn"
             disabled={current === 1}
             onClick={() => onPage(current - 1)}
           >
             {t("blog.archive.newer")}
-          </Button>
+          </TmButton>
           {pageWindow(current, totalPages).map((n, i) =>
             n === null ? (
               // eslint-disable-next-line react/no-array-index-key
@@ -84,16 +82,14 @@ export function TmPager({
               </button>
             ),
           )}
-          <Button
+          <TmButton
             type="button"
-            variant="outline"
             size="sm"
-            className="tm-btn"
             disabled={current === totalPages}
             onClick={() => onPage(current + 1)}
           >
             {t("blog.archive.older")}
-          </Button>
+          </TmButton>
         </div>
       </div>
     </div>

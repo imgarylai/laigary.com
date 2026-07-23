@@ -4,7 +4,7 @@
 // always offers rss, and shows the current path as the tmux window name.
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
-import { TmFooter, type FooterSocial } from "@/components/terminal/TmFooter";
+import { TmFooter, type FooterSocial } from "@/features/terminal/TmFooter";
 
 vi.mock("@tanstack/react-router", () => ({
   useRouterState: ({ select }: { select: (s: unknown) => unknown }) =>

@@ -1,8 +1,8 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ListIcon, MagnifyingGlassIcon, TranslateIcon, XIcon } from "@phosphor-icons/react";
-import { Button } from "@/components/ui/button";
-import { Kbd } from "@/components/ui/kbd";
+import { TmButton } from "./Button";
+import { Kbd } from "./Kbd";
 import { ThemeMenu } from "@/components/ThemeMenu";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/i18n/I18nProvider";
@@ -87,51 +87,29 @@ export function TmHeader({
           </Link>
         ))}
         <span className="h-3.5 w-px bg-tm-border" />
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="tm-btn"
-          onClick={onOpenPalette}
-        >
+        <TmButton type="button" size="sm" onClick={onOpenPalette}>
           <MagnifyingGlassIcon size={ICON} /> <Kbd className="text-tm-dim">⌘K</Kbd>
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="tm-btn"
-          onClick={toggleLocale}
-          title={t("common.language")}
-        >
+        </TmButton>
+        <TmButton type="button" size="sm" onClick={toggleLocale} title={t("common.language")}>
           <TranslateIcon size={ICON} /> {localeLabel}
-        </Button>
+        </TmButton>
         <ThemeMenu variant="outline" size="sm" className="tm-btn" />
       </nav>
 
       {/* Mobile controls */}
       <div className="flex items-center gap-2 px-3.5 md:hidden">
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          className="tm-btn"
-          onClick={onOpenPalette}
-          title={t("common.search")}
-        >
+        <TmButton type="button" size="icon" onClick={onOpenPalette} title={t("common.search")}>
           <MagnifyingGlassIcon size={ICON} />
-        </Button>
+        </TmButton>
         <ThemeMenu variant="outline" size="icon" className="tm-btn" />
-        <Button
+        <TmButton
           type="button"
-          variant="outline"
           size="icon"
-          className="tm-btn"
           onClick={() => setMenuOpen((v) => !v)}
           title={t("common.menu")}
         >
           {menuOpen ? <XIcon size={ICON} /> : <ListIcon size={ICON} />}
-        </Button>
+        </TmButton>
       </div>
 
       {menuOpen && (

@@ -47,8 +47,10 @@
   color: var(--tm-bg);
 }
 
-/* shadcn <Button> override → flat terminal button (unlayered so it beats the
-   layered Tailwind utilities shadcn's Button applies). */
+/* Terminal skin for the shared shadcn <Button> — used only by <ThemeMenu>,
+   which the admin header shares. The frontend's own buttons are <TmButton>
+   (Button.tsx) and no longer need this. Unlayered so it beats the layered
+   Tailwind utilities shadcn's Button applies. */
 .tm-btn {
   background: transparent;
   border: 1px solid var(--tm-border);
@@ -74,33 +76,6 @@
   height: 100%;
   background: var(--tm-accent);
   transition: width 80ms linear;
-}
-
-/* ── Command palette (shadcn CommandDialog override) ───────────────────── */
-.tm-cmd {
-  border: 1px solid var(--tm-border);
-  border-radius: 0;
-  background: var(--tm-bg);
-}
-.tm-cmd [data-slot="command-input-wrapper"] {
-  border-bottom: 1px solid var(--tm-border);
-}
-.tm-cmd [data-slot="command-input"] {
-  color: var(--tm-fg);
-  font-family: inherit;
-}
-.tm-cmd [data-slot="command-item"] {
-  border-radius: 0;
-  color: var(--tm-fg);
-  font-size: 12.5px;
-}
-.tm-cmd [data-slot="command-item"][data-selected="true"] {
-  background: var(--tm-subtle);
-  color: var(--tm-fg);
-}
-.tm-cmd [data-slot="command-group"] [cmdk-group-heading] {
-  color: var(--tm-muted);
-  font-size: 11px;
 }
 
 /* ── Rendered-markdown body (retheme shared pipeline output) ────────────── */
