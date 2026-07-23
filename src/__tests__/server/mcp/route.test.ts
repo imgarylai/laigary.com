@@ -12,7 +12,8 @@ vi.mock("cloudflare:workers", () => ({ env: {} }));
 type Handler = (ctx: { request: Request }) => Response | Promise<Response>;
 
 function handlers() {
-  return (Route.options as { server: { handlers: Record<string, Handler> } }).server.handlers;
+  return (Route.options as unknown as { server: { handlers: Record<string, Handler> } }).server
+    .handlers;
 }
 
 describe("/mcp route", () => {
