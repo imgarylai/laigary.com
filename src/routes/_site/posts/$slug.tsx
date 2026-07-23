@@ -4,6 +4,7 @@ import { SITE_ORIGIN, blogPostingLd, breadcrumbLd, serializeJsonLd } from "@/lib
 import { canonicalLink, ogMeta } from "@/lib/og-meta";
 import { AsciiRule, PromptLine, ReadingProgress } from "@/components/terminal/ui";
 import { TmPage } from "@/components/terminal/layout";
+import { Comments } from "@/components/Comments";
 import { useI18n } from "@/i18n/I18nProvider";
 import { FS_BLOG } from "@/lib/fsmap";
 
@@ -58,7 +59,7 @@ export const Route = createFileRoute("/_site/posts/$slug")({
 });
 
 function PostPage() {
-  const { post, html, toc, adjacent } = Route.useLoaderData();
+  const { post, html, toc, adjacent, giscus } = Route.useLoaderData();
   const { t } = useI18n();
 
   return (
@@ -137,6 +138,8 @@ function PostPage() {
             </div>
           </div>
         )}
+
+        <Comments config={giscus} />
 
         <AsciiRule className="mt-10 mb-3" />
         <p className="text-xs leading-[1.7] text-tm-muted">

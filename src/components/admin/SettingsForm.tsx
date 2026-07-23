@@ -42,7 +42,16 @@ const AUTHOR_FIELDS: FieldDef[] = [
   { key: "author_linkedin", labelKey: "admin.linkedin", prefix: SOCIAL_PREFIXES.author_linkedin },
 ];
 
-const ALL_KEYS = [...SITE_FIELDS, ...AUTHOR_FIELDS].map((f) => f.key);
+// giscus comments (all four required for the widget to render; values come
+// from giscus.app once Discussions are enabled on the repo).
+const COMMENT_FIELDS: FieldDef[] = [
+  { key: "giscus_repo", labelKey: "admin.giscusRepo" },
+  { key: "giscus_repo_id", labelKey: "admin.giscusRepoId" },
+  { key: "giscus_category", labelKey: "admin.giscusCategory" },
+  { key: "giscus_category_id", labelKey: "admin.giscusCategoryId" },
+];
+
+const ALL_KEYS = [...SITE_FIELDS, ...AUTHOR_FIELDS, ...COMMENT_FIELDS].map((f) => f.key);
 
 export function SettingsForm({ settings }: { settings: Record<string, string> }) {
   const { t } = useI18n();
@@ -96,6 +105,11 @@ export function SettingsForm({ settings }: { settings: Record<string, string> })
       <section className="space-y-4">
         <h2 className="text-lg font-semibold">{t("admin.author")}</h2>
         {renderFields(AUTHOR_FIELDS)}
+      </section>
+
+      <section className="space-y-4">
+        <h2 className="text-lg font-semibold">{t("admin.comments")}</h2>
+        {renderFields(COMMENT_FIELDS)}
       </section>
 
       <Button type="submit" disabled={form.formState.isSubmitting}>

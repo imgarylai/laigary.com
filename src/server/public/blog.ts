@@ -59,8 +59,9 @@ export async function postsDataImpl() {
 export const postsDataFn = createServerFn({ method: "GET" }).handler(postsDataImpl);
 
 export async function postDataImpl(data: { slug: string }) {
-  const { getPostBySlug, getAdjacentPosts } = await import("@/db/queries");
+  const { getPostBySlug, getAdjacentPosts, getSiteSettings } = await import("@/db/queries");
   const { extractToc } = await import("@/lib/toc");
+  const { giscusFromSettings } = await import("@/lib/giscus");
   const post = await getPostBySlug(data.slug);
   if (!post) return null;
   return {
@@ -68,6 +69,7 @@ export async function postDataImpl(data: { slug: string }) {
     html: await renderMd(post.contentMd),
     toc: extractToc(post.contentMd),
     adjacent: await getAdjacentPosts(data.slug),
+    giscus: giscusFromSettings(await getSiteSettings()),
     ...(await pageChrome(post.title)),
   };
 }
