@@ -60,6 +60,19 @@ describe("techArticleLd", () => {
     expect(ld.image).toBe("https://laigary.com/api/og/interview/coding/two-sum");
     expect(ld.articleSection).toBe("Coding");
   });
+
+  it("should emit dateModified when updatedAt is present and omit it otherwise", () => {
+    const base = {
+      slug: "two-sum",
+      section: "coding",
+      sectionLabel: "Coding",
+      title: "1. Two Sum",
+      date: "2026-07-01",
+      tags: ["hash-map"],
+    };
+    expect(techArticleLd({ ...base, updatedAt: "2026-07-22" }).dateModified).toBe("2026-07-22");
+    expect("dateModified" in techArticleLd(base)).toBe(false);
+  });
 });
 
 describe("serializeJsonLd", () => {
