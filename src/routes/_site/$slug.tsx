@@ -52,8 +52,11 @@ function PagePage() {
   return (
     <TmPage narrow>
       <PromptLine className="mb-4">{FS_BLOG.page.prompt({ slug: page.slug })}</PromptLine>
-      <h1 className="mb-[18px] text-[20px] font-bold leading-[1.35]">{page.title}</h1>
-      <div className="tm-prose" dangerouslySetInnerHTML={{ __html: html }} />
+      {/* lang: content region is zh-Hant; <html lang> follows the UI locale. */}
+      <article lang="zh-Hant">
+        <h1 className="mb-[18px] text-[20px] font-bold leading-[1.35]">{page.title}</h1>
+        <div className="tm-prose" dangerouslySetInnerHTML={{ __html: html }} />
+      </article>
     </TmPage>
   );
 }

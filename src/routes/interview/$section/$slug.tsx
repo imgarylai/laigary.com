@@ -75,10 +75,13 @@ function NotePage() {
           </span>
         </div>
 
-        <h1 className="mt-2 mb-1 text-[20px] font-semibold leading-[1.35]">{note.title}</h1>
-        <AsciiRule className="mb-[22px]" />
+        {/* lang: content region is zh-Hant; <html lang> follows the UI locale. */}
+        <article lang="zh-Hant">
+          <h1 className="mt-2 mb-1 text-[20px] font-semibold leading-[1.35]">{note.title}</h1>
+          <AsciiRule className="mb-[22px]" />
 
-        <div className="tm-prose" dangerouslySetInnerHTML={{ __html: html }} />
+          <div className="tm-prose" dangerouslySetInnerHTML={{ __html: html }} />
+        </article>
 
         {note.tags.length > 0 && (
           <div className="mt-8 border-t border-dashed border-tm-border pt-4">
