@@ -180,6 +180,28 @@ describe("getPublishedPosts", () => {
   });
 });
 
+describe("getFeedPosts", () => {
+  it("should return published posts with their markdown body when called", async () => {
+    const { createPost, getFeedPosts } = await import("@/db/queries");
+    await createPost({ title: "Live", slug: "live", contentMd: "# body", status: "published" });
+    await createPost({ title: "Draft", slug: "draft", contentMd: "hidden" });
+
+    const feed = await getFeedPosts(10);
+    expect(feed).toHaveLength(1);
+    expect(feed[0].slug).toBe("live");
+    expect(feed[0].contentMd).toBe("# body");
+    expect(feed[0].date).toBeTruthy();
+  });
+
+  it("should cap the result at the limit when more posts exist", async () => {
+    const { createPost, getFeedPosts } = await import("@/db/queries");
+    for (let i = 0; i < 3; i++) {
+      await createPost({ title: `P${i}`, slug: `p${i}`, contentMd: "x", status: "published" });
+    }
+    expect(await getFeedPosts(2)).toHaveLength(2);
+  });
+});
+
 describe("getAdminPosts", () => {
   it("filters by q (title substring)", async () => {
     const { createPost, getAdminPosts } = await import("@/db/queries");

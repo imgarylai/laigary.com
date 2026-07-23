@@ -4,9 +4,10 @@
 
 export type { PostTag } from "./_tags";
 
-export type { PublicPost, PublicPostDetail, AdminPost, AdminPostDetail } from "./posts";
+export type { PublicPost, PublicPostDetail, AdminPost, AdminPostDetail, FeedPost } from "./posts";
 export {
   getPublishedPosts,
+  getFeedPosts,
   getPostBySlug,
   getAdminPosts,
   getAllAdminPosts,
