@@ -75,24 +75,29 @@ function PostPage() {
           {`---\ntitle:   "${post.title}"\ndate:    ${post.date.slice(0, 10)}\nreading: ${post.readingTime} min\ntags:    [${post.tags.map((tg) => tg.name).join(", ")}]\n---`}
         </pre>
 
-        <h1 className="mt-5 mb-2.5 text-[22px] font-bold leading-[1.35] tracking-[-0.01em]">
-          {post.title}
-        </h1>
-        <AsciiRule className="mb-[22px]" />
+        {/* lang: content is written in Traditional Chinese while <html lang>
+            follows the UI locale — mark the content region so the language
+            signals agree with the JSON-LD inLanguage declaration. */}
+        <article lang="zh-Hant">
+          <h1 className="mt-5 mb-2.5 text-[22px] font-bold leading-[1.35] tracking-[-0.01em]">
+            {post.title}
+          </h1>
+          <AsciiRule className="mb-[22px]" />
 
-        {toc.length > 0 && (
-          <div className="mb-[26px] border border-dashed border-tm-border px-3.5 py-2.5 text-[11.5px]">
-            <div className="mb-1 text-tm-muted">{t("blog.post.toc")}</div>
-            {toc.map((h, i) => (
-              <div key={i} className="text-tm-fg">
-                <span className="mr-2 text-tm-dim">{String(i + 1).padStart(2, "0")}</span>
-                {h}
-              </div>
-            ))}
-          </div>
-        )}
+          {toc.length > 0 && (
+            <div className="mb-[26px] border border-dashed border-tm-border px-3.5 py-2.5 text-[11.5px]">
+              <div className="mb-1 text-tm-muted">{t("blog.post.toc")}</div>
+              {toc.map((h, i) => (
+                <div key={i} className="text-tm-fg">
+                  <span className="mr-2 text-tm-dim">{String(i + 1).padStart(2, "0")}</span>
+                  {h}
+                </div>
+              ))}
+            </div>
+          )}
 
-        <div className="tm-prose" dangerouslySetInnerHTML={{ __html: html }} />
+          <div className="tm-prose" dangerouslySetInnerHTML={{ __html: html }} />
+        </article>
 
         {post.tags.length > 0 && (
           <div className="mt-8 border-t border-dashed border-tm-border pt-4">
