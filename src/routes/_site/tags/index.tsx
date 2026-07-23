@@ -41,8 +41,8 @@ function TagsPage() {
           {tags.map((tag) => (
             <Link
               key={tag.slug}
-              to="/posts"
-              search={{ tag: tag.slug }}
+              to="/tags/$slug"
+              params={{ slug: tag.slug }}
               className="flex items-center justify-between border-b border-dashed border-tm-border px-1 py-2 text-[13px] text-tm-fg no-underline"
             >
               <span>

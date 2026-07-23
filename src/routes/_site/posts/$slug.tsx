@@ -100,8 +100,8 @@ function PostPage() {
             {post.tags.map((tg) => (
               <Link
                 key={tg.slug}
-                to="/posts"
-                search={{ tag: tg.slug }}
+                to="/tags/$slug"
+                params={{ slug: tg.slug }}
                 className="mr-2.5 text-[11.5px] text-tm-accent no-underline"
               >
                 #{tg.name}

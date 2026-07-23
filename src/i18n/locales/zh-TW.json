@@ -360,7 +360,8 @@
     },
     "tags": {
       "noneYet": "// 還沒有標籤。",
-      "postsUnit": "篇"
+      "postsUnit": "篇",
+      "back": "  — 所有標籤"
     },
     "interview": {
       "title": "./interview/ — 面試準備筆記",
