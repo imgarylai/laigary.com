@@ -85,6 +85,25 @@ export async function tagsDataImpl() {
 
 export const tagsDataFn = createServerFn({ method: "GET" }).handler(tagsDataImpl);
 
+// Topic page: the published posts carrying one tag. Unknown tags — and tags
+// whose posts are all drafts — come back null (→ 404); getTagsWithCounts only
+// surfaces tags with published content, matching what the sitemap advertises.
+export async function tagDataImpl(data: { slug: string }) {
+  const { getPublishedPosts, getTagsWithCounts } = await import("@/db/queries");
+  const tag = (await getTagsWithCounts()).find((t) => t.slug === data.slug);
+  if (!tag) return null;
+  const { posts } = await getPublishedPosts({ tag: data.slug, limit: 500 });
+  return {
+    tag: { name: tag.name, slug: tag.slug },
+    posts,
+    ...(await pageChrome(`#${tag.name}`)),
+  };
+}
+
+export const tagDataFn = createServerFn({ method: "GET" })
+  .validator(slugInput)
+  .handler(({ data }) => tagDataImpl(data));
+
 export async function pageDataImpl(data: { slug: string }) {
   const { getPageBySlug } = await import("@/db/queries");
   const page = await getPageBySlug(data.slug);

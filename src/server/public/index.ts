@@ -15,6 +15,8 @@ export {
   postDataFn,
   tagsDataImpl,
   tagsDataFn,
+  tagDataImpl,
+  tagDataFn,
   pageDataImpl,
   pageDataFn,
 } from "./blog";

@@ -27,6 +27,7 @@ import { Route as InterviewIndexRouteImport } from './routes/interview/index'
 import { Route as SitePostsIndexRouteImport } from './routes/_site/posts/index'
 import { Route as SitePostsSlugRouteImport } from './routes/_site/posts/$slug'
 import { Route as SiteTagsIndexRouteImport } from './routes/_site/tags/index'
+import { Route as SiteTagsSlugRouteImport } from './routes/_site/tags/$slug'
 import { Route as AdminInterviewIndexRouteImport } from './routes/admin/interview/index'
 import { Route as AdminInterviewSectionsRouteImport } from './routes/admin/interview/sections'
 import { Route as AdminPagesIndexRouteImport } from './routes/admin/pages/index'
@@ -133,6 +134,11 @@ const SiteTagsIndexRoute = SiteTagsIndexRouteImport.update({
   path: '/tags/',
   getParentRoute: () => SiteRoute,
 } as any)
+const SiteTagsSlugRoute = SiteTagsSlugRouteImport.update({
+  id: '/tags/$slug',
+  path: '/tags/$slug',
+  getParentRoute: () => SiteRoute,
+} as any)
 const AdminInterviewIndexRoute = AdminInterviewIndexRouteImport.update({
   id: '/interview/',
   path: '/interview/',
@@ -232,6 +238,7 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AdminIndexRoute
   '/interview/': typeof InterviewIndexRoute
   '/posts/$slug': typeof SitePostsSlugRoute
+  '/tags/$slug': typeof SiteTagsSlugRoute
   '/admin/interview/sections': typeof AdminInterviewSectionsRoute
   '/admin/pages/new': typeof AdminPagesNewRoute
   '/admin/posts/new': typeof AdminPostsNewRoute
@@ -265,6 +272,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminIndexRoute
   '/interview': typeof InterviewIndexRoute
   '/posts/$slug': typeof SitePostsSlugRoute
+  '/tags/$slug': typeof SiteTagsSlugRoute
   '/admin/interview/sections': typeof AdminInterviewSectionsRoute
   '/admin/pages/new': typeof AdminPagesNewRoute
   '/admin/posts/new': typeof AdminPostsNewRoute
@@ -302,6 +310,7 @@ export interface FileRoutesById {
   '/admin/': typeof AdminIndexRoute
   '/interview/': typeof InterviewIndexRoute
   '/_site/posts/$slug': typeof SitePostsSlugRoute
+  '/_site/tags/$slug': typeof SiteTagsSlugRoute
   '/admin/interview/sections': typeof AdminInterviewSectionsRoute
   '/admin/pages/new': typeof AdminPagesNewRoute
   '/admin/posts/new': typeof AdminPostsNewRoute
@@ -339,6 +348,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/interview/'
     | '/posts/$slug'
+    | '/tags/$slug'
     | '/admin/interview/sections'
     | '/admin/pages/new'
     | '/admin/posts/new'
@@ -372,6 +382,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/interview'
     | '/posts/$slug'
+    | '/tags/$slug'
     | '/admin/interview/sections'
     | '/admin/pages/new'
     | '/admin/posts/new'
@@ -408,6 +419,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/interview/'
     | '/_site/posts/$slug'
+    | '/_site/tags/$slug'
     | '/admin/interview/sections'
     | '/admin/pages/new'
     | '/admin/posts/new'
@@ -568,6 +580,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SiteTagsIndexRouteImport
       parentRoute: typeof SiteRoute
     }
+    '/_site/tags/$slug': {
+      id: '/_site/tags/$slug'
+      path: '/tags/$slug'
+      fullPath: '/tags/$slug'
+      preLoaderRoute: typeof SiteTagsSlugRouteImport
+      parentRoute: typeof SiteRoute
+    }
     '/admin/interview/': {
       id: '/admin/interview/'
       path: '/interview'
@@ -725,6 +744,7 @@ interface SiteRouteChildren {
   SiteSlugRoute: typeof SiteSlugRoute
   SiteIndexRoute: typeof SiteIndexRoute
   SitePostsSlugRoute: typeof SitePostsSlugRoute
+  SiteTagsSlugRoute: typeof SiteTagsSlugRoute
   SitePostsIndexRoute: typeof SitePostsIndexRoute
   SiteTagsIndexRoute: typeof SiteTagsIndexRoute
 }
@@ -733,6 +753,7 @@ const SiteRouteChildren: SiteRouteChildren = {
   SiteSlugRoute: SiteSlugRoute,
   SiteIndexRoute: SiteIndexRoute,
   SitePostsSlugRoute: SitePostsSlugRoute,
+  SiteTagsSlugRoute: SiteTagsSlugRoute,
   SitePostsIndexRoute: SitePostsIndexRoute,
   SiteTagsIndexRoute: SiteTagsIndexRoute,
 }
@@ -783,12 +804,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}

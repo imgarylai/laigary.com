@@ -41,6 +41,12 @@ export const FS_BLOG = {
     prompt: (ctx = {}) => `$ cat ./posts/${ctx.slug ?? ""}.md`,
   },
   tags: { kind: "dir", path: "~/tags", crumb: () => "tags", prompt: () => "$ ls ./tags/" },
+  tag: {
+    kind: "dir",
+    path: "~/tags/<slug>",
+    crumb: (ctx = {}) => `tags/${ctx.slug ?? ""}`,
+    prompt: (ctx = {}) => `$ grep -rl "#${ctx.slug ?? ""}" ./posts/`,
+  },
   page: {
     kind: "file",
     path: "~/<slug>.md",

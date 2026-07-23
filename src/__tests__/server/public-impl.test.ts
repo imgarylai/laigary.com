@@ -92,6 +92,29 @@ describe("postDataImpl", () => {
   });
 });
 
+describe("tagDataImpl", () => {
+  it("should return the tag's published posts with head chrome when the tag is used", async () => {
+    await setSettings({ title_template: "%s | Blog" });
+    const tag = await seedTag({ name: "Life", slug: "life" });
+    await seedPost({ title: "Hello", slug: "hello", tagIds: [tag.id] });
+    const { tagDataImpl } = await import("@/server/public");
+
+    const data = await tagDataImpl({ slug: "life" });
+    expect(data?.tag).toEqual({ name: "Life", slug: "life" });
+    expect(data?.posts.map((p) => p.slug)).toEqual(["hello"]);
+    expect(data?.pageTitle).toBe("#Life | Blog");
+  });
+
+  it("should return null when the tag is unknown or only used by drafts", async () => {
+    const tag = await seedTag({ name: "WIP", slug: "wip" });
+    await seedPost({ status: "draft", tagIds: [tag.id] });
+    const { tagDataImpl } = await import("@/server/public");
+
+    expect(await tagDataImpl({ slug: "nope" })).toBeNull();
+    expect(await tagDataImpl({ slug: "wip" })).toBeNull();
+  });
+});
+
 describe("tagsDataImpl", () => {
   it("returns tags with usage counts", async () => {
     const tag = await seedTag({ name: "Life", slug: "life" });
