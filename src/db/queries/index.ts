@@ -31,6 +31,7 @@ export {
 export type { Tag, TagWithUsage, UsedByItem } from "./tags";
 export {
   getTagsWithUsage,
+  getTagBySlug,
   getAllTags,
   createTag,
   updateTag,
@@ -43,11 +44,13 @@ export type {
   InterviewNoteWithTags,
   AdminInterviewNote,
   PublishedNoteIndexEntry,
+  NoteByTag,
 } from "./interview";
 export {
   getInterviewSections,
   getInterviewSectionBySlug,
   getPublishedNoteIndex,
+  getPublishedNotesByTag,
   getInterviewNoteCountsBySection,
   getRecentInterviewNotes,
   getInterviewNotesBySection,

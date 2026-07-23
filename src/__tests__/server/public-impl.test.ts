@@ -95,21 +95,39 @@ describe("postDataImpl", () => {
 });
 
 describe("tagDataImpl", () => {
-  it("should return the tag's published posts with head chrome when the tag is used", async () => {
+  it("should return both posts and interview notes carrying the tag with head chrome", async () => {
     await setSettings({ title_template: "%s | Blog" });
     const tag = await seedTag({ name: "Life", slug: "life" });
     await seedPost({ title: "Hello", slug: "hello", tagIds: [tag.id] });
+    const section = await seedSection({ slug: "coding", label: "Coding" });
+    await seedNote(section.id, { title: "Note A", slug: "note-a", tagIds: [tag.id] });
     const { tagDataImpl } = await import("@/server/public");
 
     const data = await tagDataImpl({ slug: "life" });
     expect(data?.tag).toEqual({ name: "Life", slug: "life" });
     expect(data?.posts.map((p) => p.slug)).toEqual(["hello"]);
+    expect(data?.notes.map((n) => ({ slug: n.slug, section: n.sectionSlug }))).toEqual([
+      { slug: "note-a", section: "coding" },
+    ]);
     expect(data?.pageTitle).toBe("#Life | Blog");
   });
 
-  it("should return null when the tag is unknown or only used by drafts", async () => {
+  it("should resolve a note-only tag (no posts) instead of 404ing", async () => {
+    const tag = await seedTag({ name: "Monotonic", slug: "monotonic" });
+    const section = await seedSection({ slug: "coding", label: "Coding" });
+    await seedNote(section.id, { title: "Stack", slug: "stack", tagIds: [tag.id] });
+    const { tagDataImpl } = await import("@/server/public");
+
+    const data = await tagDataImpl({ slug: "monotonic" });
+    expect(data?.posts).toEqual([]);
+    expect(data?.notes.map((n) => n.slug)).toEqual(["stack"]);
+  });
+
+  it("should return null when the tag is unknown or all its content is drafts", async () => {
     const tag = await seedTag({ name: "WIP", slug: "wip" });
     await seedPost({ status: "draft", tagIds: [tag.id] });
+    const section = await seedSection({ slug: "s", label: "S" });
+    await seedNote(section.id, { status: "draft", tagIds: [tag.id] });
     const { tagDataImpl } = await import("@/server/public");
 
     expect(await tagDataImpl({ slug: "nope" })).toBeNull();
@@ -118,12 +136,14 @@ describe("tagDataImpl", () => {
 });
 
 describe("tagsDataImpl", () => {
-  it("returns tags with usage counts", async () => {
+  it("returns tags with a combined post + note count", async () => {
     const tag = await seedTag({ name: "Life", slug: "life" });
     await seedPost({ tagIds: [tag.id] });
+    const section = await seedSection({ slug: "coding", label: "Coding" });
+    await seedNote(section.id, { tagIds: [tag.id] });
     const { tagsDataImpl } = await import("@/server/public");
     const data = await tagsDataImpl();
-    expect(data.tags).toEqual([{ name: "Life", slug: "life", count: 1 }]);
+    expect(data.tags).toEqual([{ name: "Life", slug: "life", count: 2 }]);
   });
 });
 

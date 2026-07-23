@@ -56,6 +56,16 @@ describe("tags queries", () => {
   });
 });
 
+describe("getTagBySlug", () => {
+  it("returns the tag's name and slug for a known slug, null otherwise", async () => {
+    const { createTag, getTagBySlug } = await import("@/db/queries");
+    await createTag({ name: "Life", slug: "life" });
+
+    expect(await getTagBySlug("life")).toEqual({ name: "Life", slug: "life" });
+    expect(await getTagBySlug("nope")).toBeNull();
+  });
+});
+
 describe("getAllTags", () => {
   it("returns id/name/slug for every tag, sorted by name", async () => {
     const { createTag, getAllTags } = await import("@/db/queries");

@@ -1,5 +1,13 @@
 import { eq, desc, asc, max } from "drizzle-orm";
-import { posts, postTags, tags, interviewSections, interviewNotes, pages } from "@/db/schema";
+import {
+  posts,
+  postTags,
+  tags,
+  interviewSections,
+  interviewNotes,
+  interviewNoteTags,
+  pages,
+} from "@/db/schema";
 import { getDb } from "./_db";
 
 export type SitemapData = {
@@ -16,7 +24,7 @@ export type SitemapData = {
 export async function getSitemapData(): Promise<SitemapData> {
   const db = await getDb();
 
-  const [postRows, noteRows, sectionRows, tagRows, pageRows] = await Promise.all([
+  const [postRows, noteRows, sectionRows, tagRows, noteTagRows, pageRows] = await Promise.all([
     db
       .select({ slug: posts.slug, updatedAt: posts.updatedAt })
       .from(posts)
@@ -43,6 +51,13 @@ export async function getSitemapData(): Promise<SitemapData> {
       .innerJoin(tags, eq(tags.id, postTags.tagId))
       .where(eq(posts.status, "published"))
       .groupBy(tags.slug),
+    db
+      .select({ tagSlug: tags.slug, updatedAt: max(interviewNotes.updatedAt) })
+      .from(interviewNoteTags)
+      .innerJoin(interviewNotes, eq(interviewNotes.id, interviewNoteTags.noteId))
+      .innerJoin(tags, eq(tags.id, interviewNoteTags.tagId))
+      .where(eq(interviewNotes.status, "published"))
+      .groupBy(tags.slug),
     db.select({ slug: pages.slug, updatedAt: pages.updatedAt }).from(pages),
   ]);
 
@@ -56,9 +71,13 @@ export async function getSitemapData(): Promise<SitemapData> {
     return ts ? [{ slug: s.slug, updatedAt: ts }] : [];
   });
 
-  const tagsWithLatest = tagRows.flatMap((r) =>
-    r.updatedAt ? [{ slug: r.tagSlug, updatedAt: r.updatedAt }] : [],
-  );
+  // Merge post-tag and note-tag latest timestamps into one unified tag set —
+  // the /tags/$slug page lists both, so both must be crawlable.
+  const tagLatest = new Map<string, number>();
+  for (const r of [...tagRows, ...noteTagRows]) {
+    if (r.updatedAt) tagLatest.set(r.tagSlug, Math.max(tagLatest.get(r.tagSlug) ?? 0, r.updatedAt));
+  }
+  const tagsWithLatest = [...tagLatest].map(([slug, updatedAt]) => ({ slug, updatedAt }));
 
   return { posts: postRows, tags: tagsWithLatest, sections, notes: noteRows, pages: pageRows };
 }

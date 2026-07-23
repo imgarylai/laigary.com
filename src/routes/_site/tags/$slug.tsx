@@ -49,7 +49,7 @@ export const Route = createFileRoute("/_site/tags/$slug")({
 });
 
 function TagPage() {
-  const { tag, posts } = Route.useLoaderData();
+  const { tag, posts, notes } = Route.useLoaderData();
   const { t } = useI18n();
 
   const byYear = new Map<string, typeof posts>();
@@ -69,7 +69,7 @@ function TagPage() {
           {tag.name}
         </h1>
         <span className="text-[11px] text-tm-muted">
-          {posts.length} {t("blog.tags.postsUnit")}
+          {posts.length + notes.length} {t("blog.tags.postsUnit")}
         </span>
       </div>
 
@@ -83,6 +83,21 @@ function TagPage() {
           ))}
         </section>
       ))}
+
+      {notes.length > 0 && (
+        <section>
+          <pre className="mt-7 mb-1.5 text-xs text-tm-accent">./interview/</pre>
+          {notes.map((n) => (
+            <TmRowLink
+              key={`${n.sectionSlug}/${n.slug}`}
+              to="/interview/$section/$slug"
+              params={{ section: n.sectionSlug, slug: n.slug }}
+            >
+              <TmRowCells date={n.date.slice(5, 10)} title={n.title} read={n.sectionLabel} />
+            </TmRowLink>
+          ))}
+        </section>
+      )}
 
       <p className="mt-8 text-xs leading-[1.7] text-tm-muted">
         <Link to="/tags" className="text-tm-accent no-underline">

@@ -4,6 +4,18 @@ import { getDb } from "./_db";
 
 export type UsedByItem = { type: "post" | "note"; title: string; slug: string };
 
+// Resolve a tag by its slug — name + slug only, no usage. Returns null for an
+// unknown slug. The /tags/$slug page uses this to get the display name before
+// checking whether any published content carries the tag.
+export async function getTagBySlug(slug: string): Promise<{ name: string; slug: string } | null> {
+  const db = await getDb();
+  const [row] = await db
+    .select({ name: tags.name, slug: tags.slug })
+    .from(tags)
+    .where(eq(tags.slug, slug));
+  return row ?? null;
+}
+
 export type TagWithUsage = {
   id: string;
   name: string;
