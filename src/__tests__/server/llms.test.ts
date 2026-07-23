@@ -23,6 +23,13 @@ vi.mock("@/db/queries", () => ({
 }));
 
 import { buildLlmsTxt } from "@/server/llms";
+import {
+  getSiteSettings,
+  getPublishedPosts,
+  getPagesList,
+  getInterviewSections,
+  getPublishedNoteIndex,
+} from "@/db/queries";
 
 describe("buildLlmsTxt", () => {
   it("should render the llms.txt skeleton when settings exist", async () => {
@@ -43,5 +50,27 @@ describe("buildLlmsTxt", () => {
     const txt = await buildLlmsTxt();
     expect(txt).toContain("- [About](https://ex.com/about)");
     expect(txt).toContain("- [Coding: Two Sum](https://ex.com/interview/coding/two-sum)");
+  });
+
+  it("should fall back to defaults and omit empty sections when the site is bare", async () => {
+    vi.mocked(getSiteSettings).mockResolvedValueOnce({});
+    vi.mocked(getPublishedPosts).mockResolvedValueOnce({ posts: [], total: 0 } as never);
+    vi.mocked(getPagesList).mockResolvedValueOnce([]);
+    vi.mocked(getInterviewSections).mockResolvedValueOnce([] as never);
+    vi.mocked(getPublishedNoteIndex).mockResolvedValueOnce([]);
+
+    const txt = await buildLlmsTxt();
+    expect(txt).toContain("# Unconstrained");
+    expect(txt).toContain("https://laigary.com/sitemap.xml");
+    expect(txt).not.toContain("\n> ");
+    expect(txt).not.toContain("## Posts");
+    expect(txt).not.toContain("## Pages");
+    expect(txt).not.toContain("## Interview notes");
+  });
+
+  it("should fall back to the section slug when a note's section has no label", async () => {
+    vi.mocked(getInterviewSections).mockResolvedValueOnce([] as never);
+    const txt = await buildLlmsTxt();
+    expect(txt).toContain("- [coding: Two Sum](https://ex.com/interview/coding/two-sum)");
   });
 });

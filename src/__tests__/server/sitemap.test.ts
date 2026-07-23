@@ -40,6 +40,7 @@ vi.mock("@/db/queries", () => ({
 
 import { buildSitemapXml } from "@/server/sitemap";
 import { buildFeedXml } from "@/server/feed";
+import { getFeedPosts, getSiteSettings } from "@/db/queries";
 
 describe("buildSitemapXml", () => {
   it("lists home, section list pages, and every content URL", async () => {
@@ -84,5 +85,25 @@ describe("buildFeedXml", () => {
   it("should fall back to a plain-text summary when a post has no excerpt", async () => {
     const xml = await buildFeedXml();
     expect(xml).toContain("<description><![CDATA[Just a plain paragraph.]]></description>");
+  });
+
+  it("should truncate the summary and use channel defaults when settings are bare", async () => {
+    vi.mocked(getSiteSettings).mockResolvedValueOnce({});
+    vi.mocked(getFeedPosts).mockResolvedValueOnce([
+      {
+        slug: "long",
+        title: "Long",
+        excerpt: null,
+        contentMd: "word ".repeat(100),
+        date: "2020-01-01T00:00:00.000Z",
+      },
+    ]);
+
+    const xml = await buildFeedXml();
+    expect(xml).toContain("<title>Blog</title>");
+    expect(xml).toContain("<language>zh-TW</language>");
+    expect(xml).toContain("https://laigary.com/posts/long");
+    // 500 chars of body collapse into a 280-char summary with an ellipsis.
+    expect(xml).toContain("…]]></description>");
   });
 });
