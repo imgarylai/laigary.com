@@ -1,6 +1,6 @@
 // @vitest-environment node
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { setupTestDb } from "../helpers/test-db";
 import { seedTag as seedTagRow } from "../../factories";
 
@@ -177,6 +177,50 @@ describe("getPublishedPosts", () => {
     await createPost({ title: "Draft", slug: "draft", contentMd: "x" });
     const result = await getPublishedPosts();
     expect(result.total).toBe(0);
+  });
+});
+
+describe("getAdjacentPosts", () => {
+  // createPost stamps publishedAt from Date.now(); spy it to give each seed a
+  // distinct publish second so chronology is deterministic.
+  async function seedTimeline() {
+    const { createPost } = await import("@/db/queries");
+    const now = vi.spyOn(Date, "now");
+    now.mockReturnValue(1_000_000_000);
+    await createPost({ title: "Oldest", slug: "a", contentMd: "x", status: "published" });
+    now.mockReturnValue(2_000_000_000);
+    await createPost({ title: "Middle", slug: "b", contentMd: "x", status: "published" });
+    now.mockReturnValue(3_000_000_000);
+    await createPost({ title: "Newest", slug: "c", contentMd: "x", status: "published" });
+    now.mockRestore();
+  }
+
+  it("should return both chronological neighbors when the post is in the middle", async () => {
+    const { getAdjacentPosts } = await import("@/db/queries");
+    await seedTimeline();
+    const adj = await getAdjacentPosts("b");
+    expect(adj.prev).toEqual({ slug: "a", title: "Oldest" });
+    expect(adj.next).toEqual({ slug: "c", title: "Newest" });
+  });
+
+  it("should return null on the open side when the post is first or last", async () => {
+    const { getAdjacentPosts } = await import("@/db/queries");
+    await seedTimeline();
+    expect(await getAdjacentPosts("a")).toEqual({
+      prev: null,
+      next: { slug: "b", title: "Middle" },
+    });
+    expect(await getAdjacentPosts("c")).toEqual({
+      prev: { slug: "b", title: "Middle" },
+      next: null,
+    });
+  });
+
+  it("should return null neighbors when the slug is a draft or unknown", async () => {
+    const { createPost, getAdjacentPosts } = await import("@/db/queries");
+    await createPost({ title: "Draft", slug: "draft", contentMd: "x" });
+    expect(await getAdjacentPosts("draft")).toEqual({ prev: null, next: null });
+    expect(await getAdjacentPosts("nope")).toEqual({ prev: null, next: null });
   });
 });
 

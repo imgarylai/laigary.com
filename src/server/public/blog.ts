@@ -59,7 +59,7 @@ export async function postsDataImpl() {
 export const postsDataFn = createServerFn({ method: "GET" }).handler(postsDataImpl);
 
 export async function postDataImpl(data: { slug: string }) {
-  const { getPostBySlug } = await import("@/db/queries");
+  const { getPostBySlug, getAdjacentPosts } = await import("@/db/queries");
   const { extractToc } = await import("@/lib/toc");
   const post = await getPostBySlug(data.slug);
   if (!post) return null;
@@ -67,6 +67,7 @@ export async function postDataImpl(data: { slug: string }) {
     post,
     html: await renderMd(post.contentMd),
     toc: extractToc(post.contentMd),
+    adjacent: await getAdjacentPosts(data.slug),
     ...(await pageChrome(post.title)),
   };
 }
