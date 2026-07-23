@@ -241,3 +241,98 @@ describe("remaining protocol + read tools", () => {
     expect(result.posts.map((p: { slug: string }) => p.slug)).toEqual(["tagged"]);
   });
 });
+
+describe("partial-branch sweeps", () => {
+  it("initialize without params falls back to the newest version", async () => {
+    const res = await rpc("initialize");
+    expect((res.body as RpcBody).result?.protocolVersion).toBe("2025-06-18");
+  });
+
+  it("tools/call without arguments defaults to an empty object", async () => {
+    const result = parseText(await callTool("list_tags", undefined));
+    expect(result).toEqual([]);
+  });
+
+  it("reports a null id for malformed messages without one", async () => {
+    const { handleMcpMessage } = await import("@/server/mcp/protocol");
+    const res = await handleMcpMessage({ id: null, method: 42 }, false);
+    expect((res.body as { id: null }).id).toBeNull();
+  });
+
+  it("get_site_info falls back to empty strings on a blank DB and echoes full settings", async () => {
+    const empty = parseText(await callTool("get_site_info", {}));
+    expect(empty).toEqual({
+      siteName: "",
+      description: "",
+      url: "",
+      author: "",
+      github: "",
+      twitter: "",
+    });
+
+    const { updateSiteSettings } = await import("@/db/queries");
+    await updateSiteSettings({
+      site_name: "Unconstrained",
+      site_description: "d",
+      site_url: "https://laigary.com",
+      author_name: "Gary",
+      author_github: "g",
+      author_twitter: "t",
+    });
+    const full = parseText(await callTool("get_site_info", {}));
+    expect(full.url).toBe("https://laigary.com");
+    expect(full.author).toBe("Gary");
+  });
+
+  it("get_interview_note flags a missing note as an error", async () => {
+    await seedSection({ slug: "coding" });
+    const result = await callTool("get_interview_note", { section: "coding", slug: "nope" });
+    expect(result.isError).toBe(true);
+  });
+
+  it("update_post applies the full optional field set", async () => {
+    await seedPost({ slug: "hello", title: "Old" });
+    await seedTag({ name: "Life", slug: "life" });
+    parseText(
+      await callTool(
+        "update_post",
+        {
+          slug: "hello",
+          title: "New",
+          contentMd: "new body",
+          excerpt: "short",
+          status: "published",
+          tagNames: ["Life"],
+        },
+        true,
+      ),
+    );
+    const { getPostBySlug } = await import("@/db/queries");
+    const post = await getPostBySlug("hello");
+    expect(post?.contentMd).toBe("new body");
+    expect(post?.tags.map((t) => t.name)).toEqual(["Life"]);
+  });
+
+  it("update_interview_note applies contentMd, status and tags together", async () => {
+    const section = await seedSection({ slug: "coding" });
+    await seedNote(section.id, { slug: "gas", title: "Gas", status: "draft" });
+    await seedTag({ name: "greedy", slug: "greedy" });
+    parseText(
+      await callTool(
+        "update_interview_note",
+        {
+          section: "coding",
+          slug: "gas",
+          contentMd: "solved",
+          status: "published",
+          tagNames: ["greedy"],
+        },
+        true,
+      ),
+    );
+    const { getInterviewNote } = await import("@/db/queries");
+    const note = await getInterviewNote("coding", "gas");
+    expect(note?.contentMd).toBe("solved");
+    expect(note?.tags.map((t) => t.name)).toEqual(["greedy"]);
+  });
+});
