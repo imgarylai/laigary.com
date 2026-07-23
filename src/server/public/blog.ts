@@ -90,17 +90,22 @@ export async function tagsDataImpl() {
 
 export const tagsDataFn = createServerFn({ method: "GET" }).handler(tagsDataImpl);
 
-// Topic page: the published posts carrying one tag. Unknown tags — and tags
-// whose posts are all drafts — come back null (→ 404); getTagsWithCounts only
-// surfaces tags with published content, matching what the sitemap advertises.
+// Unified topic page: every published post AND interview note carrying one tag
+// (posts and notes share the tags table). Unknown slugs, and tags whose content
+// is all drafts, come back null (→ 404) — matching what the sitemap advertises.
 export async function tagDataImpl(data: { slug: string }) {
-  const { getPublishedPosts, getTagsWithCounts } = await import("@/db/queries");
-  const tag = (await getTagsWithCounts()).find((t) => t.slug === data.slug);
+  const { getTagBySlug, getPublishedPosts, getPublishedNotesByTag } = await import("@/db/queries");
+  const tag = await getTagBySlug(data.slug);
   if (!tag) return null;
-  const { posts } = await getPublishedPosts({ tag: data.slug, limit: 500 });
+  const [{ posts }, notes] = await Promise.all([
+    getPublishedPosts({ tag: data.slug, limit: 500 }),
+    getPublishedNotesByTag(data.slug),
+  ]);
+  if (posts.length === 0 && notes.length === 0) return null;
   return {
     tag: { name: tag.name, slug: tag.slug },
     posts,
+    notes,
     ...(await pageChrome(`#${tag.name}`)),
   };
 }

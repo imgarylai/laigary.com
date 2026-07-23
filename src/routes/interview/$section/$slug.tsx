@@ -35,7 +35,12 @@ export const Route = createFileRoute("/interview/$section/$slug")({
       ? [
           {
             type: "application/ld+json",
-            children: serializeJsonLd(techArticleLd(loaderData.note)),
+            children: serializeJsonLd(
+              techArticleLd({
+                ...loaderData.note,
+                tags: loaderData.note.tags.map((tg) => tg.name),
+              }),
+            ),
           },
           {
             type: "application/ld+json",
@@ -90,13 +95,12 @@ function NotePage() {
             <span className="mr-2.5 text-[11px] text-tm-muted">{t("blog.post.tagsLabel")}</span>
             {note.tags.map((tag) => (
               <Link
-                key={tag}
-                to="/interview/$section"
-                params={{ section: note.section }}
-                search={{ tag }}
+                key={tag.slug}
+                to="/tags/$slug"
+                params={{ slug: tag.slug }}
                 className="mr-2.5 text-[11.5px] text-tm-accent no-underline"
               >
-                #{tag}
+                #{tag.name}
               </Link>
             ))}
           </div>

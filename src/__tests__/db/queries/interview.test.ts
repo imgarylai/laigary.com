@@ -280,6 +280,39 @@ describe("getInterviewNotesBySection", () => {
   });
 });
 
+describe("getPublishedNotesByTag", () => {
+  it("should return published notes across sections carrying a tag slug", async () => {
+    const { createTag, getPublishedNotesByTag } = await import("@/db/queries");
+    const tag = await createTag({ name: "Monotonic", slug: "monotonic" });
+    const s1 = await seedSection("coding", "Coding");
+    const s2 = await seedSection("systems", "Systems");
+    await seedNote(s1.id, { slug: "stack", title: "Stack", status: "published", tagIds: [tag.id] });
+    await seedNote(s2.id, { slug: "queue", title: "Queue", status: "published", tagIds: [tag.id] });
+    await seedNote(s1.id, { slug: "other", title: "Other", status: "published" });
+
+    const notes = await getPublishedNotesByTag("monotonic");
+    expect(
+      notes.map((n) => ({ slug: n.slug, section: n.sectionSlug, label: n.sectionLabel })),
+    ).toEqual(
+      expect.arrayContaining([
+        { slug: "stack", section: "coding", label: "Coding" },
+        { slug: "queue", section: "systems", label: "Systems" },
+      ]),
+    );
+    expect(notes).toHaveLength(2);
+  });
+
+  it("should exclude drafts and return empty for an unused tag", async () => {
+    const { createTag, getPublishedNotesByTag } = await import("@/db/queries");
+    const tag = await createTag({ name: "Draft", slug: "draft-tag" });
+    const s = await seedSection("coding", "Coding");
+    await seedNote(s.id, { slug: "wip", status: "draft", tagIds: [tag.id] });
+
+    expect(await getPublishedNotesByTag("draft-tag")).toEqual([]);
+    expect(await getPublishedNotesByTag("nope")).toEqual([]);
+  });
+});
+
 describe("getPublishedNoteIndex", () => {
   it("should list published notes with their section slug when called", async () => {
     const { getPublishedNoteIndex } = await import("@/db/queries");

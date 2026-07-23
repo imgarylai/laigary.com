@@ -117,7 +117,9 @@ export async function noteDataImpl(data: { section: string; slug: string }) {
       date: unixToIso(note.createdAt),
       updatedAt: unixToIso(note.updatedAt),
       minutes: computeReadingTime(note.contentMd),
-      tags: note.tags.map((t) => t.name),
+      // Keep {name, slug} so the detail page can link tags to the unified
+      // /tags/$slug page; the JSON-LD head maps these back to bare names.
+      tags: note.tags,
     },
     html: await renderMd(note.contentMd),
     ...(await pageChrome(note.title)),

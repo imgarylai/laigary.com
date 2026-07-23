@@ -1,5 +1,6 @@
 import { eq, desc, count, and, asc, like } from "drizzle-orm";
 import { interviewSections, interviewNotes, interviewNoteTags, tags } from "@/db/schema";
+import { unixToIso } from "@/lib/date";
 import { getDb, inClause, type Db } from "./_db";
 import { fetchTagsByParentIds, type PostTag } from "./_tags";
 
@@ -51,6 +52,43 @@ async function attachTags(db: Db, notes: RawNote[]): Promise<InterviewNoteWithTa
 export async function getInterviewSections() {
   const db = await getDb();
   return db.select().from(interviewSections).orderBy(asc(interviewSections.sortOrder));
+}
+
+export type NoteByTag = {
+  slug: string;
+  sectionSlug: string;
+  sectionLabel: string;
+  title: string;
+  date: string;
+};
+
+// Published notes carrying a tag, across every section, newest first — backs
+// the unified /tags/$slug page's interview section. Filters by tag slug (the
+// canonical identifier), unlike the in-section browse filter which uses names.
+export async function getPublishedNotesByTag(tagSlug: string): Promise<NoteByTag[]> {
+  const db = await getDb();
+  const rows = await db
+    .select({
+      slug: interviewNotes.slug,
+      sectionSlug: interviewSections.slug,
+      sectionLabel: interviewSections.label,
+      title: interviewNotes.title,
+      createdAt: interviewNotes.createdAt,
+    })
+    .from(interviewNoteTags)
+    .innerJoin(tags, eq(tags.id, interviewNoteTags.tagId))
+    .innerJoin(interviewNotes, eq(interviewNotes.id, interviewNoteTags.noteId))
+    .innerJoin(interviewSections, eq(interviewSections.id, interviewNotes.sectionId))
+    .where(and(eq(tags.slug, tagSlug), eq(interviewNotes.status, "published")))
+    .orderBy(desc(interviewNotes.createdAt));
+
+  return rows.map((r) => ({
+    slug: r.slug,
+    sectionSlug: r.sectionSlug,
+    sectionLabel: r.sectionLabel,
+    title: r.title,
+    date: unixToIso(r.createdAt),
+  }));
 }
 
 export type PublishedNoteIndexEntry = { slug: string; sectionSlug: string; title: string };
