@@ -1,9 +1,15 @@
 import { createFileRoute, notFound, useNavigate, Link } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 import { sectionDataFn } from "@/server/public";
-import { AsciiRule, PromptLine } from "@/components/terminal/ui";
-import { TmPage, TmEmpty, TmRowLink, TmRowCells } from "@/components/terminal/layout";
-import { TmPager } from "@/components/terminal/Pager";
+import {
+  AsciiRule,
+  PromptLine,
+  TmPage,
+  TmEmpty,
+  TmRowLink,
+  TmRowCells,
+  TmPager,
+} from "@/features/terminal";
 import { SITE_ORIGIN } from "@/lib/json-ld";
 import { canonicalLink, ogMeta } from "@/lib/og-meta";
 import { useI18n } from "@/i18n/I18nProvider";

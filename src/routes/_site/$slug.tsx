@@ -2,8 +2,7 @@ import { createFileRoute, notFound } from "@tanstack/react-router";
 import { pageDataFn } from "@/server/public";
 import { SITE_ORIGIN, breadcrumbLd, serializeJsonLd, webPageLd } from "@/lib/json-ld";
 import { canonicalLink, ogMeta } from "@/lib/og-meta";
-import { PromptLine } from "@/components/terminal/ui";
-import { TmPage } from "@/components/terminal/layout";
+import { PromptLine, TmPage } from "@/features/terminal";
 import { FS_BLOG } from "@/lib/fsmap";
 
 // Catch-all for DB-backed content pages (e.g. /about, /now). Matches last, so

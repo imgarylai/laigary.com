@@ -2,7 +2,7 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/jetbrains-mono";
-@import "./styles/terminal.css";
+@import "./features/terminal/terminal.css";
 
 @custom-variant dark (&:is(.dark *));
 @plugin "@tailwindcss/typography";

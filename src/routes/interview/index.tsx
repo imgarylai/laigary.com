@@ -2,15 +2,16 @@ import { createFileRoute } from "@tanstack/react-router";
 import { interviewDataFn } from "@/server/public";
 import { SITE_ORIGIN } from "@/lib/json-ld";
 import { canonicalLink, ogMeta } from "@/lib/og-meta";
-import { AsciiRule, PromptLine } from "@/components/terminal/ui";
 import {
+  AsciiRule,
+  PromptLine,
   TmPage,
   TmMeta,
   TmDirLink,
   TmDirCells,
   TmRowLink,
   TmRowCells,
-} from "@/components/terminal/layout";
+} from "@/features/terminal";
 import { useI18n } from "@/i18n/I18nProvider";
 
 export const Route = createFileRoute("/interview/")({

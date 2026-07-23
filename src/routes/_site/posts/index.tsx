@@ -2,9 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { postsDataFn } from "@/server/public";
 import { SITE_ORIGIN } from "@/lib/json-ld";
 import { canonicalLink, ogMeta } from "@/lib/og-meta";
-import { PromptLine } from "@/components/terminal/ui";
-import { TmPage, TmEmpty, TmRowLink, TmRowCells } from "@/components/terminal/layout";
-import { TmPager } from "@/components/terminal/Pager";
+import { PromptLine, TmPage, TmEmpty, TmRowLink, TmRowCells, TmPager } from "@/features/terminal";
 import { useI18n } from "@/i18n/I18nProvider";
 import { FS_BLOG } from "@/lib/fsmap";
 

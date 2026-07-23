@@ -2,8 +2,7 @@ import { createFileRoute, notFound, Link } from "@tanstack/react-router";
 import { tagDataFn } from "@/server/public";
 import { SITE_ORIGIN, breadcrumbLd, serializeJsonLd } from "@/lib/json-ld";
 import { canonicalLink, ogMeta } from "@/lib/og-meta";
-import { PromptLine } from "@/components/terminal/ui";
-import { TmPage, TmRowLink, TmRowCells } from "@/components/terminal/layout";
+import { PromptLine, TmPage, TmRowLink, TmRowCells } from "@/features/terminal";
 import { useI18n } from "@/i18n/I18nProvider";
 import { FS_BLOG } from "@/lib/fsmap";
 

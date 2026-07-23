@@ -5,7 +5,7 @@
 // input) only once the composition commits — never mid-composition.
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor, fireEvent } from "@testing-library/react";
-import { CommandPalette, type PaletteRow } from "@/components/terminal/CommandPalette";
+import { CommandPalette, type PaletteRow } from "@/features/terminal/CommandPalette";
 
 vi.mock("@/i18n/I18nProvider", () => ({
   useI18n: () => ({ t: (key: string) => key, locale: "en" }),

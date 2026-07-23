@@ -12,7 +12,7 @@ import {
 } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Kbd } from "@/components/ui/kbd";
-import { AsciiRule, PromptLine } from "@/components/terminal/ui";
+import { AsciiRule, PromptLine } from "@/features/terminal";
 
 // Living design-system reference. Standalone (not under the blog shell, not in
 // any nav) and directly visitable at /design-system. noindex keeps it unlisted.

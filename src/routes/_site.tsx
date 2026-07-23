@@ -2,10 +2,7 @@ import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
 import { useCallback, useMemo } from "react";
 import { blogShellFn } from "@/server/public";
 import { searchPostsFn } from "@/server/posts";
-import { TerminalShell } from "@/components/terminal/TerminalShell";
-import { TmNotFound } from "@/components/terminal/NotFound";
-import type { NavItem } from "@/components/terminal/TmHeader";
-import type { PaletteRow } from "@/components/terminal/CommandPalette";
+import { TerminalShell, TmNotFound, type NavItem, type PaletteRow } from "@/features/terminal";
 import { useI18n } from "@/i18n/I18nProvider";
 import { FS_BLOG, FS_INTERVIEW, fsCmd } from "@/lib/fsmap";
 
