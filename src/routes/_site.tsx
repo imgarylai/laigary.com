@@ -3,6 +3,7 @@ import { useCallback, useMemo } from "react";
 import { blogShellFn } from "@/server/public";
 import { searchPostsFn } from "@/server/posts";
 import { TerminalShell } from "@/components/terminal/TerminalShell";
+import { TmNotFound } from "@/components/terminal/NotFound";
 import type { NavItem } from "@/components/terminal/TmHeader";
 import type { PaletteRow } from "@/components/terminal/CommandPalette";
 import { useI18n } from "@/i18n/I18nProvider";
@@ -16,6 +17,9 @@ export const Route = createFileRoute("/_site")({
     meta: loaderData ? [{ title: loaderData.siteName }] : [],
   }),
   component: SiteLayout,
+  // Fuzzy not-found matching lands here for dead blog URLs (e.g. a post
+  // loader's notFound()), keeping the TerminalShell around the 404.
+  notFoundComponent: TmNotFound,
 });
 
 // Drawer commands come from fsmap (fsCmd) so files render as `cat` — the

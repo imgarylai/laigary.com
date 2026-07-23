@@ -2,6 +2,7 @@ import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
 import { useCallback, useMemo } from "react";
 import { interviewShellFn, searchInterviewNotesFn } from "@/server/public";
 import { TerminalShell } from "@/components/terminal/TerminalShell";
+import { TmNotFound } from "@/components/terminal/NotFound";
 import type { NavItem } from "@/components/terminal/TmHeader";
 import type { PaletteRow } from "@/components/terminal/CommandPalette";
 import { useI18n } from "@/i18n/I18nProvider";
@@ -12,6 +13,8 @@ import { FS_INTERVIEW, INTERVIEW_BASE, fsCmd } from "@/lib/fsmap";
 export const Route = createFileRoute("/interview")({
   loader: () => interviewShellFn(),
   component: InterviewLayout,
+  // Dead interview URLs keep this sub-site's shell around the 404.
+  notFoundComponent: TmNotFound,
 });
 
 function InterviewLayout() {

@@ -347,6 +347,10 @@
       "tagsLabel": "--標籤",
       "back": "  — 回到所有文章"
     },
+    "notFound": {
+      "hint": "// 404 — 這個路徑不存在。",
+      "back": "  — 回到首頁"
+    },
     "tags": {
       "noneYet": "// 還沒有標籤。",
       "postsUnit": "篇"
