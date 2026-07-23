@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { postsDataFn } from "@/server/public";
 import { SITE_ORIGIN } from "@/lib/json-ld";
-import { ogMeta } from "@/lib/og-meta";
+import { canonicalLink, ogMeta } from "@/lib/og-meta";
 import { PromptLine } from "@/components/terminal/ui";
 import { TmPage, TmEmpty, TmRowLink, TmRowCells } from "@/components/terminal/layout";
 import { TmPager } from "@/components/terminal/Pager";
@@ -31,6 +31,7 @@ export const Route = createFileRoute("/_site/posts/")({
           }),
         ]
       : [],
+    links: canonicalLink(`${SITE_ORIGIN}/posts`),
   }),
   component: Archive,
 });

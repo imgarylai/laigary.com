@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { interviewDataFn } from "@/server/public";
 import { SITE_ORIGIN } from "@/lib/json-ld";
-import { ogMeta } from "@/lib/og-meta";
+import { canonicalLink, ogMeta } from "@/lib/og-meta";
 import { AsciiRule, PromptLine } from "@/components/terminal/ui";
 import {
   TmPage,
@@ -28,6 +28,7 @@ export const Route = createFileRoute("/interview/")({
           }),
         ]
       : [],
+    links: canonicalLink(`${SITE_ORIGIN}/interview`),
   }),
   component: InterviewHome,
 });
