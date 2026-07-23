@@ -345,7 +345,9 @@
     "post": {
       "toc": "// table of contents",
       "tagsLabel": "--tags",
-      "back": "  — back to all posts"
+      "back": "  — back to all posts",
+      "older": "« older",
+      "newer": "newer »"
     },
     "notFound": {
       "hint": "// 404 — this path does not exist.",

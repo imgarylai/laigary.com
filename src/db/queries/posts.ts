@@ -1,4 +1,4 @@
-import { eq, desc, count, and, like, type SQL } from "drizzle-orm";
+import { eq, desc, asc, count, and, like, lt, gt, type SQL } from "drizzle-orm";
 import { posts, tags, postTags } from "@/db/schema";
 import { computeReadingTime, unixToIso } from "@/lib/date";
 import { getDb, inClause } from "./_db";
@@ -85,6 +85,37 @@ export async function getPublishedPosts(opts?: {
     })),
     total,
   };
+}
+
+export type AdjacentPost = { slug: string; title: string };
+
+// Chronological neighbors of a published post: `prev` is the next-older one,
+// `next` the next-newer. Ends of the timeline (and drafts/unknown slugs) come
+// back null.
+export async function getAdjacentPosts(
+  slug: string,
+): Promise<{ prev: AdjacentPost | null; next: AdjacentPost | null }> {
+  const db = await getDb();
+  const [current] = await db
+    .select({ publishedAt: posts.publishedAt })
+    .from(posts)
+    .where(and(eq(posts.slug, slug), eq(posts.status, "published")));
+  if (!current?.publishedAt) return { prev: null, next: null };
+
+  const [prev] = await db
+    .select({ slug: posts.slug, title: posts.title })
+    .from(posts)
+    .where(and(eq(posts.status, "published"), lt(posts.publishedAt, current.publishedAt)))
+    .orderBy(desc(posts.publishedAt))
+    .limit(1);
+  const [next] = await db
+    .select({ slug: posts.slug, title: posts.title })
+    .from(posts)
+    .where(and(eq(posts.status, "published"), gt(posts.publishedAt, current.publishedAt)))
+    .orderBy(asc(posts.publishedAt))
+    .limit(1);
+
+  return { prev: prev ?? null, next: next ?? null };
 }
 
 export type FeedPost = {

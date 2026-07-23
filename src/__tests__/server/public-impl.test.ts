@@ -80,6 +80,8 @@ describe("postDataImpl", () => {
     expect(data?.html).toContain("<strong>bold</strong>");
     expect(data?.toc).toEqual(["Section A"]);
     expect(data?.pageTitle).toBe("Hello | Blog");
+    // Lone post: both chronological neighbors are open.
+    expect(data?.adjacent).toEqual({ prev: null, next: null });
   });
 
   it("returns null for a missing or draft slug", async () => {

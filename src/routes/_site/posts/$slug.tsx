@@ -58,7 +58,7 @@ export const Route = createFileRoute("/_site/posts/$slug")({
 });
 
 function PostPage() {
-  const { post, html, toc } = Route.useLoaderData();
+  const { post, html, toc, adjacent } = Route.useLoaderData();
   const { t } = useI18n();
 
   return (
@@ -106,6 +106,35 @@ function PostPage() {
                 #{tg.name}
               </Link>
             ))}
+          </div>
+        )}
+
+        {(adjacent.prev || adjacent.next) && (
+          <div className="mt-8 grid grid-cols-2 gap-4 border-t border-dashed border-tm-border pt-4 text-[11.5px]">
+            <div>
+              {adjacent.prev && (
+                <Link
+                  to="/posts/$slug"
+                  params={{ slug: adjacent.prev.slug }}
+                  className="text-tm-fg no-underline"
+                >
+                  <span className="block text-[11px] text-tm-muted">{t("blog.post.older")}</span>
+                  <span className="text-tm-accent">{adjacent.prev.title}</span>
+                </Link>
+              )}
+            </div>
+            <div className="text-right">
+              {adjacent.next && (
+                <Link
+                  to="/posts/$slug"
+                  params={{ slug: adjacent.next.slug }}
+                  className="text-tm-fg no-underline"
+                >
+                  <span className="block text-[11px] text-tm-muted">{t("blog.post.newer")}</span>
+                  <span className="text-tm-accent">{adjacent.next.title}</span>
+                </Link>
+              )}
+            </div>
           </div>
         )}
 
