@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useActiveHeading } from "@/hooks/use-active-heading";
+import { useHashSync } from "@/hooks/use-hash-sync";
 import { useI18n } from "@/i18n/I18nProvider";
 import type { TocEntry } from "@/lib/toc";
 
@@ -26,6 +27,7 @@ export function Toc({ entries }: { entries: readonly TocEntry[] }) {
   const [open, setOpen] = useState(false);
   const ids = useMemo(() => entries.map((e) => e.id), [entries]);
   const activeId = useActiveHeading(ids);
+  useHashSync(activeId);
 
   // Close the drawer on Escape, matching the palette's dismissal.
   useEffect(() => {

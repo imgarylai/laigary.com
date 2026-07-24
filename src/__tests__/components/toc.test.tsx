@@ -18,6 +18,10 @@ vi.mock("@/hooks/use-active-heading", () => ({
   useActiveHeading: () => activeId.current,
 }));
 
+// Writing the active section to the url needs a router; it is a side effect of
+// the highlight rather than part of the list, and is covered by its own tests.
+vi.mock("@/hooks/use-hash-sync", () => ({ useHashSync: () => {} }));
+
 const ENTRIES: TocEntry[] = [
   { depth: 2, text: "三種基本型", id: "三種基本型" },
   { depth: 3, text: "Subsets 型", id: "subsets-型" },
