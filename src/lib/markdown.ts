@@ -1,5 +1,6 @@
 import { unified } from "unified";
 import remarkParse from "remark-parse";
+import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import remarkRehype, { type Options as RemarkRehypeOptions } from "remark-rehype";
 import rehypeStringify from "rehype-stringify";
@@ -40,6 +41,10 @@ const remarkRehypeOptions: RemarkRehypeOptions = {
 
 const processor = unified()
   .use(remarkParse)
+  // GFM for tables (the complexity cheat sheets need them). The corpus has no
+  // bare URLs, strikethrough, task lists or footnotes, so the rest of GFM is
+  // inert on existing content — enabling it changed nothing but tables.
+  .use(remarkGfm)
   .use(remarkMath)
   .use(remarkRehype, remarkRehypeOptions)
   .use(rehypeRaw)

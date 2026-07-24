@@ -78,6 +78,27 @@ describe("renderMarkdown", () => {
   });
 });
 
+describe("gfm", () => {
+  it("should render a pipe table as a table element when given gfm syntax", async () => {
+    const html = await renderMarkdown("| 題型 | 時間 |\n| --- | --- |\n| 二分 | log n |");
+    expect(html).toContain("<table>");
+    expect(html).toContain("<th>題型</th>");
+    expect(html).toContain("<td>log n</td>");
+  });
+
+  it("should keep math inside a table cell rendered as MathML", async () => {
+    const html = await renderMarkdown("| 題型 | 時間 |\n| --- | --- |\n| 二分 | $O(\\log n)$ |");
+    expect(html).toContain("<td>");
+    expect(html).toContain("math-inline");
+  });
+
+  it("should still render a lone pipe in prose as text when it is not a table", async () => {
+    const html = await renderMarkdown("a | b");
+    expect(html).not.toContain("<table>");
+    expect(html).toContain("a | b");
+  });
+});
+
 describe("code highlighting", () => {
   it("should highlight fenced code when the language is tagged", async () => {
     const html = await renderMarkdown("```python\ndef solve(arr):\n    return arr\n```");

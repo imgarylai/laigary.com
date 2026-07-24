@@ -178,6 +178,11 @@
   border: 1px solid var(--tm-border);
 }
 .tm-prose table {
+  /* block + overflow so a wide table scrolls inside itself instead of forcing
+     the page to scroll horizontally on narrow screens */
+  display: block;
+  overflow-x: auto;
+  max-width: 100%;
   border-collapse: collapse;
   margin: 0 0 16px;
   font-size: 0.875rem;
@@ -187,6 +192,12 @@
   border: 1px solid var(--tm-border);
   padding: 5px 10px;
   text-align: left;
+}
+.tm-prose th {
+  background: var(--tm-subtle);
+  color: var(--tm-accent);
+  font-weight: 400;
+  white-space: nowrap;
 }
 .tm-prose .hljs-comment,
 .tm-prose .hljs-quote {
