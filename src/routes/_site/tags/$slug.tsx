@@ -63,18 +63,20 @@ function TagPage() {
       <PromptLine>{FS_BLOG.tag.prompt({ slug: tag.slug })}</PromptLine>
 
       <div className="mb-5 flex items-baseline gap-3">
-        <h1 className="m-0 text-lg">
+        <h1 className="m-0 text-[calc(1.25rem*var(--tm-fs))]">
           <span className="text-tm-accent">#</span>
           {tag.name}
         </h1>
-        <span className="text-[11px] text-tm-muted">
+        <span className="text-[calc(0.8125rem*var(--tm-fs))] text-tm-muted">
           {posts.length + notes.length} {t("blog.tags.postsUnit")}
         </span>
       </div>
 
       {years.map((y) => (
         <section key={y}>
-          <pre className="mt-7 mb-1.5 text-xs text-tm-accent">./{y}/</pre>
+          <pre className="mt-7 mb-1.5 text-[calc(0.875rem*var(--tm-fs))] text-tm-accent">
+            ./{y}/
+          </pre>
           {byYear.get(y)!.map((p) => (
             <TmRowLink key={p.slug} to="/posts/$slug" params={{ slug: p.slug }}>
               <TmRowCells date={p.date.slice(5, 10)} title={p.title} read={`${p.readingTime}m`} />
@@ -85,7 +87,9 @@ function TagPage() {
 
       {notes.length > 0 && (
         <section>
-          <pre className="mt-7 mb-1.5 text-xs text-tm-accent">./interview/</pre>
+          <pre className="mt-7 mb-1.5 text-[calc(0.875rem*var(--tm-fs))] text-tm-accent">
+            ./interview/
+          </pre>
           {notes.map((n) => (
             <TmRowLink
               key={`${n.sectionSlug}/${n.slug}`}
@@ -98,7 +102,7 @@ function TagPage() {
         </section>
       )}
 
-      <p className="mt-8 text-xs leading-[1.7] text-tm-muted">
+      <p className="mt-8 text-[calc(0.875rem*var(--tm-fs))] leading-[1.7] text-tm-muted">
         <Link to="/tags" className="text-tm-accent no-underline">
           $ cd ..
         </Link>

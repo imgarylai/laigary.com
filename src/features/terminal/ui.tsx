@@ -12,7 +12,10 @@ export function AsciiRule({ thick = false, className }: { thick?: boolean; class
   return (
     <pre
       aria-hidden
-      className={cn("m-0 select-none overflow-hidden text-[11px] text-tm-dim", className)}
+      className={cn(
+        "m-0 select-none overflow-hidden text-[calc(0.8125rem*var(--tm-fs))] text-tm-dim",
+        className,
+      )}
     >
       {(thick ? "═" : "─").repeat(RULE_CHARS)}
     </pre>
@@ -21,7 +24,11 @@ export function AsciiRule({ thick = false, className }: { thick?: boolean; class
 
 // A `$ ...` prompt line shown above page content.
 export function PromptLine({ children, className }: { children: ReactNode; className?: string }) {
-  return <pre className={cn("m-0 mb-3 text-[11px] text-tm-muted", className)}>{children}</pre>;
+  return (
+    <pre className={cn("m-0 mb-3 text-[calc(0.8125rem*var(--tm-fs))] text-tm-muted", className)}>
+      {children}
+    </pre>
+  );
 }
 
 // Top reading-progress bar tied to document scroll.

@@ -13,7 +13,7 @@ export function TmButton({
     <ButtonPrimitive
       data-slot="tm-button"
       className={cn(
-        "inline-flex shrink-0 items-center justify-center gap-1 border border-tm-border bg-transparent text-xs whitespace-nowrap text-tm-muted transition-colors outline-none select-none",
+        "inline-flex shrink-0 items-center justify-center gap-1 border border-tm-border bg-transparent text-[calc(0.875rem*var(--tm-fs))] whitespace-nowrap text-tm-muted transition-colors outline-none select-none",
         "hover:bg-tm-subtle hover:text-tm-fg",
         "focus-visible:border-tm-accent focus-visible:text-tm-fg",
         "disabled:pointer-events-none disabled:opacity-50",

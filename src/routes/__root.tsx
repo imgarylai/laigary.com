@@ -3,6 +3,10 @@ import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { TanStackDevtools } from "@tanstack/react-devtools";
 
 import appCss from "../styles.css?url";
+// Preloaded below so the primary (latin, upright) JetBrains Mono weight fetches
+// in parallel with the stylesheet instead of only after CSS parses — cuts the
+// swap delay on the LCP text.
+import jetbrainsMonoUrl from "@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2?url";
 import { ThemeProvider } from "../components/ThemeProvider";
 import { I18nProvider } from "../i18n/I18nProvider";
 import { resolveLocaleFn } from "../server/locale";
@@ -45,6 +49,13 @@ export const Route = createRootRoute({
       },
     ],
     links: [
+      {
+        rel: "preload",
+        href: jetbrainsMonoUrl,
+        as: "font",
+        type: "font/woff2",
+        crossOrigin: "anonymous",
+      },
       {
         rel: "stylesheet",
         href: appCss,

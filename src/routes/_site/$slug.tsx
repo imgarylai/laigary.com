@@ -54,7 +54,9 @@ function PagePage() {
       <PromptLine className="mb-4">{FS_BLOG.page.prompt({ slug: page.slug })}</PromptLine>
       {/* lang: content region is zh-Hant; <html lang> follows the UI locale. */}
       <article lang="zh-Hant">
-        <h1 className="mb-[18px] text-[20px] font-bold leading-[1.35]">{page.title}</h1>
+        <h1 className="mb-[18px] text-[calc(1.375rem*var(--tm-fs))] font-bold leading-[1.35]">
+          {page.title}
+        </h1>
         <Prose html={html} />
       </article>
     </TmPage>
