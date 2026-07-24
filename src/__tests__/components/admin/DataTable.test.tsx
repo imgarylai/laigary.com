@@ -100,4 +100,21 @@ describe("DataTable", () => {
     // 3 rows / pageSize 2 → 2 pages (max index 1); a stale index 9 is clamped.
     expect(onPageChange).toHaveBeenCalledWith(1);
   });
+
+  it("does not clamp when the list is empty (no pages to snap to)", () => {
+    const onPageChange = vi.fn();
+    render(
+      <DataTable
+        columns={columns}
+        data={[]}
+        searchPlaceholder="search"
+        emptyMessage="nothing here"
+        pageIndex={0}
+        onPageChange={onPageChange}
+      />,
+    );
+    expect(screen.getByText("nothing here")).toBeDefined();
+    // An empty list has 0 pages — the clamp effect must leave the page alone.
+    expect(onPageChange).not.toHaveBeenCalled();
+  });
 });

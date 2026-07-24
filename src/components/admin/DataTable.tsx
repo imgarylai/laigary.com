@@ -4,6 +4,7 @@ import {
   type RowData,
   type SortingState,
   flexRender,
+  functionalUpdate,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
@@ -91,8 +92,7 @@ export function DataTable<T>({
       setGlobalFilter(typeof next === "string" ? next : "");
     },
     onPaginationChange: (updater) => {
-      const next = typeof updater === "function" ? updater({ pageIndex, pageSize }) : updater;
-      setPageIndex(next.pageIndex);
+      setPageIndex(functionalUpdate(updater, { pageIndex, pageSize }).pageIndex);
     },
     globalFilterFn: "includesString",
     getCoreRowModel: getCoreRowModel(),
