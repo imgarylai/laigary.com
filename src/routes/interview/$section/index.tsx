@@ -85,7 +85,9 @@ function SectionPage() {
         {totalPages > 1 ? ` | sed -n '${start + 1},${start + pageItems.length}p'` : ""}
       </PromptLine>
       <h1 className="mb-1.5 text-xl">{section.label}</h1>
-      {section.blurb && <p className="mb-2 text-sm leading-[1.7] text-tm-muted">{section.blurb}</p>}
+      {section.blurb && (
+        <p className="mb-2 text-sm leading-relaxed text-tm-muted">{section.blurb}</p>
+      )}
       <AsciiRule className="mt-2 mb-5" />
 
       {/* Tag filter chips (design: interview/app.jsx `--filter` row). Chips

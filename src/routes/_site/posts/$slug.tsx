@@ -80,9 +80,7 @@ function PostPage() {
             follows the UI locale — mark the content region so the language
             signals agree with the JSON-LD inLanguage declaration. */}
         <article lang="zh-Hant">
-          <h1 className="mt-5 mb-2.5 text-2xl font-bold leading-[1.35] tracking-[-0.01em]">
-            {post.title}
-          </h1>
+          <h1 className="mt-5 mb-2.5 text-2xl font-bold leading-snug">{post.title}</h1>
           <AsciiRule className="mb-5" />
 
           {toc.length > 0 && (
@@ -148,7 +146,7 @@ function PostPage() {
         <Comments config={giscus} />
 
         <AsciiRule className="mt-10 mb-3" />
-        <p className="text-sm leading-[1.7] text-tm-muted">
+        <p className="text-sm leading-relaxed text-tm-muted">
           <Link to="/posts" className="text-tm-accent no-underline">
             $ cd ..
           </Link>

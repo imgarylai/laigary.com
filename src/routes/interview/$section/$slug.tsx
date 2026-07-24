@@ -83,7 +83,7 @@ function NotePage() {
 
         {/* lang: content region is zh-Hant; <html lang> follows the UI locale. */}
         <article lang="zh-Hant">
-          <h1 className="mt-2 mb-1 text-2xl font-semibold leading-[1.35]">{note.title}</h1>
+          <h1 className="mt-2 mb-1 text-2xl font-semibold leading-snug">{note.title}</h1>
           <AsciiRule className="mb-5" />
 
           <Prose html={html} />
