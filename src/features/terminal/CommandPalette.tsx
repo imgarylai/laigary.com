@@ -123,7 +123,9 @@ export function CommandPalette({
       >
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className="truncate text-tm-fg">{primary}</span>
-          {secondary && <span className="truncate text-xs text-tm-muted">{secondary}</span>}
+          {secondary && secondary !== primary && (
+            <span className="truncate text-xs text-tm-muted">{secondary}</span>
+          )}
         </div>
       </CommandItem>
     );
