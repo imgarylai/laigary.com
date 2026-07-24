@@ -1,7 +1,8 @@
 import { useForm, Controller } from "react-hook-form";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { z } from "zod";
-import { useNavigate, useRouter } from "@tanstack/react-router";
+import { Link, useNavigate, useRouter } from "@tanstack/react-router";
+import { ArrowSquareOutIcon } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -51,7 +52,7 @@ export function NoteForm({
   tags,
 }: {
   note?: NoteInit;
-  sections: { id: string; label: string }[];
+  sections: { id: string; label: string; slug: string }[];
   tags: TagOption[];
 }) {
   const navigate = useNavigate();
@@ -112,7 +113,11 @@ export function NoteForm({
     if (!form.formState.isSubmitting) submit();
   });
 
-  const sectionLabel = sections.find((s) => s.id === note?.sectionId)?.label ?? "";
+  const section = sections.find((s) => s.id === note?.sectionId);
+  const sectionLabel = section?.label ?? "";
+  // A published note has a live public page; link straight to it so the author
+  // can preview without going back to the list. Drafts have no public page.
+  const canPreview = isEdit && note?.status === "published" && !!section && !!note?.slug;
 
   return (
     <form onSubmit={submit} className="space-y-6">
@@ -231,6 +236,24 @@ export function NoteForm({
         >
           {t("noteForm.cancel")}
         </Button>
+        {canPreview && section && note && (
+          <Button
+            type="button"
+            variant="outline"
+            className="ml-auto"
+            render={
+              <Link
+                to="/interview/$section/$slug"
+                params={{ section: section.slug, slug: note.slug }}
+                target="_blank"
+                rel="noreferrer"
+              />
+            }
+          >
+            <ArrowSquareOutIcon className="size-4" />
+            {t("noteForm.preview")}
+          </Button>
+        )}
       </div>
     </form>
   );

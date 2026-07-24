@@ -316,6 +316,7 @@
     "create": "Create",
     "update": "Update",
     "cancel": "Cancel",
+    "preview": "Preview",
     "saving": "Saving…"
   },
   "blog": {
