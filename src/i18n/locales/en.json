@@ -116,6 +116,7 @@
     "create": "Create",
     "update": "Update",
     "cancel": "Cancel",
+    "preview": "Preview",
     "saving": "Saving...",
     "postCreated": "Post created",
     "postUpdated": "Post updated",
