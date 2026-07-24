@@ -72,6 +72,51 @@ describe("CommandPalette", () => {
     expect(await screen.findByText("Two Sum")).toBeDefined();
   });
 
+  it("stacks the title over the path, and falls back to the path when a content row has no title", async () => {
+    // A page row carrying a descriptor (its second, dimmed line) plus two
+    // content rows — one with a title, one without — exercise every branch of
+    // the stacked row: page vs content primary, and the title-missing fallback.
+    const pagesWithSub: PaletteRow[] = [
+      {
+        kind: "page",
+        label: "cd ./leetcode",
+        sub: "leetcode",
+        haystack: "leetcode",
+        onSelect: () => {},
+      },
+    ];
+    const rows: PaletteRow[] = [
+      {
+        kind: "content",
+        label: "cat titled",
+        sub: "Titled Note",
+        haystack: "titled",
+        onSelect: () => {},
+      },
+      { kind: "content", label: "cat untitled", haystack: "untitled", onSelect: () => {} },
+    ];
+    const searchContent = vi.fn(async () => rows);
+    render(
+      <CommandPalette
+        open
+        onOpenChange={() => {}}
+        pages={pagesWithSub}
+        searchContent={searchContent}
+        placeholder="search"
+      />,
+    );
+    // Page row shows both its command and its descriptor line.
+    expect(screen.getByText("cd ./leetcode")).toBeDefined();
+    expect(screen.getByText("leetcode")).toBeDefined();
+
+    fireEvent.change(screen.getByPlaceholderText("search"), { target: { value: "t" } });
+    // Content row with a title: title is the primary line, path the secondary.
+    expect(await screen.findByText("Titled Note")).toBeDefined();
+    expect(screen.getByText("cat titled")).toBeDefined();
+    // Content row with no title falls back to showing the path as the primary.
+    expect(screen.getByText("cat untitled")).toBeDefined();
+  });
+
   it("does not search while an IME composition is in flight", async () => {
     const searchContent = vi.fn(async () => [contentRow]);
     render(
