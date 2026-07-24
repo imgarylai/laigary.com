@@ -31,9 +31,53 @@ function clientCloudflareEnvStub(): Plugin {
   };
 }
 
+// Rolldown's code generator (Vite 8's bundler) cannot emit a *lone* surrogate:
+// temml's tokenizer builds its regex from string literals containing `\uD800`
+// and friends, and those came out of the bundle as U+FFFD followed by the text
+// "d800". The resulting class `[�d800-�dbff]` spans `0`–U+FFFD, which
+// swallows the backslash — so it out-matched the control-word alternative and
+// every LaTeX command lexed as a single letter (`\times` → `\t` + "imes"),
+// silently breaking all multi-letter math on the site.
+//
+// Rewrite those literals to build the surrogates at runtime, where codegen
+// never has to encode them. Throws if temml's source stops matching, so a
+// dependency bump can't quietly reintroduce the corruption.
+function temmlSurrogateFix(): Plugin {
+  const cc = (code: number) => `String.fromCharCode(${code})`;
+  // Source fragments as they appear in temml's dist build.
+  const SYMBOL = '"\\\\\\\\[^\\uD800-\\uDFFF]"';
+  const PAIR = '"|[\\uD800-\\uDBFF][\\uDC00-\\uDFFF]"';
+  return {
+    name: "temml-surrogate-fix",
+    enforce: "pre",
+    transform(code, id) {
+      if (!id.includes("temml") || !code.includes("tokenRegexString")) return;
+      if (!code.includes(SYMBOL) || !code.includes(PAIR)) {
+        throw new Error(
+          "temml-surrogate-fix: temml's lexer source no longer matches — re-check this workaround",
+        );
+      }
+      return {
+        code: code
+          .replace(SYMBOL, `"\\\\\\\\[^" + ${cc(0xd800)} + "-" + ${cc(0xdfff)} + "]"`)
+          .replace(
+            PAIR,
+            `"|[" + ${cc(0xd800)} + "-" + ${cc(0xdbff)} + "][" + ${cc(0xdc00)} + "-" + ${cc(0xdfff)} + "]"`,
+          ),
+        map: null,
+      };
+    },
+  };
+}
+
 const config = defineConfig({
   resolve: { tsconfigPaths: true },
+  // temml is bundled from source rather than pre-bundled, so the plugin below
+  // can rewrite it before Rolldown's code generator sees it.
+  optimizeDeps: { exclude: ["temml"] },
+  environments: { ssr: { optimizeDeps: { exclude: ["temml"] } } },
   plugins: [
+    temmlSurrogateFix(),
     clientCloudflareEnvStub(),
     devtools(),
     cloudflare({ viteEnvironment: { name: "ssr" } }),
