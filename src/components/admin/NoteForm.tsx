@@ -169,7 +169,13 @@ export function NoteForm({
               control={form.control}
               name="sectionId"
               render={({ field }) => (
-                <Select value={field.value} onValueChange={(v) => field.onChange(v)}>
+                <Select
+                  value={field.value}
+                  onValueChange={(v) => field.onChange(v)}
+                  // Map ids to labels so the trigger shows the section name, not
+                  // the raw UUID value (Base UI renders the raw value otherwise).
+                  items={sections.map((s) => ({ value: s.id, label: s.label }))}
+                >
                   <SelectTrigger id="note-section">
                     <SelectValue placeholder={t("noteForm.sectionPlaceholder")} />
                   </SelectTrigger>
