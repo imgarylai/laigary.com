@@ -42,13 +42,13 @@ function TagsPage() {
               key={tag.slug}
               to="/tags/$slug"
               params={{ slug: tag.slug }}
-              className="flex items-center justify-between border-b border-dashed border-tm-border px-1 py-2 text-[calc(0.9375rem*var(--tm-fs))] text-tm-fg no-underline"
+              className="flex items-center justify-between border-b border-dashed border-tm-border px-1 py-2 text-sm text-tm-fg no-underline"
             >
               <span>
                 <span className="text-tm-accent">#</span>
                 {tag.name}
               </span>
-              <span className="text-[calc(0.8125rem*var(--tm-fs))] text-tm-muted">
+              <span className="text-xs text-tm-muted">
                 {tag.count} {t("blog.tags.postsUnit")}
               </span>
             </Link>

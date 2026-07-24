@@ -84,25 +84,21 @@ function SectionPage() {
         {FS_INTERVIEW.section.prompt({ sect: section.slug })}
         {totalPages > 1 ? ` | sed -n '${start + 1},${start + pageItems.length}p'` : ""}
       </PromptLine>
-      <h1 className="mb-1.5 text-[calc(1.25rem*var(--tm-fs))]">{section.label}</h1>
-      {section.blurb && (
-        <p className="mb-2 text-[calc(0.9062rem*var(--tm-fs))] leading-[1.7] text-tm-muted">
-          {section.blurb}
-        </p>
-      )}
+      <h1 className="mb-1.5 text-xl">{section.label}</h1>
+      {section.blurb && <p className="mb-2 text-sm leading-[1.7] text-tm-muted">{section.blurb}</p>}
       <AsciiRule className="mt-2 mb-5" />
 
       {/* Tag filter chips (design: interview/app.jsx `--filter` row). Chips
           carry tag names — the same value note rows and detail links filter
           by — with `all` clearing the filter. */}
       {tags.length > 0 && (
-        <div className="mb-[22px] flex flex-wrap items-baseline gap-1.5">
-          <span className="mr-1.5 text-[calc(0.8125rem*var(--tm-fs))] text-tm-muted">--filter</span>
+        <div className="mb-5 flex flex-wrap items-baseline gap-1.5">
+          <span className="mr-1.5 text-xs text-tm-muted">--filter</span>
           <Link
             to="/interview/$section"
             params={{ section: section.slug }}
             className={cn(
-              "border px-2.5 py-[3px] text-[calc(0.8125rem*var(--tm-fs))] no-underline",
+              "border px-2.5 py-1 text-xs no-underline",
               tag
                 ? "border-tm-border text-tm-muted"
                 : "border-tm-accent bg-tm-subtle text-tm-accent",
@@ -117,7 +113,7 @@ function SectionPage() {
               params={{ section: section.slug }}
               search={{ tag: name }}
               className={cn(
-                "border px-2.5 py-[3px] text-[calc(0.8125rem*var(--tm-fs))] no-underline",
+                "border px-2.5 py-1 text-xs no-underline",
                 tag === name
                   ? "border-tm-accent bg-tm-subtle text-tm-accent"
                   : "border-tm-border text-tm-muted",
@@ -134,9 +130,7 @@ function SectionPage() {
       ) : (
         years.map((y) => (
           <section key={y}>
-            <pre className="mt-7 mb-1.5 text-[calc(0.875rem*var(--tm-fs))] text-tm-accent">
-              ./{y}/
-            </pre>
+            <pre className="mt-7 mb-1.5 text-sm text-tm-accent">./{y}/</pre>
             {byYear.get(y)!.map((n) => (
               <TmRowLink
                 key={n.slug}

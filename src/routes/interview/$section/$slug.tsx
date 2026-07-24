@@ -71,7 +71,7 @@ function NotePage() {
         <PromptLine className="mb-1.5">
           {FS_INTERVIEW.note.prompt({ sect: note.section, slug: note.slug })}
         </PromptLine>
-        <div className="mb-1.5 flex flex-wrap items-baseline gap-2 text-[calc(0.8125rem*var(--tm-fs))]">
+        <div className="mb-1.5 flex flex-wrap items-baseline gap-2 text-xs">
           <span className="text-tm-accent">[{note.sectionLabel}]</span>
           <span className="text-tm-dim">·</span>
           <span className="text-tm-muted">{note.date}</span>
@@ -83,25 +83,21 @@ function NotePage() {
 
         {/* lang: content region is zh-Hant; <html lang> follows the UI locale. */}
         <article lang="zh-Hant">
-          <h1 className="mt-2 mb-1 text-[calc(1.375rem*var(--tm-fs))] font-semibold leading-[1.35]">
-            {note.title}
-          </h1>
-          <AsciiRule className="mb-[22px]" />
+          <h1 className="mt-2 mb-1 text-2xl font-semibold leading-[1.35]">{note.title}</h1>
+          <AsciiRule className="mb-5" />
 
           <Prose html={html} />
         </article>
 
         {note.tags.length > 0 && (
           <div className="mt-8 border-t border-dashed border-tm-border pt-4">
-            <span className="mr-2.5 text-[calc(0.8125rem*var(--tm-fs))] text-tm-muted">
-              {t("blog.post.tagsLabel")}
-            </span>
+            <span className="mr-2.5 text-xs text-tm-muted">{t("blog.post.tagsLabel")}</span>
             {note.tags.map((tag) => (
               <Link
                 key={tag.slug}
                 to="/tags/$slug"
                 params={{ slug: tag.slug }}
-                className="mr-2.5 text-[calc(0.8438rem*var(--tm-fs))] text-tm-accent no-underline"
+                className="mr-2.5 text-xs text-tm-accent no-underline"
               >
                 #{tag.name}
               </Link>
@@ -113,14 +109,11 @@ function NotePage() {
           <Link
             to="/interview/$section"
             params={{ section: note.section }}
-            className="text-[calc(0.875rem*var(--tm-fs))] text-tm-muted no-underline"
+            className="text-sm text-tm-muted no-underline"
           >
             ← cd ../{note.section}
           </Link>
-          <Link
-            to="/interview"
-            className="text-[calc(0.875rem*var(--tm-fs))] text-tm-muted no-underline"
-          >
+          <Link to="/interview" className="text-sm text-tm-muted no-underline">
             cd ~
           </Link>
         </div>

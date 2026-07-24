@@ -66,13 +66,13 @@ function Archive() {
       </PromptLine>
 
       {tag && (
-        <div className="mb-5 flex items-center gap-2 text-[calc(0.8438rem*var(--tm-fs))] text-tm-muted">
+        <div className="mb-5 flex items-center gap-2 text-xs text-tm-muted">
           <span>
             {t("blog.archive.filteredBy")} <span className="text-tm-accent">#{tag}</span>
           </span>
           <Link
             to="/posts"
-            className="border border-tm-border px-[7px] py-0.5 text-[calc(0.7812rem*var(--tm-fs))] text-tm-muted no-underline"
+            className="border border-tm-border px-2 py-0.5 text-xs text-tm-muted no-underline"
           >
             {t("blog.archive.clear")}
           </Link>
@@ -81,9 +81,7 @@ function Archive() {
 
       {years.map((y) => (
         <section key={y}>
-          <pre className="mt-7 mb-1.5 text-[calc(0.875rem*var(--tm-fs))] text-tm-accent">
-            ./{y}/
-          </pre>
+          <pre className="mt-7 mb-1.5 text-sm text-tm-accent">./{y}/</pre>
           {byYear.get(y)!.map((p) => (
             <TmRowLink key={p.slug} to="/posts/$slug" params={{ slug: p.slug }}>
               <TmRowCells date={p.date.slice(5, 10)} title={p.title} read={`${p.readingTime}m`} />

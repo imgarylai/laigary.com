@@ -43,7 +43,7 @@ export function TmPager({
     <div className="mt-9">
       <AsciiRule className="mb-4" />
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <span className="text-[calc(0.8125rem*var(--tm-fs))] text-tm-muted">
+        <span className="text-xs text-tm-muted">
           {t("blog.archive.page", { current: String(current), total: String(totalPages) })}
           <span className="text-tm-dim">
             {t("blog.archive.showing", {
@@ -65,10 +65,7 @@ export function TmPager({
           {pageWindow(current, totalPages).map((n, i) =>
             n === null ? (
               // eslint-disable-next-line react/no-array-index-key
-              <span
-                key={`gap-${i}`}
-                className="px-1 text-[calc(0.875rem*var(--tm-fs))] text-tm-dim"
-              >
+              <span key={`gap-${i}`} className="px-1 text-sm text-tm-dim">
                 …
               </span>
             ) : (
@@ -77,7 +74,7 @@ export function TmPager({
                 type="button"
                 onClick={() => onPage(n)}
                 className={cn(
-                  "min-w-[26px] cursor-pointer border border-transparent px-2 py-[3px] text-[calc(0.875rem*var(--tm-fs))]",
+                  "min-w-6 cursor-pointer border border-transparent px-2 py-1 text-sm",
                   n === current ? "border-tm-accent text-tm-accent" : "text-tm-muted",
                 )}
               >

@@ -14,15 +14,13 @@ export function TmNotFound() {
   return (
     <TmPage narrow>
       <PromptLine className="mb-1.5">{`$ cat ~${pathname}`}</PromptLine>
-      <pre className="m-0 text-[calc(0.9062rem*var(--tm-fs))] leading-[1.7] text-tm-fg">
+      <pre className="m-0 text-sm leading-[1.7] text-tm-fg">
         {`cat: ~${pathname}: No such file or directory\n[exit 1]`}
       </pre>
 
       <AsciiRule className="mt-6 mb-3" />
-      <p className="text-[calc(0.875rem*var(--tm-fs))] leading-[1.8] text-tm-muted">
-        {t("blog.notFound.hint")}
-      </p>
-      <p className="text-[calc(0.875rem*var(--tm-fs))] leading-[1.8] text-tm-muted">
+      <p className="text-sm leading-[1.8] text-tm-muted">{t("blog.notFound.hint")}</p>
+      <p className="text-sm leading-[1.8] text-tm-muted">
         <Link to="/" className="text-tm-accent no-underline">
           $ cd ~
         </Link>

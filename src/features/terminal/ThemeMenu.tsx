@@ -55,7 +55,7 @@ export function TmThemeMenu({ size = "icon" }: { size?: "sm" | "icon" }) {
                 <MenuPrimitive.RadioItem
                   key={value}
                   value={value}
-                  className="relative flex cursor-default items-center gap-2 py-1.5 pr-8 pl-2 text-[calc(0.875rem*var(--tm-fs))] text-tm-muted outline-none select-none data-[highlighted]:bg-tm-subtle data-[highlighted]:text-tm-fg data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
+                  className="relative flex cursor-default items-center gap-2 py-1.5 pr-8 pl-2 text-sm text-tm-muted outline-none select-none data-[highlighted]:bg-tm-subtle data-[highlighted]:text-tm-fg data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
                 >
                   <span className="pointer-events-none absolute right-2 flex items-center justify-center text-tm-accent">
                     <MenuPrimitive.RadioItemIndicator>

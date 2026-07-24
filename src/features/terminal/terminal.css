@@ -10,11 +10,6 @@
    next-themes, which also writes the admin's `.dark` class).
    ─────────────────────────────────────────────────────────────────────── */
 :root {
-  /* Single font-scale lever for the whole terminal frontend. Every terminal
-     font-size is `calc(<rem> * var(--tm-fs))`, so bumping this one number scales
-     all frontend type together (1 = current size, 1.1 = +10%, …). rem base keeps
-     it honouring the reader's browser font-size preference (a11y). */
-  --tm-fs: 1;
   --tm-bg: #0b0d0c;
   --tm-fg: #d4d4d4;
   --tm-muted: #7f8794;
@@ -41,7 +36,7 @@
 .tm-root {
   background: var(--tm-bg);
   color: var(--tm-fg);
-  font-size: calc(0.9375rem*var(--tm-fs));
+  font-size: 0.875rem;
   line-height: 1.65;
   /* dvh, not vh: with the sticky-footer flex layout, vh on mobile Safari
      overshoots the visible viewport and pushes the status bar below the fold. */
@@ -69,7 +64,7 @@
 
 /* ── Rendered-markdown body (retheme shared pipeline output) ────────────── */
 .tm-prose {
-  font-size: calc(0.9688rem*var(--tm-fs));
+  font-size: 1rem;
   line-height: 1.8;
   color: var(--tm-fg);
 }
@@ -87,10 +82,10 @@
   line-height: 1.4;
 }
 .tm-prose h2 {
-  font-size: calc(1.0625rem*var(--tm-fs));
+  font-size: 1.125rem;
 }
 .tm-prose h3 {
-  font-size: calc(1rem*var(--tm-fs));
+  font-size: 1rem;
 }
 .tm-prose h2::before {
   content: "## ";
@@ -143,7 +138,7 @@
   background: var(--tm-subtle);
   border: 1px solid var(--tm-border);
   padding: 1px 5px;
-  font-size: calc(0.875rem*var(--tm-fs));
+  font-size: 0.875rem;
   color: var(--tm-accent);
 }
 .tm-prose pre {
@@ -152,7 +147,7 @@
   border: 1px solid var(--tm-border);
   background: var(--tm-subtle);
   overflow-x: auto;
-  font-size: calc(0.875rem*var(--tm-fs));
+  font-size: 0.875rem;
   line-height: 1.6;
 }
 .tm-prose pre code {
@@ -180,7 +175,7 @@
 .tm-prose table {
   border-collapse: collapse;
   margin: 0 0 16px;
-  font-size: calc(0.875rem*var(--tm-fs));
+  font-size: 0.875rem;
 }
 .tm-prose th,
 .tm-prose td {

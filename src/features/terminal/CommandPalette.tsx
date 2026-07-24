@@ -142,10 +142,7 @@ export function CommandPalette({
           <CommandGroup heading={t("blog.search.content")}>{content.map(renderItem)}</CommandGroup>
         )}
         {status && (
-          <div
-            className="py-6 text-center text-[calc(0.875rem*var(--tm-fs))] text-tm-muted"
-            data-slot="command-status"
-          >
+          <div className="py-6 text-center text-sm text-tm-muted" data-slot="command-status">
             {status}
           </div>
         )}
