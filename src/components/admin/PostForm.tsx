@@ -1,6 +1,7 @@
 import { useForm } from "react-hook-form";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import { useNavigate, useRouter } from "@tanstack/react-router";
+import { Link, useNavigate, useRouter } from "@tanstack/react-router";
+import { ArrowSquareOutIcon } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/i18n/I18nProvider";
@@ -86,6 +87,10 @@ export function PostForm({
     if (!form.formState.isSubmitting) submit();
   });
 
+  // A published post has a live public page; link straight to it so the author
+  // can preview without going back to the list. Drafts have no public page.
+  const canPreview = isEdit && initialData?.status === "published" && !!initialData?.slug;
+
   return (
     <form onSubmit={submit} className="space-y-6">
       <div className="grid gap-6 sm:grid-cols-2">
@@ -115,6 +120,24 @@ export function PostForm({
         <Button type="button" variant="outline" onClick={() => navigate({ to: "/admin/posts" })}>
           {t("postForm.cancel")}
         </Button>
+        {canPreview && initialData && (
+          <Button
+            type="button"
+            variant="outline"
+            className="ml-auto"
+            render={
+              <Link
+                to="/posts/$slug"
+                params={{ slug: initialData.slug }}
+                target="_blank"
+                rel="noreferrer"
+              />
+            }
+          >
+            <ArrowSquareOutIcon className="size-4" />
+            {t("postForm.preview")}
+          </Button>
+        )}
       </div>
     </form>
   );

@@ -37,6 +37,14 @@ Local D1 schema: `npx wrangler d1 migrations apply laigary-db --local`.
 - Data flow: route `loader` → `createServerFn` (`src/server/public.ts`, admin
   mutations in `src/server/admin/`) → query layer (`src/db/queries/`, Drizzle on
   `env.DB` from `cloudflare:workers`).
+- Posts and interview notes are near-equivalent content types — same
+  title/slug/status/tags/markdown model, same editor (Tiptap), same admin CRUD
+  shape. They differ mainly in where they live: posts are standalone at
+  `/posts/<slug>` (editor `PostForm`, `src/server/admin/posts.ts`), notes are
+  grouped under a section at `/interview/<section>/<slug>` (editor `NoteForm`,
+  `src/server/admin/interview.ts`; a note also carries its `sectionId`). When
+  you add or change a feature on one (an admin action, a form field, a list
+  column), mirror it on the other unless there's a reason not to.
 - MCP endpoint (`/mcp`, `src/server/mcp/` + `src/routes/mcp.ts`): stateless
   Streamable HTTP JSON-RPC for AI clients. Read tools are public; write tools
   need `Authorization: Bearer <MCP_ADMIN_TOKEN>` (wrangler secret; unset =
