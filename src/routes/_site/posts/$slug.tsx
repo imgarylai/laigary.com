@@ -2,7 +2,7 @@ import { createFileRoute, notFound, Link } from "@tanstack/react-router";
 import { postDataFn } from "@/server/public";
 import { SITE_ORIGIN, blogPostingLd, breadcrumbLd, serializeJsonLd } from "@/lib/json-ld";
 import { canonicalLink, ogMeta } from "@/lib/og-meta";
-import { AsciiRule, PromptLine, ReadingProgress, TmPage } from "@/features/terminal";
+import { AsciiRule, Prose, PromptLine, ReadingProgress, TmPage } from "@/features/terminal";
 import { Comments } from "@/components/Comments";
 import { useI18n } from "@/i18n/I18nProvider";
 import { FS_BLOG } from "@/lib/fsmap";
@@ -97,7 +97,7 @@ function PostPage() {
             </div>
           )}
 
-          <div className="tm-prose" dangerouslySetInnerHTML={{ __html: html }} />
+          <Prose html={html} />
         </article>
 
         {post.tags.length > 0 && (
