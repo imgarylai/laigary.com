@@ -174,6 +174,26 @@ describe("NoteForm", () => {
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith("nope"));
   });
 
+  it("navigates back to the list when Cancel is clicked", () => {
+    render(<NoteForm sections={sections} tags={tags} />);
+    fireEvent.click(screen.getByRole("button", { name: "noteForm.cancel" }));
+    expect(navigate).toHaveBeenCalledWith({ to: "/admin/interview/notes" });
+  });
+
+  it("does not auto-fill the slug when editing an existing note's title", () => {
+    render(<NoteForm note={existingNote} sections={sections} tags={tags} />);
+    const slug = screen.getByLabelText("noteForm.slug") as HTMLInputElement;
+    expect(slug.value).toBe("my-note");
+    // In edit mode the slug is left alone as the title changes.
+    fireEvent.change(screen.getByLabelText("noteForm.title"), { target: { value: "Renamed" } });
+    expect(slug.value).toBe("my-note");
+  });
+
+  it("renders with an empty sectionId when there are no sections", () => {
+    render(<NoteForm sections={[]} tags={tags} />);
+    expect(screen.getByLabelText("noteForm.section")).toBeTruthy();
+  });
+
   it("hides the preview link for a draft note", () => {
     render(
       <NoteForm note={{ ...existingNote, status: "draft" }} sections={sections} tags={tags} />,
