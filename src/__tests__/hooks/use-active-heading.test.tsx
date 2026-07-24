@@ -97,6 +97,14 @@ describe("useActiveHeading", () => {
     expect(observed).toHaveLength(0);
   });
 
+  it("should stay idle when none of the ids resolve to an element", () => {
+    // The entry list can outlive the article DOM — bail rather than observing
+    // nothing and reporting a stale heading.
+    const { result } = renderHook(() => useActiveHeading(["ghost", "phantom"]));
+    expect(result.current).toBeNull();
+    expect(observed).toHaveLength(0);
+  });
+
   it("should ignore ids with no matching element in the document", () => {
     seedHeadings([{ id: "a", top: 40 }]);
     renderHook(() => useActiveHeading(["a", "ghost"]));
