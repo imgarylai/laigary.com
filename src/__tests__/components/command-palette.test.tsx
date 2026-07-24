@@ -72,6 +72,32 @@ describe("CommandPalette", () => {
     expect(await screen.findByText("Two Sum")).toBeDefined();
   });
 
+  it("runs the row action and closes the dialog on select", async () => {
+    const onSelect = vi.fn();
+    const onOpenChange = vi.fn();
+    const row: PaletteRow = {
+      kind: "content",
+      label: "cat two-sum",
+      sub: "Two Sum",
+      haystack: "two sum",
+      onSelect,
+    };
+    const searchContent = vi.fn(async () => [row]);
+    render(
+      <CommandPalette
+        open
+        onOpenChange={onOpenChange}
+        pages={[]}
+        searchContent={searchContent}
+        placeholder="search"
+      />,
+    );
+    fireEvent.change(screen.getByPlaceholderText("search"), { target: { value: "two" } });
+    fireEvent.click(await screen.findByText("Two Sum"));
+    expect(onSelect).toHaveBeenCalled();
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
   it("stacks the title over the path, and falls back to the path when a content row has no title", async () => {
     // A page row carrying a descriptor (its second, dimmed line) plus two
     // content rows — one with a title, one without — exercise every branch of
