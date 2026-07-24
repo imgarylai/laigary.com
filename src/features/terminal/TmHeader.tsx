@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { ListIcon, MagnifyingGlassIcon, TranslateIcon, XIcon } from "@phosphor-icons/react";
 import { TmButton } from "./Button";
 import { Kbd } from "./Kbd";
-import { ThemeMenu } from "@/components/ThemeMenu";
+import { TmThemeMenu } from "./ThemeMenu";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/i18n/I18nProvider";
 import { breadcrumbForPath } from "@/lib/fsmap";
@@ -93,7 +93,7 @@ export function TmHeader({
         <TmButton type="button" size="sm" onClick={toggleLocale} title={t("common.language")}>
           <TranslateIcon size={ICON} /> {localeLabel}
         </TmButton>
-        <ThemeMenu variant="outline" size="sm" className="tm-btn" />
+        <TmThemeMenu size="sm" />
       </nav>
 
       {/* Mobile controls */}
@@ -101,7 +101,7 @@ export function TmHeader({
         <TmButton type="button" size="icon" onClick={onOpenPalette} title={t("common.search")}>
           <MagnifyingGlassIcon size={ICON} />
         </TmButton>
-        <ThemeMenu variant="outline" size="icon" className="tm-btn" />
+        <TmThemeMenu size="icon" />
         <TmButton
           type="button"
           size="icon"

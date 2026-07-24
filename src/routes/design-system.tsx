@@ -10,9 +10,7 @@ import {
   TranslateIcon,
   XIcon,
 } from "@phosphor-icons/react";
-import { Button } from "@/components/ui/button";
-import { Kbd } from "@/components/ui/kbd";
-import { AsciiRule, PromptLine } from "@/features/terminal";
+import { AsciiRule, Kbd, PromptLine, TmButton } from "@/features/terminal";
 
 // Living design-system reference. Standalone (not under the blog shell, not in
 // any nav) and directly visitable at /design-system. noindex keeps it unlisted.
@@ -149,16 +147,14 @@ function ThemeToggle() {
   const mode = mounted ? ((theme ?? "system") as (typeof THEME_ORDER)[number]) : "system";
   const Icon = THEME_ICON[mode] ?? MonitorIcon;
   return (
-    <Button
+    <TmButton
       type="button"
-      variant="outline"
       size="icon"
-      className="tm-btn"
       title={`theme: ${mode}`}
       onClick={() => setTheme(THEME_ORDER[(THEME_ORDER.indexOf(mode) + 1) % THEME_ORDER.length])}
     >
       <Icon size={15} />
-    </Button>
+    </TmButton>
   );
 }
 
@@ -290,25 +286,25 @@ function DesignSystem() {
           <p className="mt-[18px] mb-2 text-[11px] text-tm-muted">buttons & icon buttons</p>
           <Card>
             <div className="flex flex-wrap items-center gap-2">
-              <Button variant="outline" size="icon" className="tm-btn">
+              <TmButton size="icon">
                 <MagnifyingGlassIcon size={15} />
-              </Button>
-              <Button variant="outline" size="icon" className="tm-btn">
+              </TmButton>
+              <TmButton size="icon">
                 <SunIcon size={15} />
-              </Button>
-              <Button variant="outline" size="icon" className="tm-btn">
+              </TmButton>
+              <TmButton size="icon">
                 <ListIcon size={15} />
-              </Button>
-              <Button variant="outline" size="icon" className="tm-btn">
+              </TmButton>
+              <TmButton size="icon">
                 <XIcon size={15} />
-              </Button>
-              <Button variant="outline" size="sm" className="tm-btn">
+              </TmButton>
+              <TmButton size="sm">
                 <TranslateIcon size={15} /> en
-              </Button>
+              </TmButton>
               <span className="h-4 w-px bg-tm-border" />
-              <Button variant="outline" size="sm" className="tm-btn">
+              <TmButton size="sm">
                 <MagnifyingGlassIcon size={15} /> <Kbd className="text-tm-dim">⌘K</Kbd>
-              </Button>
+              </TmButton>
             </div>
           </Card>
 

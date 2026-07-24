@@ -1,10 +1,9 @@
 import { Button as ButtonPrimitive } from "@base-ui/react/button";
 import { cn } from "@/lib/utils";
 
-// Terminal-native button. Replaces the shadcn <Button variant="outline"> +
-// `.tm-btn` override that the frontend used to borrow — a flat, square,
-// bordered control in the `tm-*` palette. Built directly on the Base UI button
-// primitive so the frontend no longer reaches into `@/components/ui`.
+// Terminal-native button: a flat, square, bordered control in the `tm-*`
+// palette, built directly on the Base UI button primitive. The frontend's only
+// button — it owns its look outright instead of skinning a shadcn <Button>.
 export function TmButton({
   size = "sm",
   className,
