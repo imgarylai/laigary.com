@@ -31,6 +31,7 @@ function EditPostPage() {
           coverImageUrl: post.coverImageUrl ?? "",
           tagIds: post.tagIds,
           status: post.status,
+          pinned: post.pinned,
         }}
       />
     </div>

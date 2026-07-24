@@ -180,6 +180,49 @@ describe("getPublishedPosts", () => {
   });
 });
 
+describe("pinned posts", () => {
+  it("defaults pinned to false and round-trips a pinned create", async () => {
+    const { createPost, getPublishedPosts } = await import("@/db/queries");
+    await createPost({ title: "Plain", slug: "plain", contentMd: "x", status: "published" });
+    await createPost({
+      title: "Pin",
+      slug: "pin",
+      contentMd: "x",
+      status: "published",
+      pinned: true,
+    });
+    const { posts } = await getPublishedPosts();
+    expect(posts.find((p) => p.slug === "plain")?.pinned).toBe(false);
+    expect(posts.find((p) => p.slug === "pin")?.pinned).toBe(true);
+  });
+
+  it("toggles pinned on update", async () => {
+    const { createPost, updatePost, getAdminPostById } = await import("@/db/queries");
+    const { id } = await createPost({ title: "P", slug: "p", contentMd: "x", pinned: true });
+    await updatePost(id, { pinned: false });
+    expect((await getAdminPostById(id))?.pinned).toBe(false);
+    await updatePost(id, { pinned: true });
+    expect((await getAdminPostById(id))?.pinned).toBe(true);
+  });
+
+  it("leaves pinned unchanged when the update omits it", async () => {
+    const { createPost, updatePost, getAdminPostById } = await import("@/db/queries");
+    const { id } = await createPost({ title: "P", slug: "p", contentMd: "x", pinned: true });
+    // An edit that doesn't touch the pin control must preserve the flag.
+    await updatePost(id, { title: "Renamed" });
+    expect((await getAdminPostById(id))?.pinned).toBe(true);
+  });
+
+  it("surfaces pinned in the admin list", async () => {
+    const { createPost, getAllAdminPosts } = await import("@/db/queries");
+    await createPost({ title: "Pin", slug: "pin", contentMd: "x", pinned: true });
+    await createPost({ title: "Plain", slug: "plain", contentMd: "x" });
+    const rows = await getAllAdminPosts();
+    expect(rows.find((p) => p.slug === "pin")?.pinned).toBe(true);
+    expect(rows.find((p) => p.slug === "plain")?.pinned).toBe(false);
+  });
+});
+
 describe("getAdjacentPosts", () => {
   // createPost stamps publishedAt from Date.now(); spy it to give each seed a
   // distinct publish second so chronology is deterministic.

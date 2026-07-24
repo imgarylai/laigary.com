@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { useI18n } from "@/i18n/I18nProvider";
 import { useSaveShortcut } from "@/hooks/use-save-shortcut";
 import { slugify } from "@/lib/slug";
@@ -30,6 +31,7 @@ const noteFormSchema = z.object({
   sectionId: z.string().min(1, "Section is required"),
   contentMd: z.string(),
   status: z.enum(["draft", "published"]),
+  pinned: z.boolean(),
   tagIds: z.array(z.string()),
 });
 type NoteFormValues = z.infer<typeof noteFormSchema>;
@@ -41,6 +43,7 @@ type NoteInit = {
   title: string;
   contentMd: string;
   status: "draft" | "published";
+  pinned: boolean;
   tagIds: string[];
 };
 
@@ -68,6 +71,7 @@ export function NoteForm({
       sectionId: sections[0]?.id ?? "",
       contentMd: "",
       status: "draft",
+      pinned: false,
       tagIds: [],
     },
   });
@@ -89,6 +93,7 @@ export function NoteForm({
           title: values.title,
           contentMd: values.contentMd,
           status: values.status,
+          pinned: values.pinned,
           tagIds: values.tagIds,
         },
       });
@@ -199,6 +204,23 @@ export function NoteForm({
           )}
         />
       </div>
+
+      <Controller
+        control={form.control}
+        name="pinned"
+        render={({ field }) => (
+          <Field>
+            <div className="flex items-center gap-3">
+              <Switch
+                id="note-pinned"
+                checked={field.value}
+                onCheckedChange={(checked) => field.onChange(checked)}
+              />
+              <FieldLabel htmlFor="note-pinned">{t("noteForm.pinned")}</FieldLabel>
+            </div>
+          </Field>
+        )}
+      />
 
       <Controller
         control={form.control}

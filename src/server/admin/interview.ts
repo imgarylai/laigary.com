@@ -39,6 +39,7 @@ export const noteCreateSchema = z.object({
   title: z.string().min(1).max(255),
   contentMd: z.string().optional(),
   status: z.enum(["draft", "published"]).optional(),
+  pinned: z.boolean().optional(),
   tagIds: z.array(z.string()).optional(),
 });
 export type NoteCreateInput = z.infer<typeof noteCreateSchema>;
@@ -50,6 +51,7 @@ export const noteUpdateSchema = z.object({
   title: z.string().min(1).max(255).optional(),
   contentMd: z.string().optional(),
   status: z.enum(["draft", "published"]).optional(),
+  pinned: z.boolean().optional(),
   tagIds: z.array(z.string()).optional(),
 });
 export type NoteUpdateInput = z.infer<typeof noteUpdateSchema>;

@@ -2,6 +2,7 @@ import { Controller, type Control } from "react-hook-form";
 import { z } from "zod";
 import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -29,6 +30,7 @@ export const postFormSchema = z.object({
   coverImageUrl: z.string(),
   tagIds: z.array(z.string()),
   status: z.enum(["draft", "published"]),
+  pinned: z.boolean(),
 });
 export type PostFormValues = z.infer<typeof postFormSchema>;
 
@@ -117,6 +119,28 @@ export function StatusField({ control }: { control: Ctrl }) {
               <SelectItem value="published">{t("postForm.published")}</SelectItem>
             </SelectContent>
           </Select>
+        </Field>
+      )}
+    />
+  );
+}
+
+export function PinnedField({ control }: { control: Ctrl }) {
+  const { t } = useI18n();
+  return (
+    <Controller
+      control={control}
+      name="pinned"
+      render={({ field }) => (
+        <Field>
+          <div className="flex items-center gap-3">
+            <Switch
+              id="post-pinned"
+              checked={field.value}
+              onCheckedChange={(checked) => field.onChange(checked)}
+            />
+            <FieldLabel htmlFor="post-pinned">{t("postForm.pinned")}</FieldLabel>
+          </div>
         </Field>
       )}
     />
