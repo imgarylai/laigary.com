@@ -47,22 +47,6 @@
   color: var(--tm-bg);
 }
 
-/* Terminal skin for the shared shadcn <Button> — used only by <ThemeMenu>,
-   which the admin header shares. The frontend's own buttons are <TmButton>
-   (Button.tsx) and no longer need this. Unlayered so it beats the layered
-   Tailwind utilities shadcn's Button applies. */
-.tm-btn {
-  background: transparent;
-  border: 1px solid var(--tm-border);
-  border-radius: 0;
-  color: var(--tm-muted);
-  box-shadow: none;
-}
-.tm-btn:hover {
-  background: var(--tm-subtle);
-  color: var(--tm-fg);
-}
-
 /* Reading-progress bar (post/note detail) */
 .tm-progress-track {
   position: fixed;
