@@ -103,17 +103,19 @@ export default function TiptapEditorImpl({
       <Toolbar editor={editor} onOpenLink={() => setLinkOpen(true)} />
       <LinkDialog editor={editor} open={linkOpen} onOpenChange={setLinkOpen} />
 
+      {/* Both panes are a fixed height and scroll internally: a long document no
+          longer stretches the page, so the toolbar above stays within reach. */}
       <div className={showPreview ? "grid grid-cols-2 gap-4" : ""}>
-        <div className="rounded-md border">
+        <div className="flex h-[70vh] min-h-96 flex-col rounded-md border">
           <EditorContent
             editor={editor}
-            className="prose dark:prose-invert max-w-none min-h-[500px] p-4 text-sm [&_.ProseMirror]:min-h-[468px] [&_.ProseMirror]:outline-none"
+            className="prose dark:prose-invert max-w-none min-h-0 flex-1 overflow-y-auto p-4 text-sm [&_.ProseMirror]:min-h-full [&_.ProseMirror]:outline-none"
           />
           <CharacterCount editor={editor} />
         </div>
 
         {showPreview && (
-          <div className="min-h-[500px] overflow-auto rounded-md border p-4">
+          <div className="h-[70vh] min-h-96 overflow-auto rounded-md border p-4">
             {previewHtml ? (
               <div
                 className="prose dark:prose-invert max-w-none text-sm"
