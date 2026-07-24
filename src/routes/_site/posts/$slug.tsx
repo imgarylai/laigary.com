@@ -2,7 +2,7 @@ import { createFileRoute, notFound, Link } from "@tanstack/react-router";
 import { postDataFn } from "@/server/public";
 import { SITE_ORIGIN, blogPostingLd, breadcrumbLd, serializeJsonLd } from "@/lib/json-ld";
 import { canonicalLink, ogMeta } from "@/lib/og-meta";
-import { AsciiRule, Prose, PromptLine, ReadingProgress, TmPage } from "@/features/terminal";
+import { AsciiRule, Prose, PromptLine, ReadingProgress, TmPage, Toc } from "@/features/terminal";
 import { Comments } from "@/components/Comments";
 import { useI18n } from "@/i18n/I18nProvider";
 import { FS_BLOG } from "@/lib/fsmap";
@@ -66,6 +66,7 @@ function PostPage() {
   return (
     <>
       <ReadingProgress />
+      <Toc entries={toc} />
       <TmPage narrow>
         <Link to="/posts" className="mb-4 inline-block text-sm text-tm-accent no-underline">
           $ cd ..
@@ -82,18 +83,6 @@ function PostPage() {
         <article lang="zh-Hant">
           <h1 className="mt-5 mb-2.5 text-2xl font-bold leading-snug">{post.title}</h1>
           <AsciiRule className="mb-5" />
-
-          {toc.length > 0 && (
-            <div className="mb-6 border border-dashed border-tm-border px-3.5 py-2.5 text-xs">
-              <div className="mb-1 text-tm-muted">{t("blog.post.toc")}</div>
-              {toc.map((h, i) => (
-                <div key={i} className="text-tm-fg">
-                  <span className="mr-2 text-tm-dim">{String(i + 1).padStart(2, "0")}</span>
-                  {h}
-                </div>
-              ))}
-            </div>
-          )}
 
           <Prose html={html} />
         </article>

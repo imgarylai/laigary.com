@@ -4,7 +4,8 @@ import { renderMarkdown } from "@/lib/markdown";
 describe("renderMarkdown", () => {
   it("renders a heading", async () => {
     const html = await renderMarkdown("# Hello");
-    expect(html).toContain("<h1>Hello</h1>");
+    // rehype-slug gives every heading an id so the TOC can anchor to it.
+    expect(html).toContain('<h1 id="hello">Hello</h1>');
   });
 
   it("renders a paragraph", async () => {

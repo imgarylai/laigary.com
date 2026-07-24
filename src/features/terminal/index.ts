@@ -14,6 +14,7 @@ export { CommandPalette, type PaletteRow } from "./CommandPalette";
 export { TmPager, pageWindow } from "./Pager";
 export { AsciiRule, PromptLine, ReadingProgress } from "./ui";
 export { Prose } from "./Prose";
+export { Toc } from "./Toc";
 export { TmButton } from "./Button";
 export { Kbd } from "./Kbd";
 export { TmThemeMenu } from "./ThemeMenu";

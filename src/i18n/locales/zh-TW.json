@@ -353,6 +353,7 @@
     },
     "post": {
       "toc": "// 目錄",
+      "tocToggle": "開關目錄",
       "tagsLabel": "--標籤",
       "back": "  — 回到所有文章",
       "older": "« 較舊",

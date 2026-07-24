@@ -6,6 +6,7 @@ import remarkRehype, { type Options as RemarkRehypeOptions } from "remark-rehype
 import rehypeStringify from "rehype-stringify";
 import rehypeHighlight from "rehype-highlight";
 import rehypeRaw from "rehype-raw";
+import rehypeSlug from "rehype-slug";
 import temml from "temml";
 import type { Element, Text } from "hast";
 
@@ -48,6 +49,11 @@ const processor = unified()
   .use(remarkMath)
   .use(remarkRehype, remarkRehypeOptions)
   .use(rehypeRaw)
+  // Heading ids for TOC anchors. After rehypeRaw so headings written as raw
+  // HTML get one too; the ids it generates are the single source of truth —
+  // `lib/toc` reads them back out of this HTML rather than re-deriving slugs,
+  // which would drift on headings containing inline code or emphasis.
+  .use(rehypeSlug)
   // detect: fences without a language get auto-detected within `subset` (the
   // languages this blog actually uses), so untagged code still gets colors.
   // Content that must stay uncolored (example output, ASCII diagrams) opts out

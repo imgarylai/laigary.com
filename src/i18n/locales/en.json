@@ -353,6 +353,7 @@
     },
     "post": {
       "toc": "// table of contents",
+      "tocToggle": "Toggle table of contents",
       "tagsLabel": "--tags",
       "back": "  — back to all posts",
       "older": "« older",

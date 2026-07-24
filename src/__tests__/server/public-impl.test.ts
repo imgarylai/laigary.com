@@ -78,7 +78,9 @@ describe("postDataImpl", () => {
     const data = await postDataImpl({ slug: "hello" });
     expect(data?.post.title).toBe("Hello");
     expect(data?.html).toContain("<strong>bold</strong>");
-    expect(data?.toc).toEqual(["Section A"]);
+    // The toc carries the heading id so the entry can anchor to it.
+    expect(data?.toc).toEqual([{ depth: 2, text: "Section A", id: "section-a" }]);
+    expect(data?.html).toContain('id="section-a"');
     expect(data?.pageTitle).toBe("Hello | Blog");
     // Lone post: both chronological neighbors are open.
     expect(data?.adjacent).toEqual({ prev: null, next: null });
