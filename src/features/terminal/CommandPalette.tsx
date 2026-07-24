@@ -103,21 +103,31 @@ export function CommandPalette({
     status = t("blog.search.noMatches");
   }
 
-  const renderItem = (row: PaletteRow, i: number) => (
-    <CommandItem
-      key={`${row.kind}-${i}-${row.label}`}
-      value={`${row.kind}-${i}-${row.label} ${row.haystack}`}
-      onSelect={() => {
-        row.onSelect();
-        onOpenChange(false);
-      }}
-    >
-      <span className={row.kind === "content" ? "shrink-0 text-tm-muted" : "shrink-0 text-tm-fg"}>
-        {row.label}
-      </span>
-      {row.sub && <span className="truncate text-tm-fg">{row.sub}</span>}
-    </CommandItem>
-  );
+  // Rows stack vertically so the primary line gets the full row width instead of
+  // sharing it side-by-side (on narrow screens the title used to get squeezed
+  // out). Content rows lead with the human title and tuck the file path
+  // underneath; page rows lead with the command. Either way the second line is
+  // the smaller, dimmed one.
+  const renderItem = (row: PaletteRow, i: number) => {
+    const isContent = row.kind === "content";
+    const primary = (isContent ? row.sub : row.label) ?? row.label;
+    const secondary = isContent ? row.label : row.sub;
+    return (
+      <CommandItem
+        key={`${row.kind}-${i}-${row.label}`}
+        value={`${row.kind}-${i}-${row.label} ${row.haystack}`}
+        onSelect={() => {
+          row.onSelect();
+          onOpenChange(false);
+        }}
+      >
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <span className="truncate text-tm-fg">{primary}</span>
+          {secondary && <span className="truncate text-xs text-tm-muted">{secondary}</span>}
+        </div>
+      </CommandItem>
+    );
+  };
 
   return (
     <CommandDialog
