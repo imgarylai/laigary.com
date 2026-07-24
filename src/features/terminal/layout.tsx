@@ -25,15 +25,13 @@ export function TmPage({ narrow = false, children }: { narrow?: boolean; childre
 // `·` separators.
 export function TmMeta({ children }: { children: ReactNode }) {
   return (
-    <div className="my-1 flex flex-wrap items-baseline gap-4 text-[calc(0.875rem*var(--tm-fs))] text-tm-muted">
-      {children}
-    </div>
+    <div className="my-1 flex flex-wrap items-baseline gap-4 text-sm text-tm-muted">{children}</div>
   );
 }
 
 // Empty-state line ("// no posts match.").
 export function TmEmpty({ children }: { children: ReactNode }) {
-  return <div className="py-6 text-[calc(0.875rem*var(--tm-fs))] text-tm-muted">{children}</div>;
+  return <div className="py-6 text-sm text-tm-muted">{children}</div>;
 }
 
 // Directory-listing row (home + interview home). A three-column link; caller
@@ -65,13 +63,9 @@ export function TmDirCells({
 }) {
   return (
     <>
-      <span className="text-[calc(0.9688rem*var(--tm-fs))] text-tm-accent">{label}</span>
-      <span className="text-[calc(0.9375rem*var(--tm-fs))] text-tm-fg max-sm:col-span-full">
-        {desc}
-      </span>
-      <span className="whitespace-nowrap text-[calc(0.8125rem*var(--tm-fs))] text-tm-muted">
-        {meta}
-      </span>
+      <span className="text-base text-tm-accent">{label}</span>
+      <span className="text-sm text-tm-fg max-sm:col-span-full">{desc}</span>
+      <span className="whitespace-nowrap text-xs text-tm-muted">{meta}</span>
     </>
   );
 }
@@ -82,7 +76,7 @@ const TmRowLinkBase = forwardRef<HTMLAnchorElement, AnchorHTMLAttributes<HTMLAnc
     <a
       ref={ref}
       className={cn(
-        "grid grid-cols-[60px_1fr_48px] items-baseline gap-3 border-b border-dashed border-tm-border px-2 py-[7px] text-[calc(0.9062rem*var(--tm-fs))] text-tm-fg no-underline hover:bg-tm-subtle max-sm:grid-cols-[52px_1fr] max-sm:gap-x-2.5 max-sm:gap-y-0.5",
+        "grid grid-cols-[60px_1fr_48px] items-baseline gap-3 border-b border-dashed border-tm-border px-2 py-2 text-sm text-tm-fg no-underline hover:bg-tm-subtle max-sm:grid-cols-[52px_1fr] max-sm:gap-x-2.5 max-sm:gap-y-0.5",
         className,
       )}
       {...props}
@@ -107,9 +101,7 @@ export function TmRowCells({
     <>
       <span className="text-tm-muted">{date}</span>
       <span>{title}</span>
-      <span className="text-right text-[calc(0.8125rem*var(--tm-fs))] text-tm-dim max-sm:hidden">
-        {read}
-      </span>
+      <span className="text-right text-xs text-tm-dim max-sm:hidden">{read}</span>
     </>
   );
 }

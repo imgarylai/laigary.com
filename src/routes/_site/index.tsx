@@ -70,13 +70,13 @@ function Home() {
 
   return (
     <TmPage>
-      <pre className="m-0 text-[calc(0.8438rem*var(--tm-fs))] leading-[1.5] text-tm-muted">
+      <pre className="m-0 text-xs leading-[1.5] text-tm-muted">
         {`$ whoami\n${whoami || "gary lai"}\n$ cat ./README.md`}
       </pre>
 
-      {intro && <p className="mt-3.5 mb-3 text-[calc(1rem*var(--tm-fs))] leading-[1.8]">{intro}</p>}
+      {intro && <p className="mt-3.5 mb-3 text-base leading-[1.8]">{intro}</p>}
 
-      <AsciiRule className="mt-[18px] mb-1" />
+      <AsciiRule className="mt-4 mb-1" />
       <TmMeta>
         <span>
           {postCount} {t("blog.home.postsUnit")}
@@ -103,7 +103,7 @@ function Home() {
         ))}
       </div>
 
-      <p className="text-[calc(0.875rem*var(--tm-fs))] leading-[1.8] text-tm-muted">
+      <p className="text-sm leading-[1.8] text-tm-muted">
         <Link to="/posts" className="text-tm-accent no-underline">
           $ cd ./posts
         </Link>
