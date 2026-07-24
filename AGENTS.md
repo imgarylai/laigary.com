@@ -17,6 +17,12 @@ pnpm exec tsc --noEmit  # NOT in CI — run it yourself; some legacy errors exis
 
 Local D1 schema: `npx wrangler d1 migrations apply laigary-db --local`.
 
+Schema changes: edit `src/db/schema/*` then `pnpm exec drizzle-kit generate
+--name <change>` — never hand-write schema migrations (migrations before the
+`_baseline` file predate the drizzle-kit snapshot in `migrations/meta/` and
+are hand-written history; the baseline itself is a deliberate no-op). Data
+backfills go inside the generated file or via `drizzle-kit generate --custom`.
+
 ## Workflow
 
 - Branch from `main` (`feat/…`, `fix/…`, `chore/…`); never commit to `main`.
