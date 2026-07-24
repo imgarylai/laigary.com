@@ -32,6 +32,14 @@ describe("TmThemeMenu", () => {
     expect(screen.getByRole("button", { name: "common.toggleTheme" })).toBeTruthy();
   });
 
+  it("reflects an explicit stored theme in the trigger", () => {
+    // Exercises the mode branch where a concrete light/dark theme is used
+    // instead of falling back to "system".
+    currentTheme = "dark";
+    render(<TmThemeMenu />);
+    expect(screen.getByRole("button", { name: "common.toggleTheme" }).title).toContain("dark");
+  });
+
   it("opens the menu and offers light / dark / system", async () => {
     render(<TmThemeMenu />);
     fireEvent.click(screen.getByRole("button", { name: "common.toggleTheme" }));
