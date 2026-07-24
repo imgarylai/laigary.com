@@ -27,8 +27,27 @@ describe("extractToc", () => {
     expect(extractToc(html)[0].text).toBe("Array & Two Pointers <3");
   });
 
+  it("should decode numeric entities when the heading text was escaped", () => {
+    const html = '<h2 id="a">&#26085;&#x672c;</h2>';
+    expect(extractToc(html)[0].text).toBe("日本");
+  });
+
+  it("should leave an unknown entity untouched rather than dropping it", () => {
+    const html = '<h2 id="a">100&hellip;200</h2>';
+    expect(extractToc(html)[0].text).toBe("100&hellip;200");
+  });
+
   it("should skip headings that have no id since they cannot be anchored", () => {
     const html = '<h2>No id</h2><h2 id="ok">Has id</h2>';
+    expect(extractToc(html).map((e) => e.id)).toEqual(["ok"]);
+  });
+
+  it("should read single-quoted ids since the attribute quoting is not guaranteed", () => {
+    expect(extractToc("<h2 id='ok'>Has id</h2>").map((e) => e.id)).toEqual(["ok"]);
+  });
+
+  it("should skip a heading whose text is empty since there is nothing to label it", () => {
+    const html = '<h2 id="img"><img src="x.png"></h2><h2 id="ok">Real</h2>';
     expect(extractToc(html).map((e) => e.id)).toEqual(["ok"]);
   });
 
