@@ -104,7 +104,7 @@ function Section({ title, note, children }: { title: string; note?: string; chil
         <span className="mr-2.5 text-tm-accent">##</span>
         {title}
       </h2>
-      {note && <p className="mb-4 max-w-[640px] text-sm text-tm-muted">{note}</p>}
+      {note && <p className="mb-4 max-w-2xl text-sm text-tm-muted">{note}</p>}
       {children}
     </section>
   );
@@ -174,7 +174,7 @@ function DesignSystem() {
         <ThemeToggle />
       </header>
 
-      <div className="mx-auto max-w-[860px] px-8 pt-8 pb-24 max-sm:px-4">
+      <div className="mx-auto max-w-4xl px-8 pt-8 pb-24 max-sm:px-4">
         <PromptLine>$ cat ./design-language.md</PromptLine>
         <h1 className="mt-3.5 mb-1 text-2xl font-bold tracking-[-0.01em]">Design Language</h1>
         <p className="mb-1.5 text-sm text-tm-muted">
@@ -348,7 +348,7 @@ function DesignSystem() {
           </div>
 
           <p className="mt-5 mb-2 text-xs text-tm-muted">command palette (⌘K)</p>
-          <div className="max-w-[520px] border border-tm-border bg-tm-bg">
+          <div className="max-w-lg border border-tm-border bg-tm-bg">
             <div className="flex items-center gap-2 border-b border-tm-border px-3.5 py-2.5">
               <MagnifyingGlassIcon size={14} className="text-tm-accent" />
               <span className="text-sm text-tm-muted">search posts, tags, pages…</span>

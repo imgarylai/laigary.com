@@ -113,7 +113,7 @@ export function TmHeader({
       </div>
 
       {menuOpen && (
-        <div className="absolute inset-x-0 top-14 z-[9] flex flex-col border-b border-tm-border bg-tm-bg px-3.5 py-2.5">
+        <div className="absolute inset-x-0 top-14 z-10 flex flex-col border-b border-tm-border bg-tm-bg px-3.5 py-2.5">
           {navItems.map((item) => (
             <Link key={item.label} to={item.to} params={item.params} className={drawerLink}>
               $ {item.cmd}
