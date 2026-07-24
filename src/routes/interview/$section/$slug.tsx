@@ -2,7 +2,7 @@ import { createFileRoute, notFound, Link } from "@tanstack/react-router";
 import { noteDataFn } from "@/server/public";
 import { SITE_ORIGIN, breadcrumbLd, serializeJsonLd, techArticleLd } from "@/lib/json-ld";
 import { canonicalLink, ogMeta } from "@/lib/og-meta";
-import { AsciiRule, Prose, PromptLine, ReadingProgress, TmPage } from "@/features/terminal";
+import { AsciiRule, Prose, PromptLine, ReadingProgress, TmPage, Toc } from "@/features/terminal";
 import { useI18n } from "@/i18n/I18nProvider";
 import { FS_INTERVIEW } from "@/lib/fsmap";
 
@@ -61,12 +61,13 @@ export const Route = createFileRoute("/interview/$section/$slug")({
 });
 
 function NotePage() {
-  const { note, html } = Route.useLoaderData();
+  const { note, html, toc } = Route.useLoaderData();
   const { t } = useI18n();
 
   return (
     <>
       <ReadingProgress />
+      <Toc entries={toc} />
       <TmPage narrow>
         <PromptLine className="mb-1.5">
           {FS_INTERVIEW.note.prompt({ sect: note.section, slug: note.slug })}

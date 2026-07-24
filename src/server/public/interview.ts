@@ -106,9 +106,11 @@ export const sectionDataFn = createServerFn({ method: "GET" })
 export async function noteDataImpl(data: { section: string; slug: string }) {
   const { getInterviewNote, getInterviewSectionBySlug } = await import("@/db/queries");
   const { unixToIso, computeReadingTime } = await import("@/lib/date");
+  const { extractToc } = await import("@/lib/toc");
   const note = await getInterviewNote(data.section, data.slug);
   if (!note) return null;
   const section = await getInterviewSectionBySlug(data.section);
+  const html = await renderMd(note.contentMd);
   return {
     note: {
       slug: note.slug,
@@ -122,7 +124,8 @@ export async function noteDataImpl(data: { section: string; slug: string }) {
       // /tags/$slug page; the JSON-LD head maps these back to bare names.
       tags: note.tags,
     },
-    html: await renderMd(note.contentMd),
+    html,
+    toc: extractToc(html),
     ...(await pageChrome(note.title)),
   };
 }

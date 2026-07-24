@@ -86,6 +86,11 @@
   margin: 28px 0 10px;
   line-height: 1.375;
 }
+/* Clear the sticky header (h-14) when an anchor lands on a heading — keep in
+   sync with HEADER_OFFSET in hooks/use-active-heading. */
+.tm-prose :is(h2, h3, h4) {
+  scroll-margin-top: 72px;
+}
 .tm-prose h2 {
   font-size: 1.125rem;
 }

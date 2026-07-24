@@ -69,7 +69,9 @@ export async function postDataImpl(data: { slug: string }) {
   return {
     post,
     html,
-    toc: extractToc(post.contentMd),
+    // From the rendered html, not the markdown — that is where the heading
+    // ids the TOC anchors to actually live. See lib/toc.
+    toc: extractToc(html),
     adjacent: await getAdjacentPosts(data.slug),
     giscus: giscusFromSettings(await getSiteSettings()),
     // Meta/OG description: the excerpt, or a plain-text cut of the body so no

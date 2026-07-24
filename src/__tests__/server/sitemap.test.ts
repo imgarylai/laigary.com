@@ -72,7 +72,7 @@ describe("buildFeedXml", () => {
   it("should embed the full rendered body as content:encoded when building items", async () => {
     const xml = await buildFeedXml();
     expect(xml).toContain("<content:encoded>");
-    expect(xml).toContain("<h1>Heading</h1>");
+    expect(xml).toContain('<h1 id="heading">Heading</h1>');
   });
 
   it("should split CDATA when the rendered content contains ]]>", async () => {
