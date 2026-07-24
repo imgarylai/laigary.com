@@ -128,7 +128,6 @@ export function PostForm({
           <Button
             type="button"
             variant="outline"
-            className="ml-auto"
             render={
               <Link
                 to="/posts/$slug"

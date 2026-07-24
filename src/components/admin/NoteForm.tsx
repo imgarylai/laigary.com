@@ -268,7 +268,6 @@ export function NoteForm({
           <Button
             type="button"
             variant="outline"
-            className="ml-auto"
             render={
               <Link
                 to="/interview/$section/$slug"
