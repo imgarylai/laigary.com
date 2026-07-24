@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   type ColumnDef,
   type RowData,
@@ -52,6 +52,8 @@ export function DataTable<T>({
   emptyMessage,
   globalFilter: controlledFilter,
   onGlobalFilterChange,
+  pageIndex: controlledPageIndex,
+  onPageChange,
 }: {
   columns: ColumnDef<T, unknown>[];
   data: T[];
@@ -63,6 +65,11 @@ export function DataTable<T>({
       the filter outside the table (e.g. in the route's search params). */
   globalFilter?: string;
   onGlobalFilterChange?: (value: string) => void;
+  /** Controlled 0-based page index — pass together with onPageChange to hold
+      the current page outside the table (e.g. in the route's search params) so
+      a reload restores it. Omit both to let the table page internally. */
+  pageIndex?: number;
+  onPageChange?: (index: number) => void;
 }) {
   const { t } = useI18n();
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -70,24 +77,38 @@ export function DataTable<T>({
   const globalFilter = controlledFilter ?? internalFilter;
   const setGlobalFilter = onGlobalFilterChange ?? setInternalFilter;
 
+  const [internalPageIndex, setInternalPageIndex] = useState(0);
+  const pageIndex = controlledPageIndex ?? internalPageIndex;
+  const setPageIndex = onPageChange ?? setInternalPageIndex;
+
   const table = useReactTable({
     data,
     columns,
-    state: { sorting, globalFilter },
+    state: { sorting, globalFilter, pagination: { pageIndex, pageSize } },
     onSortingChange: setSorting,
     onGlobalFilterChange: (updater) => {
       const next = typeof updater === "function" ? updater(globalFilter) : updater;
       setGlobalFilter(typeof next === "string" ? next : "");
+    },
+    onPaginationChange: (updater) => {
+      const next = typeof updater === "function" ? updater({ pageIndex, pageSize }) : updater;
+      setPageIndex(next.pageIndex);
     },
     globalFilterFn: "includesString",
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    initialState: { pagination: { pageSize } },
   });
 
   const pageCount = table.getPageCount();
+
+  // Snap a stale/out-of-range page back into bounds — e.g. a hand-edited
+  // `?page=99` URL, or the list shrinking below the current page after a
+  // delete. (An empty list has 0 pages; leave it alone.)
+  useEffect(() => {
+    if (pageCount > 0 && pageIndex > pageCount - 1) setPageIndex(pageCount - 1);
+  }, [pageCount, pageIndex, setPageIndex]);
 
   return (
     <div className="space-y-4">
