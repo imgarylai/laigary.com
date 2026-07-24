@@ -19,6 +19,7 @@ export const postCreateSchema = z.object({
   excerpt: z.string().optional(),
   coverImageUrl: z.string().optional(),
   status: z.enum(["draft", "published"]).optional(),
+  pinned: z.boolean().optional(),
   tagIds: z.array(z.string()).optional(),
 });
 export type PostCreateInput = z.infer<typeof postCreateSchema>;
@@ -33,6 +34,7 @@ export const postUpdateSchema = z.object({
   excerpt: z.string().optional(),
   coverImageUrl: z.string().optional(),
   status: z.enum(["draft", "published"]).optional(),
+  pinned: z.boolean().optional(),
   tagIds: z.array(z.string()).optional(),
 });
 export type PostUpdateInput = z.infer<typeof postUpdateSchema>;

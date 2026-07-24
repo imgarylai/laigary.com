@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Link, getRouteApi } from "@tanstack/react-router";
-import { ArrowSquareOutIcon } from "@phosphor-icons/react";
+import { ArrowSquareOutIcon, PushPinIcon } from "@phosphor-icons/react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +21,7 @@ type Post = {
   slug: string;
   title: string;
   status: string;
+  pinned: boolean;
   updatedAt: number;
 };
 
@@ -55,13 +56,18 @@ export function PostsListClient({ posts }: { posts: Post[] }) {
         header: t("postList.title"),
         // Title → edit (the primary click target for a row).
         cell: ({ row }) => (
-          <Link
-            to="/admin/posts/$postId/edit"
-            params={{ postId: row.original.id }}
-            className="font-medium hover:underline"
-          >
-            {row.original.title}
-          </Link>
+          <span className="flex items-center gap-1.5">
+            {row.original.pinned && (
+              <PushPinIcon weight="fill" className="size-4 shrink-0 text-muted-foreground" />
+            )}
+            <Link
+              to="/admin/posts/$postId/edit"
+              params={{ postId: row.original.id }}
+              className="font-medium hover:underline"
+            >
+              {row.original.title}
+            </Link>
+          </span>
         ),
       },
       {

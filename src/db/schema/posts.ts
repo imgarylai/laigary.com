@@ -13,6 +13,7 @@ export const posts = sqliteTable(
     status: text("status", { enum: ["draft", "published"] })
       .notNull()
       .default("draft"),
+    pinned: integer("pinned").notNull().default(0),
     publishedAt: integer("published_at"),
     createdAt: integer("created_at")
       .notNull()

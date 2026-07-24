@@ -11,6 +11,7 @@ export type PublicPost = {
   coverImageUrl: string | null;
   date: string;
   readingTime: number;
+  pinned: boolean;
   tags: PostTag[];
 };
 
@@ -60,10 +61,14 @@ export async function getPublishedPosts(opts?: {
       excerpt: posts.excerpt,
       coverImageUrl: posts.coverImageUrl,
       contentMd: posts.contentMd,
+      pinned: posts.pinned,
       publishedAt: posts.publishedAt,
     })
     .from(posts)
     .where(where)
+    // Ordered newest-first (NOT pinned-first): this feed backs the home page's
+    // "latest post" probe and the tag pages too, which want true recency. The
+    // archive surfaces pinned posts in their own block, filtering client-side.
     .orderBy(desc(posts.publishedAt))
     .limit(limit)
     .offset(offset);
@@ -82,6 +87,7 @@ export async function getPublishedPosts(opts?: {
       coverImageUrl: r.coverImageUrl,
       date: r.publishedAt ? unixToIso(r.publishedAt) : unixToIso(0),
       readingTime: computeReadingTime(r.contentMd),
+      pinned: r.pinned === 1,
       tags: tagsByPost.get(r.id) ?? [],
     })),
     total,
@@ -175,6 +181,7 @@ type PostMutationInput = {
   excerpt?: string | null;
   coverImageUrl?: string | null;
   status?: "draft" | "published";
+  pinned?: boolean;
   tagIds?: string[];
 };
 
@@ -193,6 +200,7 @@ export async function createPost(input: PostMutationInput): Promise<{ id: string
       excerpt: input.excerpt ?? null,
       coverImageUrl: input.coverImageUrl || null,
       status,
+      pinned: input.pinned ? 1 : 0,
       publishedAt,
     });
 
@@ -233,6 +241,9 @@ export async function updatePost(
         coverImageUrl:
           input.coverImageUrl !== undefined ? input.coverImageUrl || null : existing.coverImageUrl,
         status: newStatus,
+        // Only overwrite the flag when the caller sends it (undefined = leave as
+        // is), so an edit that doesn't touch the pin control preserves it.
+        pinned: input.pinned === undefined ? existing.pinned : input.pinned ? 1 : 0,
         publishedAt,
         updatedAt: Math.floor(Date.now() / 1000),
       })
@@ -276,6 +287,7 @@ export async function getPostBySlug(slug: string): Promise<PublicPostDetail | nu
     date: post.publishedAt ? unixToIso(post.publishedAt) : unixToIso(0),
     updatedAt: unixToIso(post.updatedAt),
     readingTime: computeReadingTime(post.contentMd),
+    pinned: post.pinned === 1,
     tags: tagMap.get(post.id) ?? [],
   };
 }
@@ -285,6 +297,7 @@ export type AdminPost = {
   slug: string;
   title: string;
   status: string;
+  pinned: boolean;
   updatedAt: number;
 };
 
@@ -296,6 +309,7 @@ export type AdminPostDetail = {
   excerpt: string | null;
   coverImageUrl: string | null;
   status: "draft" | "published";
+  pinned: boolean;
   tagIds: string[];
 };
 
@@ -319,6 +333,7 @@ export async function getAdminPostById(id: string): Promise<AdminPostDetail | nu
     excerpt: post.excerpt,
     coverImageUrl: post.coverImageUrl,
     status: post.status as "draft" | "published",
+    pinned: post.pinned === 1,
     tagIds: tagRows.map((r) => r.tagId),
   };
 }
@@ -333,10 +348,12 @@ export async function getAllAdminPosts(): Promise<AdminPost[]> {
       slug: posts.slug,
       title: posts.title,
       status: posts.status,
+      pinned: posts.pinned,
       updatedAt: posts.updatedAt,
     })
     .from(posts)
-    .orderBy(desc(posts.updatedAt));
+    .orderBy(desc(posts.updatedAt))
+    .then((rows) => rows.map((r) => ({ ...r, pinned: r.pinned === 1 })));
 }
 
 export async function getAdminPosts(opts?: {
@@ -357,12 +374,13 @@ export async function getAdminPosts(opts?: {
 
   const [{ total }] = await db.select({ total: count() }).from(posts).where(where);
 
-  const items = await db
+  const rows = await db
     .select({
       id: posts.id,
       slug: posts.slug,
       title: posts.title,
       status: posts.status,
+      pinned: posts.pinned,
       updatedAt: posts.updatedAt,
     })
     .from(posts)
@@ -371,7 +389,7 @@ export async function getAdminPosts(opts?: {
     .limit(limit)
     .offset(offset);
 
-  return { items, total };
+  return { items: rows.map((r) => ({ ...r, pinned: r.pinned === 1 })), total };
 }
 
 // Tags carrying published content, with the combined count of published posts

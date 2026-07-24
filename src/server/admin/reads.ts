@@ -19,6 +19,7 @@ type NoteDetail = {
   title: string;
   contentMd: string;
   status: "draft" | "published";
+  pinned: boolean;
   tagIds: string[];
 } | null;
 
@@ -135,6 +136,7 @@ export async function editNoteDataImpl(data: {
       title: note.title,
       contentMd: note.contentMd,
       status: note.status as "draft" | "published",
+      pinned: note.pinned === 1,
       tagIds,
     },
     sections,

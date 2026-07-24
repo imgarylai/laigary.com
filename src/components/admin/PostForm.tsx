@@ -15,6 +15,7 @@ import {
   SlugField,
   ExcerptField,
   StatusField,
+  PinnedField,
   TagsField,
   ContentField,
   CoverImageField,
@@ -49,6 +50,7 @@ export function PostForm({
       coverImageUrl: "",
       tagIds: [],
       status: "draft",
+      pinned: false,
     },
   });
 
@@ -102,6 +104,8 @@ export function PostForm({
         <ExcerptField control={form.control} />
         <StatusField control={form.control} />
       </div>
+
+      <PinnedField control={form.control} />
 
       <TagsField control={form.control} availableTags={availableTags} />
 

@@ -63,6 +63,7 @@ export async function seedPost(
     excerpt: string;
     coverImageUrl: string;
     status: "draft" | "published";
+    pinned: boolean;
     tagIds: string[];
   }> = {},
 ) {

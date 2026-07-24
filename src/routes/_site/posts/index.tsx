@@ -40,7 +40,13 @@ function Archive() {
   const navigate = useNavigate();
   const { t } = useI18n();
 
-  const filtered = tag ? posts.filter((p) => p.tags.some((pt) => pt.slug === tag)) : posts;
+  // Pinned posts render in their own block above the years; keep them out of
+  // the chronological list unless a tag filter is active (then they compete on
+  // tags like any other post). Mirrors the interview section listing.
+  const pinnedPosts = posts.filter((p) => p.pinned);
+  const filtered = tag
+    ? posts.filter((p) => p.tags.some((pt) => pt.slug === tag))
+    : posts.filter((p) => !p.pinned);
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page ?? 1, totalPages);
   const start = (safePage - 1) * PAGE_SIZE;
@@ -77,6 +83,20 @@ function Archive() {
             {t("blog.archive.clear")}
           </Link>
         </div>
+      )}
+
+      {/* Pinned block (design: same `./{dir}/` accent header as the year
+          sections) — page 1 of the unfiltered list only, so pagination and
+          tag filtering stay untouched. */}
+      {!tag && safePage === 1 && pinnedPosts.length > 0 && (
+        <section>
+          <pre className="mt-7 mb-1.5 text-sm text-tm-accent">./pinned/</pre>
+          {pinnedPosts.map((p) => (
+            <TmRowLink key={p.slug} to="/posts/$slug" params={{ slug: p.slug }}>
+              <TmRowCells date="*" title={p.title} read={`${p.readingTime}m`} />
+            </TmRowLink>
+          ))}
+        </section>
       )}
 
       {years.map((y) => (

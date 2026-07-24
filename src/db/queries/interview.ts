@@ -250,6 +250,7 @@ export type AdminInterviewNote = {
   slug: string;
   title: string;
   status: string;
+  pinned: boolean;
   sectionId: string;
   sectionLabel: string;
   sectionSlug: string;
@@ -271,6 +272,7 @@ export async function getAdminInterviewNotes(opts?: {
       slug: interviewNotes.slug,
       title: interviewNotes.title,
       status: interviewNotes.status,
+      pinned: interviewNotes.pinned,
       sectionId: interviewNotes.sectionId,
       sectionLabel: interviewSections.label,
       sectionSlug: interviewSections.slug,
@@ -281,7 +283,7 @@ export async function getAdminInterviewNotes(opts?: {
     .limit(limit)
     .offset(offset);
 
-  return { items: rows, total };
+  return { items: rows.map((r) => ({ ...r, pinned: r.pinned === 1 })), total };
 }
 
 // Every note (all sections/statuses) for the admin table, newest first. The
@@ -289,12 +291,13 @@ export async function getAdminInterviewNotes(opts?: {
 // set — same pattern as posts.
 export async function getAllAdminInterviewNotes(): Promise<AdminInterviewNote[]> {
   const db = await getDb();
-  return db
+  const rows = await db
     .select({
       id: interviewNotes.id,
       slug: interviewNotes.slug,
       title: interviewNotes.title,
       status: interviewNotes.status,
+      pinned: interviewNotes.pinned,
       sectionId: interviewNotes.sectionId,
       sectionLabel: interviewSections.label,
       sectionSlug: interviewSections.slug,
@@ -302,6 +305,7 @@ export async function getAllAdminInterviewNotes(): Promise<AdminInterviewNote[]>
     .from(interviewNotes)
     .innerJoin(interviewSections, eq(interviewSections.id, interviewNotes.sectionId))
     .orderBy(desc(interviewNotes.updatedAt));
+  return rows.map((r) => ({ ...r, pinned: r.pinned === 1 }));
 }
 
 export class SectionConflictError extends Error {
