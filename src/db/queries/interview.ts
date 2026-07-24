@@ -11,6 +11,7 @@ export type InterviewNoteWithTags = {
   title: string;
   contentMd: string;
   status: string;
+  pinned: number;
   publishedAt: number | null;
   tags: PostTag[];
   createdAt: number;
@@ -24,6 +25,7 @@ type RawNote = {
   title: string;
   contentMd: string;
   status: string;
+  pinned: number;
   publishedAt: number | null;
   createdAt: number;
   updatedAt: number;
@@ -42,6 +44,7 @@ async function attachTags(db: Db, notes: RawNote[]): Promise<InterviewNoteWithTa
     title: n.title,
     contentMd: n.contentMd,
     status: n.status,
+    pinned: n.pinned,
     publishedAt: n.publishedAt,
     createdAt: n.createdAt,
     updatedAt: n.updatedAt,
@@ -176,7 +179,7 @@ export async function getInterviewNotesBySection(
     .select()
     .from(interviewNotes)
     .where(where)
-    .orderBy(desc(interviewNotes.createdAt))
+    .orderBy(desc(interviewNotes.pinned), desc(interviewNotes.createdAt))
     .limit(limit)
     .offset(offset);
 
@@ -390,6 +393,7 @@ type NoteMutationInput = {
   title: string;
   contentMd?: string;
   status?: "draft" | "published";
+  pinned?: boolean;
   tagIds?: string[];
 };
 
@@ -407,6 +411,7 @@ export async function createNote(input: NoteMutationInput): Promise<{ id: string
       title: input.title,
       contentMd: input.contentMd ?? "",
       status,
+      pinned: input.pinned ? 1 : 0,
       publishedAt,
     });
     if (input.tagIds && input.tagIds.length > 0) {
@@ -444,6 +449,7 @@ export async function updateNote(
         title: input.title ?? existing.title,
         contentMd: input.contentMd ?? existing.contentMd,
         status: newStatus,
+        pinned: input.pinned === undefined ? existing.pinned : input.pinned ? 1 : 0,
         publishedAt,
         updatedAt: Math.floor(Date.now() / 1000),
       })

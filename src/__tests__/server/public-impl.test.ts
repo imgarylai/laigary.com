@@ -217,6 +217,16 @@ describe("sectionDataImpl", () => {
     const { sectionDataImpl } = await import("@/server/public");
     expect(await sectionDataImpl({ slug: "nope" })).toBeNull();
   });
+
+  it("should expose pinned as a boolean on mapped notes", async () => {
+    const section = await seedSection({ slug: "coding", label: "Coding" });
+    await seedNote(section.id, { slug: "pin", pinned: true });
+    await seedNote(section.id, { slug: "norm" });
+    const { sectionDataImpl } = await import("@/server/public");
+    const data = await sectionDataImpl({ slug: "coding" });
+    const bySlug = Object.fromEntries(data!.notes.map((n) => [n.slug, n.pinned]));
+    expect(bySlug).toEqual({ pin: true, norm: false });
+  });
 });
 
 describe("noteDataImpl", () => {

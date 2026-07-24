@@ -39,6 +39,7 @@ export async function seedNote(
     title: string;
     contentMd: string;
     status: "draft" | "published";
+    pinned: boolean;
     tagIds: string[];
   }> = {},
 ) {
