@@ -186,6 +186,25 @@ describe("updateNote", () => {
     await expect(updateNote(id, { slug: "taken" })).rejects.toBeInstanceOf(NoteConflictError);
   });
 
+  it("should persist pinned across unrelated updates and clear it when set to false", async () => {
+    const { createNote, updateNote, getInterviewNoteById } = await import("@/db/queries");
+    const section = await seedSection();
+    const { id } = await createNote({
+      slug: "p",
+      sectionId: section.id,
+      title: "T",
+      status: "published",
+      pinned: true,
+    });
+    expect((await getInterviewNoteById(id))?.pinned).toBe(1);
+
+    await updateNote(id, { title: "T2" });
+    expect((await getInterviewNoteById(id))?.pinned).toBe(1);
+
+    await updateNote(id, { pinned: false });
+    expect((await getInterviewNoteById(id))?.pinned).toBe(0);
+  });
+
   it("flips publishedAt when transitioning draft → published", async () => {
     const { createNote, updateNote, getInterviewNoteById } = await import("@/db/queries");
     const section = await seedSection();
@@ -277,6 +296,32 @@ describe("getInterviewNotesBySection", () => {
   it("returns empty when section doesn't exist", async () => {
     const { getInterviewNotesBySection } = await import("@/db/queries");
     expect(await getInterviewNotesBySection("nope")).toEqual({ notes: [], total: 0 });
+  });
+
+  it("should list pinned notes before newer unpinned ones", async () => {
+    const { createNote, getInterviewNotesBySection } = await import("@/db/queries");
+    const section = await seedSection();
+    await createNote({
+      slug: "old-pinned",
+      sectionId: section.id,
+      title: "Old Pinned",
+      status: "published",
+      pinned: true,
+    });
+    await createNote({
+      slug: "newer",
+      sectionId: section.id,
+      title: "Newer",
+      status: "published",
+    });
+    // Age the pinned note so createdAt ordering alone would put it last.
+    harness.sqlite
+      .prepare("UPDATE interview_notes SET created_at = created_at - 1000 WHERE slug = ?")
+      .run("old-pinned");
+
+    const result = await getInterviewNotesBySection("leetcode");
+    expect(result.notes.map((n) => n.slug)).toEqual(["old-pinned", "newer"]);
+    expect(result.notes[0].pinned).toBe(1);
   });
 });
 

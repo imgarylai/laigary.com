@@ -21,6 +21,7 @@ export const interviewNotes = sqliteTable("interview_notes", {
   contentMd: text("content_md").notNull().default(""),
   tags: text("tags"),
   status: text("status").notNull().default("draft"),
+  pinned: integer("pinned").notNull().default(0),
   publishedAt: integer("published_at"),
   createdAt: integer("created_at")
     .notNull()

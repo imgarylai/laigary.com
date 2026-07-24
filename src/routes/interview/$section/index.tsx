@@ -53,8 +53,12 @@ function SectionPage() {
   const navigate = useNavigate();
   const { t } = useI18n();
 
+  // Pinned notes render in their own block above the years; keep them out of
+  // the chronological list unless a tag filter is active (then they compete
+  // on tags like any other note).
+  const pinnedNotes = notes.filter((n) => n.pinned);
   // Note tags carry names (no separate slug is surfaced), so filter by name.
-  const filtered = tag ? notes.filter((n) => n.tags.includes(tag)) : notes;
+  const filtered = tag ? notes.filter((n) => n.tags.includes(tag)) : notes.filter((n) => !n.pinned);
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page ?? 1, totalPages);
   const start = (safePage - 1) * PAGE_SIZE;
@@ -125,6 +129,24 @@ function SectionPage() {
             </Link>
           ))}
         </div>
+      )}
+
+      {/* Pinned block (design: same `./{dir}/` accent header as the year
+          sections) — page 1 of the unfiltered list only, so pagination and
+          tag filtering stay untouched. */}
+      {!tag && safePage === 1 && pinnedNotes.length > 0 && (
+        <section>
+          <pre className="mt-7 mb-1.5 text-xs text-tm-accent">./pinned/</pre>
+          {pinnedNotes.map((n) => (
+            <TmRowLink
+              key={n.slug}
+              to="/interview/$section/$slug"
+              params={{ section: section.slug, slug: n.slug }}
+            >
+              <TmRowCells date="*" title={n.title} read={`${n.minutes}m`} />
+            </TmRowLink>
+          ))}
+        </section>
       )}
 
       {filtered.length === 0 ? (

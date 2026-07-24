@@ -93,6 +93,7 @@ export async function sectionDataImpl(data: { slug: string }) {
       title: n.title,
       date: unixToIso(n.createdAt),
       minutes: computeReadingTime(n.contentMd),
+      pinned: n.pinned === 1,
       tags: n.tags.map((t) => t.name),
     })),
   };
