@@ -19,6 +19,10 @@
   --tm-dim: #9ca3af;
   --tm-warn: #f0883e;
   --tm-soft: #161917;
+  /* Keyboard/hover selection highlight. Sits well above --tm-bg so the active
+     row reads clearly during ↑/↓ navigation — --tm-subtle was too close to the
+     near-black background to see. */
+  --tm-selected: #253029;
 }
 :root[data-theme="light"] {
   --tm-bg: #fafaf7;
@@ -30,6 +34,7 @@
   --tm-dim: #444444;
   --tm-warn: #b45309;
   --tm-soft: #f5f5f0;
+  --tm-selected: #e2ebfb;
 }
 
 /* Root: base surface + typography (font is already monospace app-wide). */
