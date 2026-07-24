@@ -82,6 +82,8 @@ describe("editNoteDataImpl", () => {
     expect(data.note?.tagIds).toEqual([tag.id]);
     expect(data.note?.tagIds).not.toContain(other.id);
     expect(data.sections).toHaveLength(1);
+    // The section slug backs the edit page's "preview live page" link.
+    expect(data.sections[0]?.slug).toBe(section.slug);
   });
 
   it("returns a null note (but sections/tags) for an unknown id", async () => {

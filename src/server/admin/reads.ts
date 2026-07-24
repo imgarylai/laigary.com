@@ -11,7 +11,7 @@ import type {
 
 type PageDetail = { id: string; slug: string; title: string; contentMd: string } | null;
 
-type SectionOption = { id: string; label: string };
+type SectionOption = { id: string; label: string; slug: string };
 type NoteDetail = {
   id: string;
   slug: string;
@@ -106,7 +106,7 @@ export const listNotesFn = createServerFn({ method: "GET" }).handler(listNotesIm
 export async function newNoteDataImpl(): Promise<{ sections: SectionOption[]; tags: Tag[] }> {
   const { getInterviewSections, getAllTags } = await import("@/db/queries");
   const [sections, tags] = await Promise.all([getInterviewSections(), getAllTags()]);
-  return { sections: sections.map((s) => ({ id: s.id, label: s.label })), tags };
+  return { sections: sections.map((s) => ({ id: s.id, label: s.label, slug: s.slug })), tags };
 }
 
 export const newNoteDataFn = createServerFn({ method: "GET" }).handler(newNoteDataImpl);
@@ -121,7 +121,7 @@ export async function editNoteDataImpl(data: {
     getInterviewSections(),
     getAllTags(),
   ]);
-  const sections = sectionRows.map((s) => ({ id: s.id, label: s.label }));
+  const sections = sectionRows.map((s) => ({ id: s.id, label: s.label, slug: s.slug }));
   if (!note) return { note: null, sections, tags };
   // The note's tags come back as { name, slug }; resolve them to tag ids
   // (unique slugs) for the tag combobox.
