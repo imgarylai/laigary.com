@@ -203,6 +203,9 @@ describe("updateNote", () => {
 
     await updateNote(id, { pinned: false });
     expect((await getInterviewNoteById(id))?.pinned).toBe(0);
+
+    await updateNote(id, { pinned: true });
+    expect((await getInterviewNoteById(id))?.pinned).toBe(1);
   });
 
   it("flips publishedAt when transitioning draft → published", async () => {
