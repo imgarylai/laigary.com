@@ -79,4 +79,6 @@ export { getSiteSettings, getSiteSetting, updateSiteSettings } from "./site";
 
 export { getSitemapData, type SitemapData } from "./sitemap";
 
+export { getDashboardStats, type DashboardStats } from "./stats";
+
 export { recordUpload, UploadConflictError, type UploadInput } from "./uploads";
