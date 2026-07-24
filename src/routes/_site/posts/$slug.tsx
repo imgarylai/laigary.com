@@ -67,12 +67,15 @@ function PostPage() {
     <>
       <ReadingProgress />
       <TmPage narrow>
-        <Link to="/posts" className="mb-[18px] inline-block text-xs text-tm-accent no-underline">
+        <Link
+          to="/posts"
+          className="mb-[18px] inline-block text-[calc(0.875rem*var(--tm-fs))] text-tm-accent no-underline"
+        >
           $ cd ..
         </Link>
 
         <PromptLine className="mb-1.5">{FS_BLOG.post.prompt({ slug: post.slug })}</PromptLine>
-        <pre className="m-0 mb-2 text-[11px] text-tm-muted">
+        <pre className="m-0 mb-2 text-[calc(0.8125rem*var(--tm-fs))] text-tm-muted">
           {`---\ntitle:   "${post.title}"\ndate:    ${post.date.slice(0, 10)}\nreading: ${post.readingTime} min\ntags:    [${post.tags.map((tg) => tg.name).join(", ")}]\n---`}
         </pre>
 
@@ -80,13 +83,13 @@ function PostPage() {
             follows the UI locale — mark the content region so the language
             signals agree with the JSON-LD inLanguage declaration. */}
         <article lang="zh-Hant">
-          <h1 className="mt-5 mb-2.5 text-[22px] font-bold leading-[1.35] tracking-[-0.01em]">
+          <h1 className="mt-5 mb-2.5 text-[calc(1.5rem*var(--tm-fs))] font-bold leading-[1.35] tracking-[-0.01em]">
             {post.title}
           </h1>
           <AsciiRule className="mb-[22px]" />
 
           {toc.length > 0 && (
-            <div className="mb-[26px] border border-dashed border-tm-border px-3.5 py-2.5 text-[11.5px]">
+            <div className="mb-[26px] border border-dashed border-tm-border px-3.5 py-2.5 text-[calc(0.8438rem*var(--tm-fs))]">
               <div className="mb-1 text-tm-muted">{t("blog.post.toc")}</div>
               {toc.map((h, i) => (
                 <div key={i} className="text-tm-fg">
@@ -102,13 +105,15 @@ function PostPage() {
 
         {post.tags.length > 0 && (
           <div className="mt-8 border-t border-dashed border-tm-border pt-4">
-            <span className="mr-2.5 text-[11px] text-tm-muted">{t("blog.post.tagsLabel")}</span>
+            <span className="mr-2.5 text-[calc(0.8125rem*var(--tm-fs))] text-tm-muted">
+              {t("blog.post.tagsLabel")}
+            </span>
             {post.tags.map((tg) => (
               <Link
                 key={tg.slug}
                 to="/tags/$slug"
                 params={{ slug: tg.slug }}
-                className="mr-2.5 text-[11.5px] text-tm-accent no-underline"
+                className="mr-2.5 text-[calc(0.8438rem*var(--tm-fs))] text-tm-accent no-underline"
               >
                 #{tg.name}
               </Link>
@@ -117,7 +122,7 @@ function PostPage() {
         )}
 
         {(adjacent.prev || adjacent.next) && (
-          <div className="mt-8 grid grid-cols-2 gap-4 border-t border-dashed border-tm-border pt-4 text-[11.5px]">
+          <div className="mt-8 grid grid-cols-2 gap-4 border-t border-dashed border-tm-border pt-4 text-[calc(0.8438rem*var(--tm-fs))]">
             <div>
               {adjacent.prev && (
                 <Link
@@ -125,7 +130,9 @@ function PostPage() {
                   params={{ slug: adjacent.prev.slug }}
                   className="text-tm-fg no-underline"
                 >
-                  <span className="block text-[11px] text-tm-muted">{t("blog.post.older")}</span>
+                  <span className="block text-[calc(0.8125rem*var(--tm-fs))] text-tm-muted">
+                    {t("blog.post.older")}
+                  </span>
                   <span className="text-tm-accent">{adjacent.prev.title}</span>
                 </Link>
               )}
@@ -137,7 +144,9 @@ function PostPage() {
                   params={{ slug: adjacent.next.slug }}
                   className="text-tm-fg no-underline"
                 >
-                  <span className="block text-[11px] text-tm-muted">{t("blog.post.newer")}</span>
+                  <span className="block text-[calc(0.8125rem*var(--tm-fs))] text-tm-muted">
+                    {t("blog.post.newer")}
+                  </span>
                   <span className="text-tm-accent">{adjacent.next.title}</span>
                 </Link>
               )}
@@ -148,7 +157,7 @@ function PostPage() {
         <Comments config={giscus} />
 
         <AsciiRule className="mt-10 mb-3" />
-        <p className="text-xs leading-[1.7] text-tm-muted">
+        <p className="text-[calc(0.875rem*var(--tm-fs))] leading-[1.7] text-tm-muted">
           <Link to="/posts" className="text-tm-accent no-underline">
             $ cd ..
           </Link>

@@ -100,11 +100,15 @@ const DONT = [
 function Section({ title, note, children }: { title: string; note?: string; children: ReactNode }) {
   return (
     <section className="mt-11">
-      <h2 className="mb-1 text-[15px] font-semibold">
+      <h2 className="mb-1 text-[calc(1.0625rem*var(--tm-fs))] font-semibold">
         <span className="mr-2.5 text-tm-accent">##</span>
         {title}
       </h2>
-      {note && <p className="mb-[18px] max-w-[640px] text-xs text-tm-muted">{note}</p>}
+      {note && (
+        <p className="mb-[18px] max-w-[640px] text-[calc(0.875rem*var(--tm-fs))] text-tm-muted">
+          {note}
+        </p>
+      )}
       {children}
     </section>
   );
@@ -113,7 +117,7 @@ function Section({ title, note, children }: { title: string; note?: string; chil
 function Card({ label, children }: { label?: string; children: ReactNode }) {
   return (
     <div className="border border-dashed border-tm-border px-4 py-3.5">
-      {label && <p className="mb-2.5 text-[11px] text-tm-muted">{label}</p>}
+      {label && <p className="mb-2.5 text-[calc(0.8125rem*var(--tm-fs))] text-tm-muted">{label}</p>}
       {children}
     </div>
   );
@@ -129,7 +133,7 @@ function Swatch({ token, hex, onLight }: { token: string; hex: string; onLight: 
       }}
     >
       <div className="h-[52px]" style={{ background: hex }} />
-      <div className="flex flex-col gap-px px-2.5 py-2 text-[11px]">
+      <div className="flex flex-col gap-px px-2.5 py-2 text-[calc(0.8125rem*var(--tm-fs))]">
         <span style={{ color: onLight ? "#1a1a1a" : "#d4d4d4" }}>{token}</span>
         <span style={{ color: onLight ? "#6b6b6b" : "#6b7280" }}>{hex}</span>
       </div>
@@ -168,16 +172,20 @@ function DesignSystem() {
             <span className="size-2.5 rounded-full bg-[#febc2e]" />
             <span className="size-2.5 rounded-full bg-[#28c840]" />
           </span>
-          <span className="text-xs text-tm-accent">~/design-language.md</span>
-          <span className="text-xs text-tm-dim">$</span>
+          <span className="text-[calc(0.875rem*var(--tm-fs))] text-tm-accent">
+            ~/design-language.md
+          </span>
+          <span className="text-[calc(0.875rem*var(--tm-fs))] text-tm-dim">$</span>
         </div>
         <ThemeToggle />
       </header>
 
       <div className="mx-auto max-w-[860px] px-8 pt-8 pb-24 max-sm:px-4">
         <PromptLine>$ cat ./design-language.md</PromptLine>
-        <h1 className="mt-3.5 mb-1 text-[22px] font-bold tracking-[-0.01em]">Design Language</h1>
-        <p className="mb-1.5 text-[12.5px] text-tm-muted">
+        <h1 className="mt-3.5 mb-1 text-[calc(1.5rem*var(--tm-fs))] font-bold tracking-[-0.01em]">
+          Design Language
+        </h1>
+        <p className="mb-1.5 text-[calc(0.9062rem*var(--tm-fs))] text-tm-muted">
           Unconstrained 的視覺系統 — terminal /
           dev-forward，flat、monospace。設計與工程交接的單一參考。
         </p>
@@ -187,7 +195,7 @@ function DesignSystem() {
           <div className="grid grid-cols-2 gap-2.5 max-sm:grid-cols-1">
             {PRINCIPLES.map(([lab, body]) => (
               <Card key={lab} label={lab}>
-                <span className="text-xs text-tm-muted">{body}</span>
+                <span className="text-[calc(0.875rem*var(--tm-fs))] text-tm-muted">{body}</span>
               </Card>
             ))}
           </div>
@@ -224,14 +232,18 @@ function DesignSystem() {
                       i < TYPE_SCALE.length - 1 ? "1px dashed var(--tm-border)" : undefined,
                   }}
                 >
-                  <span className="w-[62px] shrink-0 text-[11px] text-tm-dim">{px}</span>
+                  <span className="w-[62px] shrink-0 text-[calc(0.8125rem*var(--tm-fs))] text-tm-dim">
+                    {px}
+                  </span>
                   <span
                     className={muted ? "text-tm-muted" : undefined}
                     style={{ fontSize: size, fontWeight: weight }}
                   >
                     {label}
                   </span>
-                  <span className="ml-auto shrink-0 text-[11px] text-tm-muted">{weight}</span>
+                  <span className="ml-auto shrink-0 text-[calc(0.8125rem*var(--tm-fs))] text-tm-muted">
+                    {weight}
+                  </span>
                 </div>
               ))}
             </Card>
@@ -242,7 +254,9 @@ function DesignSystem() {
                 <div style={{ fontWeight: 600 }}>600 semibold — headings, labels</div>
                 <div style={{ fontWeight: 700 }}>700 bold — page titles only</div>
               </div>
-              <p className="mt-[18px] mb-2.5 text-[11px] text-tm-muted">italic</p>
+              <p className="mt-[18px] mb-2.5 text-[calc(0.8125rem*var(--tm-fs))] text-tm-muted">
+                italic
+              </p>
               <div className="text-tm-dim italic">// 英文副標與註解用斜體 · asides in italic</div>
             </Card>
           </div>
@@ -255,7 +269,9 @@ function DesignSystem() {
           <Card>
             {SPACES.map((v) => (
               <div key={v} className="flex items-center gap-3 py-[3px]">
-                <span className="w-[46px] shrink-0 text-[11px] text-tm-dim">{v}px</span>
+                <span className="w-[46px] shrink-0 text-[calc(0.8125rem*var(--tm-fs))] text-tm-dim">
+                  {v}px
+                </span>
                 <span className="h-3 bg-tm-accent opacity-50" style={{ width: v }} />
               </div>
             ))}
@@ -268,10 +284,10 @@ function DesignSystem() {
         >
           <div className="grid grid-cols-2 gap-2.5 max-sm:grid-cols-1">
             <Card label="borders">
-              <div className="mb-2.5 border border-tm-border px-2.5 py-2 text-xs">
+              <div className="mb-2.5 border border-tm-border px-2.5 py-2 text-[calc(0.875rem*var(--tm-fs))]">
                 1px solid var(--tm-border) — 主容器 / 卡片 / 輸入框
               </div>
-              <div className="border border-dashed border-tm-border px-2.5 py-2 text-xs">
+              <div className="border border-dashed border-tm-border px-2.5 py-2 text-[calc(0.875rem*var(--tm-fs))]">
                 1px dashed var(--tm-border) — 列表列分隔 / 次要區塊
               </div>
             </Card>
@@ -283,7 +299,9 @@ function DesignSystem() {
         </Section>
 
         <Section title="Components" note="站上重複出現的模式。全部用同一套 token 與間距。">
-          <p className="mt-[18px] mb-2 text-[11px] text-tm-muted">buttons & icon buttons</p>
+          <p className="mt-[18px] mb-2 text-[calc(0.8125rem*var(--tm-fs))] text-tm-muted">
+            buttons & icon buttons
+          </p>
           <Card>
             <div className="flex flex-wrap items-center gap-2">
               <TmButton size="icon">
@@ -308,19 +326,23 @@ function DesignSystem() {
             </div>
           </Card>
 
-          <p className="mt-[22px] mb-2 text-[11px] text-tm-muted">tags</p>
+          <p className="mt-[22px] mb-2 text-[calc(0.8125rem*var(--tm-fs))] text-tm-muted">tags</p>
           <Card>
             <div className="flex flex-wrap items-center gap-2">
-              <span className="mr-1.5 text-[11px] text-tm-muted">--tags</span>
+              <span className="mr-1.5 text-[calc(0.8125rem*var(--tm-fs))] text-tm-muted">
+                --tags
+              </span>
               {["#生活", "#隨筆", "#讀書筆記", "#工具"].map((tag) => (
-                <span key={tag} className="text-[11.5px] text-tm-accent">
+                <span key={tag} className="text-[calc(0.8438rem*var(--tm-fs))] text-tm-accent">
                   {tag}
                 </span>
               ))}
             </div>
           </Card>
 
-          <p className="mt-[22px] mb-2 text-[11px] text-tm-muted">post row (archive / listing)</p>
+          <p className="mt-[22px] mb-2 text-[calc(0.8125rem*var(--tm-fs))] text-tm-muted">
+            post row (archive / listing)
+          </p>
           <div className="border border-dashed border-tm-border px-2 py-0.5">
             {[
               ["04-18", "關於安靜的早晨", "6m"],
@@ -328,30 +350,38 @@ function DesignSystem() {
             ].map(([d, title, r]) => (
               <div
                 key={title}
-                className="grid grid-cols-[60px_1fr_48px] items-baseline gap-3 border-b border-dashed border-tm-border py-2 text-[12.5px] last:border-0"
+                className="grid grid-cols-[60px_1fr_48px] items-baseline gap-3 border-b border-dashed border-tm-border py-2 text-[calc(0.9062rem*var(--tm-fs))] last:border-0"
               >
                 <span className="text-tm-muted">{d}</span>
                 <span>{title}</span>
-                <span className="text-right text-[11px] text-tm-dim">{r}</span>
+                <span className="text-right text-[calc(0.8125rem*var(--tm-fs))] text-tm-dim">
+                  {r}
+                </span>
               </div>
             ))}
           </div>
 
-          <p className="mt-[22px] mb-2 text-[11px] text-tm-muted">code block</p>
+          <p className="mt-[22px] mb-2 text-[calc(0.8125rem*var(--tm-fs))] text-tm-muted">
+            code block
+          </p>
           <div className="border border-tm-border bg-tm-subtle">
-            <div className="flex items-center justify-between border-b border-tm-border px-2.5 py-1.5 text-[10.5px] text-tm-muted">
+            <div className="flex items-center justify-between border-b border-tm-border px-2.5 py-1.5 text-[calc(0.7812rem*var(--tm-fs))] text-tm-muted">
               <span>$ cat snippet.ts</span>
             </div>
-            <pre className="m-0 overflow-auto px-3.5 py-3 text-xs leading-[1.6] text-tm-fg">
+            <pre className="m-0 overflow-auto px-3.5 py-3 text-[calc(0.875rem*var(--tm-fs))] leading-[1.6] text-tm-fg">
               {`const add = (a, b) => a + b;\n// availability heuristic in production\nif (incident.type === "oom") team.assume("memory leak");`}
             </pre>
           </div>
 
-          <p className="mt-[22px] mb-2 text-[11px] text-tm-muted">command palette (⌘K)</p>
+          <p className="mt-[22px] mb-2 text-[calc(0.8125rem*var(--tm-fs))] text-tm-muted">
+            command palette (⌘K)
+          </p>
           <div className="max-w-[520px] border border-tm-border bg-tm-bg">
             <div className="flex items-center gap-2 border-b border-tm-border px-3.5 py-2.5">
               <MagnifyingGlassIcon size={14} className="text-tm-accent" />
-              <span className="text-[13px] text-tm-muted">search posts, tags, pages…</span>
+              <span className="text-[calc(0.9375rem*var(--tm-fs))] text-tm-muted">
+                search posts, tags, pages…
+              </span>
             </div>
             {[
               ["cd ~", "home"],
@@ -360,7 +390,7 @@ function DesignSystem() {
             ].map(([label, hint], i, arr) => (
               <div
                 key={label}
-                className="border-b border-dashed border-tm-border px-3.5 py-2.5 text-[12.5px] text-tm-fg last:border-0"
+                className="border-b border-dashed border-tm-border px-3.5 py-2.5 text-[calc(0.9062rem*var(--tm-fs))] text-tm-fg last:border-0"
                 style={{ borderBottom: i === arr.length - 1 ? "0" : undefined }}
               >
                 {label} <span className="ml-2 text-tm-dim">— {hint}</span>
@@ -386,7 +416,9 @@ function DesignSystem() {
               ].map(([icon, label]) => (
                 <span key={label as string} className="flex flex-col items-center gap-1.5">
                   {icon}
-                  <small className="text-[10.5px] text-tm-dim">{label as string}</small>
+                  <small className="text-[calc(0.7812rem*var(--tm-fs))] text-tm-dim">
+                    {label as string}
+                  </small>
                 </span>
               ))}
               {[
@@ -396,9 +428,12 @@ function DesignSystem() {
                 ["←", "back"],
                 ["⌘K", "palette"],
               ].map(([glyph, label]) => (
-                <span key={label} className="flex flex-col items-center gap-1.5 text-[18px]">
+                <span
+                  key={label}
+                  className="flex flex-col items-center gap-1.5 text-[calc(1.25rem*var(--tm-fs))]"
+                >
                   {glyph}
-                  <small className="text-[10.5px] text-tm-dim">{label}</small>
+                  <small className="text-[calc(0.7812rem*var(--tm-fs))] text-tm-dim">{label}</small>
                 </span>
               ))}
             </div>
@@ -408,20 +443,20 @@ function DesignSystem() {
         <Section title="Do / Don't">
           <div className="grid grid-cols-2 gap-2.5 max-sm:grid-cols-1">
             <div className="border border-tm-border px-3.5 py-3">
-              <p className="mb-2 text-[11px] text-tm-accent">✓ do</p>
+              <p className="mb-2 text-[calc(0.8125rem*var(--tm-fs))] text-tm-accent">✓ do</p>
               <ul className="m-0 list-disc pl-4">
                 {DO.map((x) => (
-                  <li key={x} className="mb-1.5 text-xs text-tm-muted">
+                  <li key={x} className="mb-1.5 text-[calc(0.875rem*var(--tm-fs))] text-tm-muted">
                     {x}
                   </li>
                 ))}
               </ul>
             </div>
             <div className="border border-tm-border px-3.5 py-3">
-              <p className="mb-2 text-[11px] text-tm-warn">✕ don't</p>
+              <p className="mb-2 text-[calc(0.8125rem*var(--tm-fs))] text-tm-warn">✕ don't</p>
               <ul className="m-0 list-disc pl-4">
                 {DONT.map((x) => (
-                  <li key={x} className="mb-1.5 text-xs text-tm-muted">
+                  <li key={x} className="mb-1.5 text-[calc(0.875rem*var(--tm-fs))] text-tm-muted">
                     {x}
                   </li>
                 ))}
@@ -430,7 +465,7 @@ function DesignSystem() {
           </div>
         </Section>
 
-        <div className="mt-14 border-t border-tm-border pt-4 text-[11.5px] leading-[1.9] text-tm-muted">
+        <div className="mt-14 border-t border-tm-border pt-4 text-[calc(0.8438rem*var(--tm-fs))] leading-[1.9] text-tm-muted">
           <AsciiRule thick className="mb-2.5" />
           這頁本身就照著它描述的系統做。
           <span className="text-tm-dim italic">

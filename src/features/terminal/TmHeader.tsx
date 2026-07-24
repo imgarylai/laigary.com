@@ -48,7 +48,7 @@ export function TmHeader({
   const localeLabel = locale === "zh-TW" ? "zh" : "en";
 
   const drawerLink =
-    "w-full border-b border-dashed border-tm-border px-1 py-2.5 text-left text-[13px] text-tm-fg no-underline";
+    "w-full border-b border-dashed border-tm-border px-1 py-2.5 text-left text-[calc(0.9375rem*var(--tm-fs))] text-tm-fg no-underline";
 
   return (
     <header className="sticky top-0 z-20 flex h-14 items-center justify-between whitespace-nowrap border-b border-tm-border bg-tm-bg">
@@ -63,12 +63,12 @@ export function TmHeader({
             <span className="size-2.5 rounded-full bg-[#febc2e]" />
             <span className="size-2.5 rounded-full bg-[#28c840]" />
           </span>
-          <span className="text-xs max-sm:hidden">@laigary.com</span>
+          <span className="text-[calc(0.875rem*var(--tm-fs))] max-sm:hidden">@laigary.com</span>
         </Link>
-        <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-xs text-tm-accent">
+        <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-[calc(0.875rem*var(--tm-fs))] text-tm-accent">
           ~/{breadcrumbForPath(pathname)}
         </span>
-        <span className="shrink-0 text-xs text-tm-dim">$</span>
+        <span className="shrink-0 text-[calc(0.875rem*var(--tm-fs))] text-tm-dim">$</span>
       </div>
 
       {/* Desktop nav */}
@@ -79,7 +79,7 @@ export function TmHeader({
             to={item.to}
             params={item.params}
             className={cn(
-              "text-xs no-underline",
+              "text-[calc(0.875rem*var(--tm-fs))] no-underline",
               isActive(pathname, item, homeTo) ? "text-tm-accent" : "text-tm-muted",
             )}
           >

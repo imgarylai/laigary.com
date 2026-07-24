@@ -41,8 +41,12 @@ function InterviewHome() {
 
   return (
     <TmPage>
-      <h1 className="mb-1.5 text-base font-semibold">{t("blog.interview.title")}</h1>
-      <p className="mb-4 text-[12.5px] leading-[1.7] text-tm-muted">{t("blog.interview.lead")}</p>
+      <h1 className="mb-1.5 text-[calc(1.125rem*var(--tm-fs))] font-semibold">
+        {t("blog.interview.title")}
+      </h1>
+      <p className="mb-4 text-[calc(0.9062rem*var(--tm-fs))] leading-[1.7] text-tm-muted">
+        {t("blog.interview.lead")}
+      </p>
 
       <AsciiRule className="mt-2 mb-1" />
       <TmMeta>
@@ -89,7 +93,9 @@ function InterviewHome() {
                   date={n.date.slice(5)}
                   title={
                     <>
-                      <span className="text-[11px] text-tm-dim">[{n.section}] </span>
+                      <span className="text-[calc(0.8125rem*var(--tm-fs))] text-tm-dim">
+                        [{n.section}]{" "}
+                      </span>
                       {n.title}
                     </>
                   }

@@ -10,9 +10,14 @@
    next-themes, which also writes the admin's `.dark` class).
    ─────────────────────────────────────────────────────────────────────── */
 :root {
+  /* Single font-scale lever for the whole terminal frontend. Every terminal
+     font-size is `calc(<rem> * var(--tm-fs))`, so bumping this one number scales
+     all frontend type together (1 = current size, 1.1 = +10%, …). rem base keeps
+     it honouring the reader's browser font-size preference (a11y). */
+  --tm-fs: 1;
   --tm-bg: #0b0d0c;
   --tm-fg: #d4d4d4;
-  --tm-muted: #6b7280;
+  --tm-muted: #7f8794;
   --tm-subtle: #111312;
   --tm-border: #1f2422;
   --tm-accent: #7ee787;
@@ -26,7 +31,7 @@
   --tm-muted: #6b6b6b;
   --tm-subtle: #f0f0eb;
   --tm-border: #d4d4d0;
-  --tm-accent: #1f6feb;
+  --tm-accent: #1a63d6;
   --tm-dim: #444444;
   --tm-warn: #b45309;
   --tm-soft: #f5f5f0;
@@ -36,7 +41,7 @@
 .tm-root {
   background: var(--tm-bg);
   color: var(--tm-fg);
-  font-size: 13px;
+  font-size: calc(0.9375rem*var(--tm-fs));
   line-height: 1.65;
   /* dvh, not vh: with the sticky-footer flex layout, vh on mobile Safari
      overshoots the visible viewport and pushes the status bar below the fold. */
@@ -64,7 +69,7 @@
 
 /* ── Rendered-markdown body (retheme shared pipeline output) ────────────── */
 .tm-prose {
-  font-size: 13.5px;
+  font-size: calc(0.9688rem*var(--tm-fs));
   line-height: 1.8;
   color: var(--tm-fg);
 }
@@ -82,10 +87,10 @@
   line-height: 1.4;
 }
 .tm-prose h2 {
-  font-size: 15px;
+  font-size: calc(1.0625rem*var(--tm-fs));
 }
 .tm-prose h3 {
-  font-size: 14px;
+  font-size: calc(1rem*var(--tm-fs));
 }
 .tm-prose h2::before {
   content: "## ";
@@ -138,7 +143,7 @@
   background: var(--tm-subtle);
   border: 1px solid var(--tm-border);
   padding: 1px 5px;
-  font-size: 12px;
+  font-size: calc(0.875rem*var(--tm-fs));
   color: var(--tm-accent);
 }
 .tm-prose pre {
@@ -147,7 +152,7 @@
   border: 1px solid var(--tm-border);
   background: var(--tm-subtle);
   overflow-x: auto;
-  font-size: 12px;
+  font-size: calc(0.875rem*var(--tm-fs));
   line-height: 1.6;
 }
 .tm-prose pre code {
@@ -175,7 +180,7 @@
 .tm-prose table {
   border-collapse: collapse;
   margin: 0 0 16px;
-  font-size: 12px;
+  font-size: calc(0.875rem*var(--tm-fs));
 }
 .tm-prose th,
 .tm-prose td {
