@@ -85,12 +85,31 @@ describe("Toc", () => {
     expect(drawer().hasAttribute("hidden")).toBe(true);
   });
 
+  it("should close the drawer when the backdrop is clicked", () => {
+    render(<Toc entries={ENTRIES} />);
+    fireEvent.click(toggle());
+
+    // The backdrop is aria-hidden and unfocusable — it exists only to catch
+    // the dismissing click, so it is reachable by class rather than by role.
+    const backdrop = document.querySelector(".fixed.inset-0")!;
+    fireEvent.click(backdrop);
+    expect(drawer().hasAttribute("hidden")).toBe(true);
+  });
+
   it("should close the drawer when escape is pressed", () => {
     render(<Toc entries={ENTRIES} />);
     fireEvent.click(toggle());
 
     fireEvent.keyDown(window, { key: "Escape" });
     expect(drawer().hasAttribute("hidden")).toBe(true);
+  });
+
+  it("should leave the drawer open when a key other than escape is pressed", () => {
+    render(<Toc entries={ENTRIES} />);
+    fireEvent.click(toggle());
+
+    fireEvent.keyDown(window, { key: "a" });
+    expect(drawer().hasAttribute("hidden")).toBe(false);
   });
 
   it("should report the drawer state on the toggle for assistive tech", () => {
