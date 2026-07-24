@@ -30,7 +30,7 @@ importers:
         specifier: 2.6.2
         version: 2.6.2
       '@shadcn/react':
-        specifier: ^0.2.1
+        specifier: 0.2.1
         version: 0.2.1(@types/react@19.2.17)(react@19.2.8)
       '@tailwindcss/vite':
         specifier: 4.3.3
@@ -156,10 +156,10 @@ importers:
         specifier: 0.45.2
         version: 0.45.2(@cloudflare/workers-types@4.20260702.1)(@types/better-sqlite3@7.6.13)(better-sqlite3@12.11.1)
       embla-carousel-react:
-        specifier: ^8.6.0
+        specifier: 8.6.0
         version: 8.6.0(react@19.2.8)
       input-otp:
-        specifier: ^1.4.2
+        specifier: 1.4.2
         version: 1.4.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       katex:
         specifier: 0.16.47
@@ -174,7 +174,7 @@ importers:
         specifier: 19.2.8
         version: 19.2.8
       react-day-picker:
-        specifier: ^10.0.1
+        specifier: 10.0.1
         version: 10.0.1(@types/react@19.2.17)(react@19.2.8)
       react-dom:
         specifier: 19.2.8
@@ -189,7 +189,7 @@ importers:
         specifier: 11.1.2
         version: 11.1.2(react@19.2.8)
       react-resizable-panels:
-        specifier: ^4.12.2
+        specifier: 4.12.2
         version: 4.12.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       recharts:
         specifier: 3.8.0
