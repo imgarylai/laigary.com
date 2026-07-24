@@ -47,6 +47,14 @@ export function computeOgBrand(settings: Record<string, string>): string {
   return host ? `${name} | ${host}` : name;
 }
 
+// Dashboard content counts (published/draft posts, notes, pages, tags).
+export async function dashboardStatsImpl() {
+  const { getDashboardStats } = await import("@/db/queries");
+  return getDashboardStats();
+}
+
+export const dashboardStatsFn = createServerFn({ method: "GET" }).handler(dashboardStatsImpl);
+
 // The admin posts table searches / sorts / paginates client-side, so the loader
 // takes the full list.
 export async function listPostsImpl(): Promise<AdminPost[]> {
