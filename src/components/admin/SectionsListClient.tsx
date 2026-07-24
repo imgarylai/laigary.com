@@ -22,7 +22,7 @@ const route = getRouteApi("/admin/interview/sections");
 
 export function SectionsListClient({ sections }: { sections: Section[] }) {
   const { t } = useI18n();
-  const { q } = route.useSearch();
+  const { q, page } = route.useSearch();
   const navigate = route.useNavigate();
 
   const columns = useMemo<ColumnDef<Section, unknown>[]>(
@@ -86,6 +86,13 @@ export function SectionsListClient({ sections }: { sections: Section[] }) {
       globalFilter={q ?? ""}
       onGlobalFilterChange={(v) =>
         navigate({ search: (prev) => ({ ...prev, q: v || undefined }), replace: true })
+      }
+      pageIndex={(page ?? 1) - 1}
+      onPageChange={(idx) =>
+        navigate({
+          search: (prev) => ({ ...prev, page: idx === 0 ? undefined : idx + 1 }),
+          replace: true,
+        })
       }
     />
   );

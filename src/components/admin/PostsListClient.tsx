@@ -30,10 +30,15 @@ export function PostsListClient({ posts }: { posts: Post[] }) {
   const { t, locale } = useI18n();
   // Filters live in the URL (see list-search.ts) so leaving the list and
   // coming back — or reloading — restores the filtered view.
-  const { q, status } = route.useSearch();
+  const { q, status, page } = route.useSearch();
   const navigate = route.useNavigate();
 
-  const data = status === undefined ? posts : posts.filter((p) => p.status === status);
+  // Memoized so the filtered array keeps a stable identity across renders —
+  // otherwise react-table sees "new data" every render and resets the page.
+  const data = useMemo(
+    () => (status === undefined ? posts : posts.filter((p) => p.status === status)),
+    [posts, status],
+  );
 
   const columns = useMemo<ColumnDef<Post, unknown>[]>(() => {
     function formatDate(ts: number): string {
@@ -141,6 +146,13 @@ export function PostsListClient({ posts }: { posts: Post[] }) {
       globalFilter={q ?? ""}
       onGlobalFilterChange={(v) =>
         navigate({ search: (prev) => ({ ...prev, q: v || undefined }), replace: true })
+      }
+      pageIndex={(page ?? 1) - 1}
+      onPageChange={(idx) =>
+        navigate({
+          search: (prev) => ({ ...prev, page: idx === 0 ? undefined : idx + 1 }),
+          replace: true,
+        })
       }
     />
   );

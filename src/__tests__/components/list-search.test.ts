@@ -12,6 +12,21 @@ describe("parseListSearch", () => {
     expect(parseListSearch({ q: 42 })).toEqual({ q: undefined });
     expect(parseListSearch({})).toEqual({ q: undefined });
   });
+
+  it("should keep page when it is an integer above 1 (string or number)", () => {
+    expect(parseListSearch({ page: "3" })).toEqual({ q: undefined, page: 3 });
+    expect(parseListSearch({ page: 5 })).toEqual({ q: undefined, page: 5 });
+  });
+
+  it("should drop page for the default page 1, or invalid values", () => {
+    // Page 1 is the default — omitted so the URL stays clean.
+    expect(parseListSearch({ page: "1" })).toEqual({ q: undefined, page: undefined });
+    expect(parseListSearch({ page: "0" })).toEqual({ q: undefined, page: undefined });
+    expect(parseListSearch({ page: "-2" })).toEqual({ q: undefined, page: undefined });
+    expect(parseListSearch({ page: "2.5" })).toEqual({ q: undefined, page: undefined });
+    expect(parseListSearch({ page: "abc" })).toEqual({ q: undefined, page: undefined });
+    expect(parseListSearch({})).toEqual({ q: undefined, page: undefined });
+  });
 });
 
 describe("parsePostsListSearch", () => {

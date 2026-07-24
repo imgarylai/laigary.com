@@ -64,4 +64,40 @@ describe("DataTable", () => {
     fireEvent.click(screen.getByRole("button", { name: /pagination\.next/ }));
     expect(bodyRowText()).toHaveLength(1);
   });
+
+  it("shows the controlled page and reports page changes instead of paging internally", () => {
+    const onPageChange = vi.fn();
+    render(
+      <DataTable
+        columns={columns}
+        data={data}
+        searchPlaceholder="search"
+        pageSize={2}
+        pageIndex={1}
+        onPageChange={onPageChange}
+      />,
+    );
+    // pageIndex=1 → the second page (the leftover third row).
+    expect(bodyRowText()).toHaveLength(1);
+    // Paging is controlled: clicking Prev reports the target index, it does not
+    // move the table on its own.
+    fireEvent.click(screen.getByRole("button", { name: /pagination\.prev/ }));
+    expect(onPageChange).toHaveBeenCalledWith(0);
+  });
+
+  it("snaps an out-of-range controlled page back into bounds", () => {
+    const onPageChange = vi.fn();
+    render(
+      <DataTable
+        columns={columns}
+        data={data}
+        searchPlaceholder="search"
+        pageSize={2}
+        pageIndex={9}
+        onPageChange={onPageChange}
+      />,
+    );
+    // 3 rows / pageSize 2 → 2 pages (max index 1); a stale index 9 is clamped.
+    expect(onPageChange).toHaveBeenCalledWith(1);
+  });
 });
