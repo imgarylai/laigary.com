@@ -1,4 +1,4 @@
-import { sqliteTable, text, primaryKey } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, primaryKey, index } from "drizzle-orm/sqlite-core";
 import { posts } from "./posts";
 
 export const tags = sqliteTable("tags", {
@@ -17,5 +17,8 @@ export const postTags = sqliteTable(
       .notNull()
       .references(() => tags.id, { onDelete: "cascade" }),
   },
-  (table) => [primaryKey({ columns: [table.postId, table.tagId] })],
+  (table) => [
+    primaryKey({ columns: [table.postId, table.tagId] }),
+    index("idx_post_tags_tag_id").on(table.tagId),
+  ],
 );
