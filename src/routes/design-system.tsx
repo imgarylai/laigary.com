@@ -176,7 +176,7 @@ function DesignSystem() {
 
       <div className="mx-auto max-w-4xl px-8 pt-8 pb-24 max-sm:px-4">
         <PromptLine>$ cat ./design-language.md</PromptLine>
-        <h1 className="mt-3.5 mb-1 text-2xl font-bold tracking-[-0.01em]">Design Language</h1>
+        <h1 className="mt-3.5 mb-1 text-2xl font-bold">Design Language</h1>
         <p className="mb-1.5 text-sm text-tm-muted">
           Unconstrained 的視覺系統 — terminal /
           dev-forward，flat、monospace。設計與工程交接的單一參考。
@@ -342,7 +342,7 @@ function DesignSystem() {
             <div className="flex items-center justify-between border-b border-tm-border px-2.5 py-1.5 text-xs text-tm-muted">
               <span>$ cat snippet.ts</span>
             </div>
-            <pre className="m-0 overflow-auto px-3.5 py-3 text-sm leading-[1.6] text-tm-fg">
+            <pre className="m-0 overflow-auto px-3.5 py-3 text-sm leading-relaxed text-tm-fg">
               {`const add = (a, b) => a + b;\n// availability heuristic in production\nif (incident.type === "oom") team.assume("memory leak");`}
             </pre>
           </div>
@@ -430,7 +430,7 @@ function DesignSystem() {
           </div>
         </Section>
 
-        <div className="mt-14 border-t border-tm-border pt-4 text-xs leading-[1.9] text-tm-muted">
+        <div className="mt-14 border-t border-tm-border pt-4 text-xs leading-loose text-tm-muted">
           <AsciiRule thick className="mb-2.5" />
           這頁本身就照著它描述的系統做。
           <span className="text-tm-dim italic">

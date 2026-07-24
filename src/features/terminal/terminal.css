@@ -37,7 +37,7 @@
   background: var(--tm-bg);
   color: var(--tm-fg);
   font-size: 0.875rem;
-  line-height: 1.65;
+  line-height: 1.625;
   /* dvh, not vh: with the sticky-footer flex layout, vh on mobile Safari
      overshoots the visible viewport and pushes the status bar below the fold. */
   min-height: 100dvh;
@@ -65,7 +65,7 @@
 /* ── Rendered-markdown body (retheme shared pipeline output) ────────────── */
 .tm-prose {
   font-size: 1rem;
-  line-height: 1.8;
+  line-height: 1.625;
   color: var(--tm-fg);
 }
 .tm-prose > :first-child {
@@ -79,7 +79,7 @@
 .tm-prose h4 {
   font-weight: 600;
   margin: 28px 0 10px;
-  line-height: 1.4;
+  line-height: 1.375;
 }
 .tm-prose h2 {
   font-size: 1.125rem;
@@ -148,7 +148,7 @@
   background: var(--tm-subtle);
   overflow-x: auto;
   font-size: 0.875rem;
-  line-height: 1.6;
+  line-height: 1.625;
 }
 .tm-prose pre code {
   background: transparent;

@@ -70,11 +70,11 @@ function Home() {
 
   return (
     <TmPage>
-      <pre className="m-0 text-xs leading-[1.5] text-tm-muted">
+      <pre className="m-0 text-xs leading-normal text-tm-muted">
         {`$ whoami\n${whoami || "gary lai"}\n$ cat ./README.md`}
       </pre>
 
-      {intro && <p className="mt-3.5 mb-3 text-base leading-[1.8]">{intro}</p>}
+      {intro && <p className="mt-3.5 mb-3 text-base leading-relaxed">{intro}</p>}
 
       <AsciiRule className="mt-4 mb-1" />
       <TmMeta>
@@ -103,7 +103,7 @@ function Home() {
         ))}
       </div>
 
-      <p className="text-sm leading-[1.8] text-tm-muted">
+      <p className="text-sm leading-relaxed text-tm-muted">
         <Link to="/posts" className="text-tm-accent no-underline">
           $ cd ./posts
         </Link>

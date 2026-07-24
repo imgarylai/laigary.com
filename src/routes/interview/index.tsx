@@ -42,7 +42,7 @@ function InterviewHome() {
   return (
     <TmPage>
       <h1 className="mb-1.5 text-lg font-semibold">{t("blog.interview.title")}</h1>
-      <p className="mb-4 text-sm leading-[1.7] text-tm-muted">{t("blog.interview.lead")}</p>
+      <p className="mb-4 text-sm leading-relaxed text-tm-muted">{t("blog.interview.lead")}</p>
 
       <AsciiRule className="mt-2 mb-1" />
       <TmMeta>

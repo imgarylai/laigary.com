@@ -98,7 +98,7 @@ function TagPage() {
         </section>
       )}
 
-      <p className="mt-8 text-sm leading-[1.7] text-tm-muted">
+      <p className="mt-8 text-sm leading-relaxed text-tm-muted">
         <Link to="/tags" className="text-tm-accent no-underline">
           $ cd ..
         </Link>
