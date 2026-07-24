@@ -24,6 +24,27 @@ describe("listPostsImpl", () => {
   });
 });
 
+describe("dashboardStatsImpl", () => {
+  it("returns content counts across posts, notes, pages and tags", async () => {
+    await seedPost({ status: "published" });
+    await seedPost({ status: "draft" });
+    await seedPage();
+    await seedTag();
+    const section = await seedSection();
+    await seedNote(section.id);
+    const { dashboardStatsImpl } = await import("@/server/admin/reads");
+    const s = await dashboardStatsImpl();
+    expect(s).toMatchObject({
+      postsTotal: 2,
+      postsPublished: 1,
+      postsDrafts: 1,
+      notes: 1,
+      pages: 1,
+    });
+    expect(s.tags).toBe(1);
+  });
+});
+
 describe("listTagsImpl", () => {
   it("returns tags with usage", async () => {
     const tag = await seedTag({ name: "Life", slug: "life" });
