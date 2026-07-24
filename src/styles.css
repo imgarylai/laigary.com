@@ -15,6 +15,7 @@
   --color-tm-fg: var(--tm-fg);
   --color-tm-muted: var(--tm-muted);
   --color-tm-subtle: var(--tm-subtle);
+  --color-tm-selected: var(--tm-selected);
   --color-tm-border: var(--tm-border);
   --color-tm-accent: var(--tm-accent);
   --color-tm-dim: var(--tm-dim);
