@@ -27,33 +27,51 @@ export type TagWithUsage = {
 
 export async function getTagsWithUsage(): Promise<TagWithUsage[]> {
   const db = await getDb();
-  const allTags = await db.select().from(tags);
 
-  return Promise.all(
-    allTags.map(async (tag) => {
-      const postResults = await db
-        .select({ title: posts.title, slug: posts.slug })
-        .from(postTags)
-        .innerJoin(posts, eq(posts.id, postTags.postId))
-        .where(eq(postTags.tagId, tag.id));
+  // Three constant-count queries instead of a per-tag fan-out (previously
+  // 1 + 2N queries — a posts + notes lookup for every tag, i.e. an N+1 that
+  // made the admin tags page stall on D1's per-query round-trips). Fetch the
+  // full tag list plus all post/note usage joined once, then group in memory.
+  const [allTags, postRows, noteRows] = await Promise.all([
+    db.select().from(tags),
+    db
+      .select({ tagId: postTags.tagId, title: posts.title, slug: posts.slug })
+      .from(postTags)
+      .innerJoin(posts, eq(posts.id, postTags.postId)),
+    db
+      .select({
+        tagId: interviewNoteTags.tagId,
+        title: interviewNotes.title,
+        slug: interviewNotes.slug,
+      })
+      .from(interviewNoteTags)
+      .innerJoin(interviewNotes, eq(interviewNotes.id, interviewNoteTags.noteId)),
+  ]);
 
-      const noteResults = await db
-        .select({ title: interviewNotes.title, slug: interviewNotes.slug })
-        .from(interviewNoteTags)
-        .innerJoin(interviewNotes, eq(interviewNotes.id, interviewNoteTags.noteId))
-        .where(eq(interviewNoteTags.tagId, tag.id));
+  const postsByTag = new Map<string, UsedByItem[]>();
+  for (const row of postRows) {
+    const list = postsByTag.get(row.tagId) ?? [];
+    list.push({ type: "post", title: row.title, slug: row.slug });
+    postsByTag.set(row.tagId, list);
+  }
 
-      return {
-        ...tag,
-        postCount: postResults.length,
-        noteCount: noteResults.length,
-        usedBy: [
-          ...postResults.map((p) => ({ type: "post" as const, title: p.title, slug: p.slug })),
-          ...noteResults.map((n) => ({ type: "note" as const, title: n.title, slug: n.slug })),
-        ],
-      };
-    }),
-  );
+  const notesByTag = new Map<string, UsedByItem[]>();
+  for (const row of noteRows) {
+    const list = notesByTag.get(row.tagId) ?? [];
+    list.push({ type: "note", title: row.title, slug: row.slug });
+    notesByTag.set(row.tagId, list);
+  }
+
+  return allTags.map((tag) => {
+    const postUsage = postsByTag.get(tag.id) ?? [];
+    const noteUsage = notesByTag.get(tag.id) ?? [];
+    return {
+      ...tag,
+      postCount: postUsage.length,
+      noteCount: noteUsage.length,
+      usedBy: [...postUsage, ...noteUsage],
+    };
+  });
 }
 
 export type Tag = { id: string; name: string; slug: string };
