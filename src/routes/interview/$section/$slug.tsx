@@ -2,7 +2,7 @@ import { createFileRoute, notFound, Link } from "@tanstack/react-router";
 import { noteDataFn } from "@/server/public";
 import { SITE_ORIGIN, breadcrumbLd, serializeJsonLd, techArticleLd } from "@/lib/json-ld";
 import { canonicalLink, ogMeta } from "@/lib/og-meta";
-import { AsciiRule, PromptLine, ReadingProgress, TmPage } from "@/features/terminal";
+import { AsciiRule, Prose, PromptLine, ReadingProgress, TmPage } from "@/features/terminal";
 import { useI18n } from "@/i18n/I18nProvider";
 import { FS_INTERVIEW } from "@/lib/fsmap";
 
@@ -86,7 +86,7 @@ function NotePage() {
           <h1 className="mt-2 mb-1 text-[20px] font-semibold leading-[1.35]">{note.title}</h1>
           <AsciiRule className="mb-[22px]" />
 
-          <div className="tm-prose" dangerouslySetInnerHTML={{ __html: html }} />
+          <Prose html={html} />
         </article>
 
         {note.tags.length > 0 && (

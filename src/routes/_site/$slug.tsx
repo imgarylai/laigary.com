@@ -2,7 +2,7 @@ import { createFileRoute, notFound } from "@tanstack/react-router";
 import { pageDataFn } from "@/server/public";
 import { SITE_ORIGIN, breadcrumbLd, serializeJsonLd, webPageLd } from "@/lib/json-ld";
 import { canonicalLink, ogMeta } from "@/lib/og-meta";
-import { PromptLine, TmPage } from "@/features/terminal";
+import { Prose, PromptLine, TmPage } from "@/features/terminal";
 import { FS_BLOG } from "@/lib/fsmap";
 
 // Catch-all for DB-backed content pages (e.g. /about, /now). Matches last, so
@@ -55,7 +55,7 @@ function PagePage() {
       {/* lang: content region is zh-Hant; <html lang> follows the UI locale. */}
       <article lang="zh-Hant">
         <h1 className="mb-[18px] text-[20px] font-bold leading-[1.35]">{page.title}</h1>
-        <div className="tm-prose" dangerouslySetInnerHTML={{ __html: html }} />
+        <Prose html={html} />
       </article>
     </TmPage>
   );

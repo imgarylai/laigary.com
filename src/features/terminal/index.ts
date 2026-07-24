@@ -13,4 +13,5 @@ export { TmFooter, type FooterSocial } from "./TmFooter";
 export { CommandPalette, type PaletteRow } from "./CommandPalette";
 export { TmPager, pageWindow } from "./Pager";
 export { AsciiRule, PromptLine, ReadingProgress } from "./ui";
+export { Prose } from "./Prose";
 export { TmPage, TmMeta, TmEmpty, TmDirLink, TmDirCells, TmRowLink, TmRowCells } from "./layout";
