@@ -9,6 +9,7 @@
     "dev": "vite dev --port 3000",
     "generate-routes": "tsr generate",
     "db:generate": "drizzle-kit generate",
+    "content:export": "node scripts/export-content.ts",
     "build": "vite build",
     "preview": "vite preview",
     "deploy": "alchemy deploy",
