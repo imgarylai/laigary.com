@@ -34,7 +34,7 @@ class Solution:
         def dfs(curr, visited, timestamp):
             visited.add(curr)
             for node, time in graph[curr]:
-                // 兩個人認識的時間要在目前想要確認的時間點之前或是同時，才算是已經是朋友了，這時候才有走 DFS 的必要。
+                # 兩個人認識的時間要在目前想要確認的時間點之前或是同時，才算是已經是朋友了，這時候才有走 DFS 的必要。
                 if node not in visited and time <= timestamp:
                     dfs(node, visited, timestamp)
         

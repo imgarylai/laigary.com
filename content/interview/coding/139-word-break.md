@@ -40,7 +40,7 @@ class Solution:
 
         def dfs(i):
             res = False
-            // 選擇
+            # 選擇
             for word in wordDict:
                 # word 比剩餘要檢查的字串還長
                 if len(s[i:]) < len(word):

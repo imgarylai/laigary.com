@@ -77,5 +77,5 @@ class Solution:
 
 ```
 
--   [https://laigary.com/42-trapping-rain-water/](/interview/coding/42-trapping-rain-water)
--   [https://laigary.com/11-container-with-most-water/](/interview/coding/11-container-with-most-water)
+-   [42. Trapping Rain Water](/interview/coding/42-trapping-rain-water)
+-   [11. Container With Most Water](/interview/coding/11-container-with-most-water)
