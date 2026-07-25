@@ -386,6 +386,11 @@ const TOOLS: Tool[] = [
         contentMd: { type: "string" },
         status: { type: "string", enum: ["draft", "published"] },
         tagNames: { type: "array", items: { type: "string" } },
+        touchUpdatedAt: {
+          type: "boolean",
+          description:
+            "Whether this counts as new content (default true). Pass false for a typo or link fix so the note is not resurfaced as freshly written — listings order by updatedAt.",
+        },
       },
       required: ["section", "slug"],
     },
@@ -399,6 +404,7 @@ const TOOLS: Tool[] = [
           contentMd: z.string().min(1).optional(),
           status: statusSchema.optional(),
           tagNames: z.array(z.string().min(1)).optional(),
+          touchUpdatedAt: z.boolean().optional(),
         })
         .parse(args),
     run: async (args: {
@@ -408,6 +414,7 @@ const TOOLS: Tool[] = [
       contentMd?: string;
       status?: "draft" | "published";
       tagNames?: string[];
+      touchUpdatedAt?: boolean;
     }) => {
       const { getAllAdminInterviewNotes, updateNote } = await import("@/db/queries");
       const note = (await getAllAdminInterviewNotes()).find(
@@ -415,12 +422,16 @@ const TOOLS: Tool[] = [
       );
       if (!note) return fail(`No note "${args.slug}" in section "${args.section}"`);
       const tagIds = args.tagNames ? await resolveTagNames(args.tagNames) : undefined;
-      await updateNote(note.id, {
-        title: args.title,
-        contentMd: args.contentMd,
-        status: args.status,
-        tagIds,
-      });
+      await updateNote(
+        note.id,
+        {
+          title: args.title,
+          contentMd: args.contentMd,
+          status: args.status,
+          tagIds,
+        },
+        { touchUpdatedAt: args.touchUpdatedAt },
+      );
       return { slug: args.slug, url: `/interview/${args.section}/${args.slug}` };
     },
   },
