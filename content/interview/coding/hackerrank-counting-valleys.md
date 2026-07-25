@@ -86,8 +86,7 @@ if __name__ == '__main__':
 
     result = countingValleys(steps, path)
 
-    fptr.write(str(result) + '
-')
+    fptr.write(str(result) + '\n')
 
     fptr.close()
 

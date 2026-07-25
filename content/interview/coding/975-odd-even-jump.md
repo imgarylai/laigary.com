@@ -146,24 +146,26 @@ odd_next_jump = [0] * n
 # 裡面的元素從小排到大，如果遇上相同的值，就會依照索引由小排到大
 for ele, idx in sorted([ele, idx] for idx, ele in enumerate(arr)):
     # 所有已經被放入到 stack 的索引，其索引所對應到的值
-    # 一定比我當前索引對應到的值小，所以如果其索引在我左邊（stack[-1] < i）
-    # 代表 stack[-1] 目前存的索引，他的下一步會是現在的索引 i 
-    while stack and stack[-1] < i:
+    # 一定比我當前索引對應到的值小，所以如果其索引在我左邊（stack[-1] < idx）
+    # 代表 stack[-1] 目前存的索引，他的下一步會是現在的索引 idx
+    while stack and stack[-1] < idx:
         # 於是，我們可以把這個記錄起來
-        # ex: next_higher[2] = 4 就是代表 idx 2 可以走到 idx 4 
-        odd_next_jump[stack.pop()] = i
-    stack.append(i)
+        # ex: odd_next_jump[2] = 4 就是代表 idx 2 可以走到 idx 4
+        odd_next_jump[stack.pop()] = idx
+    stack.append(idx)
 ```
 
 反之亦然
 
-```text
+```python
 stack = []
 even_next_jump = [0] * n
 
+# 值取負再排序，於是「值最大」變成「排序最前」，
+# 相同值時仍然是索引小的先出來 — 正好對應偶數跳的規則
 for ele, idx in sorted([-ele, idx] for idx, ele in enumerate(arr)):
     while stack and stack[-1] < idx:
-        even_next_jump[stack.pop()] = i
+        even_next_jump[stack.pop()] = idx
     stack.append(idx)
 ```
 
@@ -185,5 +187,52 @@ dp_even[-1] = True
 往前走的方向是這樣判斷的，如果說 `dp_odd[i]` 能往前走，要看的是之後的 `dp_even[k]` 是不是可以到的，`k` 取得的方式是看看 `odd_next_jump[i]` 能不能到，如果不能到的話就會是 `0` ，那 `0` 又比 `i` 前面，所以這時候 `dp_even[0]` 會是 `False` 這時候 `dp_odd[i]`就會是 False 。
 
 整個情況其實有點難想，尤其又是從後往前推，我覺得最容易的理解方式是考中斷點，用中斷點來看所有的變數的情況是什麼樣子。
+
+往前推的迴圈本身只有兩行，關鍵是**看懂 `0` 的雙重身分**：`odd_next_jump[i]` 沒有下一步時是 `0`，而 `0` 永遠不可能是合法的跳躍目標（目標一定在右邊，索引至少是 1），所以 `0` 就等於「跳不出去」，可以直接當成 falsy 用。
+
+```python
+for i in range(n - 2, -1, -1):
+    # 奇數跳到 odd_next_jump[i] 之後，下一步變成偶數跳
+    dp_odd[i] = dp_even[odd_next_jump[i]] if odd_next_jump[i] else False
+    # 偶數跳到 even_next_jump[i] 之後，下一步變成奇數跳
+    dp_even[i] = dp_odd[even_next_jump[i]] if even_next_jump[i] else False
+```
+
+答案就是「從自己出發、第一步是奇數跳」能走到終點的個數，也就是 `sum(dp_odd)`。
+
+完整版：
+
+```python
+class Solution:
+    def oddEvenJumps(self, arr: List[int]) -> int:
+        n = len(arr)
+        odd_next_jump = [0] * n
+        even_next_jump = [0] * n
+
+        stack = []
+        for ele, idx in sorted([ele, idx] for idx, ele in enumerate(arr)):
+            while stack and stack[-1] < idx:
+                odd_next_jump[stack.pop()] = idx
+            stack.append(idx)
+
+        stack = []
+        for ele, idx in sorted([-ele, idx] for idx, ele in enumerate(arr)):
+            while stack and stack[-1] < idx:
+                even_next_jump[stack.pop()] = idx
+            stack.append(idx)
+
+        dp_odd = [False] * n
+        dp_even = [False] * n
+        dp_odd[-1] = True
+        dp_even[-1] = True
+
+        for i in range(n - 2, -1, -1):
+            dp_odd[i] = dp_even[odd_next_jump[i]] if odd_next_jump[i] else False
+            dp_even[i] = dp_odd[even_next_jump[i]] if even_next_jump[i] else False
+
+        return sum(dp_odd)
+```
+
+時間複雜度 $O(n\log n)$（兩次排序，單調棧本身是 $O(n)$）、空間 $O(n)$ — 比上面暴力解的 $O(n^{3}\log n)$ 差了好幾個數量級。
 
 真實面試中的時候，或許我真的天資不夠聰穎，我自認應該是沒辦法不靠任何中斷點就寫出 Bug Free 的程式碼，可是我覺得理解這個題目讓我對於動態規劃的認識多了很多，畢竟是經典題目，多看無益！

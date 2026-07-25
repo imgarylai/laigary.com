@@ -54,4 +54,4 @@ class Solution:
 
 Reference:
 
-[https://laigary.com/295-find-median-from-data-stream/](/interview/coding/295-find-median-from-data-stream)
+[295. Find Median from Data Stream](/interview/coding/295-find-median-from-data-stream)

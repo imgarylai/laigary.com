@@ -18,7 +18,7 @@ class Solution:
     def combinationSum3(self, k: int, n: int) -> List[List[int]]:
         ans = []
         def backtrack(curr, target, start):
-            if target == 0 and if len(curr) == k:
+            if target == 0 and len(curr) == k:
                 ans.append(list(curr))
                 return
             if target < 0:

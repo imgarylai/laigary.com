@@ -38,7 +38,7 @@ class Solution:
             elif remaining == 0:
                 return 0
             else:
-                // f(remaining) = 1 + mim(f(remaining-coin[1]), ..., f(remaining-coin[n]))
+                # f(remaining) = 1 + min(f(remaining-coin[1]), ..., f(remaining-coin[n]))
                 min_cost = float('inf')
                 for coin in coins:
                     res = helper(remaining - coin)
@@ -47,7 +47,7 @@ class Solution:
                 if min_cost != float('inf'):
                     return min_cost
                 else:
-                    return = -1
+                    return -1
         return helper(amount)
 ```
 

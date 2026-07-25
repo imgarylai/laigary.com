@@ -33,7 +33,7 @@ class Solution:
             # 長度為奇數的回文
             if i == j:
                 return 1
-            # 長度為偶數的回文
+            # 長度為偶數的回文
             elif j - i == 1 and s[i] == s[j]:
                 return 2
             else:

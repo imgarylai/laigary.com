@@ -26,13 +26,12 @@ class Solution:
     def twoSum(self, nums, target):
         nums.sort()
         n = len(nums)
-        res = []
         low = 0
         high = n - 1
         while low < high:
             total = nums[low] + nums[high]
             if total == target:
-                return res.append([nums[low], nums[high])
+                return [nums[low], nums[high]]
             elif total < target:
                 low += 1
             else:
