@@ -3,7 +3,7 @@
 // MCP endpoint: the stateless JSON-RPC protocol layer plus the tool registry,
 // run against the real better-sqlite3 harness. Write tools are hidden from
 // unauthenticated tools/list and refused at call time.
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { setupTestDb } from "../../db/helpers/test-db";
 import { seedNote, seedPost, seedSection, seedTag } from "../../factories";
 
@@ -334,5 +334,39 @@ describe("partial-branch sweeps", () => {
     const note = await getInterviewNote("coding", "gas");
     expect(note?.contentMd).toBe("solved");
     expect(note?.tags.map((t) => t.name)).toEqual(["greedy"]);
+  });
+
+  it("update_interview_note forwards touchUpdatedAt: false so a fix does not resurface the note", async () => {
+    const section = await seedSection({ slug: "coding" });
+    await seedNote(section.id, { slug: "typo", title: "Typo", status: "published" });
+    const { getInterviewNote } = await import("@/db/queries");
+    const before = (await getInterviewNote("coding", "typo"))?.updatedAt;
+
+    vi.useFakeTimers({ toFake: ["Date"] });
+    try {
+      vi.setSystemTime(new Date("2030-01-01T00:00:00Z"));
+      parseText(
+        await callTool(
+          "update_interview_note",
+          { section: "coding", slug: "typo", contentMd: "fixed", touchUpdatedAt: false },
+          true,
+        ),
+      );
+      const fixed = await getInterviewNote("coding", "typo");
+      expect(fixed?.contentMd).toBe("fixed");
+      expect(fixed?.updatedAt).toBe(before);
+
+      // Omitting the flag keeps the old behaviour: the stamp moves.
+      parseText(
+        await callTool(
+          "update_interview_note",
+          { section: "coding", slug: "typo", contentMd: "rewritten" },
+          true,
+        ),
+      );
+      expect((await getInterviewNote("coding", "typo"))?.updatedAt).toBe(1_893_456_000);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

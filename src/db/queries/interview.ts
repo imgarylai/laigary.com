@@ -431,10 +431,23 @@ export async function createNote(input: NoteMutationInput): Promise<{ id: string
   return { id, slug: input.slug };
 }
 
+export type UpdateNoteOptions = {
+  /**
+   * Whether to stamp `updatedAt` with the current time. Defaults to true.
+   *
+   * Pass false for corrections that should not surface the note as freshly
+   * written — fixing a typo or a broken link is not new content, and several
+   * listings order by `updatedAt`, so touching it silently reorders them.
+   */
+  touchUpdatedAt?: boolean;
+};
+
 export async function updateNote(
   id: string,
   input: Partial<Omit<NoteMutationInput, "sectionId">>,
+  options: UpdateNoteOptions = {},
 ): Promise<void> {
+  const { touchUpdatedAt = true } = options;
   const db = await getDb();
   const [existing] = await db.select().from(interviewNotes).where(eq(interviewNotes.id, id));
   if (!existing) throw new NoteNotFoundError(id);
@@ -455,7 +468,9 @@ export async function updateNote(
         status: newStatus,
         pinned: input.pinned === undefined ? existing.pinned : input.pinned ? 1 : 0,
         publishedAt,
-        updatedAt: Math.floor(Date.now() / 1000),
+        // Omitted entirely (not set to the old value) when preserving, so the
+        // column keeps whatever is already stored.
+        ...(touchUpdatedAt ? { updatedAt: Math.floor(Date.now() / 1000) } : {}),
       })
       .where(eq(interviewNotes.id, id));
   } catch (err) {

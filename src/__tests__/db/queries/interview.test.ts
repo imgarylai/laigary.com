@@ -223,6 +223,33 @@ describe("updateNote", () => {
     const { updateNote, NoteNotFoundError } = await import("@/db/queries");
     await expect(updateNote("missing", { title: "x" })).rejects.toBeInstanceOf(NoteNotFoundError);
   });
+
+  it("should stamp updatedAt when touchUpdatedAt defaults, and leave it when false", async () => {
+    const { createNote, updateNote, getInterviewNoteById } = await import("@/db/queries");
+    const section = await seedSection();
+    const { id } = await createNote({ slug: "u", sectionId: section.id, title: "T" });
+    const original = (await getInterviewNoteById(id))?.updatedAt;
+    expect(original).toBeTypeOf("number");
+
+    // Only Date is faked: the query layer reads Date.now() for the stamp, and
+    // faking timers wholesale would stall the awaits below.
+    vi.useFakeTimers({ toFake: ["Date"] });
+    try {
+      vi.setSystemTime(new Date("2030-01-01T00:00:00Z"));
+
+      // A correction: the edit lands but the note is not resurfaced.
+      await updateNote(id, { title: "T2" }, { touchUpdatedAt: false });
+      const corrected = await getInterviewNoteById(id);
+      expect(corrected?.title).toBe("T2");
+      expect(corrected?.updatedAt).toBe(original);
+
+      // Real new content: the stamp moves.
+      await updateNote(id, { title: "T3" });
+      expect((await getInterviewNoteById(id))?.updatedAt).toBe(1_893_456_000);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
 
 describe("deleteNote", () => {
