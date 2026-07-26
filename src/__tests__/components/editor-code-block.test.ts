@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 //
-// Behavioural coverage for the code block keymap (#171), driven through a real
-// editor rather than the pure helpers in editor-code-indent.test.ts.
+// Behavioural coverage for the code block card (#170) and its keymap (#171),
+// driven through a real editor rather than the pure helpers in
+// editor-code-indent.test.ts.
 import { describe, expect, it } from "vitest";
 import { Editor } from "@tiptap/react";
 import { TextSelection } from "@tiptap/pm/state";
@@ -138,6 +139,40 @@ describe("code block keymap", () => {
 
     expect(editor.isActive("codeBlock")).toBe(true);
     expect(codeText(editor)).toBe("keep me");
+    editor.destroy();
+  });
+});
+
+describe("code block language attribute", () => {
+  it("should round-trip a named language through markdown", () => {
+    const editor = makeEditor("```python\nreturn n\n```");
+
+    expect(editor.getMarkdown()).toContain("```python");
+    editor.destroy();
+  });
+
+  it("should serialize a bare fence when the language is cleared to auto-detect", () => {
+    // What the card's "Auto-detect" option writes: language = null.
+    const editor = makeEditor("```python\nreturn n\n```");
+    selectInCode(editor, 0);
+
+    editor.commands.updateAttributes("codeBlock", { language: null });
+
+    expect(editor.getMarkdown()).not.toContain("```python");
+    expect(editor.getMarkdown()).toContain("```");
+    editor.destroy();
+  });
+
+  it("should serialize the new language when it is changed on an existing block", () => {
+    // The whole point of the card: a mistagged fence is fixable in place
+    // instead of having to be deleted and retyped.
+    const editor = makeEditor("```python\nSELECT 1;\n```");
+    selectInCode(editor, 0);
+
+    editor.commands.updateAttributes("codeBlock", { language: "sql" });
+
+    expect(editor.getMarkdown()).toContain("```sql");
+    expect(codeText(editor)).toBe("SELECT 1;");
     editor.destroy();
   });
 });

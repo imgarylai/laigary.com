@@ -1,5 +1,7 @@
 import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
+import { ReactNodeViewRenderer } from "@tiptap/react";
 import type { EditorState, Transaction } from "@tiptap/pm/state";
+import { CodeBlockCard } from "./CodeBlockCard";
 import { INDENT_UNIT, outdentWidth, selectedLineStarts, spansMultipleLines } from "./code-indent";
 
 /** The code block the cursor is inside, with the document position its text
@@ -18,16 +20,27 @@ function activeCodeBlock(state: EditorState, name: string) {
 }
 
 /**
- * Code block with code-shaped key semantics.
+ * Code block as a card.
  *
- * ProseMirror leaves Tab to the browser for accessibility, and the editor is
- * mounted inside a <form> — so pressing Tab while writing Python moved focus to
- * the submit button and you left the article (#171). Inside a code block, keys
- * mean code things instead.
+ * Two things ride on this extension, both consequences of the same design
+ * decision — a code block is a card with its own chrome and its own key
+ * semantics, not a bare node:
  *
- * The node's schema, markdown mapping and lowlight highlighting are untouched.
+ *   - `addNodeView` gives the language a home. It used to be writable only by
+ *     the markdown input rule at creation time, so getting it wrong meant
+ *     deleting the block and retyping it (#170).
+ *   - `addKeyboardShortcuts` makes Tab mean indentation: ProseMirror leaves Tab
+ *     to the browser for accessibility, and the editor is mounted inside a
+ *     <form>, so it used to move focus to the submit button (#171).
+ *
+ * The node's schema, markdown mapping and lowlight highlighting are untouched:
+ * a card still serializes to ```lang and parses back the same way.
  */
 export const CodeBlockCardExtension = CodeBlockLowlight.extend({
+  addNodeView() {
+    return ReactNodeViewRenderer(CodeBlockCard);
+  },
+
   addKeyboardShortcuts() {
     // Tab is the editor-wide escape hatch for keyboard users, so every handler
     // here returns false the moment the selection is outside a code block —
