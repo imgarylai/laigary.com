@@ -39,6 +39,8 @@ jobs:
         include:
           - name: Lint
             command: pnpm lint
+          - name: Typecheck
+            command: pnpm typecheck
           - name: Format
             command: pnpm format:check
           - name: Test

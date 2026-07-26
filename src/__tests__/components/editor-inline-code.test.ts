@@ -29,7 +29,9 @@ function type(editor: Editor, text: string): void {
   for (const char of text) {
     const view = editor.view;
     const { from, to } = view.state.selection;
-    const handled = view.someProp("handleTextInput", (f) => f(view, from, to, char));
+    const handled = view.someProp("handleTextInput", (f) =>
+      f(view, from, to, char, () => view.state.tr.insertText(char, from, to)),
+    );
     if (!handled) {
       view.dispatch(view.state.tr.insertText(char, from, to));
     }
@@ -42,7 +44,9 @@ describe("inline code input rule", () => {
     type(editor, "給一個數字`n`");
     expect(getMarkdown(editor)).toBe("給一個數字`n`");
     const paragraph = editor.getJSON().content?.[0];
-    const codeNode = paragraph?.content?.find((n) => n.marks?.some((m) => m.type === "code"));
+    const codeNode = paragraph?.content?.find((n) => n.marks?.some((m) => m.type === "code")) as
+      | { text?: string }
+      | undefined;
     expect(codeNode?.text).toBe("n");
   });
 

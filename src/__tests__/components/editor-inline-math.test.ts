@@ -10,7 +10,7 @@
 // `$...$` — never HTML, entities intact.
 import { describe, expect, it } from "vitest";
 import { Editor } from "@tiptap/react";
-import type { JSONContent } from "@tiptap/core";
+import type { JSONContent } from "@tiptap/react";
 import { createExtensions } from "@/components/admin/editor/extensions";
 import { matchDollarMath } from "@/components/admin/editor/inline-math";
 
