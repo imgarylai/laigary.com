@@ -27,8 +27,10 @@ import { CODE_LANGUAGE_GRAMMARS } from "@/lib/code-languages";
 // `common` bundle. Both sides run highlightAuto on an untagged fence, so a
 // grammar registered here but absent there (or the reverse) would make the same
 // block resolve to different languages while writing vs once published.
-// Registering the shared list also keeps ~28 unused grammars out of the editor
-// chunk, which is already the heaviest thing the admin loads.
+//
+// This buys correctness, not bytes: rehype-highlight still pulls `common` into
+// the same chunk (the preview imports lib/markdown), so the editor bundle is
+// unchanged at ~1.61 MB. Measured, because the opposite is easy to assume.
 const lowlight = createLowlight(CODE_LANGUAGE_GRAMMARS);
 
 export function createExtensions({ placeholder }: { placeholder: string }) {
