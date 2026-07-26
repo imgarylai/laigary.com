@@ -30,6 +30,32 @@ describe("renderMarkdown", () => {
     expect(html).toContain("hljs");
   });
 
+  it("should auto-detect an untagged fence within the shared language subset", async () => {
+    const html = await renderMarkdown("```\ndef fib(n):\n    return n\n```");
+
+    expect(html).toContain('class="hljs language-python"');
+  });
+
+  it("should highlight a fence that uses a grammar alias since the corpus writes ```py", async () => {
+    const html = await renderMarkdown("```py\ndef fib(n):\n    return n\n```");
+
+    expect(html).toContain("hljs-keyword");
+  });
+
+  it("should leave a text fence uncoloured since ```text opts out of highlighting", async () => {
+    const html = await renderMarkdown("```text\n$ pnpm build\n```");
+
+    expect(html).not.toContain("hljs-");
+  });
+
+  it("should still highlight a language outside the detection subset when the fence names it", async () => {
+    // `subset` narrows auto-detection only; the grammar registry stays full so
+    // older content naming an unusual language keeps its colours.
+    const html = await renderMarkdown("```rust\nfn main() {}\n```");
+
+    expect(html).toContain("hljs-keyword");
+  });
+
   it("renders inline code", async () => {
     const html = await renderMarkdown("use `const` keyword");
     expect(html).toContain("<code>const</code>");

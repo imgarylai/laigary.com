@@ -20,9 +20,16 @@ import Color from "@tiptap/extension-color";
 import Focus from "@tiptap/extension-focus";
 import { InlineMath } from "./inline-math";
 import { LinkSuggestion } from "./link-suggestion";
-import { common, createLowlight } from "lowlight";
+import { createLowlight } from "lowlight";
+import { CODE_LANGUAGE_GRAMMARS } from "@/lib/code-languages";
 
-const lowlight = createLowlight(common);
+// Exactly the grammars lib/markdown.ts can auto-detect into — NOT lowlight's
+// `common` bundle. Both sides run highlightAuto on an untagged fence, so a
+// grammar registered here but absent there (or the reverse) would make the same
+// block resolve to different languages while writing vs once published.
+// Registering the shared list also keeps ~28 unused grammars out of the editor
+// chunk, which is already the heaviest thing the admin loads.
+const lowlight = createLowlight(CODE_LANGUAGE_GRAMMARS);
 
 export function createExtensions({ placeholder }: { placeholder: string }) {
   return [
