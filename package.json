@@ -16,6 +16,7 @@
     "deploy:wrangler": "pnpm run build && wrangler deploy",
     "destroy": "alchemy destroy",
     "lint": "oxlint",
+    "typecheck": "tsc --noEmit",
     "format": "oxfmt --write .",
     "format:check": "oxfmt --check .",
     "test": "vitest run",

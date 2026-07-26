@@ -40,7 +40,7 @@ describe("terminal layout", () => {
   it("renders a directory row with its three cells", () => {
     const { container } = render(
       <TmDirList>
-        <TmDirLink>
+        <TmDirLink to="/">
           <TmDirCells label="./behavior-question" desc="the writing" meta="42" />
         </TmDirLink>
       </TmDirList>,
@@ -53,7 +53,7 @@ describe("terminal layout", () => {
 
   it("renders a compact row with date / title / reading time", () => {
     render(
-      <TmRowLink>
+      <TmRowLink to="/">
         <TmRowCells date="01-02" title="Two Sum" read="3m" />
       </TmRowLink>,
     );
