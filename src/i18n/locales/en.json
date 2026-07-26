@@ -113,6 +113,7 @@
     "tags": "Tags",
     "tagsPlaceholder": "Select tags...",
     "content": "Content (Markdown)",
+    "settings": "Post settings",
     "contentPlaceholder": "Write your post in Markdown...",
     "create": "Create",
     "update": "Update",
@@ -277,6 +278,7 @@
     "title": "Title",
     "titlePlaceholder": "Page title",
     "slug": "Slug",
+    "settings": "Page settings",
     "slugPlaceholder": "page-slug",
     "create": "Create",
     "update": "Update",
@@ -330,6 +332,7 @@
   "noteForm": {
     "title": "Title",
     "slug": "Slug",
+    "settings": "Note settings",
     "section": "Section",
     "sectionPlaceholder": "Select a section",
     "status": "Status",

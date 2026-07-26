@@ -20,6 +20,7 @@ import {
   ContentField,
   CoverImageField,
 } from "./form-fields";
+import { EditorShell } from "./EditorShell";
 import type { TagOption } from "./TagsCombobox";
 
 export function PostForm({
@@ -94,54 +95,65 @@ export function PostForm({
   const canPreview = isEdit && initialData?.status === "published" && !!initialData?.slug;
 
   return (
-    <form onSubmit={submit} className="space-y-6">
-      <div className="grid gap-6 sm:grid-cols-2">
-        <TitleField control={form.control} onValueChange={handleTitleChange} />
-        <SlugField control={form.control} />
-      </div>
-
-      <div className="grid gap-6 sm:grid-cols-2">
-        <ExcerptField control={form.control} />
-        <StatusField control={form.control} />
-      </div>
-
-      <PinnedField control={form.control} />
-
-      <TagsField control={form.control} availableTags={availableTags} />
-
-      <CoverImageField control={form.control} title={form.watch("title")} ogBrand={ogBrand} />
-
-      <ContentField control={form.control} />
-
-      <div className="flex gap-3">
-        <Button type="submit" disabled={form.formState.isSubmitting}>
-          {form.formState.isSubmitting
-            ? t("postForm.saving")
-            : isEdit
-              ? t("postForm.update")
-              : t("postForm.create")}
-        </Button>
-        <Button type="button" variant="outline" onClick={() => navigate({ to: "/admin/posts" })}>
-          {t("postForm.cancel")}
-        </Button>
-        {canPreview && initialData && (
-          <Button
-            type="button"
-            variant="outline"
-            render={
-              <Link
-                to="/posts/$slug"
-                params={{ slug: initialData.slug }}
-                target="_blank"
-                rel="noreferrer"
-              />
-            }
-          >
-            <ArrowSquareOutIcon className="size-4" />
-            {t("postForm.preview")}
-          </Button>
+    <form onSubmit={submit}>
+      <EditorShell
+        heading={isEdit ? t("admin.editPost") : t("admin.newPost")}
+        settingsLabel={t("postForm.settings")}
+        settings={
+          <>
+            <SlugField control={form.control} />
+            <ExcerptField control={form.control} />
+            <StatusField control={form.control} />
+            <PinnedField control={form.control} />
+            <TagsField control={form.control} availableTags={availableTags} />
+            <CoverImageField control={form.control} title={form.watch("title")} ogBrand={ogBrand} />
+          </>
+        }
+        actions={
+          <>
+            {canPreview && initialData && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                render={
+                  <Link
+                    to="/posts/$slug"
+                    params={{ slug: initialData.slug }}
+                    target="_blank"
+                    rel="noreferrer"
+                  />
+                }
+              >
+                <ArrowSquareOutIcon className="size-4" />
+                {t("postForm.preview")}
+              </Button>
+            )}
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate({ to: "/admin/posts" })}
+            >
+              {t("postForm.cancel")}
+            </Button>
+            <Button type="submit" size="sm" disabled={form.formState.isSubmitting}>
+              {form.formState.isSubmitting
+                ? t("postForm.saving")
+                : isEdit
+                  ? t("postForm.update")
+                  : t("postForm.create")}
+            </Button>
+          </>
+        }
+      >
+        {({ showPreview }) => (
+          <>
+            <TitleField control={form.control} onValueChange={handleTitleChange} />
+            <ContentField control={form.control} showPreview={showPreview} />
+          </>
         )}
-      </div>
+      </EditorShell>
     </form>
   );
 }

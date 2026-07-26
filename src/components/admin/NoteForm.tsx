@@ -20,6 +20,8 @@ import { useSaveShortcut } from "@/hooks/use-save-shortcut";
 import { slugify } from "@/lib/slug";
 import { TagsCombobox, type TagOption } from "./TagsCombobox";
 import { TiptapEditor } from "./TiptapEditor";
+import { EditorShell } from "./EditorShell";
+import { EDITOR_TITLE_CLASS } from "./form-fields";
 import { createNoteFn, updateNoteFn } from "@/server/admin/interview";
 
 const noteFormSchema = z.object({
@@ -124,41 +126,44 @@ export function NoteForm({
   // can preview without going back to the list. Drafts have no public page.
   const canPreview = isEdit && note?.status === "published" && !!section && !!note?.slug;
 
-  return (
-    <form onSubmit={submit} className="space-y-6">
-      <div className="grid gap-6 sm:grid-cols-2">
-        <Controller
-          control={form.control}
-          name="title"
-          render={({ field, fieldState }) => (
-            <Field>
-              <FieldLabel htmlFor="note-title">{t("noteForm.title")}</FieldLabel>
-              <Input
-                id="note-title"
-                {...field}
-                onChange={(e) => {
-                  field.onChange(e);
-                  handleTitleChange(e.target.value);
-                }}
-              />
-              <FieldError errors={[fieldState.error]} />
-            </Field>
-          )}
-        />
-        <Controller
-          control={form.control}
-          name="slug"
-          render={({ field, fieldState }) => (
-            <Field>
-              <FieldLabel htmlFor="note-slug">{t("noteForm.slug")}</FieldLabel>
-              <Input id="note-slug" {...field} />
-              <FieldError errors={[fieldState.error]} />
-            </Field>
-          )}
-        />
-      </div>
+  const titleField = (
+    <Controller
+      control={form.control}
+      name="title"
+      render={({ field, fieldState }) => (
+        <Field>
+          <Input
+            id="note-title"
+            aria-label={t("noteForm.title")}
+            placeholder={t("postForm.titlePlaceholder")}
+            className={EDITOR_TITLE_CLASS}
+            {...field}
+            onChange={(e) => {
+              field.onChange(e);
+              handleTitleChange(e.target.value);
+            }}
+          />
+          <FieldError errors={[fieldState.error]} />
+        </Field>
+      )}
+    />
+  );
 
-      <div className="grid gap-6 sm:grid-cols-2">
+  const settings = (
+    <>
+      <Controller
+        control={form.control}
+        name="slug"
+        render={({ field, fieldState }) => (
+          <Field>
+            <FieldLabel htmlFor="note-slug">{t("noteForm.slug")}</FieldLabel>
+            <Input id="note-slug" {...field} />
+            <FieldError errors={[fieldState.error]} />
+          </Field>
+        )}
+      />
+
+      <>
         <Field>
           <FieldLabel htmlFor="note-section">{t("noteForm.section")}</FieldLabel>
           {isEdit ? (
@@ -209,7 +214,7 @@ export function NoteForm({
             </Field>
           )}
         />
-      </div>
+      </>
 
       <Controller
         control={form.control}
@@ -238,50 +243,72 @@ export function NoteForm({
           </Field>
         )}
       />
+    </>
+  );
 
-      <Controller
-        control={form.control}
-        name="contentMd"
-        render={({ field }) => (
-          <Field>
-            <TiptapEditor value={field.value} onChange={field.onChange} />
-          </Field>
+  return (
+    <form onSubmit={submit}>
+      <EditorShell
+        heading={isEdit ? t("admin.editNote") : t("admin.newNote")}
+        settingsLabel={t("noteForm.settings")}
+        settings={settings}
+        actions={
+          <>
+            {canPreview && section && note && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                render={
+                  <Link
+                    to="/interview/$section/$slug"
+                    params={{ section: section.slug, slug: note.slug }}
+                    target="_blank"
+                    rel="noreferrer"
+                  />
+                }
+              >
+                <ArrowSquareOutIcon className="size-4" />
+                {t("noteForm.preview")}
+              </Button>
+            )}
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate({ to: "/admin/interview/notes" })}
+            >
+              {t("noteForm.cancel")}
+            </Button>
+            <Button type="submit" size="sm" disabled={form.formState.isSubmitting}>
+              {form.formState.isSubmitting
+                ? t("noteForm.saving")
+                : isEdit
+                  ? t("noteForm.update")
+                  : t("noteForm.create")}
+            </Button>
+          </>
+        }
+      >
+        {({ showPreview }) => (
+          <>
+            {titleField}
+            <Controller
+              control={form.control}
+              name="contentMd"
+              render={({ field }) => (
+                <Field>
+                  <TiptapEditor
+                    value={field.value}
+                    onChange={field.onChange}
+                    showPreview={showPreview}
+                  />
+                </Field>
+              )}
+            />
+          </>
         )}
-      />
-
-      <div className="flex gap-3">
-        <Button type="submit" disabled={form.formState.isSubmitting}>
-          {form.formState.isSubmitting
-            ? t("noteForm.saving")
-            : isEdit
-              ? t("noteForm.update")
-              : t("noteForm.create")}
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => navigate({ to: "/admin/interview/notes" })}
-        >
-          {t("noteForm.cancel")}
-        </Button>
-        {canPreview && section && note && (
-          <Button
-            type="button"
-            variant="outline"
-            render={
-              <Link
-                to="/interview/$section/$slug"
-                params={{ section: section.slug, slug: note.slug }}
-                target="_blank"
-                rel="noreferrer"
-              />
-            }
-          >
-            <ArrowSquareOutIcon className="size-4" />
-            {t("noteForm.preview")}
-          </Button>
-        )}
-      </div>
+      </EditorShell>
     </form>
   );
 }
