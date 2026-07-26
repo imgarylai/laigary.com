@@ -1,12 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
-import { EyeIcon, EyeSlashIcon } from "@phosphor-icons/react";
 // KaTeX styles power the editor's live inline-math rendering (MathExtension).
 // Imported here so it code-splits into the client-only editor chunk rather than
 // the SSR worker bundle. The read-only frontend renders math via temml → MathML
 // (see lib/markdown.ts), so it needs no KaTeX CSS.
 import "katex/dist/katex.min.css";
-import { Button } from "@/components/ui/button";
 import { renderMarkdown } from "@/lib/markdown";
 import { Prose } from "@/features/terminal/Prose";
 import { useI18n } from "@/i18n/I18nProvider";
@@ -17,16 +15,25 @@ import { LinkDialog } from "./editor/LinkDialog";
 import { ImageUploadDialog } from "./editor/ImageUploadDialog";
 import { YouTubeDialog } from "./editor/YouTubeDialog";
 
+/** Height of the sticky action bar + toolbar above the panes, in px — the point
+ *  the editor pane has scrolled "past". Matches top-24 on the preview. */
+const STICKY_OFFSET_PX = 96;
+
 export default function TiptapEditorImpl({
   value,
   onChange,
+  showPreview,
 }: {
   value: string;
   onChange: (value: string) => void;
+  /** Owned by EditorShell: the toggle lives in the action bar, and the column
+   *  width depends on it. */
+  showPreview: boolean;
 }) {
   const { t } = useI18n();
-  const [showPreview, setShowPreview] = useState(true);
   const [previewHtml, setPreviewHtml] = useState("");
+  const editorPaneRef = useRef<HTMLDivElement>(null);
+  const previewPaneRef = useRef<HTMLDivElement>(null);
   const [linkOpen, setLinkOpen] = useState(false);
   // The insert dialogs live here, not inside the toolbar, because the `/` menu
   // opens them too — one dialog, two doors. `useState` setters are stable, so
@@ -78,6 +85,34 @@ export default function TiptapEditorImpl({
     return () => clearTimeout(timeout);
   }, [value, showPreview]);
 
+  // Keep the preview roughly where the editor is. The two panes scroll on
+  // different axes now — the document grows the page, while the preview is
+  // pinned and scrolls inside itself — so without this the left pane can show
+  // Python while the right still shows TypeScript. Proportional rather than
+  // line-mapped: the rendered output has different heights from the source, so
+  // an exact mapping would need position tracking the markdown pipeline does
+  // not carry.
+  useEffect(() => {
+    if (!showPreview) return;
+
+    function syncPreviewScroll() {
+      const pane = editorPaneRef.current;
+      const preview = previewPaneRef.current;
+      if (!pane || !preview) return;
+
+      const rect = pane.getBoundingClientRect();
+      const travel = rect.height - preview.clientHeight;
+      if (travel <= 0) return;
+
+      const ratio = Math.min(1, Math.max(0, (STICKY_OFFSET_PX - rect.top) / travel));
+      preview.scrollTop = ratio * (preview.scrollHeight - preview.clientHeight);
+    }
+
+    window.addEventListener("scroll", syncPreviewScroll, { passive: true });
+    syncPreviewScroll();
+    return () => window.removeEventListener("scroll", syncPreviewScroll);
+  }, [showPreview, previewHtml]);
+
   if (!editor) return null;
 
   // The admin sidebar (shadcn) binds Cmd/Ctrl+B on `window` to toggle itself.
@@ -100,35 +135,28 @@ export default function TiptapEditorImpl({
   }
 
   return (
-    <div className="space-y-2" onKeyDown={handleKeyDown}>
-      <div className="flex items-center justify-between">
-        <span className="text-sm font-medium">{t("postForm.content")}</span>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={() => setShowPreview((prev) => !prev)}
-        >
-          {showPreview ? <EyeSlashIcon className="mr-1.5" /> : <EyeIcon className="mr-1.5" />}
-          {showPreview ? t("postForm.hidePreview") : t("postForm.showPreview")}
-        </Button>
+    <div onKeyDown={handleKeyDown}>
+      {/* Sticky under the action bar (top-0, ~h-11), so formatting stays in
+          reach in a long document without giving the editor its own scrollbar. */}
+      <div className="sticky top-11 z-10 bg-background py-2">
+        <Toolbar editor={editor} onOpenLink={() => setLinkOpen(true)} />
       </div>
 
-      <Toolbar editor={editor} onOpenLink={() => setLinkOpen(true)} />
       <LinkDialog editor={editor} open={linkOpen} onOpenChange={setLinkOpen} />
       <ImageUploadDialog editor={editor} open={imageOpen} onOpenChange={setImageOpen} />
       <YouTubeDialog editor={editor} open={youtubeOpen} onOpenChange={setYoutubeOpen} />
 
-      {/* Both panes are a fixed height and scroll internally: a long document no
-          longer stretches the page, so the toolbar above stays within reach. */}
-      <div className={showPreview ? "grid grid-cols-2 gap-4" : ""}>
+      {/* One scrollbar: the editor grows with its content and the page scrolls.
+          The preview is the exception — it is a different length from the
+          document, so it sticks to the viewport and scrolls inside itself. */}
+      <div className={showPreview ? "flex items-start gap-6" : ""}>
         {/* `tm-code` opts the writable surface into the site's own code styling
             (terminal.css) so a fence looks here exactly like it will once
             published; `prose` still handles headings, lists and the rest. */}
-        <div className="flex h-[70vh] min-h-96 flex-col rounded-md border">
+        <div ref={editorPaneRef} className={showPreview ? "min-w-0 flex-1" : ""}>
           <EditorContent
             editor={editor}
-            className="tm-code prose dark:prose-invert max-w-none min-h-0 flex-1 overflow-y-auto p-4 text-sm [&_.ProseMirror]:min-h-full [&_.ProseMirror]:outline-none"
+            className="tm-code prose dark:prose-invert max-w-none text-sm [&_.ProseMirror]:min-h-[60vh] [&_.ProseMirror]:outline-none"
           />
           <CharacterCount editor={editor} />
         </div>
@@ -136,7 +164,10 @@ export default function TiptapEditorImpl({
         {/* The preview renders pipeline output, so it uses the very component
             the public page uses — same markup, same CSS, no second opinion. */}
         {showPreview && (
-          <div className="h-[70vh] min-h-96 overflow-auto rounded-md border p-4">
+          <div
+            ref={previewPaneRef}
+            className="sticky top-24 max-h-[calc(100vh-8rem)] min-w-0 flex-1 overflow-auto rounded-md border p-4"
+          >
             {previewHtml ? (
               <Prose html={previewHtml} />
             ) : (

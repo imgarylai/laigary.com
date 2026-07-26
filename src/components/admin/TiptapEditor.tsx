@@ -13,7 +13,11 @@ const TiptapEditorImpl = lazy(() => import("./TiptapEditorImpl"));
 
 const fallback = <Skeleton className="min-h-[500px] w-full rounded-md border" />;
 
-export function TiptapEditor(props: { value: string; onChange: (value: string) => void }) {
+export function TiptapEditor(props: {
+  value: string;
+  onChange: (value: string) => void;
+  showPreview: boolean;
+}) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
