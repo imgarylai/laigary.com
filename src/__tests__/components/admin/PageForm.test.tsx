@@ -93,4 +93,20 @@ describe("PageForm", () => {
 
     await waitFor(() => expect(upsertPageFn).toHaveBeenCalledTimes(1));
   });
+
+  it("should say it is editing, lock the slug, and revalidate on an existing page", async () => {
+    // The edit branch of every isEdit ternary: heading, button label, and the
+    // slug being read-only because it is the page's public URL.
+    upsertPageFn.mockResolvedValue({ ok: true });
+    render(<PageForm page={{ slug: "about", title: "About", contentMd: "hi" }} />);
+
+    expect(screen.getByText("admin.editPage")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "pageForm.settings" }));
+    expect((await screen.findByLabelText("pageForm.slug")).hasAttribute("readonly")).toBe(true);
+    fireEvent.keyDown(document.body, { key: "Escape" });
+
+    fireEvent.click(screen.getByRole("button", { name: "pageForm.update" }));
+
+    await waitFor(() => expect(invalidate).toHaveBeenCalled());
+  });
 });
