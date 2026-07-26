@@ -8,6 +8,7 @@ import { EyeIcon, EyeSlashIcon } from "@phosphor-icons/react";
 import "katex/dist/katex.min.css";
 import { Button } from "@/components/ui/button";
 import { renderMarkdown } from "@/lib/markdown";
+import { Prose } from "@/features/terminal/Prose";
 import { useI18n } from "@/i18n/I18nProvider";
 import { createExtensions } from "./editor/extensions";
 import { Toolbar } from "./editor/Toolbar";
@@ -106,21 +107,23 @@ export default function TiptapEditorImpl({
       {/* Both panes are a fixed height and scroll internally: a long document no
           longer stretches the page, so the toolbar above stays within reach. */}
       <div className={showPreview ? "grid grid-cols-2 gap-4" : ""}>
+        {/* `tm-code` opts the writable surface into the site's own code styling
+            (terminal.css) so a fence looks here exactly like it will once
+            published; `prose` still handles headings, lists and the rest. */}
         <div className="flex h-[70vh] min-h-96 flex-col rounded-md border">
           <EditorContent
             editor={editor}
-            className="prose dark:prose-invert max-w-none min-h-0 flex-1 overflow-y-auto p-4 text-sm [&_.ProseMirror]:min-h-full [&_.ProseMirror]:outline-none"
+            className="tm-code prose dark:prose-invert max-w-none min-h-0 flex-1 overflow-y-auto p-4 text-sm [&_.ProseMirror]:min-h-full [&_.ProseMirror]:outline-none"
           />
           <CharacterCount editor={editor} />
         </div>
 
+        {/* The preview renders pipeline output, so it uses the very component
+            the public page uses — same markup, same CSS, no second opinion. */}
         {showPreview && (
           <div className="h-[70vh] min-h-96 overflow-auto rounded-md border p-4">
             {previewHtml ? (
-              <div
-                className="prose dark:prose-invert max-w-none text-sm"
-                dangerouslySetInnerHTML={{ __html: previewHtml }}
-              />
+              <Prose html={previewHtml} />
             ) : (
               <p className="text-sm text-muted-foreground">{t("postForm.previewPlaceholder")}</p>
             )}
