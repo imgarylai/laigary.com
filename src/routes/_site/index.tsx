@@ -2,7 +2,15 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { homeDataFn } from "@/server/public";
 import { SITE_ORIGIN, serializeJsonLd, webSiteLd } from "@/lib/json-ld";
 import { canonicalLink, ogMeta } from "@/lib/og-meta";
-import { AsciiRule, PromptLine, TmPage, TmMeta, TmDirLink, TmDirCells } from "@/features/terminal";
+import {
+  AsciiRule,
+  PromptLine,
+  TmPage,
+  TmMeta,
+  TmDirList,
+  TmDirLink,
+  TmDirCells,
+} from "@/features/terminal";
 import { useI18n } from "@/i18n/I18nProvider";
 import { FS_BLOG } from "@/lib/fsmap";
 import { fmtDate } from "@/lib/date";
@@ -95,13 +103,13 @@ function Home() {
       <AsciiRule className="mt-1 mb-6" />
 
       <PromptLine>{FS_BLOG.home.prompt()}</PromptLine>
-      <div className="mb-8 flex flex-col">
+      <TmDirList className="mb-8">
         {dirs.map((d) => (
           <TmDirLink key={d.label} to={d.to} params={d.params}>
             <TmDirCells label={d.label} desc={d.desc} meta={d.meta} />
           </TmDirLink>
         ))}
-      </div>
+      </TmDirList>
 
       <p className="text-sm leading-relaxed text-tm-muted">
         <Link to="/posts" className="text-tm-accent no-underline">

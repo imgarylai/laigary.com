@@ -13,7 +13,7 @@ vi.mock(import("@tanstack/react-router"), async (importOriginal) => ({
   createLink: ((Comp: unknown) => Comp) as never,
 }));
 
-const { TmPage, TmMeta, TmEmpty, TmDirLink, TmDirCells, TmRowLink, TmRowCells } =
+const { TmPage, TmMeta, TmEmpty, TmDirList, TmDirLink, TmDirCells, TmRowLink, TmRowCells } =
   await import("@/features/terminal/layout");
 
 afterEach(cleanup);
@@ -35,15 +35,20 @@ describe("terminal layout", () => {
     expect(screen.getByText("// nothing here")).toBeTruthy();
   });
 
+  // The row subgrids onto the list's columns, so a long label never wraps: the
+  // list's first track is content-sized (150px floor) and the label is nowrap.
   it("renders a directory row with its three cells", () => {
-    render(
-      <TmDirLink>
-        <TmDirCells label="./posts" desc="the writing" meta="42" />
-      </TmDirLink>,
+    const { container } = render(
+      <TmDirList>
+        <TmDirLink>
+          <TmDirCells label="./behavior-question" desc="the writing" meta="42" />
+        </TmDirLink>
+      </TmDirList>,
     );
-    expect(screen.getByText("./posts")).toBeTruthy();
     expect(screen.getByText("the writing")).toBeTruthy();
     expect(screen.getByText("42")).toBeTruthy();
+    expect(container.firstElementChild?.className).toContain("minmax(150px,max-content)");
+    expect(screen.getByText("./behavior-question").className).toContain("whitespace-nowrap");
   });
 
   it("renders a compact row with date / title / reading time", () => {

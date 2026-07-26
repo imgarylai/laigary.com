@@ -34,14 +34,34 @@ export function TmEmpty({ children }: { children: ReactNode }) {
   return <div className="py-6 text-sm text-tm-muted">{children}</div>;
 }
 
+// Wrapper for a run of TmDirLink rows. It owns the column tracks so every row
+// shares them (the rows subgrid onto it): the label column is sized by the
+// longest label in the list rather than a fixed width, so a long entry like
+// `./behavior-question` stays on one line instead of wrapping, and the
+// description column still starts at the same x on every row. 150px is the
+// floor so short listings keep the original proportions.
+export function TmDirList({ className, children }: { className?: string; children: ReactNode }) {
+  return (
+    <div
+      className={cn(
+        "grid grid-cols-[minmax(150px,max-content)_1fr_auto] max-sm:grid-cols-[1fr_auto]",
+        className,
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
 // Directory-listing row (home + interview home). A three-column link; caller
-// supplies the label / description / meta spans.
+// supplies the label / description / meta spans. Must be rendered inside a
+// TmDirList — the columns come from it via subgrid.
 const TmDirLinkBase = forwardRef<HTMLAnchorElement, AnchorHTMLAttributes<HTMLAnchorElement>>(
   ({ className, ...props }, ref) => (
     <a
       ref={ref}
       className={cn(
-        "grid grid-cols-[150px_1fr_auto] items-baseline gap-x-3.5 gap-y-0 border-b border-dashed border-tm-border px-2 py-3.5 text-tm-fg no-underline hover:bg-tm-subtle max-sm:grid-cols-[1fr_auto] max-sm:gap-y-1",
+        "col-span-3 grid grid-cols-subgrid items-baseline gap-x-3.5 gap-y-0 border-b border-dashed border-tm-border px-2 py-3.5 text-tm-fg no-underline hover:bg-tm-subtle max-sm:col-span-2 max-sm:gap-y-1",
         className,
       )}
       {...props}
@@ -63,7 +83,7 @@ export function TmDirCells({
 }) {
   return (
     <>
-      <span className="text-base text-tm-accent">{label}</span>
+      <span className="whitespace-nowrap text-base text-tm-accent">{label}</span>
       <span className="text-sm text-tm-fg max-sm:col-span-full">{desc}</span>
       <span className="whitespace-nowrap text-xs text-tm-muted">{meta}</span>
     </>
