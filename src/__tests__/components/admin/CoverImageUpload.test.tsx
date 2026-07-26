@@ -20,7 +20,26 @@ vi.mock("@/i18n/I18nProvider", () => ({
 // react-image-crop measures layout, which jsdom does not do; the crop maths
 // itself is covered in upload-client.test.ts.
 vi.mock("react-image-crop", () => ({
-  default: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
+  default: ({
+    children,
+    onComplete,
+  }: {
+    children?: React.ReactNode;
+    onComplete?: (c: unknown) => void;
+  }) => (
+    <div>
+      {/* Stands in for dragging out a crop: jsdom has no layout, so the real
+          cropper never fires onComplete on its own. */}
+      <button
+        type="button"
+        data-testid="finish-crop"
+        onClick={() => onComplete?.({ x: 0, y: 0, width: 160, height: 90, unit: "px" })}
+      >
+        crop
+      </button>
+      {children}
+    </div>
+  ),
   centerCrop: (c: unknown) => c,
   makeAspectCrop: (c: unknown) => c,
 }));
@@ -105,5 +124,59 @@ describe("CoverImageUpload", () => {
     renderCover("/uploads/cover.png");
 
     expect(screen.getByRole("button", { name: "postForm.changeCover" })).toBeTruthy();
+  });
+
+  /** Walk the dialog to the point where Upload is live. */
+  async function pickAndCrop() {
+    fireEvent.click(screen.getByRole("button", { name: /postForm.(upload|change)Cover/ }));
+    await screen.findByRole("dialog");
+    const input = document.querySelector('input[type="file"]')!;
+    fireEvent.change(input, {
+      target: { files: [new File(["img"], "shot.png", { type: "image/png" })] },
+    });
+    fireEvent.load(await screen.findByAltText("Crop"));
+    fireEvent.click(screen.getByTestId("finish-crop"));
+  }
+
+  it("should crop, compress and upload the chosen file, then adopt the URL", async () => {
+    getCroppedBlob.mockResolvedValue(new Blob(["x"], { type: "image/jpeg" }));
+    compressImage.mockImplementation(async (f: File) => f);
+    uploadFile.mockResolvedValue("/uploads/new-cover.jpg");
+    const { onChange } = renderCover();
+
+    await pickAndCrop();
+    fireEvent.click(screen.getByRole("button", { name: "editor.uploadImage" }));
+
+    await waitFor(() => expect(onChange).toHaveBeenCalledWith("/uploads/new-cover.jpg"));
+    // Cropped first, then compressed, then sent — uploading the original would
+    // ignore both the frame and the size cap.
+    expect(getCroppedBlob).toHaveBeenCalled();
+    expect(compressImage).toHaveBeenCalled();
+    expect(uploadFile).toHaveBeenCalled();
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  });
+
+  it("should keep the dialog open and show why when the upload fails", async () => {
+    getCroppedBlob.mockResolvedValue(new Blob(["x"], { type: "image/jpeg" }));
+    compressImage.mockImplementation(async (f: File) => f);
+    uploadFile.mockRejectedValue(new Error("R2 said no"));
+    const { onChange } = renderCover();
+
+    await pickAndCrop();
+    fireEvent.click(screen.getByRole("button", { name: "editor.uploadImage" }));
+
+    expect(await screen.findByText("R2 said no")).toBeTruthy();
+    expect(onChange).not.toHaveBeenCalled();
+    expect(screen.getByRole("dialog")).toBeTruthy();
+  });
+
+  it("should enable uploading once a crop exists", async () => {
+    renderCover();
+
+    await pickAndCrop();
+
+    expect(
+      screen.getByRole("button", { name: "editor.uploadImage" }).hasAttribute("disabled"),
+    ).toBe(false);
   });
 });
