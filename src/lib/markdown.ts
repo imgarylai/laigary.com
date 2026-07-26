@@ -9,6 +9,7 @@ import rehypeRaw from "rehype-raw";
 import rehypeSlug from "rehype-slug";
 import temml from "temml";
 import type { Element, Text } from "hast";
+import { DETECTABLE_LANGUAGES } from "./code-languages";
 
 // Render LaTeX → MathML at SSR time using temml. Bundling katex blew past
 // Cloudflare's 3 MiB Worker limit; temml is ~125 KiB minified and emits MathML,
@@ -58,12 +59,12 @@ const processor = unified()
   // languages this blog actually uses), so untagged code still gets colors.
   // Content that must stay uncolored (example output, ASCII diagrams) opts out
   // with ```text — the established convention in the note corpus.
-  .use(rehypeHighlight, {
-    detect: true,
-    // no cpp: the author doesn't write it, and its grammar loves to claim
-    // python snippets (both corpus "cpp" detections were actually python).
-    subset: ["python", "javascript", "typescript", "java", "go", "sql", "bash", "json", "yaml"],
-  })
+  //
+  // The subset comes from lib/code-languages so the editor detects into the
+  // same pool; see that module for why the two must not drift. Only detection
+  // is narrowed — rehype-highlight keeps its full grammar registry, so a fence
+  // that names a language outside the subset still highlights.
+  .use(rehypeHighlight, { detect: true, subset: DETECTABLE_LANGUAGES })
   .use(rehypeStringify, { allowDangerousHtml: true });
 
 export async function renderMarkdown(markdown: string): Promise<string> {
