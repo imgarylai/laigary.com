@@ -4,13 +4,6 @@ import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useI18n } from "@/i18n/I18nProvider";
 import { TagsCombobox, type TagOption } from "./TagsCombobox";
 import { TiptapEditor } from "./TiptapEditor";
@@ -118,16 +111,16 @@ export function StatusField({ control }: { control: Ctrl }) {
       name="status"
       render={({ field }) => (
         <Field>
-          <FieldLabel htmlFor="post-status">{t("postForm.status")}</FieldLabel>
-          <Select value={field.value} onValueChange={(v) => field.onChange(v)}>
-            <SelectTrigger id="post-status">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="draft">{t("postForm.draft")}</SelectItem>
-              <SelectItem value="published">{t("postForm.published")}</SelectItem>
-            </SelectContent>
-          </Select>
+          {/* Two states, so a switch rather than a select of two options — and
+              it reads as a pair with Pinned directly below. Off is draft. */}
+          <div className="flex items-center gap-3">
+            <Switch
+              id="post-status"
+              checked={field.value === "published"}
+              onCheckedChange={(checked) => field.onChange(checked ? "published" : "draft")}
+            />
+            <FieldLabel htmlFor="post-status">{t("postForm.published")}</FieldLabel>
+          </div>
         </Field>
       )}
     />

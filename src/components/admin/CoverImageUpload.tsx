@@ -90,7 +90,7 @@ function reducer(state: CoverState, action: CoverAction): CoverState {
 // of hardcoding the site name / url here.
 function OGFallback({ title, brand }: { title: string; brand: string }) {
   return (
-    <div className="flex aspect-video w-full flex-col justify-between bg-[#0a0a0a] p-6 text-white">
+    <div className="flex aspect-[1200/630] w-full flex-col justify-between bg-[#0a0a0a] p-6 text-white">
       <div
         className="leading-tight font-bold"
         style={{ fontSize: title.length > 40 ? "1rem" : "1.25rem" }}
@@ -159,11 +159,15 @@ export function CoverImageUpload({
 
   return (
     <>
-      <div className="grid grid-cols-2 gap-4">
+      {/* Stacked, not side by side: in the settings sheet two columns leave
+          each about 180px, which is too small to judge a cover by. Full width
+          also lets the preview show the real 1200×630 OG ratio — `aspect-video`
+          is 16:9 and quietly misrepresented it. */}
+      <div className="flex flex-col gap-3">
         <Button
           type="button"
           variant="outline"
-          className="flex aspect-video h-auto flex-col items-center justify-center gap-1 border-dashed"
+          className="flex h-auto flex-col items-center justify-center gap-1 border-dashed py-6"
           onClick={() => dispatch({ type: "open" })}
         >
           <ImageIcon className="size-6 text-muted-foreground" />
@@ -175,7 +179,7 @@ export function CoverImageUpload({
         <div className="relative overflow-hidden rounded-none border">
           {value ? (
             <>
-              <img src={value} alt="Cover" className="aspect-video w-full object-cover" />
+              <img src={value} alt="Cover" className="aspect-[1200/630] w-full object-cover" />
               <Button
                 type="button"
                 variant="destructive"

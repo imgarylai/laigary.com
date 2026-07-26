@@ -201,16 +201,16 @@ export function NoteForm({
           name="status"
           render={({ field }) => (
             <Field>
-              <FieldLabel htmlFor="note-status">{t("noteForm.status")}</FieldLabel>
-              <Select value={field.value} onValueChange={(v) => field.onChange(v)}>
-                <SelectTrigger id="note-status">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="draft">{t("postForm.draft")}</SelectItem>
-                  <SelectItem value="published">{t("postForm.published")}</SelectItem>
-                </SelectContent>
-              </Select>
+              {/* Binary, so a switch — matching the post editor and the Pinned
+                  toggle below it. Off is draft. */}
+              <div className="flex items-center gap-3">
+                <Switch
+                  id="note-status"
+                  checked={field.value === "published"}
+                  onCheckedChange={(checked) => field.onChange(checked ? "published" : "draft")}
+                />
+                <FieldLabel htmlFor="note-status">{t("postForm.published")}</FieldLabel>
+              </div>
             </Field>
           )}
         />
