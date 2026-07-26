@@ -110,6 +110,7 @@
     "coverImage": "Cover Image",
     "uploadCover": "Upload cover image",
     "changeCover": "Change cover image",
+    "removeCover": "Remove cover",
     "tags": "Tags",
     "tagsPlaceholder": "Select tags...",
     "content": "Content (Markdown)",
