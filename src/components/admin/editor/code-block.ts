@@ -1,8 +1,40 @@
 import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
-import { ReactNodeViewRenderer } from "@tiptap/react";
+// InputRule comes from @tiptap/core, which pnpm does not expose transitively;
+// @tiptap/react re-exports it, the same route link-suggestion.tsx uses.
+import { InputRule, ReactNodeViewRenderer } from "@tiptap/react";
 import type { EditorState, Transaction } from "@tiptap/pm/state";
+import type { EditorView } from "@tiptap/pm/view";
 import { CodeBlockCard } from "./CodeBlockCard";
 import { INDENT_UNIT, outdentWidth, selectedLineStarts, spansMultipleLines } from "./code-indent";
+
+/**
+ * An opening fence, optionally followed by a word, closed by whitespace.
+ *
+ * The word is captured but NOT assumed to be a language — deciding that is the
+ * whole point of the rule below. `\n` matters: ProseMirror's inputRules plugin
+ * re-runs rules with a newline appended when Enter is pressed, which is what
+ * makes ` ``` ` + Enter open a block.
+ */
+const FENCE_INPUT_RE = /^(```|~~~)([A-Za-z0-9+#._-]*)(\s)$/;
+
+/**
+ * Push the state's selection back into the DOM once the card has mounted.
+ *
+ * Creating a code block gives ProseMirror the right selection immediately, but
+ * the card is a React NodeView whose contentDOM only appears a frame later — so
+ * the browser caret is left in the block after it, and the next keystroke lands
+ * outside the code even though `state.selection` says otherwise.
+ *
+ * `view.focus()` rather than the chainable `focus()` command: that one no-ops
+ * when the editor already has focus, which it does in every path that needs
+ * this.
+ */
+export function restoreCaretAfterMount(editor: { view: EditorView; isDestroyed: boolean }): void {
+  requestAnimationFrame(() => {
+    if (editor.isDestroyed) return;
+    editor.view.focus();
+  });
+}
 
 /** The code block the cursor is inside, with the document position its text
  *  content starts at — or null when the selection is elsewhere. */
@@ -39,6 +71,54 @@ function activeCodeBlock(state: EditorState, name: string) {
 export const CodeBlockCardExtension = CodeBlockLowlight.extend({
   addNodeView() {
     return ReactNodeViewRenderer(CodeBlockCard);
+  },
+
+  addInputRules() {
+    // Replaces the default backtick/tilde rules, which captured whatever word
+    // followed the fence and made it the language. Typing ` ``` ` and carrying
+    // on with `const x = 1;` produced a block tagged ```const with `const`
+    // deleted from the code (#172) — and until #170 the language could not be
+    // corrected afterwards.
+    const { lowlight } = this.options;
+
+    return [
+      new InputRule({
+        find: FENCE_INPUT_RE,
+        handler: ({ state, range, match }) => {
+          const [, fence, word, trailing] = match;
+          const $start = state.doc.resolve(range.from);
+          const canReplace = $start
+            .node(-1)
+            .canReplaceWith($start.index(-1), $start.indexAfter(-1), this.type);
+          if (!canReplace) return null;
+
+          // A word only becomes the language when it actually names one of the
+          // registered grammars. Anything else is code the author was already
+          // typing, so it is kept rather than eaten.
+          if (word.length > 0 && lowlight.registered(word)) {
+            state.tr
+              .delete(range.from, range.to)
+              .setBlockType(range.from, range.from, this.type, { language: word });
+            restoreCaretAfterMount(this.editor);
+            return;
+          }
+
+          // Drop the fence only, so ` ```const ` opens a block containing
+          // `const ` — where the text was headed anyway.
+          const tr = state.tr.delete(range.from, range.from + fence.length);
+          // The triggering character is still pending: ProseMirror inserts it
+          // only when no rule handles the input. Put it back so `const` and
+          // whatever is typed next do not run together — but only when there is
+          // a word to separate it from. After a bare ` ``` ` (or an Enter) the
+          // keystroke merely closed the fence and is not part of the code.
+          if (word.length > 0 && trailing !== "\n") {
+            tr.insertText(trailing, range.from + word.length);
+          }
+          tr.setBlockType(range.from, range.from, this.type, { language: null });
+          restoreCaretAfterMount(this.editor);
+        },
+      }),
+    ];
   },
 
   addKeyboardShortcuts() {
