@@ -57,6 +57,19 @@ const existingNote = {
   tagIds: ["tag-1"],
 };
 
+// Slug, section, status, pinned and tags now live in the settings sheet (#174),
+// so anything touching them has to open it first — the writing surface is only
+// the title and the editor.
+function openSettings() {
+  fireEvent.click(screen.getByRole("button", { name: "noteForm.settings" }));
+}
+
+// The sheet is modal, so the action bar behind it is inert while it is open —
+// close it before reaching for Save.
+function closeSettings() {
+  fireEvent.keyDown(document.activeElement ?? document.body, { key: "Escape" });
+}
+
 // Base UI's Select renders its listbox in a portal only once opened. Open the
 // trigger, then click the option with the given text.
 function selectOption(trigger: HTMLElement, optionText: string) {
@@ -74,6 +87,7 @@ describe("NoteForm", () => {
   it("shows the section label, not the raw UUID, in the section select trigger", () => {
     render(<NoteForm sections={sections} tags={tags} />);
 
+    openSettings();
     const trigger = screen.getByLabelText("noteForm.section");
     // The default-selected section renders its label ("Coding"), never its id.
     expect(trigger.textContent).toContain("Coding");
@@ -115,7 +129,9 @@ describe("NoteForm", () => {
     render(<NoteForm sections={sections} tags={tags} />);
 
     fireEvent.change(screen.getByLabelText("noteForm.title"), { target: { value: "Note" } });
+    openSettings();
     selectOption(screen.getByLabelText("noteForm.section"), "Behavior Question");
+    closeSettings();
     fireEvent.click(screen.getByRole("button", { name: "noteForm.create" }));
 
     await waitFor(() => expect(createNoteFn).toHaveBeenCalledTimes(1));
@@ -127,8 +143,10 @@ describe("NoteForm", () => {
     render(<NoteForm sections={sections} tags={tags} />);
 
     fireEvent.change(screen.getByLabelText("noteForm.title"), { target: { value: "Note" } });
+    openSettings();
     fireEvent.click(screen.getByRole("switch"));
     selectOption(screen.getByLabelText("noteForm.status"), "postForm.published");
+    closeSettings();
     fireEvent.click(screen.getByRole("button", { name: "noteForm.create" }));
 
     await waitFor(() => expect(createNoteFn).toHaveBeenCalledTimes(1));
@@ -142,6 +160,7 @@ describe("NoteForm", () => {
     render(<NoteForm note={existingNote} sections={sections} tags={tags} />);
 
     // Section is fixed (read-only) and shows the label, not the UUID.
+    openSettings();
     const sectionField = screen.getByLabelText("noteForm.section") as HTMLInputElement;
     expect(sectionField.value).toBe("Behavior Question");
     expect(sectionField.value).not.toBe(sections[1].id);
@@ -149,6 +168,7 @@ describe("NoteForm", () => {
     // Published note with a slug exposes a preview link to its public page.
     expect(screen.getByText("noteForm.preview")).toBeTruthy();
 
+    closeSettings();
     fireEvent.click(screen.getByRole("button", { name: "noteForm.update" }));
     await waitFor(() => expect(updateNoteFn).toHaveBeenCalledTimes(1));
     expect(updateNoteFn.mock.calls[0][0].data.id).toBe("note-1");
@@ -182,6 +202,7 @@ describe("NoteForm", () => {
 
   it("does not auto-fill the slug when editing an existing note's title", () => {
     render(<NoteForm note={existingNote} sections={sections} tags={tags} />);
+    openSettings();
     const slug = screen.getByLabelText("noteForm.slug") as HTMLInputElement;
     expect(slug.value).toBe("my-note");
     // In edit mode the slug is left alone as the title changes.
@@ -191,6 +212,7 @@ describe("NoteForm", () => {
 
   it("renders with an empty sectionId when there are no sections", () => {
     render(<NoteForm sections={[]} tags={tags} />);
+    openSettings();
     expect(screen.getByLabelText("noteForm.section")).toBeTruthy();
   });
 
