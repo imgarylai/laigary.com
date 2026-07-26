@@ -108,6 +108,38 @@ describe("slash items", () => {
     editor.destroy();
   });
 
+  it("should do something to the document for every item that is not a dialog", () => {
+    // Covers each item's `run` rather than a hand-picked few: an entry that
+    // silently did nothing would look identical in the menu.
+    const dialogBacked = new Set(["image", "youtube"]);
+
+    for (const item of SLASH_ITEMS.filter((i) => !dialogBacked.has(i.key))) {
+      const editor = makeEditor();
+      const before = JSON.stringify(editor.getJSON());
+
+      runItem(editor, item.key);
+
+      expect(JSON.stringify(editor.getJSON()), `${item.key} changed nothing`).not.toBe(before);
+      editor.destroy();
+    }
+  });
+
+  it("should reach a dialog for every item that needs one", () => {
+    const dialogBacked = ["image", "youtube"] as const;
+
+    for (const key of dialogBacked) {
+      const openImage = vi.fn();
+      const openYouTube = vi.fn();
+      const editor = makeEditor();
+
+      runItem(editor, key, { openImage, openYouTube });
+
+      const opened = key === "image" ? openImage : openYouTube;
+      expect(opened, `${key} opened no dialog`).toHaveBeenCalled();
+      editor.destroy();
+    }
+  });
+
   it("should have a translated label in both locales for every item", () => {
     // A missing key renders as the raw key string in the menu.
     for (const item of SLASH_ITEMS) {
