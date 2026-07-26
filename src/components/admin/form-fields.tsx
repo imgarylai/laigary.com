@@ -36,6 +36,14 @@ export type PostFormValues = z.infer<typeof postFormSchema>;
 
 type Ctrl = Control<PostFormValues>;
 
+/**
+ * The title doubles as the page heading, so it carries no label and no chrome —
+ * the placeholder is the only affordance it needs. Shared with NoteForm via the
+ * className so both editors present the same writing surface.
+ */
+export const EDITOR_TITLE_CLASS =
+  "h-auto rounded-none border-0 bg-transparent px-0 py-1 text-2xl font-bold tracking-tight shadow-none md:text-3xl focus-visible:border-0 focus-visible:ring-0 dark:bg-transparent";
+
 export function TitleField({
   control,
   onValueChange,
@@ -50,10 +58,11 @@ export function TitleField({
       name="title"
       render={({ field, fieldState }) => (
         <Field>
-          <FieldLabel htmlFor="post-title">{t("postForm.title")}</FieldLabel>
           <Input
             id="post-title"
+            aria-label={t("postForm.title")}
             placeholder={t("postForm.titlePlaceholder")}
+            className={EDITOR_TITLE_CLASS}
             {...field}
             onChange={(e) => {
               field.onChange(e);
@@ -169,14 +178,14 @@ export function TagsField({
   );
 }
 
-export function ContentField({ control }: { control: Ctrl }) {
+export function ContentField({ control, showPreview }: { control: Ctrl; showPreview: boolean }) {
   return (
     <Controller
       control={control}
       name="contentMd"
       render={({ field, fieldState }) => (
         <Field>
-          <TiptapEditor value={field.value} onChange={field.onChange} />
+          <TiptapEditor value={field.value} onChange={field.onChange} showPreview={showPreview} />
           <FieldError errors={[fieldState.error]} />
         </Field>
       )}
