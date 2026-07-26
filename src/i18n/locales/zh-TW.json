@@ -113,6 +113,7 @@
     "tags": "標籤",
     "tagsPlaceholder": "選擇標籤...",
     "content": "內容（Markdown）",
+    "settings": "文章設定",
     "contentPlaceholder": "用 Markdown 撰寫文章...",
     "create": "建立",
     "update": "更新",
@@ -277,6 +278,7 @@
     "title": "標題",
     "titlePlaceholder": "頁面標題",
     "slug": "Slug",
+    "settings": "頁面設定",
     "slugPlaceholder": "page-slug",
     "create": "建立",
     "update": "更新",
@@ -330,6 +332,7 @@
   "noteForm": {
     "title": "標題",
     "slug": "Slug",
+    "settings": "筆記設定",
     "section": "分類",
     "sectionPlaceholder": "選擇分類",
     "status": "狀態",

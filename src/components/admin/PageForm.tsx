@@ -10,6 +10,8 @@ import { useI18n } from "@/i18n/I18nProvider";
 import { useSaveShortcut } from "@/hooks/use-save-shortcut";
 import { slugify } from "@/lib/slug";
 import { TiptapEditor } from "./TiptapEditor";
+import { EditorShell } from "./EditorShell";
+import { EDITOR_TITLE_CLASS } from "./form-fields";
 import { upsertPageFn } from "@/server/admin/pages";
 
 const pageFormSchema = z.object({
@@ -60,68 +62,87 @@ export function PageForm({ page }: { page?: { slug: string; title: string; conte
   });
 
   return (
-    <form onSubmit={submit} className="space-y-6">
-      <div className="grid gap-6 sm:grid-cols-2">
-        <Controller
-          control={form.control}
-          name="title"
-          render={({ field, fieldState }) => (
-            <Field>
-              <FieldLabel htmlFor="page-title">{t("pageForm.title")}</FieldLabel>
-              <Input
-                id="page-title"
-                placeholder={t("pageForm.titlePlaceholder")}
-                {...field}
-                onChange={(e) => {
-                  field.onChange(e);
-                  handleTitleChange(e.target.value);
-                }}
-              />
-              <FieldError errors={[fieldState.error]} />
-            </Field>
-          )}
-        />
-        <Controller
-          control={form.control}
-          name="slug"
-          render={({ field, fieldState }) => (
-            <Field>
-              <FieldLabel htmlFor="page-slug">{t("pageForm.slug")}</FieldLabel>
-              <Input
-                id="page-slug"
-                placeholder={t("pageForm.slugPlaceholder")}
-                readOnly={isEdit}
-                disabled={isEdit}
-                {...field}
-              />
-              <FieldError errors={[fieldState.error]} />
-            </Field>
-          )}
-        />
-      </div>
-
-      <Controller
-        control={form.control}
-        name="contentMd"
-        render={({ field }) => (
-          <Field>
-            <TiptapEditor value={field.value} onChange={field.onChange} />
-          </Field>
+    <form onSubmit={submit}>
+      <EditorShell
+        heading={isEdit ? t("admin.editPage") : t("admin.newPage")}
+        settingsLabel={t("pageForm.settings")}
+        settings={
+          <Controller
+            control={form.control}
+            name="slug"
+            render={({ field, fieldState }) => (
+              <Field>
+                <FieldLabel htmlFor="page-slug">{t("pageForm.slug")}</FieldLabel>
+                <Input
+                  id="page-slug"
+                  placeholder={t("pageForm.slugPlaceholder")}
+                  readOnly={isEdit}
+                  disabled={isEdit}
+                  {...field}
+                />
+                <FieldError errors={[fieldState.error]} />
+              </Field>
+            )}
+          />
+        }
+        actions={
+          <>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate({ to: "/admin/pages" })}
+            >
+              {t("pageForm.cancel")}
+            </Button>
+            <Button type="submit" size="sm" disabled={form.formState.isSubmitting}>
+              {form.formState.isSubmitting
+                ? t("pageForm.saving")
+                : isEdit
+                  ? t("pageForm.update")
+                  : t("pageForm.create")}
+            </Button>
+          </>
+        }
+      >
+        {({ showPreview }) => (
+          <>
+            <Controller
+              control={form.control}
+              name="title"
+              render={({ field, fieldState }) => (
+                <Field>
+                  <Input
+                    id="page-title"
+                    aria-label={t("pageForm.title")}
+                    placeholder={t("pageForm.titlePlaceholder")}
+                    className={EDITOR_TITLE_CLASS}
+                    {...field}
+                    onChange={(e) => {
+                      field.onChange(e);
+                      handleTitleChange(e.target.value);
+                    }}
+                  />
+                  <FieldError errors={[fieldState.error]} />
+                </Field>
+              )}
+            />
+            <Controller
+              control={form.control}
+              name="contentMd"
+              render={({ field }) => (
+                <Field>
+                  <TiptapEditor
+                    value={field.value}
+                    onChange={field.onChange}
+                    showPreview={showPreview}
+                  />
+                </Field>
+              )}
+            />
+          </>
         )}
-      />
-
-      <div className="flex gap-3">
-        <Button type="submit" disabled={form.formState.isSubmitting}>
-          {form.formState.isSubmitting
-            ? t("pageForm.saving")
-            : isEdit
-              ? t("pageForm.update")
-              : t("pageForm.create")}
-        </Button>
-        <Button type="button" variant="outline" onClick={() => navigate({ to: "/admin/pages" })}>
-          {t("pageForm.cancel")}
-        </Button>
-      </div>
+      </EditorShell>
     </form>
   );
 }
