@@ -9,15 +9,12 @@ import {
   TextSuperscriptIcon,
   LinkIcon,
   CodeIcon,
-  CodeBlockIcon,
   ListBulletsIcon,
   ListNumbersIcon,
-  ListChecksIcon,
-  QuotesIcon,
-  MinusIcon,
   TextAlignLeftIcon,
   TextAlignCenterIcon,
   TextAlignRightIcon,
+  PlusIcon,
 } from "@phosphor-icons/react";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -31,9 +28,11 @@ import { useI18n } from "@/i18n/I18nProvider";
 import { ToolbarButton } from "./ToolbarButton";
 import { ToolbarTableMenu } from "./ToolbarTableMenu";
 import { ColorPickerPopover } from "./ColorPickerPopover";
-import { YouTubeDialog } from "./YouTubeDialog";
-import { ImageUploadDialog } from "./ImageUploadDialog";
 
+// What stays here is what acts on a selection — marks, colour, alignment — plus
+// the two structures that are awkward to reach any other way (tables, and the
+// link dialog on ⌘K). Block insertion moved to the `/` menu (#173), which names
+// each block instead of asking you to recognise an icon.
 export function Toolbar({ editor, onOpenLink }: { editor: Editor; onOpenLink: () => void }) {
   const { t } = useI18n();
 
@@ -154,17 +153,10 @@ export function Toolbar({ editor, onOpenLink }: { editor: Editor; onOpenLink: ()
       >
         <CodeIcon className="size-4" />
       </ToolbarButton>
-      <ToolbarButton
-        onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-        isActive={editor.isActive("codeBlock")}
-        title={t("editor.codeBlock")}
-      >
-        <CodeBlockIcon className="size-4" />
-      </ToolbarButton>
 
       <Separator orientation="vertical" className="mx-0.5 h-5" />
 
-      {/* Lists */}
+      {/* Lists stay: they are toggled on existing text as often as inserted. */}
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleBulletList().run()}
         isActive={editor.isActive("bulletList")}
@@ -179,36 +171,21 @@ export function Toolbar({ editor, onOpenLink }: { editor: Editor; onOpenLink: ()
       >
         <ListNumbersIcon className="size-4" />
       </ToolbarButton>
-      <ToolbarButton
-        onClick={() => editor.chain().focus().toggleTaskList().run()}
-        isActive={editor.isActive("taskList")}
-        title={t("editor.taskList")}
-      >
-        <ListChecksIcon className="size-4" />
-      </ToolbarButton>
-      <ToolbarButton
-        onClick={() => editor.chain().focus().toggleBlockquote().run()}
-        isActive={editor.isActive("blockquote")}
-        title={t("editor.blockquote")}
-      >
-        <QuotesIcon className="size-4" />
-      </ToolbarButton>
 
       <Separator orientation="vertical" className="mx-0.5 h-5" />
 
-      {/* Table */}
+      {/* Table edits (add/remove row & column) have no slash equivalent. */}
       <ToolbarTableMenu editor={editor} />
 
       <Separator orientation="vertical" className="mx-0.5 h-5" />
 
-      {/* Media / Insert */}
-      <ImageUploadDialog editor={editor} />
-      <YouTubeDialog editor={editor} />
+      {/* Discoverability for the slash menu: typing `/` is faster, but nothing
+          on screen would otherwise say it exists. */}
       <ToolbarButton
-        onClick={() => editor.chain().focus().setHorizontalRule().run()}
-        title={t("editor.horizontalRule")}
+        onClick={() => editor.chain().focus().insertContent("/").run()}
+        title={t("editor.slashHint")}
       >
-        <MinusIcon className="size-4" />
+        <PlusIcon className="size-4" />
       </ToolbarButton>
     </div>
   );

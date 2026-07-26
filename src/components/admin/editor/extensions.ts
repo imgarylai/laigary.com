@@ -20,6 +20,7 @@ import Focus from "@tiptap/extension-focus";
 import { InlineMath } from "./inline-math";
 import { LinkSuggestion } from "./link-suggestion";
 import { CodeBlockCardExtension } from "./code-block";
+import { createSlashSuggestion, type SlashDialogs } from "./slash-suggestion";
 import { createLowlight } from "lowlight";
 import { CODE_LANGUAGE_GRAMMARS } from "@/lib/code-languages";
 
@@ -33,7 +34,18 @@ import { CODE_LANGUAGE_GRAMMARS } from "@/lib/code-languages";
 // unchanged at ~1.61 MB. Measured, because the opposite is easy to assume.
 const lowlight = createLowlight(CODE_LANGUAGE_GRAMMARS);
 
-export function createExtensions({ placeholder }: { placeholder: string }) {
+/** No-op dialogs, for callers that only need the schema (tests, and anything
+ *  rendering content without the editor's React tree around it). */
+const NO_DIALOGS: SlashDialogs = { openImage: () => {}, openYouTube: () => {} };
+
+export function createExtensions({
+  placeholder,
+  dialogs = NO_DIALOGS,
+}: {
+  placeholder: string;
+  /** Lets `/image` and `/youtube` reach the dialogs TiptapEditorImpl owns. */
+  dialogs?: SlashDialogs;
+}) {
   return [
     StarterKit.configure({ codeBlock: false, link: false, underline: false }),
     CodeBlockCardExtension.configure({ lowlight }),
@@ -70,6 +82,8 @@ export function createExtensions({ placeholder }: { placeholder: string }) {
     Focus.configure({ className: "has-focus", mode: "deepest" }),
     // `@` article mention → inserts a plain markdown link (see link-suggestion.tsx).
     LinkSuggestion,
+    // `/` block-insert menu (see slash-suggestion.tsx).
+    createSlashSuggestion(dialogs),
     // InlineMath = @aarkue InlineMathNode + markdown mapping (see inline-math.ts).
     // Registered directly instead of via MathExtension, which is only a thin
     // wrapper that would add the unextended node.

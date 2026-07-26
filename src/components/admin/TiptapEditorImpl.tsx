@@ -14,6 +14,8 @@ import { createExtensions } from "./editor/extensions";
 import { Toolbar } from "./editor/Toolbar";
 import { CharacterCount } from "./editor/CharacterCount";
 import { LinkDialog } from "./editor/LinkDialog";
+import { ImageUploadDialog } from "./editor/ImageUploadDialog";
+import { YouTubeDialog } from "./editor/YouTubeDialog";
 
 export default function TiptapEditorImpl({
   value,
@@ -26,10 +28,21 @@ export default function TiptapEditorImpl({
   const [showPreview, setShowPreview] = useState(true);
   const [previewHtml, setPreviewHtml] = useState("");
   const [linkOpen, setLinkOpen] = useState(false);
+  // The insert dialogs live here, not inside the toolbar, because the `/` menu
+  // opens them too — one dialog, two doors. `useState` setters are stable, so
+  // the extensions can close over them despite being built only once.
+  const [imageOpen, setImageOpen] = useState(false);
+  const [youtubeOpen, setYoutubeOpen] = useState(false);
 
   const editor = useEditor({
     immediatelyRender: false,
-    extensions: createExtensions({ placeholder: t("editor.placeholder") }),
+    extensions: createExtensions({
+      placeholder: t("editor.placeholder"),
+      dialogs: {
+        openImage: () => setImageOpen(true),
+        openYouTube: () => setYoutubeOpen(true),
+      },
+    }),
     content: value,
     contentType: "markdown",
     onUpdate: ({ editor: e }) => {
@@ -103,6 +116,8 @@ export default function TiptapEditorImpl({
 
       <Toolbar editor={editor} onOpenLink={() => setLinkOpen(true)} />
       <LinkDialog editor={editor} open={linkOpen} onOpenChange={setLinkOpen} />
+      <ImageUploadDialog editor={editor} open={imageOpen} onOpenChange={setImageOpen} />
+      <YouTubeDialog editor={editor} open={youtubeOpen} onOpenChange={setYoutubeOpen} />
 
       {/* Both panes are a fixed height and scroll internally: a long document no
           longer stretches the page, so the toolbar above stays within reach. */}
