@@ -18,4 +18,13 @@ export { Toc } from "./Toc";
 export { TmButton } from "./Button";
 export { Kbd } from "./Kbd";
 export { TmThemeMenu } from "./ThemeMenu";
-export { TmPage, TmMeta, TmEmpty, TmDirLink, TmDirCells, TmRowLink, TmRowCells } from "./layout";
+export {
+  TmPage,
+  TmMeta,
+  TmEmpty,
+  TmDirList,
+  TmDirLink,
+  TmDirCells,
+  TmRowLink,
+  TmRowCells,
+} from "./layout";

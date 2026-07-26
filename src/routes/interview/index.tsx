@@ -7,6 +7,7 @@ import {
   PromptLine,
   TmPage,
   TmMeta,
+  TmDirList,
   TmDirLink,
   TmDirCells,
   TmRowLink,
@@ -63,7 +64,7 @@ function InterviewHome() {
       <AsciiRule className="mt-1 mb-7" />
 
       <PromptLine>$ ls .</PromptLine>
-      <div className="mb-9 flex flex-col">
+      <TmDirList className="mb-9">
         {sections.map((s) => (
           <TmDirLink key={s.slug} to="/interview/$section" params={{ section: s.slug }}>
             <TmDirCells
@@ -73,7 +74,7 @@ function InterviewHome() {
             />
           </TmDirLink>
         ))}
-      </div>
+      </TmDirList>
 
       {recent.length > 0 && (
         <>
