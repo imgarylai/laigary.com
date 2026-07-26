@@ -144,6 +144,45 @@ describe("PostForm", () => {
     expect(invalidate).toHaveBeenCalled();
   });
 
+  it("should publish and pin from the settings switches", async () => {
+    // Status is a switch rather than a two-option select, so this is the only
+    // way it gets set.
+    createPostFn.mockResolvedValue({ ok: true, data: { id: "new-id" } });
+    render(<PostForm availableTags={tags} ogBrand="Unconstrained" />);
+
+    fireEvent.change(screen.getByLabelText("postForm.title"), { target: { value: "Live" } });
+    fireEvent.change(screen.getByLabelText("body"), { target: { value: "the body" } });
+    openSettings();
+    fireEvent.click(screen.getByRole("switch", { name: "postForm.published" }));
+    fireEvent.click(screen.getByRole("switch", { name: "postForm.pinned" }));
+    fireEvent.keyDown(document.body, { key: "Escape" });
+    fireEvent.click(screen.getByRole("button", { name: "postForm.create" }));
+
+    await waitFor(() => expect(createPostFn).toHaveBeenCalledTimes(1));
+    const arg = createPostFn.mock.calls[0][0].data;
+    expect(arg.status).toBe("published");
+    expect(arg.pinned).toBe(true);
+  });
+
+  it("should leave the editor for the list when cancelled", () => {
+    render(<PostForm availableTags={tags} ogBrand="Unconstrained" />);
+
+    fireEvent.click(screen.getByRole("button", { name: "postForm.cancel" }));
+
+    expect(navigate).toHaveBeenCalledWith({ to: "/admin/posts" });
+  });
+
+  it("should save on Cmd/Ctrl+S without reaching for the button", async () => {
+    createPostFn.mockResolvedValue({ ok: true, data: { id: "new-id" } });
+    render(<PostForm availableTags={tags} ogBrand="Unconstrained" />);
+
+    fireEvent.change(screen.getByLabelText("postForm.title"), { target: { value: "Shortcut" } });
+    fireEvent.change(screen.getByLabelText("body"), { target: { value: "the body" } });
+    fireEvent.keyDown(window, { key: "s", ctrlKey: true });
+
+    await waitFor(() => expect(createPostFn).toHaveBeenCalledTimes(1));
+  });
+
   it("should pass the shell's preview state down to the editor", () => {
     render(<PostForm availableTags={tags} ogBrand="Unconstrained" />);
 

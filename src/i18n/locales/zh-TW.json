@@ -110,6 +110,7 @@
     "coverImage": "封面圖片",
     "uploadCover": "上傳封面圖片",
     "changeCover": "更換封面圖片",
+    "removeCover": "移除封面",
     "tags": "標籤",
     "tagsPlaceholder": "選擇標籤...",
     "content": "內容（Markdown）",

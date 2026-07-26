@@ -186,6 +186,8 @@ export function CoverImageUpload({
                 size="icon"
                 className="absolute top-2 right-2 size-7"
                 onClick={() => onChange("")}
+                aria-label={t("postForm.removeCover")}
+                title={t("postForm.removeCover")}
               >
                 <TrashIcon className="size-3.5" />
               </Button>

@@ -58,4 +58,39 @@ describe("PageForm", () => {
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith("boom"));
     expect(navigate).not.toHaveBeenCalled();
   });
+
+  it("should keep the slug in the settings sheet, off the writing surface", async () => {
+    render(<PageForm />);
+
+    expect(screen.queryByLabelText("pageForm.slug")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "pageForm.settings" }));
+
+    expect(await screen.findByLabelText("pageForm.slug")).toBeTruthy();
+  });
+
+  it("should leave the editor for the list when cancelled", () => {
+    render(<PageForm />);
+
+    fireEvent.click(screen.getByRole("button", { name: "pageForm.cancel" }));
+
+    expect(navigate).toHaveBeenCalledWith({ to: "/admin/pages" });
+  });
+
+  it("should toggle the preview from the bar", () => {
+    render(<PageForm />);
+
+    fireEvent.click(screen.getByRole("button", { name: /postForm.showPreview/ }));
+
+    expect(screen.getByRole("button", { name: /postForm.hidePreview/ })).toBeTruthy();
+  });
+
+  it("should save on Cmd/Ctrl+S", async () => {
+    upsertPageFn.mockResolvedValue({ ok: true });
+    render(<PageForm />);
+
+    fireEvent.change(screen.getByLabelText("pageForm.title"), { target: { value: "Shortcut" } });
+    fireEvent.keyDown(window, { key: "s", ctrlKey: true });
+
+    await waitFor(() => expect(upsertPageFn).toHaveBeenCalledTimes(1));
+  });
 });
