@@ -121,6 +121,19 @@ describe("code block keymap", () => {
     editor.destroy();
   });
 
+  it("should exit below the block when Mod-Enter is pressed from the middle of it", () => {
+    // ArrowDown only escapes from the last line; this works from anywhere.
+    const editor = makeEditor("```python\na = 1\nb = 2\n```");
+    selectInCode(editor, 2);
+
+    press(editor, "Enter", { ctrlKey: true });
+    press(editor, "Enter", { metaKey: true });
+
+    expect(editor.isActive("codeBlock")).toBe(false);
+    expect(codeText(editor)).toBe("a = 1\nb = 2");
+    editor.destroy();
+  });
+
   it("should lift an empty code block to a paragraph when Backspace is pressed at its start", () => {
     const editor = makeEditor("```python\n\n```");
     selectInCode(editor, 0);
