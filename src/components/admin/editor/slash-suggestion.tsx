@@ -27,7 +27,7 @@ export type SlashDialogs = {
   openYouTube: () => void;
 };
 
-type SlashItem = {
+export type SlashItem = {
   /** i18n key under `editor.slash.*`, and the item's identity. */
   key: string;
   icon: Icon;
@@ -135,9 +135,9 @@ export function filterSlashItems(query: string): SlashItem[] {
 
 export type SlashListHandle = { onKeyDown: (event: KeyboardEvent) => boolean };
 
-type ListProps = { items: SlashItem[]; command: (item: SlashItem) => void };
+export type ListProps = { items: SlashItem[]; command: (item: SlashItem) => void };
 
-const SlashList = forwardRef<SlashListHandle, ListProps>(function SlashList(
+export const SlashList = forwardRef<SlashListHandle, ListProps>(function SlashList(
   { items, command },
   ref,
 ) {
