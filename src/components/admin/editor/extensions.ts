@@ -1,7 +1,6 @@
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import Image from "@tiptap/extension-image";
-import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
 import { Markdown } from "@tiptap/markdown";
 import Placeholder from "@tiptap/extension-placeholder";
 import Typography from "@tiptap/extension-typography";
@@ -20,6 +19,7 @@ import Color from "@tiptap/extension-color";
 import Focus from "@tiptap/extension-focus";
 import { InlineMath } from "./inline-math";
 import { LinkSuggestion } from "./link-suggestion";
+import { CodeBlockCardExtension } from "./code-block";
 import { createLowlight } from "lowlight";
 import { CODE_LANGUAGE_GRAMMARS } from "@/lib/code-languages";
 
@@ -36,7 +36,7 @@ const lowlight = createLowlight(CODE_LANGUAGE_GRAMMARS);
 export function createExtensions({ placeholder }: { placeholder: string }) {
   return [
     StarterKit.configure({ codeBlock: false, link: false, underline: false }),
-    CodeBlockLowlight.configure({ lowlight }),
+    CodeBlockCardExtension.configure({ lowlight }),
     Link.configure({ openOnClick: false }),
     Underline,
     Image,
