@@ -1,6 +1,6 @@
 import { useReducer, useRef } from "react";
 import type { Editor } from "@tiptap/react";
-import { ImageIcon, SpinnerIcon, CropIcon } from "@phosphor-icons/react";
+import { SpinnerIcon, CropIcon } from "@phosphor-icons/react";
 import ReactCrop, { type Crop, type PixelCrop } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
 import {
@@ -9,7 +9,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -21,7 +20,6 @@ import { uploadFile, getCroppedBlob, compressImage } from "@/lib/upload-client";
 // object driven by a reducer than as a pile of useState calls that have to be
 // reset in lockstep.
 type UploadState = {
-  open: boolean;
   file: File | null;
   preview: string | null;
   cropping: boolean;
@@ -33,7 +31,6 @@ type UploadState = {
 };
 
 const initialState: UploadState = {
-  open: false,
   file: null,
   preview: null,
   cropping: false,
@@ -45,8 +42,7 @@ const initialState: UploadState = {
 };
 
 type UploadAction =
-  | { type: "open" }
-  | { type: "close" }
+  | { type: "reset" }
   | { type: "selectFile"; file: File | null; preview: string | null }
   | { type: "resetCrop" }
   | { type: "startCrop" }
@@ -59,9 +55,7 @@ type UploadAction =
 
 function reducer(state: UploadState, action: UploadAction): UploadState {
   switch (action.type) {
-    case "open":
-      return { ...state, open: true };
-    case "close":
+    case "reset":
       // Fully reset when the dialog closes (or after a successful upload).
       return initialState;
     case "selectFile":
@@ -113,7 +107,18 @@ const ASPECT_PRESETS = [
   { label: "4:3", value: 4 / 3 },
 ] as const;
 
-export function ImageUploadDialog({ editor }: { editor: Editor }) {
+// Controlled, and rendered once by TiptapEditorImpl rather than owning a
+// trigger of its own — the toolbar button and the `/image` slash command are
+// two doors onto the same dialog. Mirrors how LinkDialog already works.
+export function ImageUploadDialog({
+  editor,
+  open,
+  onOpenChange,
+}: {
+  editor: Editor;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
   const { t } = useI18n();
   const [state, dispatch] = useReducer(reducer, initialState);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -143,7 +148,8 @@ export function ImageUploadDialog({ editor }: { editor: Editor }) {
       const url = await uploadFile(fileToUpload);
       editor.chain().focus().setImage({ src: url }).run();
       if (inputRef.current) inputRef.current.value = "";
-      dispatch({ type: "close" });
+      dispatch({ type: "reset" });
+      onOpenChange(false);
     } catch (err) {
       dispatch({
         type: "uploadError",
@@ -152,33 +158,18 @@ export function ImageUploadDialog({ editor }: { editor: Editor }) {
     }
   }
 
-  const { open, file, preview, cropping, aspectRatio, crop, uploading, error } = state;
+  const { file, preview, cropping, aspectRatio, crop, uploading, error } = state;
+
+  function handleOpenChange(next: boolean) {
+    if (!next) {
+      if (inputRef.current) inputRef.current.value = "";
+      dispatch({ type: "reset" });
+    }
+    onOpenChange(next);
+  }
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(v) => {
-        if (v) {
-          dispatch({ type: "open" });
-        } else {
-          if (inputRef.current) inputRef.current.value = "";
-          dispatch({ type: "close" });
-        }
-      }}
-    >
-      <DialogTrigger
-        render={
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="size-7"
-            title={t("editor.uploadImage")}
-          />
-        }
-      >
-        <ImageIcon className="size-4" />
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>{t("editor.uploadImage")}</DialogTitle>
@@ -257,7 +248,7 @@ export function ImageUploadDialog({ editor }: { editor: Editor }) {
           <Button
             type="button"
             variant="outline"
-            onClick={() => dispatch({ type: "close" })}
+            onClick={() => handleOpenChange(false)}
             disabled={uploading}
           >
             {t("postForm.cancel")}

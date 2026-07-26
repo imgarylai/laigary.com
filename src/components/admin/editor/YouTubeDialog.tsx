@@ -1,46 +1,41 @@
 import { useState } from "react";
 import type { Editor } from "@tiptap/react";
-import { YoutubeLogoIcon } from "@phosphor-icons/react";
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/i18n/I18nProvider";
 
-export function YouTubeDialog({ editor }: { editor: Editor }) {
+// Controlled, and rendered once by TiptapEditorImpl rather than owning a
+// trigger of its own — the toolbar button and the `/youtube` slash command are
+// two doors onto the same dialog. Mirrors how LinkDialog already works.
+export function YouTubeDialog({
+  editor,
+  open,
+  onOpenChange,
+}: {
+  editor: Editor;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
   const { t } = useI18n();
-  const [open, setOpen] = useState(false);
   const [url, setUrl] = useState("");
 
   function handleInsert() {
     if (url.trim()) {
       editor.chain().focus().setYoutubeVideo({ src: url.trim() }).run();
       setUrl("");
-      setOpen(false);
+      onOpenChange(false);
     }
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger
-        render={
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="size-7"
-            title={t("editor.embedYouTube")}
-          />
-        }
-      >
-        <YoutubeLogoIcon className="size-4" />
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("editor.embedYouTube")}</DialogTitle>
@@ -54,7 +49,7 @@ export function YouTubeDialog({ editor }: { editor: Editor }) {
           }}
         />
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             {t("postForm.cancel")}
           </Button>
           <Button type="button" onClick={handleInsert} disabled={!url.trim()}>
