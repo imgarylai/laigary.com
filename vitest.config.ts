@@ -18,6 +18,9 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["src/**/*.test.{ts,tsx}"],
+    // jsdom has no layout, so ProseMirror's scroll-into-view throws from a
+    // deferred rAF and fails the run as an unhandled error. See the file.
+    setupFiles: ["src/__tests__/setup.ts"],
     coverage: {
       // text for the terminal summary, lcov for the Codecov upload in CI.
       reporter: ["text", "lcov"],
