@@ -138,14 +138,18 @@ describe("NoteForm", () => {
     expect(createNoteFn.mock.calls[0][0].data.sectionId).toBe(sections[1].id);
   });
 
-  it("toggles the pinned switch and the status select before submitting", async () => {
+  it("toggles the published and pinned switches before submitting", async () => {
     createNoteFn.mockResolvedValue({ ok: true, data: { id: "new-id" } });
     render(<NoteForm sections={sections} tags={tags} />);
 
     fireEvent.change(screen.getByLabelText("noteForm.title"), { target: { value: "Note" } });
     openSettings();
-    fireEvent.click(screen.getByRole("switch"));
-    selectOption(screen.getByLabelText("noteForm.status"), "postForm.published");
+    // Status is a switch now, not a two-option select, so both toggles are
+    // switches and have to be told apart by label.
+    // Base UI renders a role="switch" span plus a hidden input, both tied to
+    // the label, so query by role to get the one that takes the click.
+    fireEvent.click(screen.getByRole("switch", { name: "postForm.published" }));
+    fireEvent.click(screen.getByRole("switch", { name: "noteForm.pinned" }));
     closeSettings();
     fireEvent.click(screen.getByRole("button", { name: "noteForm.create" }));
 
