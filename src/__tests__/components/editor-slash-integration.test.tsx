@@ -93,6 +93,22 @@ describe("slash menu integration", () => {
     expect(editor.isActive("codeBlock")).toBe(false);
   });
 
+  it("should stack the popup above the sticky toolbar", async () => {
+    // The bug this replaces: SlashList carried `z-50`, but that div is
+    // position: static, where z-index does nothing. The popup stacked at `auto`
+    // and the editor's sticky toolbar (z-10) painted over it, arriving sliced
+    // in half. The class has to be on the element floating-ui positions and
+    // appends to <body> (#196).
+    const editor = await mount();
+
+    act(() => type(editor, "/"));
+    await waitFor(() => expect(screen.getByText("editor.slash.codeBlock")).toBeDefined());
+
+    const positioned = screen.getByText("editor.slash.codeBlock").closest("body > div");
+    expect(positioned).not.toBeNull();
+    expect(positioned!.className).toContain("z-50");
+  });
+
   it("should not pop the menu for a slash inside a code block", async () => {
     // Paths and division are ordinary code; a menu there would be noise.
     const editor = await mount();

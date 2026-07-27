@@ -114,3 +114,51 @@ describe("SlashList", () => {
     expect(command).toHaveBeenCalledWith(table);
   });
 });
+
+describe("SlashList sizing", () => {
+  // Eleven items came to 419px with `overflow: hidden`, which on a laptop ran
+  // off the screen and could not even be scrolled to (#196).
+  it("should bound its height rather than run off the screen", () => {
+    const { container } = render(
+      <SlashList ref={createRef<SlashListHandle>()} items={SLASH_ITEMS} command={vi.fn()} />,
+    );
+
+    const list = container.firstElementChild!;
+    expect(list.className).toContain("max-h-");
+    expect(list.className).toContain("overflow-y-auto");
+  });
+
+  it("should not clip the overflow away", () => {
+    // `overflow: hidden` is what made the tail of the list unreachable rather
+    // than merely off-screen.
+    const { container } = render(
+      <SlashList ref={createRef<SlashListHandle>()} items={SLASH_ITEMS} command={vi.fn()} />,
+    );
+
+    expect(container.firstElementChild!.className).not.toContain("overflow-hidden");
+  });
+
+  it("should keep the highlighted item in view while arrowing", () => {
+    // Once the list scrolls, the highlight can walk off the visible window.
+    const scrollIntoView = vi.fn();
+    Element.prototype.scrollIntoView = scrollIntoView;
+    const ref = createRef<SlashListHandle>();
+    render(<SlashList ref={ref} items={SLASH_ITEMS} command={vi.fn()} />);
+    scrollIntoView.mockClear();
+
+    press(ref, "ArrowDown");
+
+    expect(scrollIntoView).toHaveBeenCalledWith({ block: "nearest" });
+  });
+
+  it("should carry no z-index of its own", () => {
+    // This element is position: static, where z-index does nothing. Putting one
+    // here is what hid the bug: the stacking has to go on the element
+    // floating-ui positions, and a no-op class here only looks like it works.
+    const { container } = render(
+      <SlashList ref={createRef<SlashListHandle>()} items={SLASH_ITEMS} command={vi.fn()} />,
+    );
+
+    expect(container.firstElementChild!.className).not.toMatch(/(^|\s)z-\d/);
+  });
+});
