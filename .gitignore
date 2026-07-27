@@ -15,3 +15,8 @@ todos.json
 
 # vitest coverage output
 coverage/
+
+# Ephemeral git worktrees created by agent tooling. Scratch checkouts, removed
+# when the run ends — never project content. Anything deliberate under .claude/
+# (settings, skills) can still be added explicitly.
+.claude/worktrees/
