@@ -1,85 +1,122 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import * as queries from "@/db/queries";
-import { PostConflictError, PostNotFoundError } from "@/db/queries";
-import {
-  createPostImpl,
-  updatePostImpl,
-  deletePostImpl,
-  postCreateSchema,
-  postUpdateSchema,
-} from "@/server/admin/posts";
+// @vitest-environment node
+//
+// Admin post mutations against the real better-sqlite3 harness, like the
+// sibling reads.test.ts. Every failure these map is one the public API can
+// actually produce — a duplicate slug, an unknown id — so none of them are
+// faked; the only mock is the transient driver failure AGENTS.md carves out.
+// Driving the real query layer is also what makes the assertions falsifiable:
+// asserting the row is gone catches a delete handed the wrong argument, which
+// `toHaveBeenCalledWith` on a stub could only restate.
 
-// Keep the real error classes (so toFailure's instanceof mapping works) but
-// stub the mutation functions.
-vi.mock("@/db/queries", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/db/queries")>();
-  return { ...actual, createPost: vi.fn(), updatePost: vi.fn(), deletePost: vi.fn() };
-});
+import { describe, it, expect, vi } from "vitest";
+import { setupTestDb } from "../../db/helpers/test-db";
+import { seedPost } from "../../factories";
 
-beforeEach(() => vi.clearAllMocks());
+const harness = setupTestDb();
 
 const validPost = { title: "Hello", slug: "hello", contentMd: "body" };
 
 describe("createPostImpl", () => {
-  it("calls createPost and returns the created ref", async () => {
-    vi.mocked(queries.createPost).mockResolvedValue({ id: "p1", slug: "hello" });
+  it("writes the post and returns its ref", async () => {
+    const { createPostImpl } = await import("@/server/admin/posts");
+    const { getAdminPosts } = await import("@/db/queries");
+
     const res = await createPostImpl(validPost);
-    expect(queries.createPost).toHaveBeenCalledWith(validPost);
-    expect(res).toEqual({ ok: true, data: { id: "p1", slug: "hello" } });
+
+    expect(res).toEqual({ ok: true, data: { id: expect.any(String), slug: "hello" } });
+    expect((await getAdminPosts()).items.map((p) => p.slug)).toEqual(["hello"]);
   });
 
-  it("maps a slug conflict to ok:false", async () => {
-    vi.mocked(queries.createPost).mockRejectedValue(new PostConflictError("Slug already exists"));
+  it("maps a duplicate slug to ok:false", async () => {
+    await seedPost({ slug: "hello" });
+    const { createPostImpl } = await import("@/server/admin/posts");
+
     expect(await createPostImpl(validPost)).toEqual({ ok: false, error: "Slug already exists" });
   });
 
-  it("rethrows unexpected errors", async () => {
-    vi.mocked(queries.createPost).mockRejectedValue(new Error("boom"));
-    await expect(createPostImpl(validPost)).rejects.toThrow("boom");
+  it("lets a driver failure propagate rather than reporting it as a failed action", async () => {
+    // The one sanctioned mock: a storage-level failure the public API cannot
+    // produce. One call throws, every other test here stays on the real DB.
+    vi.spyOn(harness.db, "batch").mockImplementationOnce(() => {
+      throw new Error("disk I/O error");
+    });
+    const { createPostImpl } = await import("@/server/admin/posts");
+
+    await expect(createPostImpl(validPost)).rejects.toThrow("disk I/O error");
   });
 });
 
 describe("updatePostImpl", () => {
-  it("splits id from the payload and calls updatePost", async () => {
-    vi.mocked(queries.updatePost).mockResolvedValue({ id: "p1", slug: "hi" });
-    const res = await updatePostImpl({ id: "p1", title: "Hi", slug: "hi" });
-    expect(queries.updatePost).toHaveBeenCalledWith("p1", { title: "Hi", slug: "hi" });
-    expect(res).toEqual({ ok: true, data: { id: "p1", slug: "hi" } });
+  it("applies the edit to the row without passing id through as a field", async () => {
+    const { id } = await seedPost({ slug: "old", title: "Old", status: "published" });
+    const { updatePostImpl } = await import("@/server/admin/posts");
+    const { getPostBySlug } = await import("@/db/queries");
+
+    const res = await updatePostImpl({ id, title: "New", slug: "new" });
+
+    expect(res).toEqual({ ok: true, data: { id, slug: "new" } });
+    expect((await getPostBySlug("new"))?.title).toBe("New");
   });
 
-  it("maps not-found to ok:false", async () => {
-    vi.mocked(queries.updatePost).mockRejectedValue(new PostNotFoundError("p1"));
-    expect(await updatePostImpl({ id: "p1" })).toEqual({ ok: false, error: "Post p1 not found" });
+  it("maps an unknown id to ok:false", async () => {
+    const { updatePostImpl } = await import("@/server/admin/posts");
+
+    expect(await updatePostImpl({ id: "missing" })).toEqual({
+      ok: false,
+      error: "Post missing not found",
+    });
+  });
+
+  it("maps a slug already taken by another post to ok:false", async () => {
+    await seedPost({ slug: "taken" });
+    const { id } = await seedPost({ slug: "mine" });
+    const { updatePostImpl } = await import("@/server/admin/posts");
+
+    expect(await updatePostImpl({ id, slug: "taken" })).toEqual({
+      ok: false,
+      error: "Slug already exists",
+    });
   });
 });
 
 describe("deletePostImpl", () => {
-  it("calls deletePost and returns ok", async () => {
-    vi.mocked(queries.deletePost).mockResolvedValue(undefined);
-    expect(await deletePostImpl({ id: "p1" })).toEqual({ ok: true });
-    expect(queries.deletePost).toHaveBeenCalledWith("p1");
+  it("removes the row and returns ok", async () => {
+    const { id } = await seedPost({ slug: "doomed" });
+    const { deletePostImpl } = await import("@/server/admin/posts");
+    const { getAdminPosts } = await import("@/db/queries");
+
+    expect(await deletePostImpl({ id })).toEqual({ ok: true });
+    expect((await getAdminPosts()).items).toEqual([]);
   });
 
-  it("maps not-found to ok:false", async () => {
-    vi.mocked(queries.deletePost).mockRejectedValue(new PostNotFoundError("p1"));
-    expect(await deletePostImpl({ id: "p1" })).toEqual({ ok: false, error: "Post p1 not found" });
+  it("maps an unknown id to ok:false", async () => {
+    const { deletePostImpl } = await import("@/server/admin/posts");
+
+    expect(await deletePostImpl({ id: "missing" })).toEqual({
+      ok: false,
+      error: "Post missing not found",
+    });
   });
 });
 
 describe("post schemas", () => {
-  it("accepts a valid post", () => {
+  it("accepts a valid post", async () => {
+    const { postCreateSchema } = await import("@/server/admin/posts");
     expect(() => postCreateSchema.parse(validPost)).not.toThrow();
   });
 
-  it("rejects an invalid slug", () => {
+  it("rejects an invalid slug", async () => {
+    const { postCreateSchema } = await import("@/server/admin/posts");
     expect(() => postCreateSchema.parse({ ...validPost, slug: "Not A Slug" })).toThrow();
   });
 
-  it("rejects a missing title", () => {
+  it("rejects a missing title", async () => {
+    const { postCreateSchema } = await import("@/server/admin/posts");
     expect(() => postCreateSchema.parse({ slug: "hello", contentMd: "x" })).toThrow();
   });
 
-  it("update requires an id", () => {
+  it("update requires an id", async () => {
+    const { postUpdateSchema } = await import("@/server/admin/posts");
     expect(() => postUpdateSchema.parse({ title: "Hi" })).toThrow();
   });
 });
