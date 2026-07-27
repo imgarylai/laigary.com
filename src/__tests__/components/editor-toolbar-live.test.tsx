@@ -24,7 +24,15 @@ afterEach(cleanup);
  * Mounts the toolbar over a real editor and counts how many times the parent
  * renders, so a test can prove the toolbar updated on its own.
  */
-function Harness({ onReady, renders }: { onReady: (editor: Editor) => void; renders: number[] }) {
+function Harness({
+  onReady,
+  renders,
+  onOpenLink = () => {},
+}: {
+  onReady: (editor: Editor) => void;
+  renders: number[];
+  onOpenLink?: () => void;
+}) {
   const editor = useEditor({
     immediatelyRender: true,
     extensions: createExtensions({ placeholder: "" }),
@@ -38,7 +46,7 @@ function Harness({ onReady, renders }: { onReady: (editor: Editor) => void; rend
   if (!editor) return null;
   return (
     <>
-      <Toolbar editor={editor} onOpenLink={() => {}} />
+      <Toolbar editor={editor} onOpenLink={onOpenLink} />
       <EditorContent editor={editor} />
     </>
   );
@@ -145,6 +153,115 @@ describe("Toolbar", () => {
     });
 
     expect(swatch().style.backgroundColor).toBe("rgb(37, 99, 235)");
+  });
+});
+
+describe("Toolbar commands", () => {
+  // The buttons are the other half of the contract: they have to run the
+  // command they advertise, and the flag they paint has to agree afterwards.
+  it.each([
+    ["editor.bold", "bold"],
+    ["editor.italic", "italic"],
+    ["editor.underline", "underline"],
+    ["editor.highlight", "highlight"],
+    ["editor.subscript", "subscript"],
+    ["editor.superscript", "superscript"],
+    ["editor.inlineCode", "code"],
+  ])("should apply %s to the selection", async (label, mark) => {
+    const { editor } = await mountToolbar();
+    act(() => {
+      editor.chain().selectAll().run();
+    });
+
+    fireEvent.click(button(label));
+
+    expect(editor.isActive(mark)).toBe(true);
+    expect(button(label).getAttribute("aria-pressed")).toBe("true");
+  });
+
+  it.each([
+    ["editor.heading1", 1],
+    ["editor.heading2", 2],
+  ])("should turn the block into %s", async (label, level) => {
+    const { editor } = await mountToolbar();
+
+    fireEvent.click(button(label));
+
+    expect(editor.isActive("heading", { level })).toBe(true);
+    expect(button(label).getAttribute("aria-pressed")).toBe("true");
+  });
+
+  it.each([
+    ["editor.bulletList", "bulletList"],
+    ["editor.orderedList", "orderedList"],
+  ])("should turn the block into %s", async (label, type) => {
+    const { editor } = await mountToolbar();
+
+    fireEvent.click(button(label));
+
+    expect(editor.isActive(type)).toBe(true);
+  });
+
+  it("should open the link dialog rather than toggling a mark itself", async () => {
+    // The link flow needs a URL, so the button is a door to the dialog — the
+    // one toolbar button that does not run an editor command.
+    const onOpenLink = vi.fn();
+    let editor!: Editor;
+    render(<Harness renders={[]} onReady={(e) => (editor = e)} onOpenLink={onOpenLink} />);
+    await waitFor(() => expect(editor).toBeTruthy());
+
+    // Named "editor.link (⌘K)" — the shortcut is part of the button's title.
+    fireEvent.click(screen.getByRole("button", { name: /^editor\.link/ }));
+
+    expect(onOpenLink).toHaveBeenCalled();
+    expect(editor.isActive("link")).toBe(false);
+  });
+
+  it("should type a slash for the block menu", async () => {
+    // Discoverability: the `/` menu is faster than any icon, but nothing on
+    // screen would otherwise say it exists.
+    const { editor } = await mountToolbar();
+
+    fireEvent.click(button("editor.slashHint"));
+
+    expect(editor.getText()).toContain("/");
+  });
+
+  it("should align text from the alignment menu", async () => {
+    const { editor } = await mountToolbar();
+    fireEvent.click(button("editor.alignLeft"));
+
+    fireEvent.click(await screen.findByRole("menuitem", { name: "editor.alignCenter" }));
+
+    expect(editor.isActive({ textAlign: "center" })).toBe(true);
+  });
+
+  it("should set and clear a text colour", async () => {
+    const { editor } = await mountToolbar();
+    act(() => {
+      editor.chain().selectAll().run();
+    });
+    fireEvent.click(button("editor.textColor"));
+
+    fireEvent.click(await screen.findByTitle("#2563eb"));
+    expect(editor.getAttributes("textStyle").color).toBe("#2563eb");
+
+    fireEvent.click(screen.getByRole("button", { name: "editor.clearColor" }));
+    expect(editor.getAttributes("textStyle").color).toBeUndefined();
+  });
+
+  it("should insert a table and then edit its rows", async () => {
+    const { editor } = await mountToolbar();
+    fireEvent.click(button("editor.table"));
+
+    fireEvent.click(await screen.findByRole("menuitem", { name: "editor.insertTable" }));
+    expect(editor.isActive("table")).toBe(true);
+
+    const rowsBefore = editor.getHTML().split("<tr>").length;
+    fireEvent.click(button("editor.table"));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "editor.addRowAfter" }));
+
+    expect(editor.getHTML().split("<tr>").length).toBe(rowsBefore + 1);
   });
 });
 
