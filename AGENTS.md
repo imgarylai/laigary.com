@@ -84,6 +84,16 @@ backfills go inside the generated file or via `drizzle-kit generate --custom`.
   the in-memory DB and wires truncate/close. `cloudflare:workers` is stubbed
   via vitest alias. Mock server functions in component tests — no network, no
   real D1.
+- The harness and D1 diverge on transactions, and the harness papers over it.
+  D1 has no interactive transactions (`db.transaction()` throws there), so any
+  mutation touching more than one table must batch its writes through
+  `runBatch` in `db/queries/_db.ts` — its atomic unit is `db.batch()`, which
+  D1 runs as one transaction. drizzle's better-sqlite3 driver is the mirror
+  image: it has `transaction()` but no `batch()` at all, so `createTestDb()`
+  attaches an equivalent that wraps the statements in BEGIN/COMMIT. Without
+  that, the harness would run batched writes as separate autocommits and every
+  partial-write test would pass for the wrong reason. When you touch this,
+  prove the rollback test fails against the unfixed source first.
 - Server functions are tested through their exported `*Impl` functions
   (`server/public/*`, `server/admin/*`), never by calling the `createServerFn`
   wrapper: without the Start vite plugin's compile step the wrapper's server
