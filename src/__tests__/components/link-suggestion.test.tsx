@@ -25,6 +25,9 @@ vi.mock("@/server/admin/reads", () => ({
 
 afterEach(cleanup);
 
+// Comfortably past the suggestion plugin's 250ms debounce.
+const PAST_DEBOUNCE = 400;
+
 const gasStation: LinkTarget = {
   type: "note",
   title: "134. Gas Station",
@@ -176,8 +179,17 @@ describe("LinkSuggestion integration", () => {
 
     Object.defineProperty(editor!.view, "composing", { get: () => true, configurable: true });
     mock.mockClear();
-    act(() => type(editor!, "@ㄍㄚ"));
-    await new Promise((r) => setTimeout(r, 400));
-    expect(mock).not.toHaveBeenCalled();
+
+    // Drive the suggestion plugin's own 250ms debounce with fake timers rather
+    // than sleeping past it: the assertion is "nothing fired once the window
+    // closed", and a wall-clock sleep makes that depend on runner load.
+    vi.useFakeTimers();
+    try {
+      act(() => type(editor!, "@ㄍㄚ"));
+      await act(() => vi.advanceTimersByTimeAsync(PAST_DEBOUNCE));
+      expect(mock).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

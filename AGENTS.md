@@ -11,8 +11,8 @@ pnpm dev              # vite dev on :3000 (miniflare provides local D1 binding)
 pnpm test             # vitest; pnpm lint (oxlint); pnpm format:check (oxfmt)
 pnpm build            # vite build (client + workers bundle)
 pnpm generate-routes  # tsr generate — run after adding/renaming route files
-pnpm exec tsc --noEmit  # NOT in CI — run it yourself; some legacy errors exist,
-                        # just don't add new ones in files you touch
+pnpm typecheck        # tsc --noEmit; gated by CI's Typecheck leg and currently
+                      # clean — a new error fails the build, so run it yourself
 ```
 
 Local D1 schema: `npx wrangler d1 migrations apply laigary-db --local`.
@@ -107,11 +107,30 @@ backfills go inside the generated file or via `drizzle-kit generate --custom`.
   fabricate errors the public API can already produce (NOT NULL, UNIQUE —
   trigger those for real).
 - Coverage: `pnpm test:coverage` (v8, lcov → Codecov in CI's Test leg; every
-  PR gets a diff-coverage comment). Excluded as not-our-unit-to-test:
+  PR gets a diff-coverage comment). `coverage.include` in vitest.config.ts is
+  pinned to `src/**/*.{ts,tsx}` and MUST stay pinned: without it v8 measures
+  only the modules a run happened to import, so the denominator moves with the
+  import graph and a PR that adds one test drops project coverage on files it
+  never opened. That was the Codecov drift. Excluded as not-our-unit-to-test:
   `components/ui/**` (vendored), `db/schema/**` (declarative),
   `routeTree.gen.ts` (generated), `src/__tests__/**` (test infra),
-  `i18n/I18nProvider.tsx` (context glue, deliberately untested). Hooks ARE
-  tested (jsdom `renderHook` + stubbed rAF/matchMedia — see
+  `i18n/I18nProvider.tsx` (context glue, deliberately untested), `router.tsx`
+  (Start entry only), `lib/og/render.ts` (its `.wasm` imports resolve in the
+  worker build only, so the module cannot load under vitest at all) and
+  `routes/design-system.tsx` (noindex styleguide page). Keep that list and the
+  `ignore:` list in codecov.yml in sync.
+- Routes are NOT excluded, and are testable off `Route.options` with no router
+  harness: server handlers via `Route.options.server.handlers` fed a real
+  `Request` (`__tests__/routes/`, `__tests__/server/mcp/route.test.ts`), and a
+  UI route's `validateSearch` / `head` / `loader` as the plain functions they
+  are. Only a route `component` needs a RouterProvider harness — there is none
+  yet, so UI-route components are the standing coverage gap.
+- No wall-clock sleeps in tests. For "the debounce fired" use `vi.waitFor`; for
+  "the debounce did NOT fire" use fake timers and `advanceTimersByTimeAsync`
+  inside `act()` — a real sleep makes the assertion depend on runner load, and
+  two input events inside one real debounce window collapse into a single
+  trailing call whether or not the gate under test works.
+- Hooks ARE tested (jsdom `renderHook` + stubbed rAF/matchMedia — see
   `__tests__/hooks/`); their listener math and cleanup regress like any code.
   The `createServerFn` wrapper arrows stay in-file and uncovered — they're the
   RPC boundary, a few lines each, and uncoverable without the Start plugin.

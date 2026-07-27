@@ -7,7 +7,7 @@
 // itself handles backticks correctly. These tests pin down that correctness:
 // the input rule must consume the delimiters, and the markdown round-trip must
 // stay clean, so real backtick characters can never leak into stored content.
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { Editor } from "@tiptap/react";
 import { createExtensions } from "@/components/admin/editor/extensions";
 
@@ -62,8 +62,10 @@ describe("inline code input rule", () => {
     // the input-rule plugin re-runs rules on compositionend (in a setTimeout).
     editor.view.dispatch(editor.view.state.tr.insertText("給一個數字`n`"));
     editor.view.dom.dispatchEvent(new CompositionEvent("compositionend"));
-    await new Promise((resolve) => setTimeout(resolve, 10));
-    expect(getMarkdown(editor)).toBe("給一個數字`n`");
+    // Poll for the rule to land instead of sleeping a fixed 10ms: the plugin's
+    // own setTimeout has no guaranteed deadline, and on a loaded CI runner a
+    // fixed sleep asserts before the rule has run.
+    await vi.waitFor(() => expect(getMarkdown(editor)).toBe("給一個數字`n`"));
   });
 });
 
