@@ -8,6 +8,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import { isSelfHandledTarget } from "@/components/admin/DataTable";
 import { PostRowActions } from "@/components/admin/PostRowActions";
+import { NoteRowActions } from "@/components/admin/NoteRowActions";
 
 vi.mock("@tanstack/react-router", () => ({
   useRouter: () => ({ invalidate: vi.fn() }),
@@ -18,6 +19,7 @@ vi.mock("@tanstack/react-router", () => ({
   ),
 }));
 vi.mock("@/server/admin/posts", () => ({ deletePostFn: vi.fn() }));
+vi.mock("@/server/admin/interview", () => ({ deleteNoteFn: vi.fn() }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 vi.mock("@/i18n/I18nProvider", () => ({
   useI18n: () => ({ t: (k: string) => k, locale: "en" }),
@@ -125,5 +127,57 @@ describe("PostRowActions", () => {
     fireEvent.click(screen.getByRole("button", { name: "postList.actions" }));
 
     expect(onRowClick).not.toHaveBeenCalled();
+  });
+});
+
+describe("NoteRowActions", () => {
+  // The notes list gets the same treatment as posts (AGENTS.md), so it gets the
+  // same proof rather than being assumed to follow.
+  function renderNoteActions(published = true) {
+    render(
+      <NoteRowActions
+        noteId="n1"
+        noteSlug="two-sum"
+        noteTitle="Two Sum"
+        sectionSlug="arrays"
+        published={published}
+      />,
+    );
+  }
+
+  it("should keep the actions behind a menu", () => {
+    renderNoteActions();
+
+    expect(screen.queryByText("noteList.delete")).toBeNull();
+    expect(screen.getByRole("button", { name: "noteList.actions" })).toBeTruthy();
+  });
+
+  it("should offer edit, view and delete for a published note", async () => {
+    renderNoteActions(true);
+
+    fireEvent.click(screen.getByRole("button", { name: "noteList.actions" }));
+
+    expect(await screen.findByRole("menuitem", { name: /postList.edit/ })).toBeTruthy();
+    expect(screen.getByRole("menuitem", { name: /noteList.view/ })).toBeTruthy();
+    expect(screen.getByRole("menuitem", { name: /noteList.delete/ })).toBeTruthy();
+  });
+
+  it("should not offer to view a draft note", async () => {
+    renderNoteActions(false);
+
+    fireEvent.click(screen.getByRole("button", { name: "noteList.actions" }));
+
+    expect(await screen.findByRole("menuitem", { name: /postList.edit/ })).toBeTruthy();
+    expect(screen.queryByRole("menuitem", { name: /noteList.view/ })).toBeNull();
+  });
+
+  it("should confirm before deleting a note", async () => {
+    renderNoteActions();
+    fireEvent.click(screen.getByRole("button", { name: "noteList.actions" }));
+
+    fireEvent.click(await screen.findByRole("menuitem", { name: /noteList.delete/ }));
+
+    expect(await screen.findByRole("dialog")).toBeTruthy();
+    expect(screen.getByText("noteList.deleteTitle")).toBeTruthy();
   });
 });

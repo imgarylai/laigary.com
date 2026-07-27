@@ -52,4 +52,19 @@ describe("DeletePostDialog", () => {
     await waitFor(() => expect(toast.error).toHaveBeenCalled());
     expect(invalidate).not.toHaveBeenCalled();
   });
+
+  it("closes without deleting when cancelled", async () => {
+    // The row's menu owns the open state, so cancelling has to hand it back.
+    const onOpenChange = vi.fn();
+    render(<DeletePostDialog postId="c1" postTitle="Keep me" open onOpenChange={onOpenChange} />);
+
+    fireEvent.click(
+      within(await screen.findByRole("dialog")).getByRole("button", {
+        name: "deletePost.cancel",
+      }),
+    );
+
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(deletePostFn).not.toHaveBeenCalled();
+  });
 });
