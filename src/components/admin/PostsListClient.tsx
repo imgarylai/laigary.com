@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Link, getRouteApi } from "@tanstack/react-router";
-import { ArrowSquareOutIcon, PushPinIcon } from "@phosphor-icons/react";
+import { PushPinIcon } from "@phosphor-icons/react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,8 +13,9 @@ import {
 import { DataTable } from "./DataTable";
 import { StatusBadge } from "./StatusBadge";
 import type { PostStatus } from "@/routes/admin/posts/-list-search";
-import { DeletePostButton } from "./DeletePostButton";
+import { PostRowActions } from "./PostRowActions";
 import { useI18n } from "@/i18n/I18nProvider";
+import { fmtRelativeFromUnix } from "@/lib/date";
 
 type Post = {
   id: string;
@@ -42,12 +43,8 @@ export function PostsListClient({ posts }: { posts: Post[] }) {
   );
 
   const columns = useMemo<ColumnDef<Post, unknown>[]>(() => {
-    function formatDate(ts: number): string {
-      return new Date(ts * 1000).toLocaleDateString(locale, {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      });
+    function absoluteDate(ts: number): string {
+      return new Date(ts * 1000).toLocaleString(locale, { dateStyle: "long", timeStyle: "short" });
     }
 
     return [
@@ -79,36 +76,26 @@ export function PostsListClient({ posts }: { posts: Post[] }) {
         accessorKey: "updatedAt",
         header: t("postList.updated"),
         cell: ({ row }) => (
-          <span className="text-muted-foreground">{formatDate(row.original.updatedAt)}</span>
+          // Relative, because in a working list almost everything is recent and
+          // "3 hours ago" is the distinction being scanned for. The exact
+          // timestamp stays one hover away.
+          <span className="text-muted-foreground" title={absoluteDate(row.original.updatedAt)}>
+            {fmtRelativeFromUnix(row.original.updatedAt, locale)}
+          </span>
         ),
       },
       {
         id: "actions",
-        header: t("postList.actions"),
+        header: "",
         enableSorting: false,
-        meta: { headClassName: "text-right", cellClassName: "text-right" },
+        meta: { headClassName: "w-10", cellClassName: "w-10 text-right" },
         cell: ({ row }) => (
-          <div className="flex items-center justify-end gap-2">
-            {/* View the live page in a new tab; drafts have no public page. */}
-            {row.original.status === "published" && (
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                render={
-                  <Link
-                    to="/posts/$slug"
-                    params={{ slug: row.original.slug }}
-                    target="_blank"
-                    rel="noreferrer"
-                    title={t("postList.view")}
-                  />
-                }
-              >
-                <ArrowSquareOutIcon className="size-4" />
-              </Button>
-            )}
-            <DeletePostButton postId={row.original.id} postTitle={row.original.title} />
-          </div>
+          <PostRowActions
+            postId={row.original.id}
+            postSlug={row.original.slug}
+            postTitle={row.original.title}
+            published={row.original.status === "published"}
+          />
         ),
       },
     ];
@@ -145,6 +132,9 @@ export function PostsListClient({ posts }: { posts: Post[] }) {
       searchPlaceholder={t("postList.searchPlaceholder")}
       toolbar={toolbar}
       emptyMessage={t("common.noPostsFound")}
+      onRowActivate={(post) =>
+        navigate({ to: "/admin/posts/$postId/edit", params: { postId: post.id } })
+      }
       globalFilter={q ?? ""}
       onGlobalFilterChange={(v) =>
         navigate({ search: (prev) => ({ ...prev, q: v || undefined }), replace: true })

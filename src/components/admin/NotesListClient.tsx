@@ -1,11 +1,11 @@
 import { useMemo } from "react";
 import { Link, getRouteApi } from "@tanstack/react-router";
-import { ArrowSquareOutIcon, PushPinIcon } from "@phosphor-icons/react";
+import { PushPinIcon } from "@phosphor-icons/react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "./DataTable";
 import { StatusBadge } from "./StatusBadge";
-import { DeleteNoteButton } from "./DeleteNoteButton";
+import { NoteRowActions } from "./NoteRowActions";
 import { useI18n } from "@/i18n/I18nProvider";
 
 type Note = {
@@ -54,31 +54,17 @@ export function NotesListClient({ notes }: { notes: Note[] }) {
       },
       {
         id: "actions",
-        header: t("noteList.actions"),
+        header: "",
         enableSorting: false,
-        meta: { headClassName: "text-right", cellClassName: "text-right" },
+        meta: { headClassName: "w-10", cellClassName: "w-10 text-right" },
         cell: ({ row }) => (
-          <div className="flex items-center justify-end gap-2">
-            {/* View the live page in a new tab; drafts have no public page. */}
-            {row.original.status === "published" && (
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                render={
-                  <Link
-                    to="/interview/$section/$slug"
-                    params={{ section: row.original.sectionSlug, slug: row.original.slug }}
-                    target="_blank"
-                    rel="noreferrer"
-                    title={t("noteList.view")}
-                  />
-                }
-              >
-                <ArrowSquareOutIcon className="size-4" />
-              </Button>
-            )}
-            <DeleteNoteButton noteId={row.original.id} noteTitle={row.original.title} />
-          </div>
+          <NoteRowActions
+            noteId={row.original.id}
+            noteSlug={row.original.slug}
+            noteTitle={row.original.title}
+            sectionSlug={row.original.sectionSlug}
+            published={row.original.status === "published"}
+          />
         ),
       },
     ],
@@ -94,6 +80,9 @@ export function NotesListClient({ notes }: { notes: Note[] }) {
         <Button render={<Link to="/admin/interview/notes/new" />}>{t("noteList.newNote")}</Button>
       }
       emptyMessage={t("admin.noNotes")}
+      onRowActivate={(note) =>
+        navigate({ to: "/admin/interview/notes/$noteId/edit", params: { noteId: note.id } })
+      }
       globalFilter={q ?? ""}
       onGlobalFilterChange={(v) =>
         navigate({ search: (prev) => ({ ...prev, q: v || undefined }), replace: true })

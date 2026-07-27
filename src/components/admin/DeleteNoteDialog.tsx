@@ -9,15 +9,28 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { useI18n } from "@/i18n/I18nProvider";
 import { deleteNoteFn } from "@/server/admin/interview";
 
-export function DeleteNoteButton({ noteId, noteTitle }: { noteId: string; noteTitle: string }) {
+/**
+ * Confirmation for deleting a note. Controlled and trigger-less for the same
+ * reason as DeletePostDialog — the row's `⋯` menu opens it, and a trigger inside
+ * that menu would unmount as the menu closed.
+ */
+export function DeleteNoteDialog({
+  noteId,
+  noteTitle,
+  open,
+  onOpenChange,
+}: {
+  noteId: string;
+  noteTitle: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
   const router = useRouter();
   const { t } = useI18n();
-  const [open, setOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   async function handleDelete() {
@@ -29,22 +42,19 @@ export function DeleteNoteButton({ noteId, noteTitle }: { noteId: string; noteTi
       return;
     }
     toast.success(t("admin.noteDeleted"));
-    setOpen(false);
+    onOpenChange(false);
     router.invalidate();
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button variant="destructive" size="sm" />}>
-        {t("noteList.delete")}
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("noteList.deleteTitle")}</DialogTitle>
           <DialogDescription>{t("noteList.deleteConfirm", { title: noteTitle })}</DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
             {t("noteForm.cancel")}
           </Button>
           <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
