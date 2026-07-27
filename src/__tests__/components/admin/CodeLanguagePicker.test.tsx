@@ -10,6 +10,7 @@ import { render, screen, fireEvent, waitFor, cleanup, within } from "@testing-li
 import {
   AUTO,
   CodeLanguagePicker,
+  labelFor,
   languageOptions,
 } from "@/components/admin/editor/CodeLanguagePicker";
 
@@ -39,6 +40,26 @@ function renderPicker(value = AUTO) {
 
 const open = () => fireEvent.click(screen.getByRole("button", { name: "editor.codeLanguage" }));
 const search = () => screen.getByPlaceholderText("editor.codeLanguageSearch");
+
+describe("labelFor", () => {
+  // It is total on purpose: every value has a label, so the picker needs no
+  // "not found" fallback anywhere downstream.
+  it("should name an untagged fence", () => {
+    expect(labelFor(AUTO, LABELS)).toBe("Auto-detect");
+  });
+
+  it("should name the no-highlighting opt-out", () => {
+    expect(labelFor("text", LABELS)).toBe("Plain text");
+  });
+
+  it("should name a grammar the list carries", () => {
+    expect(labelFor("javascript", LABELS)).toBe("JavaScript");
+  });
+
+  it("should fall back to the fence tag for a language it does not carry", () => {
+    expect(labelFor("rust", LABELS)).toBe("rust");
+  });
+});
 
 describe("languageOptions", () => {
   it("should offer auto-detect ahead of the grammars", () => {
@@ -148,6 +169,20 @@ describe("CodeLanguagePicker", () => {
     fireEvent.keyDown(search(), { key: "Enter" });
 
     expect(onChange).toHaveBeenCalledWith("python");
+  });
+
+  it("should open on a language the list does not carry", async () => {
+    // The trigger's label and the option's identity are computed by two
+    // different paths here — labelFor's fallback and the option languageOptions
+    // pushes. If they drift, Enter lands on auto-detect and rewrites a fence
+    // the picker was only ever meant to display.
+    const { onChange } = renderPicker("rust");
+    open();
+    await screen.findByPlaceholderText("editor.codeLanguageSearch");
+
+    fireEvent.keyDown(search(), { key: "Enter" });
+
+    expect(onChange).toHaveBeenCalledWith("rust");
   });
 
   it("should say so when nothing matches", async () => {

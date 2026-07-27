@@ -21,23 +21,44 @@ export const AUTO = "auto";
 
 export type LanguageOption = { value: string; label: string };
 
+/** The two names that come from the locale rather than from the grammar list. */
+export type LanguageLabels = { auto: string; plain: string };
+
+/**
+ * The name to show for a language value.
+ *
+ * Total by construction, which is the point: a language the list does not carry
+ * — content written before it existed, or a hand-typed fence — is named by its
+ * own fence tag. Every value therefore has a label, so nothing downstream needs
+ * a fallback for "no such option".
+ */
+export function labelFor(value: string, labels: LanguageLabels): string {
+  if (value === AUTO) return labels.auto;
+  if (value === PLAIN_LANGUAGE) return labels.plain;
+  return CODE_LANGUAGE_OPTIONS.find((o) => o.value === value)?.label ?? value;
+}
+
 /**
  * The options to offer for a block currently set to `current`.
  *
- * Content written before this list existed — or by a hand-typed fence — can name
- * a language the picker does not carry. It is surfaced as its own option rather
- * than silently rewriting the author's fence to something else.
+ * A language the list does not carry is surfaced as its own option rather than
+ * silently rewriting the author's fence to something else — so `current` is
+ * always among the options returned.
  */
-export function languageOptions(current: string, labels: Record<string, string>): LanguageOption[] {
+export function languageOptions(current: string, labels: LanguageLabels): LanguageOption[] {
   const options: LanguageOption[] = [
     { value: AUTO, label: labels.auto },
-    ...CODE_LANGUAGE_OPTIONS.map((o) => ({
-      value: o.value,
-      label: o.value === PLAIN_LANGUAGE ? labels.plain : o.label,
-    })),
+    ...CODE_LANGUAGE_OPTIONS.map((o) => ({ value: o.value, label: labelFor(o.value, labels) })),
   ];
-  if (!options.some((o) => o.value === current)) options.push({ value: current, label: current });
+  if (!options.some((o) => o.value === current)) {
+    options.push({ value: current, label: labelFor(current, labels) });
+  }
   return options;
+}
+
+/** cmdk's searchable string for an option — also its identity to the list. */
+function searchKey(value: string, label: string): string {
+  return `${value} ${label}`;
 }
 
 /**
@@ -63,17 +84,14 @@ export function CodeLanguagePicker({
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
 
-  const options = useMemo(
-    () =>
-      languageOptions(value, {
-        auto: t("editor.codeLanguageAuto"),
-        plain: t("editor.codeLanguagePlain"),
-      }),
-    [value, t],
+  const labels = useMemo(
+    () => ({ auto: t("editor.codeLanguageAuto"), plain: t("editor.codeLanguagePlain") }),
+    [t],
   );
-  const current = options.find((o) => o.value === value);
-  /** cmdk's searchable string for an option — also its identity to the list. */
-  const searchKey = (option: LanguageOption) => `${option.value} ${option.label}`;
+  const options = useMemo(() => languageOptions(value, labels), [value, labels]);
+  // Not a lookup into `options`: labelFor is total, so there is no "not found"
+  // case to guard here, and the two agree by construction.
+  const currentLabel = labelFor(value, labels);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -89,7 +107,7 @@ export function CodeLanguagePicker({
           />
         }
       >
-        {current?.label ?? value}
+        {currentLabel}
         <CaretUpDownIcon className="size-3 opacity-50" />
       </PopoverTrigger>
       <PopoverContent className="w-56 p-0" align="start">
@@ -98,7 +116,7 @@ export function CodeLanguagePicker({
             and pressing Enter would quietly reset it to auto-detect — and
             picking with the keyboard is the point of this control. Typing hands
             the highlight to the best match, as usual. */}
-        <Command defaultValue={current ? searchKey(current) : undefined}>
+        <Command defaultValue={searchKey(value, currentLabel)}>
           <CommandInput placeholder={t("editor.codeLanguageSearch")} />
           <CommandList>
             <CommandEmpty>{t("editor.codeLanguageNoResults")}</CommandEmpty>
@@ -111,7 +129,7 @@ export function CodeLanguagePicker({
                   // Python either way, and only `plain` needs the label. The
                   // fence name is carried along for the pair that eventually
                   // diverges, and to match how TagsCombobox searches.
-                  value={searchKey(option)}
+                  value={searchKey(option.value, option.label)}
                   onSelect={() => {
                     onChange(option.value);
                     setOpen(false);
