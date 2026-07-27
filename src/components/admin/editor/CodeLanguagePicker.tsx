@@ -72,6 +72,8 @@ export function CodeLanguagePicker({
     [value, t],
   );
   const current = options.find((o) => o.value === value);
+  /** cmdk's searchable string for an option — also its identity to the list. */
+  const searchKey = (option: LanguageOption) => `${option.value} ${option.label}`;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -91,7 +93,12 @@ export function CodeLanguagePicker({
         <CaretUpDownIcon className="size-3 opacity-50" />
       </PopoverTrigger>
       <PopoverContent className="w-56 p-0" align="start">
-        <Command>
+        {/* Start on the language the block already has. cmdk otherwise
+            highlights the first row, so opening the picker on a Python block
+            and pressing Enter would quietly reset it to auto-detect — and
+            picking with the keyboard is the point of this control. Typing hands
+            the highlight to the best match, as usual. */}
+        <Command defaultValue={current ? searchKey(current) : undefined}>
           <CommandInput placeholder={t("editor.codeLanguageSearch")} />
           <CommandList>
             <CommandEmpty>{t("editor.codeLanguageNoResults")}</CommandEmpty>
@@ -99,9 +106,12 @@ export function CodeLanguagePicker({
               {options.map((option) => (
                 <CommandItem
                   key={option.value}
-                  // Both, so `py` finds Python and `js` finds JavaScript: the
-                  // value is what an author types, the label is what they read.
-                  value={`${option.value} ${option.label}`}
+                  // The label does the work today: every fence name in the list
+                  // is already a substring of its own label, so `py` finds
+                  // Python either way, and only `plain` needs the label. The
+                  // fence name is carried along for the pair that eventually
+                  // diverges, and to match how TagsCombobox searches.
+                  value={searchKey(option)}
                   onSelect={() => {
                     onChange(option.value);
                     setOpen(false);

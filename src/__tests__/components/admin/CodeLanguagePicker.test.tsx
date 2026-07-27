@@ -99,15 +99,18 @@ describe("CodeLanguagePicker", () => {
     expect(screen.queryByText("Go")).toBeNull();
   });
 
-  it("should match on the label as well as the value", async () => {
-    // `js` is the value's shorthand; the label reads JavaScript.
+  it("should match on the name the author reads, not only the fence name", async () => {
+    // `plain` is the one query in this list that the labels answer and the
+    // fence names do not — ```text is what gets written, "Plain text" is what
+    // gets shown.
     renderPicker();
     open();
     await screen.findByPlaceholderText("editor.codeLanguageSearch");
 
-    fireEvent.change(search(), { target: { value: "javas" } });
+    fireEvent.change(search(), { target: { value: "plain" } });
 
-    await waitFor(() => expect(screen.getByText("JavaScript")).toBeTruthy());
+    await waitFor(() => expect(screen.getByText("editor.codeLanguagePlain")).toBeTruthy());
+    expect(screen.queryByText("Python")).toBeNull();
   });
 
   it("should commit the picked language", async () => {
@@ -132,6 +135,19 @@ describe("CodeLanguagePicker", () => {
     fireEvent.click(screen.getByText("editor.codeLanguageAuto"));
 
     expect(onChange).toHaveBeenCalledWith(AUTO);
+  });
+
+  it("should open on the language the block already has", async () => {
+    // Otherwise the first row is highlighted, and opening the picker on a
+    // Python block and pressing Enter straight away would reset it to
+    // auto-detect — with picking by keyboard being the point of the control.
+    const { onChange } = renderPicker("python");
+    open();
+    await screen.findByPlaceholderText("editor.codeLanguageSearch");
+
+    fireEvent.keyDown(search(), { key: "Enter" });
+
+    expect(onChange).toHaveBeenCalledWith("python");
   });
 
   it("should say so when nothing matches", async () => {
