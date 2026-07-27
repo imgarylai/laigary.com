@@ -20,3 +20,13 @@ if (typeof Range !== "undefined") {
   };
   Range.prototype.getBoundingClientRect ??= () => new DOMRect();
 }
+
+// Same class of gap, same answer: jsdom implements no scrolling either, so
+// `scrollIntoView` is absent rather than a no-op. The `/` menu keeps its
+// highlighted item in view that way now the list scrolls (#196), and any
+// component that scrolls a focused element into view will hit this. Shimming it
+// here beats guarding every call site against a browser API that always exists
+// in the browser.
+if (typeof Element !== "undefined") {
+  Element.prototype.scrollIntoView ??= () => {};
+}

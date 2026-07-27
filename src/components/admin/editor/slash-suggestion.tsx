@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { Extension, ReactRenderer, type Editor, type Range } from "@tiptap/react";
 import Suggestion from "@tiptap/suggestion";
 import { PluginKey } from "@tiptap/pm/state";
@@ -143,8 +143,13 @@ export const SlashList = forwardRef<SlashListHandle, ListProps>(function SlashLi
 ) {
   const { t } = useI18n();
   const [active, setActive] = useState(0);
+  const activeRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => setActive(0), [items]);
+
+  // The list scrolls now, so arrowing past its edge has to bring the highlight
+  // back into view or the selection walks off somewhere invisible.
+  useEffect(() => activeRef.current?.scrollIntoView({ block: "nearest" }), [active]);
 
   useImperativeHandle(
     ref,
@@ -172,10 +177,19 @@ export const SlashList = forwardRef<SlashListHandle, ListProps>(function SlashLi
   if (items.length === 0) return null;
 
   return (
-    <div className="z-50 w-64 overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md">
+    // No z-index here: this div is `position: static`, where z-index does
+    // nothing at all. The stacking belongs on the element floating-ui actually
+    // positions — see createSlashSuggestion below (#196).
+    //
+    // Bounded and scrollable: eleven items came to 419px, which on a laptop ran
+    // off the screen with `overflow: hidden` so it could not even be scrolled
+    // to. The plugin already flips the menu to whichever side has more room;
+    // capping the height is what gives flip something that fits.
+    <div className="max-h-[min(20rem,60vh)] w-64 overflow-y-auto rounded-md border bg-popover text-popover-foreground shadow-md">
       {items.map((item, i) => (
         <Button
           key={item.key}
+          ref={i === active ? activeRef : undefined}
           type="button"
           variant="ghost"
           onClick={() => command(item)}
@@ -234,6 +248,13 @@ export function createSlashSuggestion(dialogs: SlashDialogs) {
                   editor: props.editor,
                   props: toListProps(props),
                 });
+                // This is the element floating-ui positions and appends to
+                // <body>, so it is the one that can carry a z-index at all.
+                // Without it the popup stacks at `auto` and the editor's sticky
+                // toolbar (z-10) paints straight over it — the menu arrived
+                // sliced in half (#196). z-50 is the popup layer everywhere
+                // else in the admin: dialogs, dropdowns, popovers.
+                component.element.classList.add("z-50");
                 unmount = props.mount(component.element);
               },
               onUpdate: (props) => component?.updateProps(toListProps(props)),
