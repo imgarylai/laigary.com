@@ -23,6 +23,7 @@ import {
   SidebarMenuSubButton,
 } from "@/components/ui/sidebar";
 import { useI18n } from "@/i18n/I18nProvider";
+import { isSectionActive } from "./admin-location";
 
 export function AdminSidebar() {
   const { pathname } = useLocation();
@@ -57,7 +58,7 @@ export function AdminSidebar() {
             {navItems.map((item) => (
               <SidebarMenuItem key={item.href}>
                 <SidebarMenuButton
-                  isActive={pathname === item.href}
+                  isActive={isSectionActive(pathname, item.href)}
                   render={<Link to={item.href} />}
                 >
                   <item.icon />
@@ -93,7 +94,7 @@ export function AdminSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
-              isActive={pathname === "/admin/settings"}
+              isActive={isSectionActive(pathname, "/admin/settings")}
               render={<Link to="/admin/settings" />}
             >
               <GearIcon />
