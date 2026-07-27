@@ -4,7 +4,7 @@
 // queries posts + notes by title only after typing (never mid-IME-composition)
 // and inserts the picked article as an internal link.
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { Editor } from "@tiptap/react";
 import { createExtensions } from "@/components/admin/editor/extensions";
 import { LinkDialog, isUrlLike } from "@/components/admin/editor/LinkDialog";
@@ -17,6 +17,9 @@ const searchLinkTargetsFn = vi.fn();
 vi.mock("@/server/admin/reads", () => ({
   searchLinkTargetsFn: (arg: unknown) => searchLinkTargetsFn(arg),
 }));
+
+// Comfortably past LinkDialog's 250ms query debounce.
+const PAST_DEBOUNCE = 400;
 
 afterEach(() => {
   cleanup();
@@ -84,15 +87,29 @@ describe("LinkDialog", () => {
     render(<LinkDialog editor={editor} open onOpenChange={() => {}} />);
     const input = screen.getByPlaceholderText("editor.linkDialogPlaceholder");
 
-    fireEvent.compositionStart(input);
-    fireEvent.change(input, { target: { value: "ㄍ" } });
-    await new Promise((r) => setTimeout(r, 350));
-    expect(searchLinkTargetsFn).not.toHaveBeenCalled();
+    // The debounce window has to actually elapse for this to prove anything —
+    // two changes inside one window would collapse into a single trailing
+    // search whether or not the composition gate works. Drive it with fake
+    // timers rather than sleeping: wall-clock sleeps made the assertion depend
+    // on runner load, and the extra renders they let through were showing up as
+    // per-run coverage drift in this file.
+    vi.useFakeTimers();
+    try {
+      fireEvent.compositionStart(input);
+      fireEvent.change(input, { target: { value: "ㄍ" } });
+      await act(() => vi.advanceTimersByTimeAsync(PAST_DEBOUNCE));
+      expect(searchLinkTargetsFn).not.toHaveBeenCalled();
 
-    searchLinkTargetsFn.mockResolvedValue([]);
-    fireEvent.change(input, { target: { value: "貪心" } });
-    fireEvent.compositionEnd(input);
-    await waitFor(() => expect(searchLinkTargetsFn).toHaveBeenCalledWith({ data: { q: "貪心" } }));
+      searchLinkTargetsFn.mockResolvedValue([]);
+      fireEvent.change(input, { target: { value: "貪心" } });
+      fireEvent.compositionEnd(input);
+      await act(() => vi.advanceTimersByTimeAsync(PAST_DEBOUNCE));
+      expect(searchLinkTargetsFn).toHaveBeenCalledWith({ data: { q: "貪心" } });
+      // The half-formed syllable never reached the backend.
+      expect(searchLinkTargetsFn).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
 

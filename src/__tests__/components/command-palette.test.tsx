@@ -4,7 +4,7 @@
 // content rows are fetched on demand only after the user types, and (for IME
 // input) only once the composition commits — never mid-composition.
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen, waitFor, fireEvent } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor, fireEvent } from "@testing-library/react";
 import { CommandPalette, type PaletteRow } from "@/features/terminal/CommandPalette";
 
 vi.mock("@/i18n/I18nProvider", () => ({
@@ -22,6 +22,9 @@ vi.stubGlobal("ResizeObserver", ResizeObserverStub);
 Element.prototype.scrollIntoView = () => {};
 
 afterEach(cleanup);
+
+// Comfortably past CommandPalette's 180ms query debounce.
+const PAST_DEBOUNCE = 400;
 
 const pages: PaletteRow[] = [
   { kind: "page", label: "ls ~", haystack: "home", onSelect: () => {} },
@@ -158,16 +161,27 @@ describe("CommandPalette", () => {
 
     // Simulate typing Zhuyin/Pinyin: composition starts, the input carries the
     // half-formed value, but no search fires until the composition commits.
-    fireEvent.compositionStart(input);
-    fireEvent.change(input, { target: { value: "ㄊ" } });
-    // Give the debounce window a chance — it must stay gated while composing.
-    await new Promise((r) => setTimeout(r, 250));
-    expect(searchContent).not.toHaveBeenCalled();
+    // Fake timers so the debounce window elapses deterministically — two
+    // changes inside one real window collapse into a single trailing search
+    // whether or not the gate works, so a wall-clock sleep both slowed the test
+    // and weakened it.
+    vi.useFakeTimers();
+    try {
+      fireEvent.compositionStart(input);
+      fireEvent.change(input, { target: { value: "ㄊ" } });
+      await act(() => vi.advanceTimersByTimeAsync(PAST_DEBOUNCE));
+      expect(searchContent).not.toHaveBeenCalled();
 
-    // Composition commits to a real word → the search now fires with it.
-    fireEvent.change(input, { target: { value: "貪心" } });
-    fireEvent.compositionEnd(input);
-    await waitFor(() => expect(searchContent).toHaveBeenCalledWith("貪心"));
+      // Composition commits to a real word → the search now fires with it.
+      fireEvent.change(input, { target: { value: "貪心" } });
+      fireEvent.compositionEnd(input);
+      await act(() => vi.advanceTimersByTimeAsync(PAST_DEBOUNCE));
+      expect(searchContent).toHaveBeenCalledWith("貪心");
+      // The half-formed syllable never reached the backend.
+      expect(searchContent).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
 

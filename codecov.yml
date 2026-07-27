@@ -1,0 +1,43 @@
+# Codecov configuration.
+#
+# The set of files coverage is measured over is pinned in vitest.config.ts
+# (`coverage.include`) — that pin is what stops the project number from moving
+# whenever a PR changes the import graph. This file only mirrors the exclusions
+# and defines how a change is judged.
+
+coverage:
+  precision: 2
+  round: down
+  range: "65...90"
+  status:
+    project:
+      default:
+        # Compare against the PR base. The threshold absorbs the sub-percent
+        # wobble v8 produces between runs so only a real regression fails.
+        target: auto
+        threshold: 0.5%
+    patch:
+      default:
+        # Lines the PR actually touches carry their own bar, independent of the
+        # project total — that is the check that should gate a change.
+        target: 80%
+        threshold: 0%
+
+# Must stay in sync with `coverage.exclude` in vitest.config.ts: Codecov builds
+# its own totals from the uploaded lcov, so a path excluded there but missing
+# here would still be counted here.
+ignore:
+  - "src/components/ui/**"
+  - "src/db/schema/**"
+  - "src/routeTree.gen.ts"
+  - "src/__tests__/**"
+  - "src/i18n/I18nProvider.tsx"
+  - "src/router.tsx"
+  - "src/lib/og/render.ts"
+  - "src/routes/design-system.tsx"
+
+comment:
+  layout: "condensed_header, diff, flags, components, condensed_files"
+  behavior: default
+  # Stay quiet on PRs that touch no measured code.
+  require_changes: true

@@ -192,4 +192,38 @@ describe("PostForm", () => {
 
     expect(screen.getByTestId("editor").dataset.preview).toBe("true");
   });
+
+  it("should stop auto-filling the slug once the author has edited it by hand", async () => {
+    // The guard is `!slugManuallyEdited && !isEdit` — the edit-mode half is
+    // covered above, this is the dirty-field half. Without it, renaming the
+    // title would silently throw away a hand-picked slug on a new post.
+    createPostFn.mockResolvedValue({ ok: true, data: { id: "new-id" } });
+    render(<PostForm availableTags={tags} ogBrand="Unconstrained" />);
+
+    const title = screen.getByLabelText("postForm.title");
+    fireEvent.change(title, { target: { value: "First Title" } });
+    fireEvent.change(screen.getByLabelText("body"), { target: { value: "the body" } });
+
+    openSettings();
+    const slug = screen.getByLabelText("postForm.slug") as HTMLInputElement;
+    expect(slug.value).toBe("first-title");
+    fireEvent.change(slug, { target: { value: "hand-picked" } });
+    fireEvent.keyDown(document.body, { key: "Escape" });
+
+    fireEvent.change(title, { target: { value: "Second Title" } });
+    fireEvent.click(screen.getByRole("button", { name: "postForm.create" }));
+
+    await waitFor(() => expect(createPostFn).toHaveBeenCalledTimes(1));
+    expect(createPostFn.mock.calls[0][0].data.slug).toBe("hand-picked");
+  });
+
+  it("should refuse to save a post with no title", async () => {
+    render(<PostForm availableTags={tags} ogBrand="Unconstrained" />);
+
+    fireEvent.change(screen.getByLabelText("body"), { target: { value: "the body" } });
+    fireEvent.click(screen.getByRole("button", { name: "postForm.create" }));
+
+    await waitFor(() => expect(screen.getByText("Title is required")).toBeTruthy());
+    expect(createPostFn).not.toHaveBeenCalled();
+  });
 });
