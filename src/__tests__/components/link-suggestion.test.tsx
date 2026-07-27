@@ -118,6 +118,23 @@ describe("LinkSuggestion integration", () => {
     }
   }
 
+  /**
+   * Type into the editor and drive the suggestion plugin's debounce with fake
+   * timers rather than polling the wall clock. How many renders land inside a
+   * real 250ms window varies with runner load, and that showed up as per-run
+   * coverage drift in this file. Assert synchronously afterwards — never reach
+   * for `findBy`/`waitFor` here, their polling deadlocks against fake timers.
+   */
+  async function typeAndSettle(editor: Editor, text: string) {
+    vi.useFakeTimers();
+    try {
+      act(() => type(editor, text));
+      await act(() => vi.advanceTimersByTimeAsync(PAST_DEBOUNCE));
+    } finally {
+      vi.useRealTimers();
+    }
+  }
+
   function MountedEditor({ onReady }: { onReady: (editor: Editor) => void }) {
     const editor = useEditor({
       immediatelyRender: true,
@@ -139,15 +156,11 @@ describe("LinkSuggestion integration", () => {
     render(<MountedEditor onReady={(e) => (editor = e)} />);
     await waitFor(() => expect(editor).not.toBeNull());
 
-    act(() => type(editor!, "@gas"));
+    await typeAndSettle(editor!, "@gas");
 
-    // Plugin debounce is 250ms; the popup then renders via ReactRenderer.
-    const row = await screen.findByText("134. Gas Station", undefined, { timeout: 3000 });
-    fireEvent.click(row);
+    fireEvent.click(screen.getByText("134. Gas Station"));
 
-    await waitFor(() =>
-      expect(editor!.getMarkdown()).toBe("[134. Gas Station](/interview/coding/134-gas-station) "),
-    );
+    expect(editor!.getMarkdown()).toBe("[134. Gas Station](/interview/coding/134-gas-station) ");
   });
 
   it("dismisses the popup on Escape without inserting a link", async () => {
@@ -158,12 +171,12 @@ describe("LinkSuggestion integration", () => {
     render(<MountedEditor onReady={(e) => (editor = e)} />);
     await waitFor(() => expect(editor).not.toBeNull());
 
-    act(() => type(editor!, "@gas"));
-    await screen.findByText("134. Gas Station", undefined, { timeout: 3000 });
+    await typeAndSettle(editor!, "@gas");
+    screen.getByText("134. Gas Station");
 
     // Escape goes through the plugin's handleKeyDown → onExit (popup gone).
     fireEvent.keyDown(editor!.view.dom, { key: "Escape" });
-    await waitFor(() => expect(screen.queryByText("134. Gas Station")).toBeNull());
+    expect(screen.queryByText("134. Gas Station")).toBeNull();
     // The typed text stays; no link was inserted.
     expect(editor!.getMarkdown()).toBe("@gas");
   });
@@ -183,13 +196,7 @@ describe("LinkSuggestion integration", () => {
     // Drive the suggestion plugin's own 250ms debounce with fake timers rather
     // than sleeping past it: the assertion is "nothing fired once the window
     // closed", and a wall-clock sleep makes that depend on runner load.
-    vi.useFakeTimers();
-    try {
-      act(() => type(editor!, "@ㄍㄚ"));
-      await act(() => vi.advanceTimersByTimeAsync(PAST_DEBOUNCE));
-      expect(mock).not.toHaveBeenCalled();
-    } finally {
-      vi.useRealTimers();
-    }
+    await typeAndSettle(editor!, "@ㄍㄚ");
+    expect(mock).not.toHaveBeenCalled();
   });
 });
