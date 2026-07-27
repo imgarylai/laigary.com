@@ -54,7 +54,7 @@ function get(route: { options: unknown }) {
     .handlers.GET;
 }
 
-const request = new Request("https://laigary.com/api/og");
+const request = new Request("http://test.local/api/og");
 
 beforeEach(() => {
   vi.clearAllMocks();

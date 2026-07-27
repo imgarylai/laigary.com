@@ -35,7 +35,7 @@ const CACHE = "public, max-age=3600";
 describe("crawler text endpoints", () => {
   it("serves /sitemap.xml as xml built by the sitemap builder", async () => {
     const res = await get(SitemapRoute)({
-      request: new Request("https://laigary.com/sitemap.xml"),
+      request: new Request("http://test.local/sitemap.xml"),
     });
 
     expect(res.headers.get("Content-Type")).toBe("application/xml; charset=utf-8");
@@ -44,7 +44,7 @@ describe("crawler text endpoints", () => {
   });
 
   it("serves /llms.txt as plain text", async () => {
-    const res = await get(LlmsRoute)({ request: new Request("https://laigary.com/llms.txt") });
+    const res = await get(LlmsRoute)({ request: new Request("http://test.local/llms.txt") });
 
     expect(res.headers.get("Content-Type")).toBe("text/plain; charset=utf-8");
     expect(res.headers.get("Cache-Control")).toBe(CACHE);
@@ -52,7 +52,7 @@ describe("crawler text endpoints", () => {
   });
 
   it("serves /feed.xml as an rss content type, not generic xml", async () => {
-    const res = await get(FeedRoute)({ request: new Request("https://laigary.com/feed.xml") });
+    const res = await get(FeedRoute)({ request: new Request("http://test.local/feed.xml") });
 
     expect(res.headers.get("Content-Type")).toBe("application/rss+xml; charset=utf-8");
     expect(res.headers.get("Cache-Control")).toBe(CACHE);
