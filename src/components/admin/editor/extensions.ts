@@ -21,6 +21,7 @@ import { InlineMath } from "./inline-math";
 import { LinkSuggestion } from "./link-suggestion";
 import { CodeBlockCardExtension } from "./code-block";
 import { createSlashSuggestion, type SlashDialogs } from "./slash-suggestion";
+import { ImageUpload, type ImageUploadMessages } from "./image-upload";
 import { createLowlight } from "lowlight";
 import { CODE_LANGUAGE_GRAMMARS } from "@/lib/code-languages";
 
@@ -38,13 +39,24 @@ const lowlight = createLowlight(CODE_LANGUAGE_GRAMMARS);
  *  rendering content without the editor's React tree around it). */
 const NO_DIALOGS: SlashDialogs = { openImage: () => {}, openYouTube: () => {} };
 
+/** English fallbacks for callers that only need the schema, as above. */
+const DEFAULT_UPLOAD_MESSAGES: ImageUploadMessages = {
+  uploading: "Uploading...",
+  failed: "Upload failed",
+  timedOut: "Upload timed out",
+};
+
 export function createExtensions({
   placeholder,
   dialogs = NO_DIALOGS,
+  uploadMessages = DEFAULT_UPLOAD_MESSAGES,
 }: {
   placeholder: string;
   /** Lets `/image` and `/youtube` reach the dialogs TiptapEditorImpl owns. */
   dialogs?: SlashDialogs;
+  /** Paste/drop upload strings; the plugin lives outside React, so it cannot
+   *  reach `t` itself. */
+  uploadMessages?: ImageUploadMessages;
 }) {
   return [
     StarterKit.configure({ codeBlock: false, link: false, underline: false }),
@@ -52,6 +64,8 @@ export function createExtensions({
     Link.configure({ openOnClick: false }),
     Underline,
     Image,
+    // Paste or drop an image straight into the document (see image-upload.ts).
+    ImageUpload.configure({ messages: uploadMessages }),
     Markdown,
     Placeholder.configure({ placeholder }),
     // Keep the harmless typographic replacements (em-dash, ellipsis, arrows, …)
