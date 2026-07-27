@@ -1,50 +1,20 @@
 import { useState } from "react";
 import { NodeViewContent, NodeViewWrapper, type NodeViewProps } from "@tiptap/react";
 import { CheckIcon, CopyIcon } from "@phosphor-icons/react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/i18n/I18nProvider";
-import { CODE_LANGUAGE_OPTIONS, PLAIN_LANGUAGE } from "@/lib/code-languages";
+import { AUTO, CodeLanguagePicker } from "./CodeLanguagePicker";
 
 // A code block's language used to be writable only by the markdown input rule,
 // at creation time. Nothing displayed it and nothing could change it, so a
 // fence tagged wrong (or not at all) had to be deleted and retyped. This header
 // makes `language` an ordinary editable attribute.
-//
-// `auto` is the UI name for language = null: an untagged fence, which both the
-// editor and the renderer auto-detect. That is genuinely different from `text`,
-// which asks for no highlighting at all — so both are offered rather than
-// collapsing them into one "none".
-const AUTO = "auto";
 
 export function CodeBlockCard({ node, updateAttributes, editor }: NodeViewProps) {
   const { t } = useI18n();
   const [copied, setCopied] = useState(false);
 
   const language = (node.attrs.language as string | null) ?? AUTO;
-
-  function labelFor(value: string): string {
-    if (value === AUTO) return t("editor.codeLanguageAuto");
-    if (value === PLAIN_LANGUAGE) return t("editor.codeLanguagePlain");
-    return CODE_LANGUAGE_OPTIONS.find((o) => o.value === value)?.label ?? value;
-  }
-
-  // Content written before this list existed (or by a hand-typed fence) can name
-  // a language the picker doesn't offer. Surface it as its own option instead of
-  // silently rewriting the author's fence to something else.
-  const options = [
-    { value: AUTO, label: labelFor(AUTO) },
-    ...CODE_LANGUAGE_OPTIONS.map((o) => ({ value: o.value, label: labelFor(o.value) })),
-  ];
-  if (!options.some((o) => o.value === language)) {
-    options.push({ value: language, label: language });
-  }
 
   async function handleCopy() {
     await navigator.clipboard.writeText(node.textContent);
@@ -60,31 +30,15 @@ export function CodeBlockCard({ node, updateAttributes, editor }: NodeViewProps)
         contentEditable={false}
         className="flex items-center gap-1 border border-b-0 border-tm-border bg-tm-soft px-2 py-1"
       >
-        <Select
+        <CodeLanguagePicker
           value={language}
-          onValueChange={(value) => {
-            updateAttributes({ language: value === AUTO ? null : value });
+          onChange={(next) => {
+            updateAttributes({ language: next === AUTO ? null : next });
             // The trigger keeps focus after a pick; hand it back to the code so
             // typing continues where the author was working.
             editor.commands.focus();
           }}
-          items={options}
-        >
-          <SelectTrigger
-            size="sm"
-            className="h-6 w-auto min-w-32 border-0 bg-transparent text-xs shadow-none"
-            aria-label={t("editor.codeLanguage")}
-          >
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {options.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        />
 
         <Button
           type="button"

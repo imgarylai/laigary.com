@@ -172,6 +172,8 @@
     "codeLanguage": "語言",
     "codeLanguageAuto": "自動偵測",
     "codeLanguagePlain": "純文字",
+    "codeLanguageSearch": "搜尋語言…",
+    "codeLanguageNoResults": "找不到語言。",
     "codeCopy": "複製程式碼",
     "codeCopied": "已複製",
     "slashHint": "插入區塊（/）",
