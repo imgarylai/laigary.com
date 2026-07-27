@@ -113,6 +113,25 @@ describe("updatePost", () => {
     expect(post?.tags.map((t) => t.slug)).toEqual(["b"]);
   });
 
+  it("clears every tag when tagIds is empty", async () => {
+    // An empty array deletes without inserting — distinct from omitting tagIds,
+    // which leaves the existing links alone.
+    const { createPost, updatePost, getPostBySlug } = await import("@/db/queries");
+    const tagA = await seedTag("A", "a");
+    const { id } = await createPost({
+      title: "T",
+      slug: "t",
+      contentMd: "x",
+      status: "published",
+      tagIds: [tagA.id],
+    });
+
+    await updatePost(id, { title: "T", slug: "t", contentMd: "x", tagIds: [] });
+
+    const post = await getPostBySlug("t");
+    expect(post?.tags).toEqual([]);
+  });
+
   it("throws PostNotFoundError for unknown id", async () => {
     const { updatePost, PostNotFoundError } = await import("@/db/queries");
     await expect(
