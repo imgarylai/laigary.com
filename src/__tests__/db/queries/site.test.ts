@@ -30,6 +30,14 @@ describe("updateSiteSettings", () => {
     expect(await getSiteSettings()).toEqual({ a: "2", b: "3" });
   });
 
+  it("is a no-op for an empty map", async () => {
+    const { updateSiteSettings, getSiteSettings } = await import("@/db/queries");
+    await updateSiteSettings({ site_name: "v1" });
+    await updateSiteSettings({});
+
+    expect(await getSiteSettings()).toEqual({ site_name: "v1" });
+  });
+
   it("leaves every key untouched when one of them fails", async () => {
     const { updateSiteSettings, getSiteSettings } = await import("@/db/queries");
     await updateSiteSettings({ site_name: "v1" });
