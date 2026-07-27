@@ -40,6 +40,21 @@ import {
 } from "@/components/ui/table";
 import { useI18n } from "@/i18n/I18nProvider";
 
+/**
+ * Whether a click landed on something that handles its own activation — a link,
+ * a button, or anything inside the row's `⋯` menu.
+ *
+ * The row navigates to the editor, so without this the Delete item would open
+ * the post on its way to opening the confirmation, and the "view live" link
+ * would do both at once (#180).
+ */
+export function isSelfHandledTarget(target: EventTarget | null): boolean {
+  return (
+    target instanceof Element &&
+    target.closest("a, button, input, [role='menuitem'], [role='menu'], [role='dialog']") !== null
+  );
+}
+
 // Shared admin list table (posts / notes / tags). Data is loaded in full and
 // searched / sorted / paginated client-side — fine at this blog's scale and it
 // keeps every list snappy with no per-interaction round-trip. Each list just
@@ -55,9 +70,14 @@ export function DataTable<T>({
   onGlobalFilterChange,
   pageIndex: controlledPageIndex,
   onPageChange,
+  onRowActivate,
 }: {
   columns: ColumnDef<T, unknown>[];
   data: T[];
+  /** Clicking anywhere inert in a row runs this — the row's primary action.
+   *  Pointer affordance only; the title stays a real link so the keyboard and
+   *  screen readers have the same destination. */
+  onRowActivate?: (row: T) => void;
   searchPlaceholder?: string;
   toolbar?: React.ReactNode;
   pageSize?: number;
@@ -173,7 +193,18 @@ export function DataTable<T>({
             </TableRow>
           ) : (
             table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id}>
+              <TableRow
+                key={row.id}
+                className={onRowActivate ? "cursor-pointer" : undefined}
+                onClick={
+                  onRowActivate
+                    ? (event) => {
+                        if (isSelfHandledTarget(event.target)) return;
+                        onRowActivate(row.original);
+                      }
+                    : undefined
+                }
+              >
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id} className={cell.column.columnDef.meta?.cellClassName}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}

@@ -2,7 +2,7 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, within, waitFor, cleanup } from "@testing-library/react";
-import { DeleteNoteButton } from "@/components/admin/DeleteNoteButton";
+import { DeleteNoteDialog } from "@/components/admin/DeleteNoteDialog";
 
 const { deleteNoteFn, invalidate, toast } = vi.hoisted(() => ({
   deleteNoteFn: vi.fn(),
@@ -20,18 +20,18 @@ vi.mock("@/i18n/I18nProvider", () => ({
 beforeEach(() => vi.clearAllMocks());
 afterEach(() => cleanup());
 
-async function openAndConfirm() {
-  fireEvent.click(screen.getByRole("button", { name: "noteList.delete" }));
+/** The dialog is opened by the row's ⋯ menu, so tests render it already open. */
+async function confirm() {
   const dialog = await screen.findByRole("dialog");
   fireEvent.click(within(dialog).getByRole("button", { name: "noteList.delete" }));
 }
 
-describe("DeleteNoteButton", () => {
+describe("DeleteNoteDialog", () => {
   it("calls deleteNoteFn and invalidates on success", async () => {
     deleteNoteFn.mockResolvedValue({ ok: true });
-    render(<DeleteNoteButton noteId="n1" noteTitle="Two Sum" />);
+    render(<DeleteNoteDialog noteId="n1" noteTitle="Two Sum" open onOpenChange={() => {}} />);
 
-    await openAndConfirm();
+    await confirm();
 
     await waitFor(() => expect(deleteNoteFn).toHaveBeenCalledWith({ data: { id: "n1" } }));
     expect(toast.success).toHaveBeenCalled();
@@ -40,9 +40,9 @@ describe("DeleteNoteButton", () => {
 
   it("shows an error toast and does not invalidate on failure", async () => {
     deleteNoteFn.mockResolvedValue({ ok: false, error: "nope" });
-    render(<DeleteNoteButton noteId="n2" noteTitle="X" />);
+    render(<DeleteNoteDialog noteId="n2" noteTitle="X" open onOpenChange={() => {}} />);
 
-    await openAndConfirm();
+    await confirm();
 
     await waitFor(() => expect(toast.error).toHaveBeenCalled());
     expect(invalidate).not.toHaveBeenCalled();

@@ -9,15 +9,28 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { useI18n } from "@/i18n/I18nProvider";
 import { deletePostFn } from "@/server/admin/posts";
 
-export function DeletePostButton({ postId, postTitle }: { postId: string; postTitle: string }) {
+/**
+ * Confirmation for deleting a post. Controlled, and carrying no trigger of its
+ * own: the row's `⋯` menu opens it (#180), and a trigger nested inside that menu
+ * would be unmounted by the menu closing before the dialog could take over.
+ */
+export function DeletePostDialog({
+  postId,
+  postTitle,
+  open,
+  onOpenChange,
+}: {
+  postId: string;
+  postTitle: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
   const router = useRouter();
   const { t } = useI18n();
-  const [open, setOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   async function handleDelete() {
@@ -29,16 +42,13 @@ export function DeletePostButton({ postId, postTitle }: { postId: string; postTi
       return;
     }
     toast.success(t("deletePost.postDeleted"));
-    setOpen(false);
+    onOpenChange(false);
     // Re-run the list loader so the deleted row disappears.
     router.invalidate();
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button variant="destructive" size="sm" />}>
-        {t("deletePost.delete")}
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("deletePost.deletePost")}</DialogTitle>
@@ -47,7 +57,7 @@ export function DeletePostButton({ postId, postTitle }: { postId: string; postTi
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
             {t("deletePost.cancel")}
           </Button>
           <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
