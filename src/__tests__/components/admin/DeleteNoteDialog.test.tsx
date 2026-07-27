@@ -47,4 +47,19 @@ describe("DeleteNoteDialog", () => {
     await waitFor(() => expect(toast.error).toHaveBeenCalled());
     expect(invalidate).not.toHaveBeenCalled();
   });
+
+  it("closes without deleting when cancelled", async () => {
+    // The row's menu owns the open state, so cancelling has to hand it back.
+    const onOpenChange = vi.fn();
+    render(<DeleteNoteDialog noteId="c1" noteTitle="Keep me" open onOpenChange={onOpenChange} />);
+
+    fireEvent.click(
+      within(await screen.findByRole("dialog")).getByRole("button", {
+        name: "noteForm.cancel",
+      }),
+    );
+
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(deleteNoteFn).not.toHaveBeenCalled();
+  });
 });
