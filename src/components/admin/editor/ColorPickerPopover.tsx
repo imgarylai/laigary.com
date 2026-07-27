@@ -1,4 +1,5 @@
-import type { Editor } from "@tiptap/react";
+import { memo } from "react";
+import { useEditorState, type Editor } from "@tiptap/react";
 import { PaletteIcon } from "@phosphor-icons/react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
@@ -19,9 +20,15 @@ const COLORS = [
   "#0d9488",
 ];
 
-export function ColorPickerPopover({ editor }: { editor: Editor }) {
+// The swatch under the palette icon shows the colour at the caret, so like the
+// table menu this subscribes for itself rather than relying on an ancestor
+// re-rendering often enough to keep the read fresh.
+export const ColorPickerPopover = memo(function ColorPickerPopover({ editor }: { editor: Editor }) {
   const { t } = useI18n();
-  const currentColor = editor.getAttributes("textStyle").color as string | undefined;
+  const currentColor = useEditorState({
+    editor,
+    selector: ({ editor: e }) => e.getAttributes("textStyle").color as string | undefined,
+  });
 
   return (
     <Popover>
@@ -69,4 +76,4 @@ export function ColorPickerPopover({ editor }: { editor: Editor }) {
       </PopoverContent>
     </Popover>
   );
-}
+});

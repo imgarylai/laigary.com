@@ -1,4 +1,5 @@
-import type { Editor } from "@tiptap/react";
+import { memo } from "react";
+import { useEditorState, type Editor } from "@tiptap/react";
 import {
   TextHIcon,
   TextBIcon,
@@ -33,22 +34,55 @@ import { ColorPickerPopover } from "./ColorPickerPopover";
 // the two structures that are awkward to reach any other way (tables, and the
 // link dialog on ⌘K). Block insertion moved to the `/` menu (#173), which names
 // each block instead of asking you to recognise an icon.
-export function Toolbar({ editor, onOpenLink }: { editor: Editor; onOpenLink: () => void }) {
+//
+// Memoised, and subscribed to the editor rather than reading it during render.
+// The two go together: inline `editor.isActive(...)` calls were only ever
+// correct because the document flowed through React state and re-rendered this
+// whole subtree on every keystroke — ~15 buttons, their icons, three menus.
+// That is what made typing expensive (#175). Reading the flags through
+// useEditorState instead means the toolbar repaints when a mark actually turns
+// on or off, and not once per character.
+export const Toolbar = memo(function Toolbar({
+  editor,
+  onOpenLink,
+}: {
+  editor: Editor;
+  onOpenLink: () => void;
+}) {
   const { t } = useI18n();
+  // One selector for every flag the toolbar paints. useEditorState compares
+  // with deepEqual, so an unchanged set of flags does not re-render.
+  const active = useEditorState({
+    editor,
+    selector: ({ editor: e }) => ({
+      h1: e.isActive("heading", { level: 1 }),
+      h2: e.isActive("heading", { level: 2 }),
+      bold: e.isActive("bold"),
+      italic: e.isActive("italic"),
+      underline: e.isActive("underline"),
+      highlight: e.isActive("highlight"),
+      subscript: e.isActive("subscript"),
+      superscript: e.isActive("superscript"),
+      link: e.isActive("link"),
+      code: e.isActive("code"),
+      bulletList: e.isActive("bulletList"),
+      orderedList: e.isActive("orderedList"),
+    }),
+  });
 
   return (
     <div className="flex flex-wrap items-center gap-0.5 rounded-md border p-1">
       {/* Headings */}
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-        isActive={editor.isActive("heading", { level: 1 })}
+        isActive={active.h1}
         title={t("editor.heading1")}
       >
         <TextHIcon className="size-4" weight="bold" />
       </ToolbarButton>
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-        isActive={editor.isActive("heading", { level: 2 })}
+        isActive={active.h2}
         title={t("editor.heading2")}
       >
         <TextHIcon className="size-3.5" />
@@ -59,42 +93,42 @@ export function Toolbar({ editor, onOpenLink }: { editor: Editor; onOpenLink: ()
       {/* Inline formatting */}
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleBold().run()}
-        isActive={editor.isActive("bold")}
+        isActive={active.bold}
         title={t("editor.bold")}
       >
         <TextBIcon className="size-4" />
       </ToolbarButton>
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleItalic().run()}
-        isActive={editor.isActive("italic")}
+        isActive={active.italic}
         title={t("editor.italic")}
       >
         <TextItalicIcon className="size-4" />
       </ToolbarButton>
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleUnderline().run()}
-        isActive={editor.isActive("underline")}
+        isActive={active.underline}
         title={t("editor.underline")}
       >
         <TextUnderlineIcon className="size-4" />
       </ToolbarButton>
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleHighlight().run()}
-        isActive={editor.isActive("highlight")}
+        isActive={active.highlight}
         title={t("editor.highlight")}
       >
         <HighlighterCircleIcon className="size-4" />
       </ToolbarButton>
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleSubscript().run()}
-        isActive={editor.isActive("subscript")}
+        isActive={active.subscript}
         title={t("editor.subscript")}
       >
         <TextSubscriptIcon className="size-4" />
       </ToolbarButton>
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleSuperscript().run()}
-        isActive={editor.isActive("superscript")}
+        isActive={active.superscript}
         title={t("editor.superscript")}
       >
         <TextSuperscriptIcon className="size-4" />
@@ -139,16 +173,12 @@ export function Toolbar({ editor, onOpenLink }: { editor: Editor; onOpenLink: ()
       <Separator orientation="vertical" className="mx-0.5 h-5" />
 
       {/* Code */}
-      <ToolbarButton
-        onClick={onOpenLink}
-        isActive={editor.isActive("link")}
-        title={`${t("editor.link")} (⌘K)`}
-      >
+      <ToolbarButton onClick={onOpenLink} isActive={active.link} title={`${t("editor.link")} (⌘K)`}>
         <LinkIcon className="size-4" />
       </ToolbarButton>
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleCode().run()}
-        isActive={editor.isActive("code")}
+        isActive={active.code}
         title={t("editor.inlineCode")}
       >
         <CodeIcon className="size-4" />
@@ -159,14 +189,14 @@ export function Toolbar({ editor, onOpenLink }: { editor: Editor; onOpenLink: ()
       {/* Lists stay: they are toggled on existing text as often as inserted. */}
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleBulletList().run()}
-        isActive={editor.isActive("bulletList")}
+        isActive={active.bulletList}
         title={t("editor.bulletList")}
       >
         <ListBulletsIcon className="size-4" />
       </ToolbarButton>
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleOrderedList().run()}
-        isActive={editor.isActive("orderedList")}
+        isActive={active.orderedList}
         title={t("editor.orderedList")}
       >
         <ListNumbersIcon className="size-4" />
@@ -189,4 +219,4 @@ export function Toolbar({ editor, onOpenLink }: { editor: Editor; onOpenLink: ()
       </ToolbarButton>
     </div>
   );
-}
+});

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 // KaTeX styles power the editor's live inline-math rendering (MathExtension).
 // Imported here so it code-splits into the client-only editor chunk rather than
@@ -19,6 +19,18 @@ import { YouTubeDialog } from "./editor/YouTubeDialog";
  *  the editor pane has scrolled "past". Matches top-24 on the preview. */
 const STICKY_OFFSET_PX = 96;
 
+// requestIdleCallback is unavailable in Safari <18 and in jsdom; a timeout is a
+// close enough stand-in for work that is already debounced.
+const requestIdle: (cb: () => void) => number =
+  typeof window !== "undefined" && "requestIdleCallback" in window
+    ? (cb) => window.requestIdleCallback(cb)
+    : (cb) => window.setTimeout(cb, 1);
+
+const cancelIdle: (handle: number) => void =
+  typeof window !== "undefined" && "cancelIdleCallback" in window
+    ? (handle) => window.cancelIdleCallback(handle)
+    : (handle) => window.clearTimeout(handle);
+
 export default function TiptapEditorImpl({
   value,
   onChange,
@@ -35,6 +47,10 @@ export default function TiptapEditorImpl({
   const editorPaneRef = useRef<HTMLDivElement>(null);
   const previewPaneRef = useRef<HTMLDivElement>(null);
   const [linkOpen, setLinkOpen] = useState(false);
+  // The markdown this editor last handed to the form. Everything below keys off
+  // it to tell "the parent is echoing our own change back" apart from "the form
+  // was reset from outside".
+  const lastEmittedRef = useRef(value);
   // The insert dialogs live here, not inside the toolbar, because the `/` menu
   // opens them too — one dialog, two doors. `useState` setters are stable, so
   // the extensions can close over them despite being built only once.
@@ -53,7 +69,9 @@ export default function TiptapEditorImpl({
     content: value,
     contentType: "markdown",
     onUpdate: ({ editor: e }) => {
-      onChange(e.getMarkdown());
+      const markdown = e.getMarkdown();
+      lastEmittedRef.current = markdown;
+      onChange(markdown);
     },
   });
 
@@ -66,23 +84,43 @@ export default function TiptapEditorImpl({
     // character gets typed twice / lag" behaviour. When composition ends the
     // effect runs again with the committed text, so nothing is dropped.
     if (editor.view.composing) return;
-    const currentMd = editor.getMarkdown();
-    // Only sync genuine external changes; our own onUpdate echoes back an equal
-    // value, so this skips the self-inflicted round-trip. emitUpdate: false
-    // keeps an external set from bouncing another onChange back to the parent.
-    if (value !== currentMd) {
+
+    // The common case by far: the parent is handing back the very string we
+    // just gave it. Recognising that from a ref costs a comparison, where
+    // re-serializing the document to discover the same thing cost a second full
+    // getMarkdown() on every keystroke.
+    if (value === lastEmittedRef.current) return;
+
+    // Genuine external change (a form reset, or a loader re-run). emitUpdate:
+    // false keeps the set from bouncing another onChange back to the parent.
+    if (value !== editor.getMarkdown()) {
       editor.commands.setContent(value, { emitUpdate: false, contentType: "markdown" });
     }
+    lastEmittedRef.current = value;
   }, [value, editor]);
 
-  // Preview rendering
+  // Preview rendering. renderMarkdown is the whole unified pipeline — remark,
+  // temml, rehype-highlight — so it never runs while a keystroke might still be
+  // in flight: debounced, then deferred to idle time. The preview trailing the
+  // caret by a moment is invisible; a pipeline run competing with typing is not.
   useEffect(() => {
     if (!showPreview) return;
-    const timeout = setTimeout(async () => {
-      const html = await renderMarkdown(value);
-      setPreviewHtml(html);
-    }, 200);
-    return () => clearTimeout(timeout);
+
+    let cancelled = false;
+    let idleHandle: number | undefined;
+
+    const timeout = setTimeout(() => {
+      idleHandle = requestIdle(async () => {
+        const html = await renderMarkdown(value);
+        if (!cancelled) setPreviewHtml(html);
+      });
+    }, 300);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timeout);
+      if (idleHandle !== undefined) cancelIdle(idleHandle);
+    };
   }, [value, showPreview]);
 
   // Keep the preview roughly where the editor is. The two panes scroll on
@@ -113,6 +151,10 @@ export default function TiptapEditorImpl({
     return () => window.removeEventListener("scroll", syncPreviewScroll);
   }, [showPreview, previewHtml]);
 
+  // Stable, or the memo on Toolbar buys nothing: a fresh arrow function each
+  // render would fail the prop comparison every time.
+  const openLink = useCallback(() => setLinkOpen(true), []);
+
   if (!editor) return null;
 
   // The admin sidebar (shadcn) binds Cmd/Ctrl+B on `window` to toggle itself.
@@ -139,7 +181,7 @@ export default function TiptapEditorImpl({
       {/* Sticky under the action bar (top-0, ~h-11), so formatting stays in
           reach in a long document without giving the editor its own scrollbar. */}
       <div className="sticky top-11 z-10 bg-background py-2">
-        <Toolbar editor={editor} onOpenLink={() => setLinkOpen(true)} />
+        <Toolbar editor={editor} onOpenLink={openLink} />
       </div>
 
       <LinkDialog editor={editor} open={linkOpen} onOpenChange={setLinkOpen} />

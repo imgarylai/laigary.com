@@ -1,4 +1,4 @@
-import { useEffect, useReducer, useRef } from "react";
+import { memo, useEffect, useReducer, useRef } from "react";
 import type { Editor } from "@tiptap/react";
 import { ArrowBendDownLeftIcon, FileTextIcon, LinkIcon, NoteIcon } from "@phosphor-icons/react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -79,7 +79,12 @@ export function linkDialogReducer(state: State, action: Action): State {
 // One input, two modes: paste a URL, or type to search posts & notes by title
 // and link to the picked article. Search is debounced and IME-safe — nothing
 // fires while a CJK composition is in flight.
-export function LinkDialog({
+// Memoised: `editor` is stable and `onOpenChange` is a useState setter, so the
+// only prop that ever changes is `open`. Without this the dialog's entire
+// element tree — every child of DialogContent, built eagerly whether or not it
+// is mounted — was reconstructed on each keystroke, because the document used
+// to flow through React state (#175).
+export const LinkDialog = memo(function LinkDialog({
   editor,
   open,
   onOpenChange,
@@ -254,4 +259,4 @@ export function LinkDialog({
       </DialogContent>
     </Dialog>
   );
-}
+});

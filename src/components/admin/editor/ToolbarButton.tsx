@@ -19,6 +19,10 @@ export function ToolbarButton({
       variant={isActive ? "secondary" : "ghost"}
       size="icon"
       className="size-7"
+      // These are toggles, so say so: until now "bold is on" was conveyed by
+      // background colour alone, which a screen reader cannot report. Buttons
+      // that never toggle (the `/` hint) pass no isActive and stay plain.
+      aria-pressed={isActive}
       onClick={onClick}
       disabled={disabled}
       title={title}

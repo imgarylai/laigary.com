@@ -1,4 +1,4 @@
-import { useReducer, useRef } from "react";
+import { memo, useReducer, useRef } from "react";
 import type { Editor } from "@tiptap/react";
 import { SpinnerIcon, CropIcon } from "@phosphor-icons/react";
 import ReactCrop, { type Crop, type PixelCrop } from "react-image-crop";
@@ -110,7 +110,12 @@ const ASPECT_PRESETS = [
 // Controlled, and rendered once by TiptapEditorImpl rather than owning a
 // trigger of its own — the toolbar button and the `/image` slash command are
 // two doors onto the same dialog. Mirrors how LinkDialog already works.
-export function ImageUploadDialog({
+// Memoised: `editor` is stable and `onOpenChange` is a useState setter, so the
+// only prop that ever changes is `open`. Without this the dialog's entire
+// element tree — every child of DialogContent, built eagerly whether or not it
+// is mounted — was reconstructed on each keystroke, because the document used
+// to flow through React state (#175).
+export const ImageUploadDialog = memo(function ImageUploadDialog({
   editor,
   open,
   onOpenChange,
@@ -267,4 +272,4 @@ export function ImageUploadDialog({
       </DialogContent>
     </Dialog>
   );
-}
+});
