@@ -4,7 +4,7 @@
 // queries posts + notes by title only after typing (never mid-IME-composition)
 // and inserts the picked article as an internal link.
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { Editor } from "@tiptap/react";
 import { createExtensions } from "@/components/admin/editor/extensions";
 import { LinkDialog, isUrlLike } from "@/components/admin/editor/LinkDialog";
@@ -20,6 +20,25 @@ vi.mock("@/server/admin/reads", () => ({
 
 // Comfortably past LinkDialog's 250ms query debounce.
 const PAST_DEBOUNCE = 400;
+
+/**
+ * Type a query and drive the debounce with fake timers rather than waiting on
+ * the wall clock. How many renders land inside a real 250ms window varies with
+ * runner load, and that showed up as per-run coverage drift in this file.
+ *
+ * Assert synchronously after this resolves — `advanceTimersByTimeAsync` flushes
+ * the pending microtasks too, so the search has already settled. Never reach
+ * for `findBy`/`waitFor` here: their polling deadlocks against fake timers.
+ */
+async function typeAndSettle(input: HTMLElement, value: string) {
+  vi.useFakeTimers();
+  try {
+    fireEvent.change(input, { target: { value } });
+    await act(() => vi.advanceTimersByTimeAsync(PAST_DEBOUNCE));
+  } finally {
+    vi.useRealTimers();
+  }
+}
 
 afterEach(() => {
   cleanup();
@@ -73,11 +92,10 @@ describe("LinkDialog", () => {
 
     render(<LinkDialog editor={editor} open onOpenChange={() => {}} />);
     const input = screen.getByPlaceholderText("editor.linkDialogPlaceholder");
-    fireEvent.change(input, { target: { value: "gas" } });
+    await typeAndSettle(input, "gas");
 
-    await waitFor(() => expect(searchLinkTargetsFn).toHaveBeenCalledWith({ data: { q: "gas" } }));
-    const row = await screen.findByText("134. Gas Station");
-    fireEvent.click(row);
+    expect(searchLinkTargetsFn).toHaveBeenCalledWith({ data: { q: "gas" } });
+    fireEvent.click(screen.getByText("134. Gas Station"));
 
     expect(editor.getMarkdown()).toBe("[134. Gas Station](/interview/coding/134-gas-station)");
   });
@@ -136,8 +154,8 @@ describe("LinkDialog interaction branches", () => {
     const editor = makeEditor("");
     render(<LinkDialog editor={editor} open onOpenChange={() => {}} />);
     const input = screen.getByPlaceholderText("editor.linkDialogPlaceholder");
-    fireEvent.change(input, { target: { value: "gas" } });
-    await screen.findByText("134. Gas Station");
+    await typeAndSettle(input, "gas");
+    screen.getByText("134. Gas Station");
 
     fireEvent.keyDown(input, { key: "ArrowDown" });
     fireEvent.keyDown(input, { key: "ArrowUp" });
@@ -161,8 +179,8 @@ describe("LinkDialog interaction branches", () => {
     const editor = makeEditor("");
     render(<LinkDialog editor={editor} open onOpenChange={() => {}} />);
     const input = screen.getByPlaceholderText("editor.linkDialogPlaceholder");
-    fireEvent.change(input, { target: { value: "gas" } });
-    const second = await screen.findByText("Gas prices");
+    await typeAndSettle(input, "gas");
+    const second = screen.getByText("Gas prices");
 
     fireEvent.mouseEnter(second.closest("button")!);
     fireEvent.keyDown(input, { key: "Enter" });
@@ -199,7 +217,7 @@ describe("LinkDialog interaction branches", () => {
     const editor = makeEditor("");
     render(<LinkDialog editor={editor} open onOpenChange={() => {}} />);
     const input = screen.getByPlaceholderText("editor.linkDialogPlaceholder");
-    fireEvent.change(input, { target: { value: "gas" } });
-    expect(await screen.findByText("editor.linkNoResults")).toBeDefined();
+    await typeAndSettle(input, "gas");
+    expect(screen.getByText("editor.linkNoResults")).toBeDefined();
   });
 });

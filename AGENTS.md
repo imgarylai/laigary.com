@@ -119,17 +119,34 @@ backfills go inside the generated file or via `drizzle-kit generate --custom`.
   worker build only, so the module cannot load under vitest at all) and
   `routes/design-system.tsx` (noindex styleguide page). Keep that list and the
   `ignore:` list in codecov.yml in sync.
-- Routes are NOT excluded, and are testable off `Route.options` with no router
-  harness: server handlers via `Route.options.server.handlers` fed a real
-  `Request` (`__tests__/routes/`, `__tests__/server/mcp/route.test.ts`), and a
-  UI route's `validateSearch` / `head` / `loader` as the plain functions they
-  are. Only a route `component` needs a RouterProvider harness — there is none
-  yet, so UI-route components are the standing coverage gap.
-- No wall-clock sleeps in tests. For "the debounce fired" use `vi.waitFor`; for
-  "the debounce did NOT fire" use fake timers and `advanceTimersByTimeAsync`
-  inside `act()` — a real sleep makes the assertion depend on runner load, and
-  two input events inside one real debounce window collapse into a single
-  trailing call whether or not the gate under test works.
+- Routes are NOT excluded. Server handlers need no harness at all — reach them
+  at `Route.options.server.handlers` and feed a real `Request`
+  (`__tests__/routes/`, `__tests__/server/mcp/route.test.ts`); a UI route's
+  `validateSearch` / `head` / `loader` are likewise plain functions on
+  `Route.options`.
+- Route _components_ need a router, and `__tests__/helpers/router.tsx` is it:
+  `renderRoute("/posts?tag=go")` mounts the app over the GENERATED route tree
+  with a memory history. It has to be the generated tree — the component's
+  `Route.useLoaderData()` / `useSearch()` resolve by route id, and only the
+  generated tree carries the real ids. A render therefore also exercises
+  `__root` and the pathless layout on the way down. Read the header comment
+  before writing one: five `vi.mock` calls are load-bearing (they cannot live
+  in the helper — factories are hoisted per file), and `beforeAll(warmRouteTree,
+60_000)` keeps the tree import out of the first test's 5s timeout. Still
+  uncovered by choice: the admin route wrappers (a loader plus a render of an
+  already-tested client component) and the two layouts' palette-search
+  closures, whose fake-timer flow deadlocked against the palette's async open.
+- No wall-clock waits around a debounce, in either direction. Install fake
+  timers, `await act(() => vi.advanceTimersByTimeAsync(PAST_DEBOUNCE))`, then
+  assert with a SYNCHRONOUS `getBy` — `advanceTimersByTimeAsync` flushes the
+  pending microtasks, so the search has already settled. See the `typeAndSettle`
+  helpers in the link-dialog, command-palette and link-suggestion tests. Never
+  mix `findBy`/`waitFor` with fake timers: their polling deadlocks against the
+  fake clock. This matters twice over — a real sleep makes the assertion depend
+  on runner load, and for a "did NOT fire" assertion two input events inside one
+  real debounce window collapse into a single trailing call whether or not the
+  gate under test works. It is also what keeps the lcov byte-stable between
+  runs: real waits let a varying number of renders land inside the window.
 - Hooks ARE tested (jsdom `renderHook` + stubbed rAF/matchMedia — see
   `__tests__/hooks/`); their listener math and cleanup regress like any code.
   The `createServerFn` wrapper arrows stay in-file and uncovered — they're the

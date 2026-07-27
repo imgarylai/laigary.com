@@ -4,7 +4,7 @@
 // content rows are fetched on demand only after the user types, and (for IME
 // input) only once the composition commits — never mid-composition.
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, render, screen, waitFor, fireEvent } from "@testing-library/react";
+import { act, cleanup, render, screen, fireEvent } from "@testing-library/react";
 import { CommandPalette, type PaletteRow } from "@/features/terminal/CommandPalette";
 
 vi.mock("@/i18n/I18nProvider", () => ({
@@ -25,6 +25,25 @@ afterEach(cleanup);
 
 // Comfortably past CommandPalette's 180ms query debounce.
 const PAST_DEBOUNCE = 400;
+
+/**
+ * Type a query and drive the debounce with fake timers rather than waiting on
+ * the wall clock. How many renders land inside a real 180ms window varies with
+ * runner load, and that showed up as per-run coverage drift in this file.
+ *
+ * Assert synchronously after this resolves — `advanceTimersByTimeAsync` flushes
+ * the pending microtasks too, so the search has already settled. Never reach
+ * for `findBy`/`waitFor` here: their polling deadlocks against fake timers.
+ */
+async function typeAndSettle(value: string) {
+  vi.useFakeTimers();
+  try {
+    fireEvent.change(screen.getByPlaceholderText("search"), { target: { value } });
+    await act(() => vi.advanceTimersByTimeAsync(PAST_DEBOUNCE));
+  } finally {
+    vi.useRealTimers();
+  }
+}
 
 const pages: PaletteRow[] = [
   { kind: "page", label: "ls ~", haystack: "home", onSelect: () => {} },
@@ -70,9 +89,9 @@ describe("CommandPalette", () => {
         placeholder="search"
       />,
     );
-    fireEvent.change(screen.getByPlaceholderText("search"), { target: { value: "two" } });
-    await waitFor(() => expect(searchContent).toHaveBeenCalledWith("two"));
-    expect(await screen.findByText("Two Sum")).toBeDefined();
+    await typeAndSettle("two");
+    expect(searchContent).toHaveBeenCalledWith("two");
+    expect(screen.getByText("Two Sum")).toBeDefined();
   });
 
   it("runs the row action and closes the dialog on select", async () => {
@@ -95,8 +114,8 @@ describe("CommandPalette", () => {
         placeholder="search"
       />,
     );
-    fireEvent.change(screen.getByPlaceholderText("search"), { target: { value: "two" } });
-    fireEvent.click(await screen.findByText("Two Sum"));
+    await typeAndSettle("two");
+    fireEvent.click(screen.getByText("Two Sum"));
     expect(onSelect).toHaveBeenCalled();
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
@@ -138,9 +157,9 @@ describe("CommandPalette", () => {
     expect(screen.getByText("cd ./leetcode")).toBeDefined();
     expect(screen.getByText("leetcode")).toBeDefined();
 
-    fireEvent.change(screen.getByPlaceholderText("search"), { target: { value: "t" } });
+    await typeAndSettle("t");
     // Content row with a title: title is the primary line, path the secondary.
-    expect(await screen.findByText("Titled Note")).toBeDefined();
+    expect(screen.getByText("Titled Note")).toBeDefined();
     expect(screen.getByText("cat titled")).toBeDefined();
     // Content row with no title falls back to showing the path as the primary.
     expect(screen.getByText("cat untitled")).toBeDefined();
@@ -197,8 +216,8 @@ describe("CommandPalette lifecycle branches", () => {
         placeholder="search"
       />,
     );
-    fireEvent.change(screen.getByPlaceholderText("search"), { target: { value: "two" } });
-    expect(await screen.findByText("Two Sum")).toBeDefined();
+    await typeAndSettle("two");
+    expect(screen.getByText("Two Sum")).toBeDefined();
 
     rerender(
       <CommandPalette
@@ -236,7 +255,7 @@ describe("CommandPalette lifecycle branches", () => {
         placeholder="search"
       />,
     );
-    fireEvent.change(screen.getByPlaceholderText("search"), { target: { value: "zzz" } });
-    expect(await screen.findByText("blog.search.noMatches")).toBeDefined();
+    await typeAndSettle("zzz");
+    expect(screen.getByText("blog.search.noMatches")).toBeDefined();
   });
 });
