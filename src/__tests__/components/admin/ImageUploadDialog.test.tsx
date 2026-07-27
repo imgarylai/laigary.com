@@ -24,12 +24,23 @@ vi.mock("@/i18n/I18nProvider", () => ({
 vi.mock("react-image-crop", () => ({
   default: ({
     children,
+    onChange,
     onComplete,
   }: {
     children?: React.ReactNode;
+    onChange?: (c: unknown) => void;
     onComplete?: (c: unknown) => void;
   }) => (
     <div>
+      {/* Dragging a crop out: onChange fires continuously, onComplete once on
+          release. Two buttons so a test can drive either half. */}
+      <button
+        type="button"
+        data-testid="drag-crop"
+        onClick={() => onChange?.({ x: 0, y: 0, width: 80, height: 45, unit: "px" })}
+      >
+        drag
+      </button>
       <button
         type="button"
         data-testid="finish-crop"
@@ -120,6 +131,31 @@ describe("ImageUploadDialog", () => {
     expect(screen.getByRole("button", { name: "editor.cropFree" })).toBeTruthy();
   });
 
+  it("should lock the crop to a chosen aspect ratio", () => {
+    renderDialog();
+    pickFile();
+    fireEvent.click(screen.getByRole("button", { name: /editor.cropImage/ }));
+
+    fireEvent.click(screen.getByRole("button", { name: "16:9" }));
+
+    // The active preset is the one the crop is constrained to, so it has to be
+    // distinguishable from the rest.
+    expect(screen.getByRole("button", { name: "16:9" }).className).toContain("secondary");
+    expect(screen.getByRole("button", { name: "4:3" }).className).not.toContain("secondary");
+  });
+
+  it("should follow the crop as it is dragged", () => {
+    renderDialog();
+    pickFile();
+    fireEvent.click(screen.getByRole("button", { name: /editor.cropImage/ }));
+
+    // Only onComplete gates the upload, but the rectangle has to track the drag
+    // or the cropper would render a frozen frame under the pointer.
+    fireEvent.click(screen.getByTestId("drag-crop"));
+
+    expect(screen.getByAltText("Crop")).toBeTruthy();
+  });
+
   it("should go back to the plain preview when cropping is cancelled", () => {
     renderDialog();
     pickFile();
@@ -160,6 +196,19 @@ describe("ImageUploadDialog", () => {
     expect(await screen.findByText("R2 said no")).toBeTruthy();
     expect(setImage).not.toHaveBeenCalled();
     expect(onOpenChange).not.toHaveBeenCalled();
+  });
+
+  it("should fall back to a generic message when the failure is not an Error", async () => {
+    // fetch and third-party code can reject with a string; showing "undefined"
+    // as the reason would be worse than saying nothing useful.
+    compressImage.mockImplementation(async (f: File) => f);
+    uploadFile.mockRejectedValue("nope");
+    renderDialog();
+
+    pickFile();
+    fireEvent.click(uploadButton());
+
+    expect(await screen.findByText("editor.uploadFailed")).toBeTruthy();
   });
 
   it("should close without inserting anything when cancelled", () => {

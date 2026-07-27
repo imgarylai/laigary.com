@@ -72,6 +72,16 @@ describe("YouTubeDialog", () => {
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
+  it("should not embed while the URL is still being typed", () => {
+    // Only Enter submits; every other key has to fall through to the input.
+    const { setYoutubeVideo } = renderDialog();
+    fireEvent.change(urlBox(), { target: { value: "https://youtu.be/abc123" } });
+
+    fireEvent.keyDown(urlBox(), { key: "a" });
+
+    expect(setYoutubeVideo).not.toHaveBeenCalled();
+  });
+
   it("should ignore Enter on an empty box", () => {
     const { setYoutubeVideo, onOpenChange } = renderDialog();
 
