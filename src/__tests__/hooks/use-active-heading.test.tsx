@@ -151,9 +151,16 @@ describe("useActiveHeading", () => {
 
   it("should not subscribe when the id list is empty", () => {
     const spy = vi.spyOn(window, "addEventListener");
-    const { result } = renderHook(() => useActiveHeading([]));
-    expect(result.current).toBeNull();
-    expect(spy.mock.calls.some(([type]) => type === "scroll")).toBe(false);
+    try {
+      const { result } = renderHook(() => useActiveHeading([]));
+      expect(result.current).toBeNull();
+      expect(spy.mock.calls.some(([type]) => type === "scroll")).toBe(false);
+    } finally {
+      // The cleanup test below drives real scroll listeners. Left installed,
+      // this spy would still call through today — but it is one behaviour
+      // change away from making that test pass against a stub.
+      spy.mockRestore();
+    }
   });
 
   it("should stay idle when none of the ids resolve to an element", () => {

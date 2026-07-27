@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   buildGoogleFontsCssUrl,
   collectNonAsciiGlyphs,
@@ -8,10 +8,6 @@ import {
   parseTruetypeUrl,
 } from "@/lib/og/fonts";
 import { siteTemplate } from "@/lib/og/templates";
-
-afterEach(() => {
-  vi.restoreAllMocks();
-});
 
 const ttfBytes = () => new Uint8Array([0, 1, 0, 0]).buffer;
 

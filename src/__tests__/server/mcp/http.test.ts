@@ -2,7 +2,7 @@
 //
 // HTTP layer for /mcp: body parsing, bearer wiring into the protocol, and
 // the notification fast-path. The worker env is mocked per test.
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { setupTestDb } from "../../db/helpers/test-db";
 
 setupTestDb();
@@ -12,8 +12,6 @@ setupTestDb();
 vi.mock("cloudflare:workers", () => ({
   env: { MCP_ADMIN_TOKEN: "secret-token" },
 }));
-
-beforeEach(() => vi.clearAllMocks());
 
 function post(body: string, headers: Record<string, string> = {}) {
   return new Request("http://test.local/mcp", {

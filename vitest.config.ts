@@ -18,6 +18,24 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["src/**/*.test.{ts,tsx}"],
+    // Mock hygiene is global so no file has to hand-roll it — the version that
+    // gets hand-rolled wrong fails silently. `vi.clearAllMocks()` in a local
+    // beforeEach clears recorded CALLS but leaves the implementation installed,
+    // so a one-off `mockRejectedValue` leaks into whichever test runs next
+    // (#192 was exactly that, green only because the happy path was declared
+    // first). `mockReset` restores a `vi.fn(impl)` to its original
+    // implementation rather than blanking it, so `vi.mock` factories keep
+    // working; `restoreMocks` undoes `vi.spyOn` so a stub cannot outlive the
+    // test that installed it.
+    mockReset: true,
+    restoreMocks: true,
+    // Randomise both the file order and the order within each file, so a test
+    // that depends on a sibling running first fails now instead of on whatever
+    // future PR happens to reorder it. #192 was that bug, and it survived
+    // because the happy-path test was declared before the one that poisoned the
+    // mock. Vitest prints the seed on every run — pass it back via
+    // `--sequence.seed=<n>` to replay an order exactly.
+    sequence: { shuffle: { files: true, tests: true } },
     // jsdom has no layout, so ProseMirror's scroll-into-view throws from a
     // deferred rAF and fails the run as an unhandled error. See the file.
     setupFiles: ["src/__tests__/setup.ts"],

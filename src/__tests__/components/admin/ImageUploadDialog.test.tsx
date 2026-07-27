@@ -66,11 +66,12 @@ function stubEditor() {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  vi.stubGlobal("URL", { ...URL, createObjectURL: () => "blob:preview" });
+  // See CoverImageUpload.test.tsx: spreading the URL class into an object
+  // literal drops the constructor and revokeObjectURL. Spy the static instead.
+  vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:preview");
 });
 afterEach(() => {
   cleanup();
-  vi.unstubAllGlobals();
 });
 
 function renderDialog() {
