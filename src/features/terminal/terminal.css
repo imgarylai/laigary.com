@@ -122,15 +122,42 @@
 }
 .tm-prose ul > li,
 .tm-prose ol > li {
-  margin-bottom: 4px;
-  padding-left: 1.4em;
+  margin-bottom: 8px;
   position: relative;
 }
+/* Gutters are sized per list type rather than shared. The bullet block needs
+   ~1.5ch; the `01.` counter needs ~3.5ch. The single shared 1.4em left the
+   three-character number all but touching its own text. */
+.tm-prose ul > li {
+  padding-left: 1.5em;
+}
+.tm-prose ol > li {
+  padding-left: 2.6em;
+}
+/* A drawn block, not the old `—`: an em dash is a single hairline stroke sitting
+   at mid-x-height, so at body size it read as punctuation *inside* the line
+   rather than as a marker beside it. Nested levels go hollow, so depth is
+   legible from the marker and not from indentation alone.
+
+   Drawn rather than a glyph on purpose. The preloaded JetBrains Mono latin
+   subset covers U+2022/U+00B7 but none of `◦`/`▪`/`‣`, so a glyph-based nesting
+   scale would silently swap typeface partway down the list. A box also carries
+   more mass at this size than any bullet character, and echoes the block cursor
+   the rest of the terminal styling leans on. */
 .tm-prose ul > li::before {
-  content: "—";
-  color: var(--tm-accent);
+  content: "";
   position: absolute;
-  left: 0;
+  left: 0.15em;
+  /* Vertically centres the block on the first line's x-height at the .tm-prose
+     1rem/1.625 metrics. */
+  top: 0.62em;
+  width: 0.42em;
+  height: 0.42em;
+  background: var(--tm-accent);
+}
+.tm-prose ul ul > li::before {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--tm-accent);
 }
 .tm-prose ol {
   counter-reset: tm-ol;
@@ -138,11 +165,20 @@
 .tm-prose ol > li {
   counter-increment: tm-ol;
 }
+/* Accent, not --tm-dim: the counter labels the item, and dimming it below body
+   text made the label recede behind the content it is numbering. The trailing
+   "." separates it from the text at a glance. */
 .tm-prose ol > li::before {
-  content: counter(tm-ol, decimal-leading-zero);
-  color: var(--tm-dim);
+  content: counter(tm-ol, decimal-leading-zero) ".";
+  color: var(--tm-accent);
   position: absolute;
   left: 0;
+}
+/* A nested list closes out its parent item; it is not a block in its own right.
+   Without this it inherits the 16px bottom margin above and opens a
+   paragraph-sized hole in the middle of the outer list. */
+.tm-prose :is(ul, ol) :is(ul, ol) {
+  margin: 8px 0 0;
 }
 /* Code presentation is shared with the admin editor via `.tm-code` (see the
    `--tm-code-surface` group at the bottom of this file). `--tm-*` tokens live
