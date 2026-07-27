@@ -9,6 +9,25 @@ const harness = setupTestDb();
 const seedSection = (slug = "leetcode", label = "LeetCode") =>
   seedSectionRow({ slug, label, blurb: "...", icon: "[#]", sortOrder: 0 });
 
+/**
+ * Spread the given notes over distinct, ascending timestamps — listed oldest
+ * first.
+ *
+ * `interview_notes.created_at`/`updated_at` come from the DB default, so notes
+ * seeded in a tight loop all share one second and ordering is unobservable
+ * rather than merely unasserted. Restamping makes chronology something the
+ * query can actually get wrong.
+ */
+function ageNotes(slugs: string[]) {
+  const stmt = harness.sqlite.prepare(
+    "UPDATE interview_notes SET created_at = ?, updated_at = ? WHERE slug = ?",
+  );
+  for (const [i, slug] of slugs.entries()) {
+    const at = (i + 1) * 1_000_000;
+    stmt.run(at, at, slug);
+  }
+}
+
 describe("createSection", () => {
   it("inserts a new section", async () => {
     const { createSection, getInterviewSections } = await import("@/db/queries");
@@ -363,9 +382,16 @@ describe("getInterviewNotesBySection", () => {
         status: "published",
       });
     }
+    ageNotes(["n0", "n1", "n2", "n3", "n4"]);
+
+    // Exact slices at two different offsets. A count alone stays correct even
+    // when offset is ignored entirely and page 1 repeats forever.
     const page = await getInterviewNotesBySection("leetcode", { limit: 2, offset: 1 });
-    expect(page.notes).toHaveLength(2);
+    expect(page.notes.map((n) => n.slug)).toEqual(["n3", "n2"]);
     expect(page.total).toBe(5);
+
+    const last = await getInterviewNotesBySection("leetcode", { limit: 2, offset: 3 });
+    expect(last.notes.map((n) => n.slug)).toEqual(["n1", "n0"]);
   });
 
   it("returns empty when section doesn't exist", async () => {
@@ -410,16 +436,17 @@ describe("getPublishedNotesByTag", () => {
     await seedNote(s2.id, { slug: "queue", title: "Queue", status: "published", tagIds: [tag.id] });
     await seedNote(s1.id, { slug: "other", title: "Other", status: "published" });
 
+    ageNotes(["stack", "queue", "other"]);
+
+    // Exact array, not arrayContaining: this feed is ordered newest-first and
+    // a containment check cannot see that.
     const notes = await getPublishedNotesByTag("monotonic");
     expect(
       notes.map((n) => ({ slug: n.slug, section: n.sectionSlug, label: n.sectionLabel })),
-    ).toEqual(
-      expect.arrayContaining([
-        { slug: "stack", section: "coding", label: "Coding" },
-        { slug: "queue", section: "systems", label: "Systems" },
-      ]),
-    );
-    expect(notes).toHaveLength(2);
+    ).toEqual([
+      { slug: "queue", section: "systems", label: "Systems" },
+      { slug: "stack", section: "coding", label: "Coding" },
+    ]);
   });
 
   it("should exclude drafts and return empty for an unused tag", async () => {
@@ -455,8 +482,12 @@ describe("searchAdminInterviewNotes", () => {
     await createNote({ slug: "sum-types", sectionId: sd.id, title: "Sum Types" });
     await createNote({ slug: "bfs", sectionId: lc.id, title: "BFS Template", status: "published" });
 
+    ageNotes(["two-sum", "sum-types"]);
+
+    // Not .sort(): this list is ordered by updatedAt desc, and sorting the
+    // result of an ordering query asserts nothing about the ordering.
     const hits = await searchAdminInterviewNotes("Sum");
-    expect(hits.map((h) => h.slug).sort()).toEqual(["sum-types", "two-sum"]);
+    expect(hits.map((h) => h.slug)).toEqual(["sum-types", "two-sum"]);
     expect(hits.find((h) => h.slug === "two-sum")).toMatchObject({
       sectionSlug: "leetcode",
       status: "published",
@@ -481,22 +512,26 @@ describe("getTagsInSection", () => {
   it("returns distinct tags from published notes only", async () => {
     const { createNote, createTag, getTagsInSection } = await import("@/db/queries");
     const section = await seedSection();
-    const a = await createTag({ name: "A", slug: "a" });
-    const b = await createTag({ name: "B", slug: "b" });
+    const zeta = await createTag({ name: "Zeta", slug: "zeta" });
+    const alpha = await createTag({ name: "Alpha", slug: "alpha" });
     const drafts = await createTag({ name: "Drafts", slug: "drafts" });
 
+    // The query scans interview_note_tags, so what decides the unordered result
+    // is the order the LINKS are written — not the order the tags were created.
+    // Link zeta first on both notes: drop `asc(tags.name)` and the chip row
+    // comes back ["zeta", "alpha"].
     await createNote({
       slug: "n1",
       sectionId: section.id,
       title: "N1",
-      tagIds: [a.id],
+      tagIds: [zeta.id],
       status: "published",
     });
     await createNote({
       slug: "n2",
       sectionId: section.id,
       title: "N2",
-      tagIds: [a.id, b.id],
+      tagIds: [zeta.id, alpha.id],
       status: "published",
     });
     // Draft shouldn't contribute its tag
@@ -508,7 +543,7 @@ describe("getTagsInSection", () => {
     });
 
     const tags = await getTagsInSection("leetcode");
-    expect(tags.map((t) => t.slug).sort()).toEqual(["a", "b"]);
+    expect(tags.map((t) => t.slug)).toEqual(["alpha", "zeta"]);
   });
 });
 

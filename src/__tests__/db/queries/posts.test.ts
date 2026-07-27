@@ -8,6 +8,24 @@ setupTestDb();
 
 const seedTag = (name: string, slug: string) => seedTagRow({ name, slug });
 
+/**
+ * Publish posts on distinct, ascending seconds — listed oldest first.
+ *
+ * `createPost` stamps `publishedAt` from `Date.now()`, so rows seeded in a
+ * tight loop all land on the same second and any ordering assertion over them
+ * is unobservable rather than merely unasserted. Spy the clock so chronology
+ * is a property the query can actually get wrong.
+ */
+async function seedChronology(slugs: string[]) {
+  const { createPost } = await import("@/db/queries");
+  const now = vi.spyOn(Date, "now");
+  for (const [i, slug] of slugs.entries()) {
+    now.mockReturnValue((i + 1) * 1_000_000);
+    await createPost({ title: slug, slug, contentMd: "x", status: "published" });
+  }
+  now.mockRestore();
+}
+
 describe("createPost", () => {
   it("inserts a draft by default with no publishedAt", async () => {
     const { createPost, getAdminPosts } = await import("@/db/queries");
@@ -204,22 +222,28 @@ describe("getPublishedPosts", () => {
     expect(onlyA.posts[0].slug).toBe("p1");
   });
 
+  it("lists newest first", async () => {
+    // Seeded oldest → newest, so a feed that has kept its ordering hands them
+    // back reversed. This is the invariant the home page's "latest post" probe
+    // and every /tags/$slug page depend on.
+    const { getPublishedPosts } = await import("@/db/queries");
+    await seedChronology(["oldest", "middle", "newest"]);
+
+    const { posts } = await getPublishedPosts();
+    expect(posts.map((p) => p.slug)).toEqual(["newest", "middle", "oldest"]);
+  });
+
   it("respects limit and offset", async () => {
-    const { createPost, getPublishedPosts } = await import("@/db/queries");
-    for (let i = 0; i < 5; i++) {
-      await createPost({
-        title: `P${i}`,
-        slug: `p${i}`,
-        contentMd: "x",
-        status: "published",
-      });
-    }
+    const { getPublishedPosts } = await import("@/db/queries");
+    await seedChronology(["p0", "p1", "p2", "p3", "p4"]);
+
     const page1 = await getPublishedPosts({ limit: 2, offset: 0 });
     const page2 = await getPublishedPosts({ limit: 2, offset: 2 });
-    expect(page1.posts).toHaveLength(2);
-    expect(page2.posts).toHaveLength(2);
+    // Exact slices, not just "the two pages differ" — that much stays true
+    // even if offset is ignored and the rows come back in insertion order.
+    expect(page1.posts.map((p) => p.slug)).toEqual(["p4", "p3"]);
+    expect(page2.posts.map((p) => p.slug)).toEqual(["p2", "p1"]);
     expect(page1.total).toBe(5);
-    expect(page1.posts[0].slug).not.toBe(page2.posts[0].slug);
   });
 
   it("returns empty for unknown tag", async () => {
