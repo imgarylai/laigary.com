@@ -14,6 +14,9 @@ const { upsertPageFn, navigate, invalidate, toast } = vi.hoisted(() => ({
 vi.mock("@/server/admin/pages", () => ({ upsertPageFn }));
 vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => navigate,
+  // The editor's navigation guard calls this; an idle resolver means nothing is
+  // currently blocked, which is the state every test here starts in.
+  useBlocker: () => ({ status: "idle" }),
   useRouter: () => ({ invalidate }),
 }));
 vi.mock("sonner", () => ({ toast }));

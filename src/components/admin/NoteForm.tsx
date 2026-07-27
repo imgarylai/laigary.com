@@ -21,6 +21,8 @@ import { slugify } from "@/lib/slug";
 import { TagsCombobox, type TagOption } from "./TagsCombobox";
 import { TiptapEditor } from "./TiptapEditor";
 import { EditorShell } from "./EditorShell";
+import { SaveState } from "./SaveState";
+import { UnsavedChangesGuard } from "./UnsavedChangesGuard";
 import { EDITOR_TITLE_CLASS } from "./form-fields";
 import { createNoteFn, updateNoteFn } from "@/server/admin/interview";
 
@@ -104,6 +106,10 @@ export function NoteForm({
         return;
       }
       toast.success(t("admin.noteUpdated"));
+      // Clears isDirty, which the save-state indicator and the navigation guard
+      // both read. Without it the form stays dirty forever after the first
+      // edit, so the guard would block the redirect this save is about to make.
+      form.reset(values);
       router.invalidate();
     } else {
       const result = await createNoteFn({ data: values });
@@ -112,6 +118,10 @@ export function NoteForm({
         return;
       }
       toast.success(t("admin.noteCreated"));
+      // Clears isDirty, which the save-state indicator and the navigation guard
+      // both read. Without it the form stays dirty forever after the first
+      // edit, so the guard would block the redirect this save is about to make.
+      form.reset(values);
       navigate({ to: "/admin/interview/notes/$noteId/edit", params: { noteId: result.data.id } });
     }
   });
@@ -248,12 +258,18 @@ export function NoteForm({
 
   return (
     <form onSubmit={submit}>
+      <UnsavedChangesGuard dirty={form.formState.isDirty} saving={form.formState.isSubmitting} />
       <EditorShell
         heading={isEdit ? t("admin.editNote") : t("admin.newNote")}
         settingsLabel={t("noteForm.settings")}
         settings={settings}
         actions={
           <>
+            <SaveState
+              dirty={form.formState.isDirty}
+              saving={form.formState.isSubmitting}
+              saved={!!note}
+            />
             {canPreview && section && note && (
               <Button
                 type="button"
@@ -280,7 +296,12 @@ export function NoteForm({
             >
               {t("noteForm.cancel")}
             </Button>
-            <Button type="submit" size="sm" disabled={form.formState.isSubmitting}>
+            <Button
+              type="submit"
+              size="sm"
+              disabled={form.formState.isSubmitting}
+              title={`${note ? t("noteForm.update") : t("noteForm.create")} (⌘S)`}
+            >
               {form.formState.isSubmitting
                 ? t("noteForm.saving")
                 : isEdit

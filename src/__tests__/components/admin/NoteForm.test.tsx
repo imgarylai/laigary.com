@@ -24,6 +24,9 @@ const { createNoteFn, updateNoteFn, navigate, invalidate, toast } = vi.hoisted((
 vi.mock("@/server/admin/interview", () => ({ createNoteFn, updateNoteFn }));
 vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => navigate,
+  // The editor's navigation guard calls this; an idle resolver means nothing is
+  // currently blocked, which is the state every test here starts in.
+  useBlocker: () => ({ status: "idle" }),
   useRouter: () => ({ invalidate }),
   Link: ({ children, ...props }: { children: React.ReactNode }) => <a {...props}>{children}</a>,
 }));

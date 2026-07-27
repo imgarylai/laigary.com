@@ -18,6 +18,9 @@ const { createPostFn, updatePostFn, navigate, invalidate, toast } = vi.hoisted((
 vi.mock("@/server/admin/posts", () => ({ createPostFn, updatePostFn }));
 vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => navigate,
+  // The editor's navigation guard calls this; an idle resolver means nothing is
+  // currently blocked, which is the state every test here starts in.
+  useBlocker: () => ({ status: "idle" }),
   useRouter: () => ({ invalidate }),
   Link: ({ children }: { children?: React.ReactNode }) => <a href="/">{children}</a>,
 }));
@@ -162,6 +165,89 @@ describe("PostForm", () => {
     const arg = createPostFn.mock.calls[0][0].data;
     expect(arg.status).toBe("published");
     expect(arg.pinned).toBe(true);
+  });
+
+  it("should say nothing about saving before the author touches anything", () => {
+    render(<PostForm availableTags={tags} ogBrand="Unconstrained" />);
+
+    // A new post has nothing stored, so "Saved" would be a lie.
+    expect(screen.queryByText("postForm.unsavedChanges")).toBeNull();
+    expect(screen.queryByText("postForm.allSaved")).toBeNull();
+  });
+
+  it("should flag unsaved changes as soon as a field is edited", () => {
+    render(<PostForm availableTags={tags} ogBrand="Unconstrained" />);
+
+    fireEvent.change(screen.getByLabelText("postForm.title"), { target: { value: "Draft" } });
+
+    expect(screen.getByText("postForm.unsavedChanges")).toBeTruthy();
+  });
+
+  it("should clear the unsaved flag once the save lands", async () => {
+    // The reset after a successful save is what does this, and it is also what
+    // stops the navigation guard blocking the editor's own redirect.
+    updatePostFn.mockResolvedValue({ ok: true });
+    render(
+      <PostForm
+        postId="p1"
+        availableTags={tags}
+        ogBrand="Unconstrained"
+        initialData={{
+          title: "Original",
+          slug: "original-slug",
+          contentMd: "body",
+          excerpt: "",
+          coverImageUrl: "",
+          tagIds: [],
+          status: "draft",
+          pinned: false,
+        }}
+      />,
+    );
+    fireEvent.change(screen.getByLabelText("postForm.title"), { target: { value: "Renamed" } });
+    expect(screen.getByText("postForm.unsavedChanges")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "postForm.update" }));
+
+    await waitFor(() => expect(screen.getByText("postForm.allSaved")).toBeTruthy());
+    expect(screen.queryByText("postForm.unsavedChanges")).toBeNull();
+  });
+
+  it("should keep the unsaved flag up when the save fails", async () => {
+    // Clearing it here would tell the author their work is safe when it is not.
+    updatePostFn.mockResolvedValue({ ok: false, error: "boom" });
+    render(
+      <PostForm
+        postId="p1"
+        availableTags={tags}
+        ogBrand="Unconstrained"
+        initialData={{
+          title: "Original",
+          slug: "original-slug",
+          contentMd: "body",
+          excerpt: "",
+          coverImageUrl: "",
+          tagIds: [],
+          status: "draft",
+          pinned: false,
+        }}
+      />,
+    );
+    fireEvent.change(screen.getByLabelText("postForm.title"), { target: { value: "Renamed" } });
+
+    fireEvent.click(screen.getByRole("button", { name: "postForm.update" }));
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("boom"));
+    expect(screen.getByText("postForm.unsavedChanges")).toBeTruthy();
+  });
+
+  it("should advertise the save shortcut on the button", () => {
+    // ⌘S has worked all along, but nothing on screen said so.
+    render(<PostForm availableTags={tags} ogBrand="Unconstrained" />);
+
+    expect(screen.getByRole("button", { name: "postForm.create" }).getAttribute("title")).toContain(
+      "⌘S",
+    );
   });
 
   it("should leave the editor for the list when cancelled", () => {
