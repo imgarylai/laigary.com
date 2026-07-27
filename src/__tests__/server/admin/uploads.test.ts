@@ -100,14 +100,17 @@ describe("confirmUploadImpl", () => {
 
   it("maps a duplicate confirm to a failed result", async () => {
     mockHead(true);
-    vi.mocked(queries.recordUpload).mockRejectedValue(new UploadConflictError());
+    // Once, not persistently: `vi.clearAllMocks()` clears calls but keeps
+    // implementations, so a plain mockRejectedValue leaks into whichever test
+    // runs next and fails it under a shuffled order.
+    vi.mocked(queries.recordUpload).mockRejectedValueOnce(new UploadConflictError());
     const res = await confirmUploadImpl(confirmInput);
     expect(res.ok).toBe(false);
   });
 
   it("rethrows non-conflict record errors untouched", async () => {
     mockHead(true);
-    vi.mocked(queries.recordUpload).mockRejectedValue(new Error("disk I/O error"));
+    vi.mocked(queries.recordUpload).mockRejectedValueOnce(new Error("disk I/O error"));
     await expect(confirmUploadImpl(confirmInput)).rejects.toThrow("disk I/O error");
   });
 });
