@@ -12,6 +12,36 @@ const MIGRATIONS_DIR = join(process.cwd(), "migrations");
 
 export type TestDb = ReturnType<typeof drizzle>;
 
+/**
+ * Give the better-sqlite3 driver the `batch()` the D1 driver has.
+ *
+ * D1 has no interactive transactions — `db.transaction()` throws `Failed query:
+ * begin` there — so the atomic unit the mutations use is `db.batch()`, which D1
+ * runs as a single transaction. drizzle's better-sqlite3 driver has no `batch`
+ * at all, so without this the harness would execute the very writes it is meant
+ * to prove atomic as separate autocommits, and a partial-write test would pass
+ * for the wrong reason.
+ *
+ * Statements are awaited in order between BEGIN and COMMIT. better-sqlite3 is
+ * synchronous on one connection, so nothing interleaves and a throw rolls the
+ * whole sequence back — the same guarantee D1 gives.
+ */
+function attachBatch(db: TestDb, sqlite: Database.Database): void {
+  (db as unknown as { batch: (s: readonly Promise<unknown>[]) => Promise<unknown[]> }).batch =
+    async (statements) => {
+      sqlite.exec("BEGIN");
+      try {
+        const results: unknown[] = [];
+        for (const statement of statements) results.push(await statement);
+        sqlite.exec("COMMIT");
+        return results;
+      } catch (err) {
+        sqlite.exec("ROLLBACK");
+        throw err;
+      }
+    };
+}
+
 export function createTestDb() {
   const sqlite = new Database(":memory:");
   // D1 enforces foreign keys; mirror that here so onDelete cascade rules apply.
@@ -27,6 +57,7 @@ export function createTestDb() {
   }
 
   const db = drizzle(sqlite);
+  attachBatch(db, sqlite);
 
   return {
     db,

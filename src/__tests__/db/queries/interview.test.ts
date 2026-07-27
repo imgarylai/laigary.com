@@ -125,6 +125,28 @@ describe("createNote", () => {
       createNote({ slug: "n", sectionId: section.id, title: "B" }),
     ).rejects.toBeInstanceOf(NoteConflictError);
   });
+
+  it("leaves no orphan row behind when the tag write fails", async () => {
+    // Mirrors the posts side: without atomicity the note row is committed
+    // before the tag insert fails, so a reported failure still leaves a note.
+    const { createNote, getInterviewNotesBySection } = await import("@/db/queries");
+    const section = await seedSection();
+
+    await expect(
+      createNote({
+        slug: "n",
+        sectionId: section.id,
+        title: "A",
+        // Published, or the listing below filters the orphan out anyway and the
+        // assertion would hold whether or not the row was rolled back.
+        status: "published",
+        tagIds: ["does-not-exist"],
+      }),
+    ).rejects.toThrow();
+
+    const { total } = await getInterviewNotesBySection(section.slug);
+    expect(total).toBe(0);
+  });
 });
 
 describe("updateNote", () => {
@@ -249,6 +271,29 @@ describe("updateNote", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it("leaves the row and its tags untouched when the tag write fails", async () => {
+    // Mirrors the posts side. Note this one is worse on main: updateNote's
+    // try/catch wraps only the UPDATE, so the tag writes sit outside it.
+    const { createNote, updateNote, createTag, getInterviewNoteById } =
+      await import("@/db/queries");
+    const section = await seedSection();
+    const tag = await createTag({ name: "Go", slug: "go" });
+    const { id } = await createNote({
+      slug: "n",
+      sectionId: section.id,
+      title: "Original",
+      tagIds: [tag.id],
+    });
+
+    await expect(
+      updateNote(id, { title: "Renamed", tagIds: ["does-not-exist"] }),
+    ).rejects.toThrow();
+
+    const after = await getInterviewNoteById(id);
+    expect(after?.title).toBe("Original");
+    expect(after?.tags.map((t) => t.slug)).toEqual(["go"]);
   });
 });
 

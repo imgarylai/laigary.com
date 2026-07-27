@@ -1,7 +1,7 @@
 import { eq, desc, count, and, asc, like } from "drizzle-orm";
 import { interviewSections, interviewNotes, interviewNoteTags, tags } from "@/db/schema";
 import { unixToIso } from "@/lib/date";
-import { getDb, inClause, type Db } from "./_db";
+import { getDb, inClause, runBatch, type BatchWrites, type Db } from "./_db";
 import { fetchTagsByParentIds, type PostTag } from "./_tags";
 
 export type InterviewNoteWithTags = {
@@ -407,8 +407,9 @@ export async function createNote(input: NoteMutationInput): Promise<{ id: string
   const status = input.status ?? "draft";
   const publishedAt = status === "published" ? Math.floor(Date.now() / 1000) : null;
 
-  try {
-    await db.insert(interviewNotes).values({
+  // One unit with the tag insert below — see createPost for why.
+  const writes: BatchWrites = [
+    db.insert(interviewNotes).values({
       id,
       slug: input.slug,
       sectionId: input.sectionId,
@@ -417,12 +418,17 @@ export async function createNote(input: NoteMutationInput): Promise<{ id: string
       status,
       pinned: input.pinned ? 1 : 0,
       publishedAt,
-    });
-    if (input.tagIds && input.tagIds.length > 0) {
-      await db
-        .insert(interviewNoteTags)
-        .values(input.tagIds.map((tagId) => ({ noteId: id, tagId })));
-    }
+    }),
+  ];
+
+  if (input.tagIds && input.tagIds.length > 0) {
+    writes.push(
+      db.insert(interviewNoteTags).values(input.tagIds.map((tagId) => ({ noteId: id, tagId }))),
+    );
+  }
+
+  try {
+    await runBatch(db, writes);
   } catch (err) {
     const message = err instanceof Error ? err.message : "";
     if (message.includes("UNIQUE")) throw new NoteConflictError();
@@ -458,8 +464,11 @@ export async function updateNote(
     publishedAt = Math.floor(Date.now() / 1000);
   }
 
-  try {
-    await db
+  // Row edit and tag replacement are one unit — see updatePost. Note the tag
+  // writes previously sat outside the try/catch entirely, so a failure there
+  // did not even get the conflict mapping.
+  const writes: BatchWrites = [
+    db
       .update(interviewNotes)
       .set({
         slug: input.slug ?? existing.slug,
@@ -472,20 +481,24 @@ export async function updateNote(
         // column keeps whatever is already stored.
         ...(touchUpdatedAt ? { updatedAt: Math.floor(Date.now() / 1000) } : {}),
       })
-      .where(eq(interviewNotes.id, id));
+      .where(eq(interviewNotes.id, id)),
+  ];
+
+  if (input.tagIds !== undefined) {
+    writes.push(db.delete(interviewNoteTags).where(eq(interviewNoteTags.noteId, id)));
+    if (input.tagIds.length > 0) {
+      writes.push(
+        db.insert(interviewNoteTags).values(input.tagIds.map((tagId) => ({ noteId: id, tagId }))),
+      );
+    }
+  }
+
+  try {
+    await runBatch(db, writes);
   } catch (err) {
     const message = err instanceof Error ? err.message : "";
     if (message.includes("UNIQUE")) throw new NoteConflictError();
     throw err;
-  }
-
-  if (input.tagIds !== undefined) {
-    await db.delete(interviewNoteTags).where(eq(interviewNoteTags.noteId, id));
-    if (input.tagIds.length > 0) {
-      await db
-        .insert(interviewNoteTags)
-        .values(input.tagIds.map((tagId) => ({ noteId: id, tagId })));
-    }
   }
 }
 
