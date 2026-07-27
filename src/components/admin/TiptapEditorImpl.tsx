@@ -14,6 +14,7 @@ import { CharacterCount } from "./editor/CharacterCount";
 import { LinkDialog } from "./editor/LinkDialog";
 import { ImageUploadDialog } from "./editor/ImageUploadDialog";
 import { YouTubeDialog } from "./editor/YouTubeDialog";
+import { TableBubbleMenu } from "./editor/TableBubbleMenu";
 
 /** Height of the sticky action bar + toolbar above the panes, in px — the point
  *  the editor pane has scrolled "past". Matches top-24 on the preview. */
@@ -188,6 +189,9 @@ export default function TiptapEditorImpl({
       <div className="sticky top-11 z-10 bg-background py-2">
         <Toolbar editor={editor} onOpenLink={openLink} />
       </div>
+
+      {/* Row/column controls next to the table being edited (#197). */}
+      <TableBubbleMenu editor={editor} />
 
       <LinkDialog editor={editor} open={linkOpen} onOpenChange={setLinkOpen} />
       <ImageUploadDialog editor={editor} open={imageOpen} onOpenChange={setImageOpen} />
