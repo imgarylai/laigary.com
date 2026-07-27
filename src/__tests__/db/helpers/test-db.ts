@@ -12,6 +12,11 @@ const MIGRATIONS_DIR = join(process.cwd(), "migrations");
 
 export type TestDb = ReturnType<typeof drizzle>;
 
+/** What `createTestDb` hands back: the drizzle instance plus the `batch` D1 has. */
+export type BatchCapableDb = TestDb & {
+  batch: (statements: readonly Promise<unknown>[]) => Promise<unknown[]>;
+};
+
 /**
  * Give the better-sqlite3 driver the `batch()` the D1 driver has.
  *
@@ -26,20 +31,21 @@ export type TestDb = ReturnType<typeof drizzle>;
  * synchronous on one connection, so nothing interleaves and a throw rolls the
  * whole sequence back — the same guarantee D1 gives.
  */
-function attachBatch(db: TestDb, sqlite: Database.Database): void {
-  (db as unknown as { batch: (s: readonly Promise<unknown>[]) => Promise<unknown[]> }).batch =
-    async (statements) => {
-      sqlite.exec("BEGIN");
-      try {
-        const results: unknown[] = [];
-        for (const statement of statements) results.push(await statement);
-        sqlite.exec("COMMIT");
-        return results;
-      } catch (err) {
-        sqlite.exec("ROLLBACK");
-        throw err;
-      }
-    };
+function attachBatch(db: TestDb, sqlite: Database.Database): BatchCapableDb {
+  const batched = db as BatchCapableDb;
+  batched.batch = async (statements) => {
+    sqlite.exec("BEGIN");
+    try {
+      const results: unknown[] = [];
+      for (const statement of statements) results.push(await statement);
+      sqlite.exec("COMMIT");
+      return results;
+    } catch (err) {
+      sqlite.exec("ROLLBACK");
+      throw err;
+    }
+  };
+  return batched;
 }
 
 export function createTestDb() {
@@ -56,8 +62,7 @@ export function createTestDb() {
     sqlite.exec(sql);
   }
 
-  const db = drizzle(sqlite);
-  attachBatch(db, sqlite);
+  const db = attachBatch(drizzle(sqlite), sqlite);
 
   return {
     db,

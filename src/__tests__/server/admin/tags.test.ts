@@ -1,25 +1,29 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import * as queries from "@/db/queries";
-import { TagConflictError, TagNotFoundError } from "@/db/queries";
-import { createTagImpl, updateTagImpl, deleteTagImpl, tagCreateSchema } from "@/server/admin/tags";
+// @vitest-environment node
+//
+// Admin tag mutations against the real better-sqlite3 harness. deleteTagImpl
+// was the one delete impl with no not-found test, so its catch could return
+// ok:true — a failed delete reporting success — and stay green.
 
-vi.mock("@/db/queries", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/db/queries")>();
-  return { ...actual, createTag: vi.fn(), updateTag: vi.fn(), deleteTag: vi.fn() };
-});
+import { describe, it, expect } from "vitest";
+import { setupTestDb } from "../../db/helpers/test-db";
+import { seedTag } from "../../factories";
 
-beforeEach(() => vi.clearAllMocks());
+setupTestDb();
 
 describe("createTagImpl", () => {
-  it("calls createTag and returns ok", async () => {
-    vi.mocked(queries.createTag).mockResolvedValue({ id: "t1", name: "Go", slug: "go" });
+  it("writes the tag and returns ok", async () => {
+    const { createTagImpl } = await import("@/server/admin/tags");
+    const { getAllTags } = await import("@/db/queries");
+
     expect(await createTagImpl({ name: "Go", slug: "go" })).toEqual({ ok: true });
-    expect(queries.createTag).toHaveBeenCalledWith({ name: "Go", slug: "go" });
+    expect((await getAllTags()).map((t) => t.slug)).toEqual(["go"]);
   });
 
-  it("maps a conflict to ok:false", async () => {
-    vi.mocked(queries.createTag).mockRejectedValue(new TagConflictError("Tag already exists"));
-    expect(await createTagImpl({ name: "Go", slug: "go" })).toEqual({
+  it("maps a duplicate slug to ok:false", async () => {
+    await seedTag({ name: "Go", slug: "go" });
+    const { createTagImpl } = await import("@/server/admin/tags");
+
+    expect(await createTagImpl({ name: "Golang", slug: "go" })).toEqual({
       ok: false,
       error: "Tag already exists",
     });
@@ -27,34 +31,64 @@ describe("createTagImpl", () => {
 });
 
 describe("updateTagImpl", () => {
-  it("only forwards the name (slug is immutable)", async () => {
-    vi.mocked(queries.updateTag).mockResolvedValue({ id: "t1", name: "Golang", slug: "go" });
-    expect(await updateTagImpl({ id: "t1", name: "Golang" })).toEqual({ ok: true });
-    expect(queries.updateTag).toHaveBeenCalledWith("t1", { name: "Golang" });
+  it("renames the tag and leaves its slug alone", async () => {
+    const { id, slug } = await seedTag({ name: "Go", slug: "go" });
+    const { updateTagImpl } = await import("@/server/admin/tags");
+    const { getAllTags } = await import("@/db/queries");
+
+    expect(await updateTagImpl({ id, name: "Golang" })).toEqual({ ok: true });
+    expect(await getAllTags()).toEqual([{ id, name: "Golang", slug }]);
   });
 
-  it("maps not-found to ok:false", async () => {
-    vi.mocked(queries.updateTag).mockRejectedValue(new TagNotFoundError("t1"));
-    expect(await updateTagImpl({ id: "t1", name: "X" })).toEqual({
+  it("maps an unknown id to ok:false", async () => {
+    const { updateTagImpl } = await import("@/server/admin/tags");
+
+    expect(await updateTagImpl({ id: "missing", name: "X" })).toEqual({
       ok: false,
-      error: "Tag t1 not found",
+      error: "Tag missing not found",
+    });
+  });
+
+  it("maps a name already taken by another tag to ok:false", async () => {
+    await seedTag({ name: "Go", slug: "go" });
+    const { id } = await seedTag({ name: "Rust", slug: "rust" });
+    const { updateTagImpl } = await import("@/server/admin/tags");
+
+    expect(await updateTagImpl({ id, name: "Go" })).toEqual({
+      ok: false,
+      error: "Tag name already exists",
     });
   });
 });
 
 describe("deleteTagImpl", () => {
-  it("calls deleteTag and returns ok", async () => {
-    vi.mocked(queries.deleteTag).mockResolvedValue(undefined);
-    expect(await deleteTagImpl({ id: "t1" })).toEqual({ ok: true });
-    expect(queries.deleteTag).toHaveBeenCalledWith("t1");
+  it("removes the row and returns ok", async () => {
+    const { id } = await seedTag({ name: "Go", slug: "go" });
+    const { deleteTagImpl } = await import("@/server/admin/tags");
+    const { getAllTags } = await import("@/db/queries");
+
+    expect(await deleteTagImpl({ id })).toEqual({ ok: true });
+    expect(await getAllTags()).toEqual([]);
+  });
+
+  it("maps an unknown id to ok:false", async () => {
+    const { deleteTagImpl } = await import("@/server/admin/tags");
+
+    expect(await deleteTagImpl({ id: "missing" })).toEqual({
+      ok: false,
+      error: "Tag missing not found",
+    });
   });
 });
 
 describe("tagCreateSchema", () => {
-  it("rejects an empty name", () => {
+  it("rejects an empty name", async () => {
+    const { tagCreateSchema } = await import("@/server/admin/tags");
     expect(() => tagCreateSchema.parse({ name: "", slug: "go" })).toThrow();
   });
-  it("rejects a bad slug", () => {
+
+  it("rejects a bad slug", async () => {
+    const { tagCreateSchema } = await import("@/server/admin/tags");
     expect(() => tagCreateSchema.parse({ name: "Go", slug: "Go Lang" })).toThrow();
   });
 });

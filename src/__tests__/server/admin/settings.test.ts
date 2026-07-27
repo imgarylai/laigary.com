@@ -1,44 +1,60 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import * as queries from "@/db/queries";
-import { updateSettingsImpl, settingsSchema } from "@/server/admin/settings";
+// @vitest-environment node
+//
+// Settings upsert against the real better-sqlite3 harness. The normalization
+// assertions read the values back out rather than inspecting the call, so they
+// prove what a later read actually returns.
 
-vi.mock("@/db/queries", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/db/queries")>();
-  return { ...actual, updateSiteSettings: vi.fn() };
-});
+import { describe, it, expect } from "vitest";
+import { setupTestDb } from "../../db/helpers/test-db";
 
-beforeEach(() => vi.clearAllMocks());
+setupTestDb();
 
 describe("updateSettingsImpl", () => {
-  it("forwards the key/value map to updateSiteSettings", async () => {
-    vi.mocked(queries.updateSiteSettings).mockResolvedValue(undefined);
+  it("stores the key/value map", async () => {
+    const { updateSettingsImpl } = await import("@/server/admin/settings");
+    const { getSiteSettings } = await import("@/db/queries");
     const values = { site_name: "Psychedelic Engineer", author_name: "Gary" };
+
     expect(await updateSettingsImpl(values)).toEqual({ ok: true });
-    expect(queries.updateSiteSettings).toHaveBeenCalledWith(values);
+    expect(await getSiteSettings()).toEqual(values);
   });
-});
 
-describe("settingsSchema", () => {
-  it("accepts a string map", () => {
-    expect(() => settingsSchema.parse({ a: "1", b: "2" })).not.toThrow();
-  });
-  it("rejects non-string values", () => {
-    expect(() => settingsSchema.parse({ a: 1 })).toThrow();
-  });
-});
+  it("overwrites a key that is already set", async () => {
+    const { updateSettingsImpl } = await import("@/server/admin/settings");
+    const { getSiteSetting } = await import("@/db/queries");
 
-describe("updateSettingsImpl social normalization", () => {
+    await updateSettingsImpl({ site_name: "v1" });
+    await updateSettingsImpl({ site_name: "v2" });
+
+    expect(await getSiteSetting("site_name")).toBe("v2");
+  });
+
   it("normalizes social keys to bare handles and leaves other keys untouched", async () => {
-    vi.mocked(queries.updateSiteSettings).mockResolvedValue(undefined);
+    const { updateSettingsImpl } = await import("@/server/admin/settings");
+    const { getSiteSettings } = await import("@/db/queries");
+
     await updateSettingsImpl({
       author_twitter: "https://x.com/@imgarylai/",
       author_github: "@imgarylai",
       site_name: "Unconstrained",
     });
-    expect(queries.updateSiteSettings).toHaveBeenCalledWith({
+
+    expect(await getSiteSettings()).toEqual({
       author_twitter: "imgarylai",
       author_github: "imgarylai",
       site_name: "Unconstrained",
     });
+  });
+});
+
+describe("settingsSchema", () => {
+  it("accepts a string map", async () => {
+    const { settingsSchema } = await import("@/server/admin/settings");
+    expect(() => settingsSchema.parse({ a: "1", b: "2" })).not.toThrow();
+  });
+
+  it("rejects non-string values", async () => {
+    const { settingsSchema } = await import("@/server/admin/settings");
+    expect(() => settingsSchema.parse({ a: 1 })).toThrow();
   });
 });

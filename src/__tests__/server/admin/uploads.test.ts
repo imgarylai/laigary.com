@@ -1,7 +1,12 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+// @vitest-environment node
+//
+// The R2 client stays mocked — it is an external service, which is the
+// AGENTS.md carve-out — but the upload record goes to the real harness, so a
+// double-confirm raises its UNIQUE violation for real instead of being faked.
+
+import { describe, it, expect, vi } from "vitest";
 import * as r2 from "@/lib/r2";
-import * as queries from "@/db/queries";
-import { UploadConflictError } from "@/db/queries";
+import { setupTestDb } from "../../db/helpers/test-db";
 import {
   presignUploadImpl,
   confirmUploadImpl,
@@ -32,12 +37,14 @@ vi.mock("@/lib/r2", async (importOriginal) => {
   };
 });
 
-vi.mock("@/db/queries", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/db/queries")>();
-  return { ...actual, recordUpload: vi.fn() };
-});
+const harness = setupTestDb();
 
-beforeEach(() => vi.clearAllMocks());
+/** Rows actually written to the uploads table. */
+function recordedIds(): string[] {
+  return (harness.sqlite.prepare("SELECT id FROM uploads").all() as { id: string }[]).map(
+    (r) => r.id,
+  );
+}
 
 const validFile = { filename: "photo.png", contentType: "image/png", sizeBytes: 2048 };
 
@@ -88,29 +95,36 @@ describe("confirmUploadImpl", () => {
       expect(res.data.id).toBe("u1");
       expect(res.data.url).toContain(confirmInput.r2Key);
     }
-    expect(queries.recordUpload).toHaveBeenCalledWith(confirmInput);
+    expect(recordedIds()).toEqual(["u1"]);
   });
 
   it("fails when the object is missing from storage", async () => {
     mockHead(false);
     const res = await confirmUploadImpl(confirmInput);
     expect(res.ok).toBe(false);
-    expect(queries.recordUpload).not.toHaveBeenCalled();
+    expect(recordedIds()).toEqual([]);
   });
 
   it("maps a duplicate confirm to a failed result", async () => {
+    // A real UNIQUE violation on r2_key, not a fabricated rejection: confirm
+    // the same object twice, which is exactly what a retried request does.
     mockHead(true);
-    // Once, not persistently: `vi.clearAllMocks()` clears calls but keeps
-    // implementations, so a plain mockRejectedValue leaks into whichever test
-    // runs next and fails it under a shuffled order.
-    vi.mocked(queries.recordUpload).mockRejectedValueOnce(new UploadConflictError());
-    const res = await confirmUploadImpl(confirmInput);
-    expect(res.ok).toBe(false);
+    await confirmUploadImpl(confirmInput);
+
+    const res = await confirmUploadImpl({ ...confirmInput, id: "u2" });
+
+    expect(res).toEqual({ ok: false, error: "Upload already confirmed" });
+    expect(recordedIds()).toEqual(["u1"]);
   });
 
   it("rethrows non-conflict record errors untouched", async () => {
+    // Transient storage failure — the sanctioned reason to mock inside the
+    // real-DB harness. One insert throws; every other test keeps the real DB.
     mockHead(true);
-    vi.mocked(queries.recordUpload).mockRejectedValueOnce(new Error("disk I/O error"));
+    vi.spyOn(harness.db, "insert").mockImplementationOnce(() => {
+      throw new Error("disk I/O error");
+    });
+
     await expect(confirmUploadImpl(confirmInput)).rejects.toThrow("disk I/O error");
   });
 });

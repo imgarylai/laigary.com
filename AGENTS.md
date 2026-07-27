@@ -99,7 +99,12 @@ backfills go inside the generated file or via `drizzle-kit generate --custom`.
   wrapper: without the Start vite plugin's compile step the wrapper's server
   handler isn't wired and the return value is lost. New server fns follow the
   same split — logic in an exported Impl, wrapper as the one-line validated
-  boundary.
+  boundary. Those Impl tests run against `setupTestDb()` too, NOT a wholesale
+  `vi.mock("@/db/queries")`: a conflict or a not-found is something the query
+  layer produces for real, and with it stubbed the assertions decay into
+  restating the call you just configured — which is how posts and notes ended
+  up testing opposite branches of the same four verbs without either file
+  looking incomplete.
 - Seed rows through `src/__tests__/factories.ts` (`seedPost`, `seedTag`,
   `seedSection`, `seedNote`, `seedPage`, `seedUpload`) instead of hand-written
   literals; spell out only the fields the test asserts on.
