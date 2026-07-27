@@ -1,7 +1,7 @@
 import { eq, desc, asc, count, and, like, lt, gt, type SQL } from "drizzle-orm";
 import { posts, tags, postTags, interviewNotes, interviewNoteTags } from "@/db/schema";
 import { computeReadingTime, unixToIso } from "@/lib/date";
-import { getDb, inClause } from "./_db";
+import { getDb, inClause, runBatch, type BatchWrites } from "./_db";
 import { fetchTagsByParentIds, type PostTag } from "./_tags";
 
 export type PublicPost = {
@@ -191,8 +191,10 @@ export async function createPost(input: PostMutationInput): Promise<{ id: string
   const status = input.status ?? "draft";
   const publishedAt = status === "published" ? Math.floor(Date.now() / 1000) : null;
 
-  try {
-    await db.insert(posts).values({
+  // One unit with the tag insert below: a bad tagId must not leave an untagged
+  // post behind after the caller has been told the create failed.
+  const writes: BatchWrites = [
+    db.insert(posts).values({
       id,
       slug: input.slug,
       title: input.title,
@@ -202,11 +204,15 @@ export async function createPost(input: PostMutationInput): Promise<{ id: string
       status,
       pinned: input.pinned ? 1 : 0,
       publishedAt,
-    });
+    }),
+  ];
 
-    if (input.tagIds && input.tagIds.length > 0) {
-      await db.insert(postTags).values(input.tagIds.map((tagId) => ({ postId: id, tagId })));
-    }
+  if (input.tagIds && input.tagIds.length > 0) {
+    writes.push(db.insert(postTags).values(input.tagIds.map((tagId) => ({ postId: id, tagId }))));
+  }
+
+  try {
+    await runBatch(db, writes);
   } catch (err) {
     const message = err instanceof Error ? err.message : "";
     if (message.includes("UNIQUE")) throw new PostConflictError();
@@ -230,8 +236,11 @@ export async function updatePost(
     publishedAt = Math.floor(Date.now() / 1000);
   }
 
-  try {
-    await db
+  // Row edit and tag replacement are one unit: the tag write can fail on a
+  // stale or bogus tagId, and committing the other two would leave the post
+  // renamed with every tag deleted while the caller is told the save failed.
+  const writes: BatchWrites = [
+    db
       .update(posts)
       .set({
         title: input.title ?? existing.title,
@@ -247,14 +256,18 @@ export async function updatePost(
         publishedAt,
         updatedAt: Math.floor(Date.now() / 1000),
       })
-      .where(eq(posts.id, id));
+      .where(eq(posts.id, id)),
+  ];
 
-    if (input.tagIds !== undefined) {
-      await db.delete(postTags).where(eq(postTags.postId, id));
-      if (input.tagIds.length > 0) {
-        await db.insert(postTags).values(input.tagIds.map((tagId) => ({ postId: id, tagId })));
-      }
+  if (input.tagIds !== undefined) {
+    writes.push(db.delete(postTags).where(eq(postTags.postId, id)));
+    if (input.tagIds.length > 0) {
+      writes.push(db.insert(postTags).values(input.tagIds.map((tagId) => ({ postId: id, tagId }))));
     }
+  }
+
+  try {
+    await runBatch(db, writes);
   } catch (err) {
     const message = err instanceof Error ? err.message : "";
     if (message.includes("UNIQUE")) throw new PostConflictError();

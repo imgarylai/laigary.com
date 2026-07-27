@@ -4,6 +4,7 @@
 import { env } from "cloudflare:workers";
 import { drizzle } from "drizzle-orm/d1";
 import { sql, type AnyColumn, type SQL } from "drizzle-orm";
+import type { BatchItem } from "drizzle-orm/batch";
 
 // TanStack Start exposes Cloudflare bindings via `cloudflare:workers`. The DB
 // binding is provisioned + typed by Alchemy (alchemy.run.ts + src/env.d.ts).
@@ -13,6 +14,30 @@ export async function getDb() {
 }
 
 export type Db = Awaited<ReturnType<typeof getDb>>;
+
+/**
+ * A list of pending writes to commit together. Drizzle's query builders are
+ * lazy and thenable, so a mutation builds this array and hands the whole thing
+ * to `runBatch` instead of awaiting each write in turn.
+ */
+export type BatchWrites = BatchItem<"sqlite">[];
+
+/**
+ * Run every write as one atomic unit — all of them commit, or none does.
+ *
+ * D1 has no interactive transactions (`db.transaction()` throws `Failed query:
+ * begin`); its atomic primitive is `batch()`, which the platform executes as a
+ * single transaction. Any mutation touching more than one table must go through
+ * here, or a failure partway leaves the earlier writes committed while the
+ * caller is told the whole thing failed.
+ *
+ * The test harness gives better-sqlite3 an equivalent `batch` so the same code
+ * path is exercised under test — see `__tests__/db/helpers/test-db.ts`.
+ */
+export async function runBatch(db: Db, writes: BatchWrites): Promise<void> {
+  if (writes.length === 0) return;
+  await db.batch(writes as [BatchItem<"sqlite">, ...BatchItem<"sqlite">[]]);
+}
 
 // D1 caps bound parameters per query at 100. Chunk IN-clause inputs at 50 —
 // half the limit, leaves comfortable headroom for any non-IN parameters in

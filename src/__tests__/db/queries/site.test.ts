@@ -29,6 +29,24 @@ describe("updateSiteSettings", () => {
 
     expect(await getSiteSettings()).toEqual({ a: "2", b: "3" });
   });
+
+  it("leaves every key untouched when one of them fails", async () => {
+    const { updateSiteSettings, getSiteSettings } = await import("@/db/queries");
+    await updateSiteSettings({ site_name: "v1" });
+
+    // `value` is NOT NULL, so the second entry blows up mid-write. The first is
+    // an update to an existing row and the third a fresh insert — neither may
+    // survive a rejected call.
+    await expect(
+      updateSiteSettings({
+        site_name: "v2",
+        broken: null as unknown as string,
+        site_url: "https://x.com",
+      }),
+    ).rejects.toThrow();
+
+    expect(await getSiteSettings()).toEqual({ site_name: "v1" });
+  });
 });
 
 describe("getSiteSetting", () => {

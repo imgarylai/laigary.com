@@ -58,6 +58,19 @@ describe("createPost", () => {
       PostConflictError,
     );
   });
+
+  it("leaves no orphan row behind when the tag write fails", async () => {
+    // Without atomicity the post row is already committed by the time the tag
+    // insert fails, so a reported failure still leaves an untagged post.
+    const { createPost, getAdminPosts } = await import("@/db/queries");
+
+    await expect(
+      createPost({ title: "X", slug: "x", contentMd: "b", tagIds: ["does-not-exist"] }),
+    ).rejects.toThrow();
+
+    const { total } = await getAdminPosts();
+    expect(total).toBe(0);
+  });
 });
 
 describe("updatePost", () => {
@@ -105,6 +118,30 @@ describe("updatePost", () => {
     await expect(
       updatePost("missing", { title: "x", slug: "x", contentMd: "x" }),
     ).rejects.toBeInstanceOf(PostNotFoundError);
+  });
+
+  it("leaves the row and its tags untouched when the tag write fails", async () => {
+    // The row update, the tag delete and the tag insert are one unit. A tagId
+    // that does not exist fails the insert, and without atomicity the caller
+    // sees an error while the post has already been renamed and stripped of
+    // every tag — the original set unrecoverable.
+    const { createPost, updatePost, getPostBySlug } = await import("@/db/queries");
+    const tag = await seedTag("Go", "go");
+    const { id } = await createPost({
+      title: "Original",
+      slug: "original",
+      contentMd: "body",
+      status: "published",
+      tagIds: [tag.id],
+    });
+
+    await expect(
+      updatePost(id, { title: "Renamed", tagIds: ["does-not-exist"] }),
+    ).rejects.toThrow();
+
+    const after = await getPostBySlug("original");
+    expect(after?.title).toBe("Original");
+    expect(after?.tags.map((t) => t.slug)).toEqual(["go"]);
   });
 });
 
