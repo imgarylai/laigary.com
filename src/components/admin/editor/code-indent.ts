@@ -24,7 +24,7 @@ export function lineStartAt(text: string, offset: number): number {
 export function selectedLineStarts(text: string, from: number, to: number): number[] {
   const starts = [lineStartAt(text, from)];
 
-  for (let cursor = starts[0]; ; ) {
+  for (let cursor = starts[0]; ;) {
     const nextBreak = text.indexOf("\n", cursor);
     if (nextBreak === -1) break;
 
