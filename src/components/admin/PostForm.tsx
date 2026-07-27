@@ -21,6 +21,8 @@ import {
   CoverImageField,
 } from "./form-fields";
 import { EditorShell } from "./EditorShell";
+import { SaveState } from "./SaveState";
+import { UnsavedChangesGuard } from "./UnsavedChangesGuard";
 import type { TagOption } from "./TagsCombobox";
 
 export function PostForm({
@@ -77,6 +79,11 @@ export function PostForm({
 
     toast.success(isEdit ? t("postForm.postUpdated") : t("postForm.postCreated"));
 
+    // Clears isDirty, which the save-state indicator and the navigation guard
+    // both read. Without it the form stays dirty forever after the first edit,
+    // so the guard would block the redirect this very save is about to make.
+    form.reset(values);
+
     if (isEdit) {
       // Stay on the editor; re-run the loader to pick up server-side changes.
       router.invalidate();
@@ -96,6 +103,7 @@ export function PostForm({
 
   return (
     <form onSubmit={submit}>
+      <UnsavedChangesGuard dirty={form.formState.isDirty} saving={form.formState.isSubmitting} />
       <EditorShell
         heading={isEdit ? t("admin.editPost") : t("admin.newPost")}
         settingsLabel={t("postForm.settings")}
@@ -111,6 +119,11 @@ export function PostForm({
         }
         actions={
           <>
+            <SaveState
+              dirty={form.formState.isDirty}
+              saving={form.formState.isSubmitting}
+              saved={isEdit}
+            />
             {canPreview && initialData && (
               <Button
                 type="button"
@@ -137,7 +150,12 @@ export function PostForm({
             >
               {t("postForm.cancel")}
             </Button>
-            <Button type="submit" size="sm" disabled={form.formState.isSubmitting}>
+            <Button
+              type="submit"
+              size="sm"
+              disabled={form.formState.isSubmitting}
+              title={`${isEdit ? t("postForm.update") : t("postForm.create")} (⌘S)`}
+            >
               {form.formState.isSubmitting
                 ? t("postForm.saving")
                 : isEdit

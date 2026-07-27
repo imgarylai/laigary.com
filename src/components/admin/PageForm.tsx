@@ -11,6 +11,8 @@ import { useSaveShortcut } from "@/hooks/use-save-shortcut";
 import { slugify } from "@/lib/slug";
 import { TiptapEditor } from "./TiptapEditor";
 import { EditorShell } from "./EditorShell";
+import { SaveState } from "./SaveState";
+import { UnsavedChangesGuard } from "./UnsavedChangesGuard";
 import { EDITOR_TITLE_CLASS } from "./form-fields";
 import { upsertPageFn } from "@/server/admin/pages";
 
@@ -50,6 +52,10 @@ export function PageForm({ page }: { page?: { slug: string; title: string; conte
       return;
     }
     toast.success(isEdit ? t("admin.pageUpdated") : t("admin.pageCreated"));
+    // Clears isDirty, which the save-state indicator and the navigation guard
+    // both read. Without it the form stays dirty forever after the first
+    // edit, so the guard would block the redirect this save is about to make.
+    form.reset(values);
     if (isEdit) {
       router.invalidate();
     } else {
@@ -63,6 +69,7 @@ export function PageForm({ page }: { page?: { slug: string; title: string; conte
 
   return (
     <form onSubmit={submit}>
+      <UnsavedChangesGuard dirty={form.formState.isDirty} saving={form.formState.isSubmitting} />
       <EditorShell
         heading={isEdit ? t("admin.editPage") : t("admin.newPage")}
         settingsLabel={t("pageForm.settings")}
@@ -87,6 +94,11 @@ export function PageForm({ page }: { page?: { slug: string; title: string; conte
         }
         actions={
           <>
+            <SaveState
+              dirty={form.formState.isDirty}
+              saving={form.formState.isSubmitting}
+              saved={isEdit}
+            />
             <Button
               type="button"
               variant="ghost"
@@ -95,7 +107,12 @@ export function PageForm({ page }: { page?: { slug: string; title: string; conte
             >
               {t("pageForm.cancel")}
             </Button>
-            <Button type="submit" size="sm" disabled={form.formState.isSubmitting}>
+            <Button
+              type="submit"
+              size="sm"
+              disabled={form.formState.isSubmitting}
+              title={`${isEdit ? t("pageForm.update") : t("pageForm.create")} (⌘S)`}
+            >
               {form.formState.isSubmitting
                 ? t("pageForm.saving")
                 : isEdit
