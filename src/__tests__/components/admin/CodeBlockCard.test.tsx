@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent, cleanup, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, cleanup, waitFor, within } from "@testing-library/react";
 import type { NodeViewProps } from "@tiptap/react";
 import { CodeBlockCard } from "@/components/admin/editor/CodeBlockCard";
 
@@ -22,8 +22,8 @@ vi.mock("@/i18n/I18nProvider", () => ({
   useI18n: () => ({ t: (k: string) => k, locale: "en" }),
 }));
 
-// Base UI's Select positioner observes size; jsdom has no ResizeObserver, and
-// without it the popup never opens.
+// cmdk observes its list element for size changes; jsdom has no ResizeObserver,
+// and without it the popup never renders.
 class ResizeObserverStub {
   observe() {}
   unobserve() {}
@@ -34,14 +34,17 @@ vi.stubGlobal("ResizeObserver", ResizeObserverStub);
 const writeText = vi.fn().mockResolvedValue(undefined);
 vi.stubGlobal("navigator", { clipboard: { writeText } });
 
-// Base UI's Select renders its listbox in a portal only once opened. Open the
-// trigger, then click the option with the given text.
+/** The picker's trigger — a button, not a native select. */
+function trigger(): HTMLElement {
+  return screen.getByRole("button", { name: "editor.codeLanguage" });
+}
+
+// The picker renders its list in a portal only once opened. Open it, then click
+// the option with the given label — scoped to the popup, since the trigger
+// carries the current language's label too.
 function selectOption(optionText: string) {
-  fireEvent.click(screen.getByRole("combobox"));
-  const option = screen.getByRole("option", { name: optionText });
-  fireEvent.pointerDown(option);
-  fireEvent.pointerUp(option);
-  fireEvent.click(option);
+  fireEvent.click(trigger());
+  fireEvent.click(within(screen.getByRole("dialog")).getByText(optionText));
 }
 
 beforeEach(() => vi.clearAllMocks());
@@ -62,7 +65,7 @@ function renderCard(language: string | null, textContent = "def fib(n):\n    ret
 
 /** The label the trigger currently shows. */
 function triggerLabel(): string {
-  return screen.getByRole("combobox").textContent?.trim() ?? "";
+  return trigger().textContent?.trim() ?? "";
 }
 
 describe("CodeBlockCard", () => {

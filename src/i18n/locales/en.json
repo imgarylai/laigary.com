@@ -172,6 +172,8 @@
     "codeLanguage": "Language",
     "codeLanguageAuto": "Auto-detect",
     "codeLanguagePlain": "Plain text",
+    "codeLanguageSearch": "Search languages…",
+    "codeLanguageNoResults": "No language found.",
     "codeCopy": "Copy code",
     "codeCopied": "Copied",
     "slashHint": "Insert a block (/)",
