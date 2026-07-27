@@ -65,6 +65,11 @@ export default function TiptapEditorImpl({
         openImage: () => setImageOpen(true),
         openYouTube: () => setYoutubeOpen(true),
       },
+      uploadMessages: {
+        uploading: t("editor.uploading"),
+        failed: t("editor.uploadFailed"),
+        timedOut: t("editor.uploadTimedOut"),
+      },
     }),
     content: value,
     contentType: "markdown",

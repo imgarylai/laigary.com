@@ -200,6 +200,7 @@
     "selectFile": "選擇檔案",
     "uploading": "上傳中...",
     "uploadFailed": "上傳失敗",
+    "uploadTimedOut": "上傳逾時",
     "cropImage": "裁切",
     "cropFree": "自由",
     "cancelCrop": "取消裁切",

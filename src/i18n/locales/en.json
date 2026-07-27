@@ -200,6 +200,7 @@
     "selectFile": "Select file",
     "uploading": "Uploading...",
     "uploadFailed": "Upload failed",
+    "uploadTimedOut": "Upload timed out",
     "cropImage": "Crop",
     "cropFree": "Free",
     "cancelCrop": "Cancel crop",
