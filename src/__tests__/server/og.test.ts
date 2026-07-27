@@ -20,7 +20,7 @@ vi.mock("@/lib/og/render", () => ({
 }));
 
 const node = { type: "div", props: {} } as unknown as OgNode;
-const request = new Request("https://laigary.com/api/og/posts/hello");
+const request = new Request("http://test.local/api/og/posts/hello");
 
 beforeEach(() => {
   getSiteSettings.mockResolvedValue({});
