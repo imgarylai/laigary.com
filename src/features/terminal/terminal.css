@@ -207,11 +207,21 @@
   color: var(--tm-fg);
   font-size: inherit;
 }
+/* The rule is the whole marker here — there is no background, because the one
+   surface tint available (--tm-subtle) is what code blocks use, and a tinted
+   quote read as an unlabelled code block. So the rule carries it in --tm-accent
+   rather than --tm-border: #1f2422 on a #0b0d0c background is under 1.4:1, which
+   left the quote looking like nothing but slightly dimmer body text. */
 .tm-prose blockquote {
-  border-left: 2px solid var(--tm-border);
-  padding-left: 14px;
+  border-left: 2px solid var(--tm-accent);
+  padding: 2px 0 2px 16px;
   margin: 0 0 16px;
   color: var(--tm-muted);
+}
+/* Paragraphs keep their 16px bottom margin inside a quote, so the last one hung
+   an extra 16px below the rule and the block came out visibly bottom-heavy. */
+.tm-prose blockquote > :last-child {
+  margin-bottom: 0;
 }
 .tm-prose hr {
   border: 0;
@@ -235,7 +245,7 @@
 .tm-prose th,
 .tm-prose td {
   border: 1px solid var(--tm-border);
-  padding: 5px 10px;
+  padding: 6px 12px;
   text-align: left;
 }
 .tm-prose th {
@@ -244,6 +254,55 @@
   font-weight: 400;
   white-space: nowrap;
 }
+/* The header only differed from the body by a --tm-subtle fill, which is two
+   steps off the background — on the complexity tables the head did not read as
+   a head. An accent underrule separates it without adding another fill. */
+.tm-prose thead th {
+  border-bottom: 2px solid var(--tm-accent);
+}
+/* Zebra rows. These tables are read across (solution → time → space → note) and
+   the 1px --tm-border grid alone was not enough to hold the eye on one row. */
+.tm-prose tbody tr:nth-child(even) {
+  background: var(--tm-soft);
+}
+/* ── Math (lib/markdown → temml → MathML) ───────────────────────────────────
+   The pipeline wraps every formula in a span: `.math-display` for `$$` blocks,
+   `.math-inline` for `$`. Nothing styled either one, which is why display
+   formulas sat flush against the paragraphs around them — the span is inline by
+   default, so the block-level <math> inside it had no box to hang a margin on
+   and the browser's own block-math margin is nil. Making the wrapper a block is
+   what lets the margin below apply at all. */
+.tm-prose .math-display {
+  display: block;
+  /* Deliberately wider than the 16px between paragraphs: a display formula is
+     its own beat, and at 16px it read as another line of the paragraph above. */
+  margin: 24px 0;
+  /* Long formulas (closed forms, nested fractions) exceed the 70ch measure.
+     Scroll inside the block, matching how `pre` and `table` are handled, rather
+     than letting one formula widen the whole page on mobile.
+
+     This makes the block a scroll container on *both* axes — per the overflow
+     spec, `overflow-y: visible` alongside a non-visible `overflow-x` computes to
+     `auto`, so there is no way to scroll one axis and overflow the other. That
+     is fine here only because MathML reports its full height, superscripts and
+     radicals included, so the box is never shorter than its contents; the
+     padding is for optical margin, not to rescue clipped glyphs. */
+  overflow-x: auto;
+  padding: 2px 0;
+}
+/* Inline math sits inside a line of body text, so it must not drag the line box
+   taller than its neighbours — a fraction inside a paragraph would otherwise
+   push that one line apart from the rest. */
+.tm-prose .math-inline {
+  line-height: 1;
+}
+/* temml falls back to a <code class="math-error"> when a formula will not parse.
+   It inherits the inline-code chip, which paints it --tm-accent — i.e. exactly
+   like a healthy inline code span, so a broken formula looked deliberate. */
+.tm-prose code.math-error {
+  color: var(--tm-warn);
+}
+
 /* ── hljs token theme (--tm-code-surface) ───────────────────────────────────
    Scoped to BOTH the published body (.tm-prose) and the admin editor's
    writable surface (.tm-code). lowlight emits these classes inside the Tiptap
