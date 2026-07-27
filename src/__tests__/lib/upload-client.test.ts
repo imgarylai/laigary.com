@@ -80,6 +80,12 @@ describe("uploadFile", () => {
   });
 });
 
+// Captured once, before any spy is installed. Re-binding inside stubCanvas
+// would capture the PREVIOUS test's spy — vi.spyOn returns the existing mock
+// when the property is already spied — and calling through would recurse until
+// the stack blew.
+const realCreateElement = document.createElement.bind(document);
+
 describe("getCroppedBlob", () => {
   /** A stand-in for the <img> the cropper measures, plus a canvas we can watch. */
   function stubCanvas(toBlobResult: Blob | null) {
@@ -90,7 +96,12 @@ describe("getCroppedBlob", () => {
       getContext: () => ({ drawImage }),
       toBlob: (cb: (b: Blob | null) => void) => cb(toBlobResult),
     };
-    vi.spyOn(document, "createElement").mockReturnValue(canvas as unknown as HTMLCanvasElement);
+    // Scoped to <canvas>. A blanket mockReturnValue hands this stub to every
+    // createElement call in the file — including React's, whose failure then
+    // points at React rather than here.
+    vi.spyOn(document, "createElement").mockImplementation((tag: string) =>
+      tag === "canvas" ? (canvas as unknown as HTMLCanvasElement) : realCreateElement(tag),
+    );
     return { canvas, drawImage };
   }
 

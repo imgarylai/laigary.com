@@ -31,8 +31,13 @@ class ResizeObserverStub {
 }
 vi.stubGlobal("ResizeObserver", ResizeObserverStub);
 
+// Add the one API jsdom lacks rather than replacing `navigator` wholesale:
+// stubbing the global with an object literal left userAgent, language and
+// platform undefined for every test in this file, and both cmdk and Base UI
+// read them. `navigator` has no own enumerable properties, so spreading it
+// would not have helped either.
 const writeText = vi.fn().mockResolvedValue(undefined);
-vi.stubGlobal("navigator", { clipboard: { writeText } });
+Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
 
 /** The picker's trigger — a button, not a native select. */
 function trigger(): HTMLElement {

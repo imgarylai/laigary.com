@@ -1,13 +1,11 @@
 // @vitest-environment node
 //
 // The /mcp route glue: method gating and the dynamic-import POST wiring.
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { setupTestDb } from "../../db/helpers/test-db";
 import { Route } from "@/routes/mcp";
 
 setupTestDb();
-
-vi.mock("cloudflare:workers", () => ({ env: {} }));
 
 type Handler = (ctx: { request: Request }) => Response | Promise<Response>;
 

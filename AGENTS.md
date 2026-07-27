@@ -109,6 +109,20 @@ backfills go inside the generated file or via `drizzle-kit generate --custom`.
 - Assertion depth: assert the outcome that matters (status, message, `ok`,
   row count, the computed field) — not deep-equals of whole payloads, unless
   computing that value is the function's job.
+- Mock hygiene is global, so do NOT hand-roll it per file. `mockReset` and
+  `restoreMocks` are on in vitest.config.ts: `vi.fn(impl)` goes back to its
+  factory implementation and every `vi.spyOn` is undone between tests. A local
+  `vi.clearAllMocks()` is not equivalent — it clears recorded calls but leaves
+  implementations installed, which is how a one-off `mockRejectedValue` leaked
+  into the next test in #192. Stub a global with `vi.stubGlobal`/`vi.spyOn`
+  rather than replacing a built-in wholesale: `{ ...URL }` copies no own
+  enumerable properties off a class, so the replacement loses its constructor,
+  and `navigator` has none either.
+- Test order is shuffled (files and tests both), so a test that leans on a
+  sibling running first fails immediately rather than on some future reorder.
+  Every run prints its seed; replay one with `--sequence.seed=<n>`. This means
+  a test must never depend on declaration order — including "the guard test
+  runs after the test that installs the stub".
 - Transient errors (disk I/O, lost connection, disk full — environmental
   failures the public API cannot produce) are the one sanctioned reason to
   mock inside the real-DB harness: `vi.spyOn(harness.db, …)` with

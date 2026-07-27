@@ -46,11 +46,14 @@ vi.mock("react-image-crop", () => ({
 
 beforeEach(() => {
   vi.clearAllMocks();
-  vi.stubGlobal("URL", { ...URL, createObjectURL: () => "blob:preview" });
+  // Spy the one static instead of replacing the class. `{ ...URL }` copies only
+  // own enumerable properties — a class has none — so the replacement lost both
+  // [[Construct]] (`new URL(...)` threw "URL is not a constructor" for every
+  // test in the file) and `revokeObjectURL`.
+  vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:preview");
 });
 afterEach(() => {
   cleanup();
-  vi.unstubAllGlobals();
 });
 
 function renderCover(value = "") {

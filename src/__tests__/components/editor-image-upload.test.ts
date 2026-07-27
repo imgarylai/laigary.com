@@ -198,33 +198,43 @@ describe("pasting an image", () => {
     // Not hypothetical: `fetch` has no default timeout, so a stalled PUT to
     // storage never settles. Without a deadline the badge sits in the document
     // forever, clearable only by reloading.
+    // try/finally, not a trailing useRealTimers(): every assertion above is a
+    // throw point, and one real failure would otherwise leave the fake clock
+    // installed. `settle()` is a setTimeout(0), so it would then never resolve
+    // and the run would report a dozen timeouts instead of the one failure.
     vi.useFakeTimers();
-    uploadFile.mockReturnValue(new Promise<string>(() => {}));
+    try {
+      uploadFile.mockReturnValue(new Promise<string>(() => {}));
 
-    paste(editor, { files: [png()] });
-    await vi.advanceTimersByTimeAsync(1);
-    expect(pendingUploadCount(editor.state)).toBe(1);
+      paste(editor, { files: [png()] });
+      await vi.advanceTimersByTimeAsync(1);
+      expect(pendingUploadCount(editor.state)).toBe(1);
 
-    await vi.advanceTimersByTimeAsync(60_000);
+      await vi.advanceTimersByTimeAsync(60_000);
 
-    expect(pendingUploadCount(editor.state)).toBe(0);
-    expect(toast.error).toHaveBeenCalledWith("Upload timed out");
-    vi.useRealTimers();
+      expect(pendingUploadCount(editor.state)).toBe(0);
+      expect(toast.error).toHaveBeenCalledWith("Upload timed out");
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("should not give up on an upload that is merely slow", async () => {
     vi.useFakeTimers();
-    let release!: (url: string) => void;
-    uploadFile.mockReturnValue(new Promise<string>((r) => (release = r)));
+    try {
+      let release!: (url: string) => void;
+      uploadFile.mockReturnValue(new Promise<string>((r) => (release = r)));
 
-    paste(editor, { files: [png()] });
-    await vi.advanceTimersByTimeAsync(30_000);
-    release("/uploads/slow.png");
-    await vi.advanceTimersByTimeAsync(1);
+      paste(editor, { files: [png()] });
+      await vi.advanceTimersByTimeAsync(30_000);
+      release("/uploads/slow.png");
+      await vi.advanceTimersByTimeAsync(1);
 
-    expect(editor.getHTML()).toContain('src="/uploads/slow.png"');
-    expect(toast.error).not.toHaveBeenCalled();
-    vi.useRealTimers();
+      expect(editor.getHTML()).toContain('src="/uploads/slow.png"');
+      expect(toast.error).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("should upload every image in a multi-file paste", async () => {
