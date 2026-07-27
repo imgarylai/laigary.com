@@ -227,14 +227,20 @@ describe("Toolbar commands", () => {
     expect(editor.getText()).toContain("/");
   });
 
-  it("should align text from the alignment menu", async () => {
-    const { editor } = await mountToolbar();
-    fireEvent.click(button("editor.alignLeft"));
+  it.each(["editor.alignLeft", "editor.alignCenter", "editor.alignRight"])(
+    "should apply %s from the alignment menu",
+    async (item) => {
+      const { editor } = await mountToolbar();
+      // The trigger is titled with the left-align label; the menu holds all three.
+      fireEvent.click(button("editor.alignLeft"));
 
-    fireEvent.click(await screen.findByRole("menuitem", { name: "editor.alignCenter" }));
+      fireEvent.click(await screen.findByRole("menuitem", { name: item }));
 
-    expect(editor.isActive({ textAlign: "center" })).toBe(true);
-  });
+      expect(editor.isActive({ textAlign: item.replace("editor.align", "").toLowerCase() })).toBe(
+        true,
+      );
+    },
+  );
 
   it("should set and clear a text colour", async () => {
     const { editor } = await mountToolbar();
@@ -250,18 +256,69 @@ describe("Toolbar commands", () => {
     expect(editor.getAttributes("textStyle").color).toBeUndefined();
   });
 
-  it("should insert a table and then edit its rows", async () => {
+  it("should insert a table from the menu", async () => {
     const { editor } = await mountToolbar();
     fireEvent.click(button("editor.table"));
 
     fireEvent.click(await screen.findByRole("menuitem", { name: "editor.insertTable" }));
+
     expect(editor.isActive("table")).toBe(true);
+  });
 
-    const rowsBefore = editor.getHTML().split("<tr>").length;
+  // Deliberately not chained onto the test above. Driving two menu items in a
+  // row was order-dependent: closing the first menu does not reliably leave the
+  // editor selection back inside the table, so the second command would find no
+  // table to act on and the count would silently not move. Seeding the table
+  // through the command puts the caret in a known cell.
+  const rowCount = (e: Editor) => (e.getHTML().match(/<tr>/g) ?? []).length;
+  const colCount = (e: Editor) =>
+    ((e.getHTML().match(/<tr>(.*?)<\/tr>/)?.[1] ?? "").match(/<t[hd]/g) ?? []).length;
+
+  it.each([
+    ["editor.addRowBefore", 1],
+    ["editor.addRowAfter", 1],
+    ["editor.deleteRow", -1],
+  ])("should apply %s to the table the caret is in", async (item, delta) => {
+    const { editor } = await mountToolbar();
+    act(() => {
+      editor.chain().insertTable({ rows: 3, cols: 2 }).run();
+    });
+    const before = rowCount(editor);
+
     fireEvent.click(button("editor.table"));
-    fireEvent.click(await screen.findByRole("menuitem", { name: "editor.addRowAfter" }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: item }));
 
-    expect(editor.getHTML().split("<tr>").length).toBe(rowsBefore + 1);
+    expect(rowCount(editor)).toBe(before + delta);
+  });
+
+  it.each([
+    ["editor.addColumnBefore", 1],
+    ["editor.addColumnAfter", 1],
+    ["editor.deleteColumn", -1],
+  ])("should apply %s to the table the caret is in", async (item, delta) => {
+    const { editor } = await mountToolbar();
+    act(() => {
+      editor.chain().insertTable({ rows: 2, cols: 3 }).run();
+    });
+    const before = colCount(editor);
+
+    fireEvent.click(button("editor.table"));
+    fireEvent.click(await screen.findByRole("menuitem", { name: item }));
+
+    expect(colCount(editor)).toBe(before + delta);
+  });
+
+  it("should delete the whole table", async () => {
+    const { editor } = await mountToolbar();
+    act(() => {
+      editor.chain().insertTable({ rows: 2, cols: 2 }).run();
+    });
+
+    fireEvent.click(button("editor.table"));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "editor.deleteTable" }));
+
+    expect(editor.isActive("table")).toBe(false);
+    expect(editor.getHTML()).not.toContain("<table");
   });
 });
 
