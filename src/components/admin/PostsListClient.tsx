@@ -3,7 +3,6 @@ import { Link, getRouteApi } from "@tanstack/react-router";
 import { ArrowSquareOutIcon, PushPinIcon } from "@phosphor-icons/react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -12,6 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DataTable } from "./DataTable";
+import { StatusBadge } from "./StatusBadge";
 import type { PostStatus } from "@/routes/admin/posts/-list-search";
 import { DeletePostButton } from "./DeletePostButton";
 import { useI18n } from "@/i18n/I18nProvider";
@@ -73,11 +73,7 @@ export function PostsListClient({ posts }: { posts: Post[] }) {
       {
         accessorKey: "status",
         header: t("postList.status"),
-        cell: ({ row }) => (
-          <Badge variant={row.original.status === "published" ? "default" : "secondary"}>
-            {row.original.status}
-          </Badge>
-        ),
+        cell: ({ row }) => <StatusBadge status={row.original.status} />,
       },
       {
         accessorKey: "updatedAt",

@@ -3,8 +3,8 @@ import { Link, getRouteApi } from "@tanstack/react-router";
 import { ArrowSquareOutIcon, PushPinIcon } from "@phosphor-icons/react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { DataTable } from "./DataTable";
+import { StatusBadge } from "./StatusBadge";
 import { DeleteNoteButton } from "./DeleteNoteButton";
 import { useI18n } from "@/i18n/I18nProvider";
 
@@ -50,11 +50,7 @@ export function NotesListClient({ notes }: { notes: Note[] }) {
       {
         accessorKey: "status",
         header: t("noteList.status"),
-        cell: ({ row }) => (
-          <Badge variant={row.original.status === "published" ? "default" : "secondary"}>
-            {row.original.status}
-          </Badge>
-        ),
+        cell: ({ row }) => <StatusBadge status={row.original.status} />,
       },
       {
         id: "actions",
