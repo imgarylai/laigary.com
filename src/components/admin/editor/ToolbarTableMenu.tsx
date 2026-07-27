@@ -1,4 +1,5 @@
-import type { Editor } from "@tiptap/react";
+import { memo } from "react";
+import { useEditorState, type Editor } from "@tiptap/react";
 import { TableIcon } from "@phosphor-icons/react";
 import {
   DropdownMenu,
@@ -10,9 +11,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/i18n/I18nProvider";
 
-export function ToolbarTableMenu({ editor }: { editor: Editor }) {
+// Subscribes on its own behalf: every item in here is enabled or disabled by
+// whether the caret sits in a table, and the memoised Toolbar above no longer
+// re-renders per keystroke to refresh a value read during render.
+export const ToolbarTableMenu = memo(function ToolbarTableMenu({ editor }: { editor: Editor }) {
   const { t } = useI18n();
-  const inTable = editor.isActive("table");
+  const inTable = useEditorState({ editor, selector: ({ editor: e }) => e.isActive("table") });
 
   return (
     <DropdownMenu>
@@ -85,4 +89,4 @@ export function ToolbarTableMenu({ editor }: { editor: Editor }) {
       </DropdownMenuContent>
     </DropdownMenu>
   );
-}
+});

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useState } from "react";
 import type { Editor } from "@tiptap/react";
 import {
   Dialog,
@@ -14,7 +14,12 @@ import { useI18n } from "@/i18n/I18nProvider";
 // Controlled, and rendered once by TiptapEditorImpl rather than owning a
 // trigger of its own — the toolbar button and the `/youtube` slash command are
 // two doors onto the same dialog. Mirrors how LinkDialog already works.
-export function YouTubeDialog({
+// Memoised: `editor` is stable and `onOpenChange` is a useState setter, so the
+// only prop that ever changes is `open`. Without this the dialog's entire
+// element tree — every child of DialogContent, built eagerly whether or not it
+// is mounted — was reconstructed on each keystroke, because the document used
+// to flow through React state (#175).
+export const YouTubeDialog = memo(function YouTubeDialog({
   editor,
   open,
   onOpenChange,
@@ -59,4 +64,4 @@ export function YouTubeDialog({
       </DialogContent>
     </Dialog>
   );
-}
+});
