@@ -30,6 +30,25 @@ const postDataFn = vi.fn();
 const interviewDataFn = vi.fn();
 const noteDataFn = vi.fn();
 
+// searchInterviewNotesFn returns a BARE ARRAY. Both files used to mock it as
+// `{ notes: [] }` — a contract that never existed (#208). The handle is typed
+// against the real awaited return type, so a fixture that drifts back to an
+// object shape fails `pnpm typecheck` rather than sitting here as the suite's
+// only executable description of the contract.
+//
+// `Partial<typeof import("@/server/public")>` on the factory does NOT work:
+// createServerFn returns an OptionalFetcher carrying [TSS_SERVER_FUNCTION],
+// url, method and __executeServer, so a plain arrow is unassignable and even a
+// CORRECT mock fails to compile. Pinning the return type is the part that bites.
+type NotesSearchResult = Awaited<
+  ReturnType<(typeof import("@/server/public"))["searchInterviewNotesFn"]>
+>;
+const { searchInterviewNotes } = vi.hoisted(() => ({
+  searchInterviewNotes: vi.fn<(opts: { data: { q: string } }) => Promise<NotesSearchResult>>(
+    async () => [],
+  ),
+}));
+
 vi.mock("@/server/public", () => ({
   blogShellFn: async () => ({
     siteName: "Unconstrained",
@@ -40,7 +59,7 @@ vi.mock("@/server/public", () => ({
     siteName: "Unconstrained",
     social: { github: null, twitter: null, linkedin: null, email: null },
   }),
-  searchInterviewNotesFn: async () => ({ notes: [] }),
+  searchInterviewNotesFn: searchInterviewNotes,
   homeDataFn: () => homeDataFn(),
   tagsDataFn: () => tagsDataFn(),
   tagDataFn: () => tagDataFn(),
