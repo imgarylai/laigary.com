@@ -93,10 +93,25 @@ describe("renderMarkdown", () => {
     expect(html).not.toContain("ParseError");
   });
 
-  it("falls back to math-error span for invalid LaTeX", async () => {
+  it("renders temml's own error markup inline for invalid LaTeX", async () => {
+    // Not `math-error`: temml is called with `throwOnError: false`, so it never
+    // throws on a parse failure and temmlNode's catch cannot fire. It returns
+    // its own error span instead, still inside the math wrapper. The previous
+    // assertion here was `typeof html === "string"`, which no change to any of
+    // this could have falsified.
+    const html = await renderMarkdown("$\\frac{1}$");
+
+    expect(html).toContain('class="math-inline"');
+    expect(html).toContain('class="temml-error"');
+    expect(html).toContain("ParseError");
+  });
+
+  it("leaves an unclosed dollar as literal text rather than math", async () => {
+    // `$\invalid{` has no closing delimiter, so remark-math never treats it as
+    // math and temml is not reached at all.
     const html = await renderMarkdown("$\\invalid{");
-    // temml is permissive; this just guards that the pipeline doesn't throw
-    expect(typeof html).toBe("string");
+
+    expect(html).toBe("<p>$\\invalid{</p>");
   });
 
   it("preserves raw HTML via rehype-raw", async () => {

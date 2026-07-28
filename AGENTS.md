@@ -128,6 +128,14 @@ backfills go inside the generated file or via `drizzle-kit generate --custom`.
   Every run prints its seed; replay one with `--sequence.seed=<n>`. This means
   a test must never depend on declaration order — including "the guard test
   runs after the test that installs the stub".
+- `TZ=UTC` is pinned in vitest.config.ts, so assert one exact date. A regex
+  spanning two days (`/^2025年7月(19|20)日$/`) hides a real timezone bug rather
+  than pinning the behaviour — `toLocaleDateString` reads the system zone.
+- Write the fixture so it VIOLATES the property under test. Input that already
+  satisfies it makes the assertion unfailable: a year list seeded newest-first
+  cannot tell `.sort().reverse()` from no sorting, and `expect(typeof html)` on
+  a renderer cannot tell a class rename from anything else. Prove a new test
+  fails against the mutation it is meant to catch before trusting it.
 - Transient errors (disk I/O, lost connection, disk full — environmental
   failures the public API cannot produce) are the one sanctioned reason to
   mock inside the real-DB harness: `vi.spyOn(harness.db, …)` with

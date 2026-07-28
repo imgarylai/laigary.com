@@ -67,13 +67,21 @@ afterEach(() => cleanup());
 
 describe("/posts archive", () => {
   it("groups the page's posts under a heading per year, newest first", async () => {
-    withPosts([post("a", "2025-03-02"), post("b", "2024-11-09"), post("c", "2025-08-21")]);
+    // Three years, seeded scrambled on purpose. The grouping Map keeps
+    // insertion order, so a fixture that already arrives newest-first cannot
+    // tell `.sort().reverse()` from no sorting at all — and this order also
+    // fails on a `.sort()` that forgets to reverse.
+    withPosts([
+      post("mid", "2024-11-09"),
+      post("newest", "2025-08-21"),
+      post("oldest", "2023-01-04"),
+    ]);
 
     await renderRoute("/posts");
 
-    await screen.findByText("Post a");
+    await screen.findByText("Post newest");
     const years = screen.getAllByText(/^\.\/\d{4}\/$/).map((el) => el.textContent);
-    expect(years).toEqual(["./2025/", "./2024/"]);
+    expect(years).toEqual(["./2025/", "./2024/", "./2023/"]);
   });
 
   it("lifts pinned posts into their own block and out of the chronological list", async () => {
@@ -122,11 +130,18 @@ describe("/posts archive", () => {
   });
 
   it("ignores a page number of 1 or below rather than paging off the front", async () => {
+    // `validateSearch` maps page <= 1 to undefined. Left as the literal 0,
+    // `start` would be -8 and `slice(-8, 0)` would render an empty archive.
+    // The assertions have to distinguish this from ?page=2 and ?page=99, which
+    // is why the overflow is checked as absent — findByText alone could not.
     withPosts(tenPosts());
 
-    await renderRoute("/posts?page=0");
+    const { router } = await renderRoute("/posts?page=0");
 
     await screen.findByText("Post n0");
+    expect(router.state.location.search).toEqual({});
+    expect(screen.queryByText("Post o2")).toBeNull();
+    expect(screen.queryByText("Post o3")).toBeNull();
   });
 
   it("filters to a tag and lets pinned posts compete on it like any other", async () => {

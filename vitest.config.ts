@@ -29,6 +29,11 @@ export default defineConfig({
     // test that installed it.
     mockReset: true,
     restoreMocks: true,
+    // Pin the zone. `toLocaleDateString` reads the system one, so any date
+    // assertion is otherwise machine-dependent — which is how formatOgDate came
+    // to be asserted as `/^2025年7月(19|20)日$/`, a regex that tolerates being a
+    // day out rather than pinning the day. UTC matches what CI already runs in.
+    env: { TZ: "UTC" },
     // Randomise both the file order and the order within each file, so a test
     // that depends on a sibling running first fails now instead of on whatever
     // future PR happens to reorder it. #192 was that bug, and it survived
