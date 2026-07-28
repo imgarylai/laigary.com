@@ -105,6 +105,7 @@ export default defineConfig({
         "src/router.tsx",
         "src/lib/og/render.ts",
         "src/routes/design-system.tsx",
+        "src/**/index.ts",
       ],
     },
   },
