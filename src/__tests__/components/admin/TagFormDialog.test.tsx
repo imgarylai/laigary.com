@@ -122,3 +122,16 @@ describe("TagFormDialog in edit mode", () => {
     expect(nameInput()).toBeTruthy();
   });
 });
+
+describe("TagFormDialog cancel", () => {
+  it("closes without submitting and discards the typing", async () => {
+    render(<TagFormDialog />);
+    openDialog("tagList.newTag");
+    fireEvent.change(nameInput(), { target: { value: "Discarded" } });
+
+    fireEvent.click(screen.getByRole("button", { name: "tagForm.cancel" }));
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(createTagFn).not.toHaveBeenCalled();
+  });
+});

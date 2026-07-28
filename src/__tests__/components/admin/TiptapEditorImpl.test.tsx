@@ -286,3 +286,48 @@ describe("TiptapEditorImpl preview", () => {
     expect(renderMarkdown.mock.lastCall?.[0]).toContain("abcdef");
   });
 });
+
+// The three dialogs the editor owns. Each is opened by a closure this component
+// passes down — `dialogs.openImage` / `openYouTube` into the `/` menu's
+// extensions, and `openLink` into the memoised toolbar — and a closure wired to
+// the wrong `setState` opens the wrong dialog with no other symptom.
+describe("TiptapEditorImpl dialogs", () => {
+  /** Run the `/` menu the way a user does: type the query, then Enter. */
+  async function pickSlashItem(e: Editor, query: string, label: string) {
+    act(() => type(e, query));
+    await screen.findByText(label);
+    act(() => {
+      e.view.someProp("handleKeyDown", (handler) =>
+        handler(e.view, new KeyboardEvent("keydown", { key: "Enter" })),
+      );
+    });
+  }
+
+  it("opens the image dialog from the / menu", async () => {
+    const { editor: e } = await mount();
+
+    await pickSlashItem(e, "/image", "editor.slash.image");
+
+    const dialog = await screen.findByRole("dialog");
+    expect(dialog.textContent).toContain("editor.uploadImage");
+  });
+
+  it("opens the YouTube dialog from the / menu", async () => {
+    const { editor: e } = await mount();
+
+    await pickSlashItem(e, "/youtube", "editor.slash.youtube");
+
+    const dialog = await screen.findByRole("dialog");
+    expect(dialog.textContent).toContain("editor.embedYouTube");
+  });
+
+  it("opens the link dialog from the toolbar button", async () => {
+    // ⌘K is covered above; this is the same dialog through the other door, and
+    // the door that goes through a `useCallback` the toolbar memo depends on.
+    await mount();
+
+    fireEvent.click(screen.getByRole("button", { name: /editor.link/ }));
+
+    expect(await screen.findByRole("dialog")).toBeTruthy();
+  });
+});

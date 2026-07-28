@@ -22,14 +22,26 @@ vi.mock("@/i18n/I18nProvider", () => ({
 vi.mock("react-image-crop", () => ({
   default: ({
     children,
+    crop,
+    onChange,
     onComplete,
   }: {
     children?: React.ReactNode;
+    crop?: { width?: number };
+    onChange?: (c: unknown) => void;
     onComplete?: (c: unknown) => void;
   }) => (
-    <div>
-      {/* Stands in for dragging out a crop: jsdom has no layout, so the real
-          cropper never fires onComplete on its own. */}
+    <div data-testid="cropper" data-crop-width={String(crop?.width ?? "")}>
+      {/* Stands in for dragging the crop box: jsdom has no layout, so the real
+          cropper never fires either callback on its own. `onChange` is the
+          live drag; `onComplete` is the release that arms the upload. */}
+      <button
+        type="button"
+        data-testid="drag-crop"
+        onClick={() => onChange?.({ x: 0, y: 0, width: 320, height: 180, unit: "px" })}
+      >
+        drag
+      </button>
       <button
         type="button"
         data-testid="finish-crop"
@@ -181,5 +193,52 @@ describe("CoverImageUpload", () => {
     expect(
       screen.getByRole("button", { name: "editor.uploadImage" }).hasAttribute("disabled"),
     ).toBe(false);
+  });
+});
+
+describe("CoverImageUpload dialog dismissal", () => {
+  it("resets the picker when the dialog is dismissed rather than cancelled", async () => {
+    // Escape and the backdrop go through `onOpenChange`, not the Cancel button,
+    // and they have to run the same teardown — otherwise reopening shows the
+    // previous file still cropped and ready to upload.
+    renderCover();
+    fireEvent.click(screen.getByRole("button", { name: "postForm.uploadCover" }));
+    await screen.findByRole("dialog");
+    fireEvent.change(document.querySelector('input[type="file"]')!, {
+      target: { files: [new File(["img"], "shot.png", { type: "image/png" })] },
+    });
+    fireEvent.load(await screen.findByAltText("Crop"));
+    fireEvent.click(screen.getByTestId("finish-crop"));
+
+    fireEvent.keyDown(document.activeElement ?? document.body, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+
+    fireEvent.click(screen.getByRole("button", { name: "postForm.uploadCover" }));
+    await screen.findByRole("dialog");
+    expect(screen.queryByAltText("Crop")).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "editor.uploadImage" }).hasAttribute("disabled"),
+    ).toBe(true);
+  });
+});
+
+describe("CoverImageUpload crop box", () => {
+  it("follows the crop as it is dragged", async () => {
+    // The live `onChange` is what keeps the drawn box under the cursor; only
+    // the release (`onComplete`) arms the upload. Wiring the box to the
+    // completed crop instead would make it snap back on every drag.
+    renderCover();
+    fireEvent.click(screen.getByRole("button", { name: "postForm.uploadCover" }));
+    await screen.findByRole("dialog");
+    fireEvent.change(document.querySelector('input[type="file"]')!, {
+      target: { files: [new File(["img"], "shot.png", { type: "image/png" })] },
+    });
+    fireEvent.load(await screen.findByAltText("Crop"));
+
+    fireEvent.click(screen.getByTestId("drag-crop"));
+
+    await waitFor(() =>
+      expect(screen.getByTestId("cropper").getAttribute("data-crop-width")).toBe("320"),
+    );
   });
 });

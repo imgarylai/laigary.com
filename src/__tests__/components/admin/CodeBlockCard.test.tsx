@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent, cleanup, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import type { NodeViewProps } from "@tiptap/react";
 import { CodeBlockCard } from "@/components/admin/editor/CodeBlockCard";
 
@@ -132,5 +132,27 @@ describe("CodeBlockCard", () => {
     await waitFor(() =>
       expect(screen.getByRole("button", { name: "editor.codeCopied" })).toBeTruthy(),
     );
+  });
+
+  it("should go back to offering a copy after the confirmation times out", async () => {
+    // A button stuck reading "copied" is a button that looks like it already
+    // did the thing on the NEXT block someone tries to copy. The reset is on a
+    // 1.5s timer, so the clock is faked from before the click — a timer
+    // scheduled on the real clock is not something a fake one can advance.
+    renderCard("python", "print('hi')");
+    vi.useFakeTimers();
+    try {
+      fireEvent.click(screen.getByRole("button", { name: "editor.codeCopy" }));
+      // Settles the clipboard promise without moving the clock, so the
+      // confirmation is asserted before the reset could possibly have fired.
+      await act(() => vi.advanceTimersByTimeAsync(0));
+      expect(screen.getByRole("button", { name: "editor.codeCopied" })).toBeTruthy();
+
+      await act(() => vi.advanceTimersByTimeAsync(2000));
+
+      expect(screen.getByRole("button", { name: "editor.codeCopy" })).toBeTruthy();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

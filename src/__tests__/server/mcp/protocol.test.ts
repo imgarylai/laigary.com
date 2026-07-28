@@ -90,6 +90,15 @@ describe("read tools", () => {
     expect(missing.isError).toBe(true);
   });
 
+  it("get_post reports a post's tags as names, not join rows", async () => {
+    // The payload crosses a wire to a model; a raw `{id, name, slug}` row there
+    // is noise it has to parse around, and `search_posts` already sends names.
+    const tag = await seedTag({ name: "Life", slug: "life" });
+    await seedPost({ title: "Hello", slug: "hello", tagIds: [tag.id] });
+
+    expect(parseText(await callTool("get_post", { slug: "hello" })).tags).toEqual(["Life"]);
+  });
+
   it("get_interview_note fetches published notes", async () => {
     const section = await seedSection({ slug: "coding" });
     await seedNote(section.id, { slug: "gas", title: "Gas Station" });
@@ -97,6 +106,17 @@ describe("read tools", () => {
       await callTool("get_interview_note", { section: "coding", slug: "gas" }),
     );
     expect(note.title).toBe("Gas Station");
+  });
+
+  it("get_interview_note reports a note's tags as names too", async () => {
+    const tag = await seedTag({ name: "Greedy", slug: "greedy" });
+    const section = await seedSection({ slug: "coding" });
+    await seedNote(section.id, { slug: "gas", title: "Gas Station", tagIds: [tag.id] });
+
+    const note = parseText(
+      await callTool("get_interview_note", { section: "coding", slug: "gas" }),
+    );
+    expect(note.tags).toEqual(["Greedy"]);
   });
 
   it("rejects invalid arguments as a tool error, not a crash", async () => {

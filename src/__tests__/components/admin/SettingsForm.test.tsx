@@ -44,3 +44,17 @@ describe("SettingsForm", () => {
     expect(invalidate).not.toHaveBeenCalled();
   });
 });
+
+describe("SettingsForm keyboard save", () => {
+  it("saves on Cmd/Ctrl+S without reaching for the button", async () => {
+    // The settings page is a long form; ⌘S is the way it is actually saved.
+    updateSettingsFn.mockResolvedValue({ ok: true });
+    render(<SettingsForm settings={{ site_name: "Old" }} />);
+    fireEvent.change(screen.getByLabelText("admin.siteName"), { target: { value: "New" } });
+
+    fireEvent.keyDown(window, { key: "s", ctrlKey: true });
+
+    await waitFor(() => expect(updateSettingsFn).toHaveBeenCalledTimes(1));
+    expect(updateSettingsFn.mock.calls[0][0].data.site_name).toBe("New");
+  });
+});
