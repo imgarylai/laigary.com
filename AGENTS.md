@@ -72,7 +72,11 @@ backfills go inside the generated file or via `drizzle-kit generate --custom`.
   Tailwind Typography's decorative `code::before/after` backticks are disabled
   globally in `styles.css` — don't re-enable them.
 - i18n: every user-facing string goes through `t()`; add keys to BOTH
-  `src/i18n/locales/en.json` and `zh-TW.json`.
+  `src/i18n/locales/en.json` and `zh-TW.json`. Enforced by
+  `__tests__/i18n/locale-parity.test.ts` — key sets, leaf types and `{placeholder}`
+  names must match, and the failure names the offending keys. `getTranslation`
+  has no `en` fallback, so a key present in only one file renders as its raw
+  dotted path to the reader, not as English.
 
 ## Testing conventions
 
