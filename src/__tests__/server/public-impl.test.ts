@@ -200,6 +200,17 @@ describe("interviewDataImpl", () => {
     expect(data.recent[0].section).toBe("coding");
     expect(data.recent[0].minutes).toBeGreaterThan(0);
   });
+
+  it("carries the recent notes' tag names, the way the section pages do", async () => {
+    // The home block renders these as `#tag` chips; a join row would render as
+    // "[object Object]" and the tags are the only filter affordance there.
+    const tag = await seedTag({ name: "greedy", slug: "greedy" });
+    const section = await seedSection({ slug: "coding", label: "Coding" });
+    await seedNote(section.id, { title: "Gas Station", tagIds: [tag.id] });
+    const { interviewDataImpl } = await import("@/server/public");
+
+    expect((await interviewDataImpl()).recent[0].tags).toEqual(["greedy"]);
+  });
 });
 
 describe("sectionDataImpl", () => {

@@ -189,6 +189,15 @@ describe("blog palette", () => {
     await waitFor(() => expect(router.state.location.pathname).toBe("/interview"));
   });
 
+  it("navigates to the tag index when its row is picked", async () => {
+    const { router } = await renderRoute("/");
+    await openPalette("blog.search.placeholder");
+
+    fireEvent.click(screen.getByText("cd ./tags"));
+
+    await waitFor(() => expect(router.state.location.pathname).toBe("/tags"));
+  });
+
   it("navigates to the about page, which is a page route and not a directory", async () => {
     const { router } = await renderRoute("/");
     await openPalette("blog.search.placeholder");

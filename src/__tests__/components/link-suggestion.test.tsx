@@ -101,6 +101,75 @@ describe("LinkSuggestionList", () => {
     render(<LinkSuggestionList items={[]} loading={false} query="" command={() => {}} />);
     expect(screen.getByText("editor.linkSuggestHint")).toBeDefined();
   });
+
+  it("walks back up the list with ArrowUp", () => {
+    // Down twice then up once has to land on the middle row. A handler that
+    // decrements without clamping, or that shares the Down branch, cannot tell
+    // this apart from a list that only ever moves one way.
+    const command = vi.fn();
+    const ref = createRef<LinkSuggestionListHandle>();
+    const rows = ["a", "b", "c"].map((slug, i) => ({
+      ...gasStation,
+      title: `Row ${i}`,
+      url: `/posts/${slug}`,
+      type: "post" as const,
+    }));
+    render(
+      <LinkSuggestionList ref={ref} items={rows} loading={false} query="r" command={command} />,
+    );
+
+    const press = (key: string) =>
+      act(() => void ref.current!.onKeyDown(new KeyboardEvent("keydown", { key })));
+    press("ArrowDown");
+    press("ArrowDown");
+    press("ArrowUp");
+    press("Enter");
+
+    expect(command).toHaveBeenCalledWith(expect.objectContaining({ url: "/posts/b" }));
+  });
+
+  it("stops at the top of the list rather than wrapping round", () => {
+    const command = vi.fn();
+    const ref = createRef<LinkSuggestionListHandle>();
+    render(
+      <LinkSuggestionList
+        ref={ref}
+        items={[gasStation, { ...gasStation, title: "Other", url: "/posts/other", type: "post" }]}
+        loading={false}
+        query="gas"
+        command={command}
+      />,
+    );
+
+    const press = (key: string) =>
+      act(() => void ref.current!.onKeyDown(new KeyboardEvent("keydown", { key })));
+    press("ArrowUp");
+    press("Enter");
+
+    expect(command).toHaveBeenCalledWith(expect.objectContaining({ url: gasStation.url }));
+  });
+
+  it("moves the active row to whatever the pointer is over", () => {
+    // Keyboard and pointer share one selection; without this, hovering row two
+    // and pressing Enter picks row one.
+    const command = vi.fn();
+    const ref = createRef<LinkSuggestionListHandle>();
+    const other = { ...gasStation, title: "Other", url: "/posts/other", type: "post" as const };
+    render(
+      <LinkSuggestionList
+        ref={ref}
+        items={[gasStation, other]}
+        loading={false}
+        query="gas"
+        command={command}
+      />,
+    );
+
+    fireEvent.mouseEnter(screen.getByText("Other").closest("button")!);
+    act(() => void ref.current!.onKeyDown(new KeyboardEvent("keydown", { key: "Enter" })));
+
+    expect(command).toHaveBeenCalledWith(expect.objectContaining({ url: "/posts/other" }));
+  });
 });
 
 describe("LinkSuggestion integration", () => {

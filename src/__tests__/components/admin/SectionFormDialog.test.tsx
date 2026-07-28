@@ -120,3 +120,16 @@ describe("SectionFormDialog in edit mode", () => {
     expect(invalidate).not.toHaveBeenCalled();
   });
 });
+
+describe("SectionFormDialog cancel", () => {
+  it("closes without submitting and discards the typing", async () => {
+    render(<SectionFormDialog />);
+    openDialog("sectionList.newSection");
+    fireEvent.change(labelInput(), { target: { value: "Discarded" } });
+
+    fireEvent.click(screen.getByRole("button", { name: "sectionForm.cancel" }));
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(createSectionFn).not.toHaveBeenCalled();
+  });
+});

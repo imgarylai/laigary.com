@@ -2,7 +2,7 @@
 
 import { describe, it, expect } from "vitest";
 import { setupTestDb } from "../helpers/test-db";
-import { seedNote, seedSection } from "../../factories";
+import { seedNote, seedPost, seedSection, seedTag } from "../../factories";
 
 setupTestDb();
 
@@ -112,5 +112,43 @@ describe("tag branch gaps", () => {
     const err = await updateTag(tag.id, { name: undefined as never }).catch((e) => e);
     expect(err).toBeInstanceOf(Error);
     expect(err).not.toBeInstanceOf(TagConflictError);
+  });
+});
+
+// One namespace across posts and notes: `/tags` and the sitemap both read this,
+// and both present it as a ranking, so the ordering is part of the contract.
+describe("getTagsWithCounts", () => {
+  it("ranks tags by their combined post and note count", async () => {
+    // Seeded deliberately out of order — `few` is created first and would come
+    // out on top if the sort were dropped or reversed.
+    const few = await seedTag({ name: "Few", slug: "few" });
+    const many = await seedTag({ name: "Many", slug: "many" });
+    await seedPost({ slug: "p1", tagIds: [few.id, many.id] });
+    await seedPost({ slug: "p2", tagIds: [many.id] });
+    await seedPost({ slug: "p3", tagIds: [many.id] });
+    const { getTagsWithCounts } = await import("@/db/queries");
+
+    expect(await getTagsWithCounts()).toEqual([
+      { name: "Many", slug: "many", count: 3 },
+      { name: "Few", slug: "few", count: 1 },
+    ]);
+  });
+
+  it("adds a tag's note count to its post count rather than replacing it", async () => {
+    const tag = await seedTag({ name: "Greedy", slug: "greedy" });
+    const section = await seedSection({ slug: "coding" });
+    await seedPost({ slug: "p1", tagIds: [tag.id] });
+    await seedNote(section.id, { slug: "gas", tagIds: [tag.id] });
+    const { getTagsWithCounts } = await import("@/db/queries");
+
+    expect(await getTagsWithCounts()).toEqual([{ name: "Greedy", slug: "greedy", count: 2 }]);
+  });
+
+  it("leaves out tags whose only content is unpublished", async () => {
+    const tag = await seedTag({ name: "Draft only", slug: "draft-only" });
+    await seedPost({ slug: "wip", status: "draft", tagIds: [tag.id] });
+    const { getTagsWithCounts } = await import("@/db/queries");
+
+    expect(await getTagsWithCounts()).toEqual([]);
   });
 });
