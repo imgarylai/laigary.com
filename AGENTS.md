@@ -170,9 +170,20 @@ backfills go inside the generated file or via `drizzle-kit generate --custom`.
   before writing one: five `vi.mock` calls are load-bearing (they cannot live
   in the helper — factories are hoisted per file), and `beforeAll(warmRouteTree,
 60_000)` keeps the tree import out of the first test's 5s timeout. Still
-  uncovered by choice: the admin route wrappers (a loader plus a render of an
-  already-tested client component) and the two layouts' palette-search
-  closures, whose fake-timer flow deadlocked against the palette's async open.
+  uncovered by choice: the two layouts' palette-search closures, whose
+  fake-timer flow deadlocked against the palette's async open.
+- The admin route wrappers stay uncovered, but NOT because what they render is
+  already tested — an earlier version of this file claimed that and it was
+  false, which is how the biggest gap in the report came to read as a
+  considered decision (#206). The wrappers themselves are a loader plus a
+  render; the components they mount are tested directly with `render()`, which
+  needs no router. Test the component, not the wrapper.
+- Deliberately not covered, so nobody re-litigates it: `DataTable`'s react-table
+  filter callback and the dialog cancel-button lines are unreachable by
+  construction, and the presentational rows in `PagesListClient` /
+  `SectionsListClient` would only restate their own JSX. Everything else in
+  `components/admin` is fair game — and if you exclude something new, say why
+  here in terms that are checkable.
 - No wall-clock waits around a debounce, in either direction. Install fake
   timers, `await act(() => vi.advanceTimersByTimeAsync(PAST_DEBOUNCE))`, then
   assert with a SYNCHRONOUS `getBy` — `advanceTimersByTimeAsync` flushes the
