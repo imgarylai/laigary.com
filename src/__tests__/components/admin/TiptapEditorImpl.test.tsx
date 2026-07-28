@@ -225,10 +225,20 @@ describe("TiptapEditorImpl", () => {
 
 describe("TiptapEditorImpl preview", () => {
   it("should not run the markdown pipeline at all while the preview is hidden", async () => {
-    const { editor: e } = await mount({ showPreview: false });
+    // Fake timers rather than a real sleep. The debounce this guards is 300ms,
+    // so the 50ms wait this replaces could not have caught a pipeline run even
+    // with the `showPreview` gate deleted — the assertion was unfailable.
+    // `mount()` is unusable here: its findBy/waitFor would deadlock against the
+    // fake clock. Advance well past the debounce, then assert synchronously.
+    vi.useFakeTimers();
+    render(<Controlled showPreview={false} />);
+    await vi.waitFor(() => expect(editor).toBeTruthy());
+    const e = editor!;
 
     act(() => type(e, "hello"));
-    await new Promise((r) => setTimeout(r, 50));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1000);
+    });
 
     expect(renderMarkdown).not.toHaveBeenCalled();
     expect(screen.queryByText("postForm.previewPlaceholder")).toBeNull();

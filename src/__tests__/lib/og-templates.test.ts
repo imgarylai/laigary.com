@@ -18,8 +18,9 @@ function flattenText(node: unknown): string {
 
 describe("formatOgDate", () => {
   it("should format unix seconds as a zh-TW long date when given a timestamp", () => {
-    // 2025-07-19T20:00:00Z
-    expect(formatOgDate(1752960000)).toMatch(/^2025年7月(19|20)日$/);
+    // Exact day, not `(19|20)`: vitest.config.ts pins TZ=UTC, so there is one
+    // right answer. 1752960000 is 2025-07-19T20:00:00Z.
+    expect(formatOgDate(1752960000)).toBe("2025年7月19日");
   });
 
   it("should return null when the timestamp is null or undefined", () => {
