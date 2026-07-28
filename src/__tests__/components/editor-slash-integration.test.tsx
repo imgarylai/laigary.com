@@ -122,3 +122,35 @@ describe("slash menu integration", () => {
     expect(editor.state.doc.textContent).toContain("a / b");
   });
 });
+
+// `createExtensions` takes `dialogs` optionally and falls back to no-ops, for
+// callers that only want the schema — the markdown renderer, and every test in
+// this file. `/image` and `/youtube` are the two items that reach for a dialog,
+// so they are the two that would throw on `undefined.openImage` if that default
+// ever went away. Both are driven end-to-end below, against an editor built the
+// no-dialogs way.
+describe("slash menu without dialogs wired", () => {
+  it("should consume /image without a dialog to open", async () => {
+    const editor = await mount();
+    act(() => type(editor, "/image"));
+    await waitFor(() => expect(screen.getByText("editor.slash.image")).toBeDefined());
+
+    act(() => pressInEditor(editor, "Enter"));
+
+    // The typed query is consumed and the document is left clean — no crash,
+    // and no stray "/image" text where the block would have gone.
+    await waitFor(() => expect(screen.queryByText("editor.slash.image")).toBeNull());
+    expect(editor.state.doc.textContent).not.toContain("/image");
+  });
+
+  it("should consume /youtube without a dialog to open", async () => {
+    const editor = await mount();
+    act(() => type(editor, "/youtube"));
+    await waitFor(() => expect(screen.getByText("editor.slash.youtube")).toBeDefined());
+
+    act(() => pressInEditor(editor, "Enter"));
+
+    await waitFor(() => expect(screen.queryByText("editor.slash.youtube")).toBeNull());
+    expect(editor.state.doc.textContent).not.toContain("/youtube");
+  });
+});

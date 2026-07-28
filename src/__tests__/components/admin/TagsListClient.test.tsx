@@ -128,3 +128,34 @@ describe("TagsListClient url state", () => {
     expect(search({ q: "go" })).toEqual({ q: undefined });
   });
 });
+
+// Paging lives in the URL so a reload (or a back-navigation out of an item)
+// lands on the page you were on rather than resetting to the top of the list.
+describe("TagsListClient paging", () => {
+  const many = Array.from({ length: 21 }, (_, i) =>
+    tag({ id: `t${i}`, slug: `tag-${i}`, name: `Tag ${i}` }),
+  );
+
+  it("pushes the page number into the url", async () => {
+    render(<TagsListClient tags={many} />);
+
+    fireEvent.click(screen.getByText("pagination.next"));
+
+    await waitFor(() => expect(navigate).toHaveBeenCalled());
+    const search = navigate.mock.lastCall?.[0].search as (p: object) => object;
+    expect(search({})).toEqual(expect.objectContaining({ page: 2 }));
+  });
+
+  it("drops page from the url on the way back to the first page", async () => {
+    // Page 1 is the default view, so it stays out of the URL entirely — a
+    // handler that always writes `idx + 1` leaves a redundant `?page=1` behind.
+    useSearch.mockReturnValue({ page: 2 });
+    render(<TagsListClient tags={many} />);
+
+    fireEvent.click(screen.getByText("pagination.prev"));
+
+    await waitFor(() => expect(navigate).toHaveBeenCalled());
+    const search = navigate.mock.lastCall?.[0].search as (p: object) => object;
+    expect(search({ page: 2 })).toEqual(expect.objectContaining({ page: undefined }));
+  });
+});

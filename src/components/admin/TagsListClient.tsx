@@ -53,6 +53,7 @@ export function TagsListClient({ tags }: { tags: Tag[] }) {
             <Button
               variant="ghost"
               size="icon-sm"
+              nativeButton={false}
               render={
                 <Link
                   to="/posts"

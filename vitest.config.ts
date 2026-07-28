@@ -1,11 +1,32 @@
-import { defineConfig, coverageConfigDefaults } from "vitest/config";
+import { defineConfig, coverageConfigDefaults, type Plugin } from "vitest/config";
 import { fileURLToPath } from "node:url";
 import react from "@vitejs/plugin-react";
 
 const src = fileURLToPath(new URL("./src", import.meta.url));
 
+// A `?url` CSS import only resolves to a real asset URL once Vite has emitted
+// the asset, which no test run does — so `import appCss from "./styles.css?url"`
+// in __root evaluates to the empty string and the shell renders
+// `<link rel="stylesheet" href="">`. React warns on an empty `href` once per
+// render, which was 36 of the suite's console warnings and belongs to the test
+// environment, not to __root: in a real build appCss is always a hashed URL.
+// Hand back a plausible one instead of teaching product code to expect "".
+//
+// It has to redirect to a real `.ts` stub rather than `load()` the replacement
+// in place: returning code for an id that still ends in `.css` leaves `vite:css`
+// to transform it afterwards, which puts the empty string straight back.
+function cssUrlStub(): Plugin {
+  return {
+    name: "css-url-stub",
+    enforce: "pre",
+    resolveId(id) {
+      if (id.endsWith(".css?url")) return `${src}/__tests__/stubs/css-url.ts`;
+    },
+  };
+}
+
 export default defineConfig({
-  plugins: [react()],
+  plugins: [cssUrlStub(), react()],
   resolve: {
     alias: {
       "@": src,

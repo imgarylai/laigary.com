@@ -4,7 +4,7 @@
 // the same proof rather than being assumed to follow (#180, #181).
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent, cleanup } from "@testing-library/react";
+import { render, screen, fireEvent, cleanup, waitFor } from "@testing-library/react";
 import { NotesListClient } from "@/components/admin/NotesListClient";
 
 const { navigate, useSearch } = vi.hoisted(() => ({
@@ -106,5 +106,64 @@ describe("NotesListClient", () => {
 
     await screen.findByRole("menuitem", { name: /postList.edit/ });
     expect(screen.queryByRole("menuitem", { name: /noteList.view/ })).toBeNull();
+  });
+});
+
+// The list's three URL writers. Everything above proves what the rows render;
+// these prove the filter/pager state survives a reload, which is the whole
+// reason it lives in the URL rather than in component state.
+describe("NotesListClient url state", () => {
+  const many = Array.from({ length: 21 }, (_, i) => ({
+    ...notes[0],
+    id: `n${i}`,
+    slug: `note-${i}`,
+    title: `Note ${i}`,
+  }));
+
+  it("pushes the search box value into the url", async () => {
+    render(<NotesListClient notes={notes} />);
+
+    fireEvent.change(screen.getByPlaceholderText("noteList.searchPlaceholder"), {
+      target: { value: "two" },
+    });
+
+    await waitFor(() => expect(navigate).toHaveBeenCalled());
+    const search = navigate.mock.lastCall?.[0].search as (p: object) => object;
+    expect(search({})).toEqual(expect.objectContaining({ q: "two" }));
+  });
+
+  it("drops q from the url when the search box is cleared", async () => {
+    useSearch.mockReturnValue({ q: "two" });
+    render(<NotesListClient notes={notes} />);
+
+    fireEvent.change(screen.getByPlaceholderText("noteList.searchPlaceholder"), {
+      target: { value: "" },
+    });
+
+    await waitFor(() => expect(navigate).toHaveBeenCalled());
+    const search = navigate.mock.lastCall?.[0].search as (p: object) => object;
+    expect(search({ q: "two" })).toEqual(expect.objectContaining({ q: undefined }));
+  });
+
+  it("pushes the page number into the url", async () => {
+    render(<NotesListClient notes={many} />);
+
+    fireEvent.click(screen.getByText("pagination.next"));
+
+    await waitFor(() => expect(navigate).toHaveBeenCalled());
+    const search = navigate.mock.lastCall?.[0].search as (p: object) => object;
+    expect(search({})).toEqual(expect.objectContaining({ page: 2 }));
+  });
+
+  it("drops page from the url on the way back to the first page", async () => {
+    // Page 1 is the default view, so it stays out of the URL entirely.
+    useSearch.mockReturnValue({ page: 2 });
+    render(<NotesListClient notes={many} />);
+
+    fireEvent.click(screen.getByText("pagination.prev"));
+
+    await waitFor(() => expect(navigate).toHaveBeenCalled());
+    const search = navigate.mock.lastCall?.[0].search as (p: object) => object;
+    expect(search({ page: 2 })).toEqual(expect.objectContaining({ page: undefined }));
   });
 });

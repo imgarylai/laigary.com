@@ -65,6 +65,7 @@ export function PagesListClient({ pages }: { pages: Page[] }) {
             <Button
               variant="ghost"
               size="icon-sm"
+              nativeButton={false}
               render={
                 <Link
                   to="/$slug"
@@ -88,7 +89,11 @@ export function PagesListClient({ pages }: { pages: Page[] }) {
       columns={columns}
       data={pages}
       searchPlaceholder={t("pageList.searchPlaceholder")}
-      toolbar={<Button render={<Link to="/admin/pages/new" />}>{t("pageList.newPage")}</Button>}
+      toolbar={
+        <Button nativeButton={false} render={<Link to="/admin/pages/new" />}>
+          {t("pageList.newPage")}
+        </Button>
+      }
       emptyMessage={t("admin.noPages")}
       globalFilter={q ?? ""}
       onGlobalFilterChange={(v) =>

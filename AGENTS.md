@@ -173,21 +173,30 @@ backfills go inside the generated file or via `drizzle-kit generate --custom`.
   `__root` and the pathless layout on the way down. Read the header comment
   before writing one: five `vi.mock` calls are load-bearing (they cannot live
   in the helper — factories are hoisted per file), and `beforeAll(warmRouteTree,
-60_000)` keeps the tree import out of the first test's 5s timeout. Still
-  uncovered by choice: the two layouts' palette-search closures, whose
-  fake-timer flow deadlocked against the palette's async open.
-- The admin route wrappers stay uncovered, but NOT because what they render is
-  already tested — an earlier version of this file claimed that and it was
-  false, which is how the biggest gap in the report came to read as a
-  considered decision (#206). The wrappers themselves are a loader plus a
-  render; the components they mount are tested directly with `render()`, which
-  needs no router. Test the component, not the wrapper.
-- Deliberately not covered, so nobody re-litigates it: `DataTable`'s react-table
-  filter callback and the dialog cancel-button lines are unreachable by
-  construction, and the presentational rows in `PagesListClient` /
-  `SectionsListClient` would only restate their own JSX. Everything else in
-  `components/admin` is fair game — and if you exclude something new, say why
-  here in terms that are checkable.
+60_000)` keeps the tree import out of the first test's 5s timeout.
+- The two layouts' palette closures ARE covered now
+  (`__tests__/routes/layout-palettes.test.tsx`); the note here used to say the
+  fake-timer flow deadlocked against the palette's async open. It does — if the
+  clock is faked before the dialog mounts. Open the palette on the real clock,
+  wait for the shell, and only then fake the clock for the 180ms debounce. Every
+  row's `onSelect` is the sole definition of where that row goes, so each is
+  asserted against `router.state.location.pathname` after a click.
+- The admin route wrappers ARE covered (`__tests__/routes/admin-routes.test.tsx`).
+  Two earlier versions of this file excused them: first as "what they render is
+  already tested" (false), then as a loader-plus-a-render not worth a router
+  (also false — they are where `/admin` declares `noindex`, where the three edit
+  routes turn a missing row into `notFound()`, and where `/admin/interview`
+  redirects instead of rendering). Loaders and `head` are plain functions off
+  `Route.options`; the components go through `renderRoute` like any other.
+- `mod+k` under jsdom is CTRL+k, not META+k: react-hotkeys-hook resolves `mod`
+  per platform and jsdom's user agent is not an Apple one. A `metaKey` event
+  matches nothing, so a toggle test written with it passes for the wrong reason
+  in one direction and fails in the other.
+- Genuinely not covered, so nobody re-litigates it: `DataTable`'s react-table
+  filter callback is unreachable by construction. That is the whole list — the
+  dialog cancel buttons and the `PagesListClient` / `SectionsListClient` rows
+  used to be on it and were simply untested, cancel included. If you exclude
+  something new, say why here in terms that are checkable, and check it first.
 - No wall-clock waits around a debounce, in either direction. Install fake
   timers, `await act(() => vi.advanceTimersByTimeAsync(PAST_DEBOUNCE))`, then
   assert with a SYNCHRONOUS `getBy` — `advanceTimersByTimeAsync` flushes the
@@ -201,11 +210,40 @@ backfills go inside the generated file or via `drizzle-kit generate --custom`.
   runs: real waits let a varying number of renders land inside the window.
 - Hooks ARE tested (jsdom `renderHook` + stubbed rAF/matchMedia — see
   `__tests__/hooks/`); their listener math and cleanup regress like any code.
-  The `createServerFn` wrapper arrows stay in-file and uncovered — they're the
-  RPC boundary, a few lines each, and uncoverable without the Start plugin.
   Don't chase the last percent: a branch only reachable by mocking what the
   public API can't produce is left uncovered (or, for transient errors, tested
   per the rule above).
+- The `createServerFn` wrapper arrows carry
+  `/* v8 ignore start -- RPC boundary … */` rather than sitting permanently red.
+  Verified, not assumed: calling the fn throws "No Start context found in
+  AsyncLocalStorage", and so does its private `__executeServer` — reaching them
+  needs both that underscore-prefixed property AND a `Symbol.for(...)` global
+  the Start runtime installs, two private contracts of a dependency Renovate
+  bumps weekly. Types already catch the realistic slip (a validator's output
+  type has to match its Impl's input), and every wrapper is one line over a
+  tested Impl. Marking them keeps ~54 permanently unreachable functions out of
+  the denominator instead of training everyone to ignore a red number.
+- That marker is for the RPC boundary only. Anything else living inside a
+  handler should move OUT to an exported `*Impl` instead of being ignored —
+  `server/posts.ts` and `server/locale.ts` were both inline, and their paging
+  defaults (`limit ?? 100`) and request-key names (`locale`,
+  `accept-language`) are real behaviour that fails silently.
+- console.error / console.warn FAIL the test that emitted them
+  (`__tests__/helpers/console-guard.ts`, installed from `setup.ts`). Vitest 4
+  only prints console output for failing tests, so a green run is no evidence of
+  a quiet one — the suite was emitting 46 warnings a run and showing none of
+  them. No product code writes to those channels, so anything appearing there is
+  React, jsdom or a component library reporting a real defect. If a warning IS
+  what a test asserts, declare it with `allowConsole(/…/)` and spell the message
+  out; do not widen the pattern to shut a class of them up.
+- `*.css?url` resolves to `__tests__/stubs/css-url.ts` under vitest
+  (`cssUrlStub` in vitest.config.ts). Vite only mints the hashed asset URL in a
+  real build, so `styles.css?url` is `""` otherwise and __root renders
+  `<link rel="stylesheet" href="">` — an empty `href` React warns about on every
+  render. The stub exports `undefined`, NOT a plausible URL: React 19 treats a
+  stylesheet link with an href as a suspensey resource and holds the commit
+  until it loads, which under jsdom never happens, and every route test then
+  renders an empty container.
 
 ## TanStack reference (tool-managed)
 

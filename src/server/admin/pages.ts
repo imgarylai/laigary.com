@@ -20,6 +20,8 @@ export async function upsertPageImpl(input: PageUpsertInput): Promise<ActionResu
   return { ok: true };
 }
 
+/* v8 ignore start -- RPC boundary, unreachable under vitest (see AGENTS.md). */
 export const upsertPageFn = createServerFn({ method: "POST" })
   .validator((data: unknown) => pageUpsertSchema.parse(data))
   .handler(({ data }) => upsertPageImpl(data));
+/* v8 ignore stop */

@@ -42,4 +42,29 @@ describe("TmPager", () => {
     render(<TmPager {...props} current={1} onPage={() => {}} />);
     expect(screen.getByText("blog.archive.newer").closest("button")?.disabled).toBe(true);
   });
+
+  it("should step back one page from newer", () => {
+    // Relative, not absolute: newer/older move by one from wherever you are.
+    // Hardcoding 1 / totalPages passes on a two-page list and nowhere else.
+    const onPage = vi.fn();
+    render(<TmPager {...props} current={2} onPage={onPage} />);
+
+    fireEvent.click(screen.getByText("blog.archive.newer"));
+
+    expect(onPage).toHaveBeenCalledWith(1);
+  });
+
+  it("should step forward one page from older", () => {
+    const onPage = vi.fn();
+    render(<TmPager {...props} current={2} totalPages={5} onPage={onPage} />);
+
+    fireEvent.click(screen.getByText("blog.archive.older"));
+
+    expect(onPage).toHaveBeenCalledWith(3);
+  });
+
+  it("should disable older on the last page", () => {
+    render(<TmPager {...props} current={3} totalPages={3} onPage={() => {}} />);
+    expect(screen.getByText("blog.archive.older").closest("button")?.disabled).toBe(true);
+  });
 });

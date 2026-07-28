@@ -5,7 +5,7 @@
 // unnoticed for as long as they did.
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent, cleanup } from "@testing-library/react";
+import { render, screen, fireEvent, cleanup, waitFor } from "@testing-library/react";
 import { PostsListClient } from "@/components/admin/PostsListClient";
 
 const { navigate, useSearch } = vi.hoisted(() => ({
@@ -119,5 +119,82 @@ describe("PostsListClient", () => {
     const pinnedRow = screen.getByText("Draft post").closest("tr")!;
     expect(pinnedRow.querySelector("svg")).toBeTruthy();
     expect(container).toBeTruthy();
+  });
+});
+
+// The list's URL writers: the status dropdown, the search box and the pager all
+// write into the route's search params so the filtered view survives a reload.
+describe("PostsListClient url state", () => {
+  // Base UI's Select portals its listbox only once open, and commits on the
+  // pointer sequence rather than on a bare click (see NoteForm's helper).
+  function selectStatus(optionText: string) {
+    fireEvent.click(screen.getByRole("combobox"));
+    const option = screen.getByRole("option", { name: optionText });
+    fireEvent.pointerDown(option);
+    fireEvent.pointerUp(option);
+    fireEvent.click(option);
+  }
+
+  const many = Array.from({ length: 21 }, (_, i) => ({
+    ...posts[0],
+    id: `p${i}`,
+    slug: `post-${i}`,
+    title: `Post ${i}`,
+  }));
+
+  it("pushes the chosen status into the url", async () => {
+    render(<PostsListClient posts={posts} />);
+
+    selectStatus("postForm.draft");
+
+    await waitFor(() => expect(navigate).toHaveBeenCalled());
+    const search = navigate.mock.lastCall?.[0].search as (p: object) => object;
+    expect(search({})).toEqual(expect.objectContaining({ status: "draft" }));
+  });
+
+  it("drops status from the url when the filter goes back to all", async () => {
+    // "all" is the default view, so it is an absence in the URL rather than a
+    // literal `?status=all` the route's validateSearch would then reject.
+    useSearch.mockReturnValue({ status: "draft" });
+    render(<PostsListClient posts={posts} />);
+
+    selectStatus("postList.all");
+
+    await waitFor(() => expect(navigate).toHaveBeenCalled());
+    const search = navigate.mock.lastCall?.[0].search as (p: object) => object;
+    expect(search({ status: "draft" })).toEqual(expect.objectContaining({ status: undefined }));
+  });
+
+  it("pushes the search box value into the url", async () => {
+    render(<PostsListClient posts={posts} />);
+
+    fireEvent.change(screen.getByPlaceholderText("postList.searchPlaceholder"), {
+      target: { value: "live" },
+    });
+
+    await waitFor(() => expect(navigate).toHaveBeenCalled());
+    const search = navigate.mock.lastCall?.[0].search as (p: object) => object;
+    expect(search({})).toEqual(expect.objectContaining({ q: "live" }));
+  });
+
+  it("pushes the page number into the url", async () => {
+    render(<PostsListClient posts={many} />);
+
+    fireEvent.click(screen.getByText("pagination.next"));
+
+    await waitFor(() => expect(navigate).toHaveBeenCalled());
+    const search = navigate.mock.lastCall?.[0].search as (p: object) => object;
+    expect(search({})).toEqual(expect.objectContaining({ page: 2 }));
+  });
+
+  it("drops page from the url on the way back to the first page", async () => {
+    useSearch.mockReturnValue({ page: 2 });
+    render(<PostsListClient posts={many} />);
+
+    fireEvent.click(screen.getByText("pagination.prev"));
+
+    await waitFor(() => expect(navigate).toHaveBeenCalled());
+    const search = navigate.mock.lastCall?.[0].search as (p: object) => object;
+    expect(search({ page: 2 })).toEqual(expect.objectContaining({ page: undefined }));
   });
 });

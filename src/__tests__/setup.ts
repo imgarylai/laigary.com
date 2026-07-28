@@ -1,3 +1,12 @@
+// Per-file test setup: the console guard, plus the jsdom shims ProseMirror
+// needs.
+import { installConsoleGuard } from "./helpers/console-guard";
+
+// Turns every console.error / console.warn into a test failure. Vitest 4 hides
+// console output from passing tests, so without this the suite can be loud and
+// green at the same time — see the file for what that was hiding.
+installConsoleGuard();
+
 // jsdom shims needed by ProseMirror, applied to every test file.
 //
 // jsdom implements no layout, so `Range.getClientRects` / `getBoundingClientRect`

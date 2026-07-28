@@ -120,26 +120,38 @@ export async function deleteNoteImpl(input: { id: string }): Promise<ActionResul
   }
 }
 
+/* v8 ignore start -- RPC boundary, unreachable under vitest (see AGENTS.md). */
 export const createSectionFn = createServerFn({ method: "POST" })
   .validator((data: unknown) => sectionCreateSchema.parse(data))
   .handler(({ data }) => createSectionImpl(data));
+/* v8 ignore stop */
 
+/* v8 ignore start -- RPC boundary, unreachable under vitest (see AGENTS.md). */
 export const updateSectionFn = createServerFn({ method: "POST" })
   .validator((data: unknown) => sectionUpdateSchema.parse(data))
   .handler(({ data }) => updateSectionImpl(data));
+/* v8 ignore stop */
 
+/* v8 ignore start -- RPC boundary, unreachable under vitest (see AGENTS.md). */
 export const deleteSectionFn = createServerFn({ method: "POST" })
   .validator((data: unknown) => idSchema.parse(data))
   .handler(({ data }) => deleteSectionImpl(data));
+/* v8 ignore stop */
 
+/* v8 ignore start -- RPC boundary, unreachable under vitest (see AGENTS.md). */
 export const createNoteFn = createServerFn({ method: "POST" })
   .validator((data: unknown) => noteCreateSchema.parse(data))
   .handler(({ data }) => createNoteImpl(data));
+/* v8 ignore stop */
 
+/* v8 ignore start -- RPC boundary, unreachable under vitest (see AGENTS.md). */
 export const updateNoteFn = createServerFn({ method: "POST" })
   .validator((data: unknown) => noteUpdateSchema.parse(data))
   .handler(({ data }) => updateNoteImpl(data));
+/* v8 ignore stop */
 
+/* v8 ignore start -- RPC boundary, unreachable under vitest (see AGENTS.md). */
 export const deleteNoteFn = createServerFn({ method: "POST" })
   .validator((data: unknown) => idSchema.parse(data))
   .handler(({ data }) => deleteNoteImpl(data));
+/* v8 ignore stop */

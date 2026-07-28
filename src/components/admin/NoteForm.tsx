@@ -275,6 +275,7 @@ export function NoteForm({
                 type="button"
                 variant="ghost"
                 size="sm"
+                nativeButton={false}
                 render={
                   <Link
                     to="/interview/$section/$slug"
