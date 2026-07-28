@@ -24,9 +24,20 @@ vi.mock("@/i18n/I18nProvider", () => ({
 vi.mock("@/server/locale", () => ({ resolveLocaleFn: async () => "en" }));
 vi.mock("@/components/Comments", () => ({ Comments: () => null }));
 
+// Both handles are typed against the real awaited return type, for the reason
+// interview-section.test.tsx spells out (#208): searchInterviewNotesFn returns a
+// BARE ARRAY, and a fixture that drifts to an object shape should fail
+// `pnpm typecheck` rather than quietly become the suite's description of a
+// contract that never existed.
+type PostsSearchResult = Awaited<ReturnType<(typeof import("@/server/posts"))["searchPostsFn"]>>;
+type NotesSearchResult = Awaited<
+  ReturnType<(typeof import("@/server/public"))["searchInterviewNotesFn"]>
+>;
+
 const { searchPostsFn, searchInterviewNotesFn } = vi.hoisted(() => ({
-  searchPostsFn: vi.fn(),
-  searchInterviewNotesFn: vi.fn(),
+  searchPostsFn:
+    vi.fn<(opts: { data: { q: string; limit: number } }) => Promise<PostsSearchResult>>(),
+  searchInterviewNotesFn: vi.fn<(opts: { data: { q: string } }) => Promise<NotesSearchResult>>(),
 }));
 
 vi.mock("@/server/posts", () => ({ searchPostsFn }));
@@ -118,6 +129,19 @@ installShellStubs();
 
 // Comfortably past CommandPalette's 180ms query debounce.
 const PAST_DEBOUNCE = 400;
+
+// A full PublicPost, not just the two fields the palette happens to read — the
+// typed handle above rejects the short version, which is the point of it.
+const helloPost: PostsSearchResult["posts"][number] = {
+  slug: "hello",
+  title: "Hello World",
+  excerpt: null,
+  coverImageUrl: null,
+  date: "2025-07-19",
+  readingTime: 5,
+  pinned: false,
+  tags: [],
+};
 
 /**
  * Open the palette on the REAL clock. Faking it first is what deadlocks: the
@@ -217,10 +241,7 @@ describe("blog palette", () => {
   });
 
   it("searches posts on demand and lists them as content rows", async () => {
-    searchPostsFn.mockResolvedValue({
-      posts: [{ slug: "hello", title: "Hello World" }],
-      total: 1,
-    });
+    searchPostsFn.mockResolvedValue({ posts: [helloPost], total: 1 });
     await renderRoute("/");
     const input = await openPalette("blog.search.placeholder");
 
@@ -233,10 +254,7 @@ describe("blog palette", () => {
   });
 
   it("opens the post a content row points at", async () => {
-    searchPostsFn.mockResolvedValue({
-      posts: [{ slug: "hello", title: "Hello World" }],
-      total: 1,
-    });
+    searchPostsFn.mockResolvedValue({ posts: [helloPost], total: 1 });
     const { router } = await renderRoute("/");
     const input = await openPalette("blog.search.placeholder");
     await typeAndSettle(input, "hello");
