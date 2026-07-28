@@ -22,8 +22,9 @@ vi.mock("@/server/locale", () => ({ resolveLocaleFn: async () => "en" }));
 // searchInterviewNotesFn returns a BARE ARRAY. Both files used to mock it as
 // `{ notes: [] }` — a contract that never existed (#208). The handle is typed
 // against the real awaited return type, so a fixture that drifts back to an
-// object shape fails `pnpm typecheck` rather than sitting here as the suite's
-// only executable description of the contract.
+// object shape fails `pnpm typecheck`. The palette closure that consumes it is
+// no longer excluded from route coverage either — `routes/layout-palettes`
+// drives it for real — so the shape is now pinned from both ends.
 //
 // `Partial<typeof import("@/server/public")>` on the factory does NOT work:
 // createServerFn returns an OptionalFetcher carrying [TSS_SERVER_FUNCTION],
