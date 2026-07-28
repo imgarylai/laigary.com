@@ -152,9 +152,11 @@ export async function editNoteDataImpl(data: {
   };
 }
 
+/* v8 ignore start -- RPC boundary, unreachable under vitest (see AGENTS.md). */
 export const editNoteDataFn = createServerFn({ method: "GET" })
   .validator((data: unknown) => z.object({ id: z.string().min(1) }).parse(data))
   .handler(({ data }) => editNoteDataImpl(data));
+/* v8 ignore stop */
 
 // A link target the editor's link dialog can point at: internal URL plus the
 // bits the result list renders (type badge, section, draft marker).
@@ -193,9 +195,11 @@ export async function searchLinkTargetsImpl(data: { q: string }): Promise<LinkTa
   ];
 }
 
+/* v8 ignore start -- RPC boundary, unreachable under vitest (see AGENTS.md). */
 export const searchLinkTargetsFn = createServerFn({ method: "GET" })
   .validator((data: unknown) => z.object({ q: z.string().min(1) }).parse(data))
   .handler(({ data }) => searchLinkTargetsImpl(data));
+/* v8 ignore stop */
 
 // Site settings key/value map for the settings form.
 export async function getSettingsImpl(): Promise<Record<string, string>> {
@@ -222,9 +226,11 @@ export async function getPageImpl(data: { slug: string }): Promise<PageDetail> {
     : null;
 }
 
+/* v8 ignore start -- RPC boundary, unreachable under vitest (see AGENTS.md). */
 export const getPageFn = createServerFn({ method: "GET" })
   .validator((data: unknown) => z.object({ slug: z.string().min(1) }).parse(data))
   .handler(({ data }) => getPageImpl(data));
+/* v8 ignore stop */
 
 // New-post form: available tags + the OG brand line.
 export async function newPostDataImpl(): Promise<{ tags: Tag[]; ogBrand: string }> {
@@ -248,6 +254,8 @@ export async function editPostDataImpl(data: {
   return { post, tags, ogBrand: computeOgBrand(settings) };
 }
 
+/* v8 ignore start -- RPC boundary, unreachable under vitest (see AGENTS.md). */
 export const editPostDataFn = createServerFn({ method: "GET" })
   .validator((data: unknown) => z.object({ id: z.string().min(1) }).parse(data))
   .handler(({ data }) => editPostDataImpl(data));
+/* v8 ignore stop */

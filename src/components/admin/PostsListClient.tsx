@@ -121,7 +121,9 @@ export function PostsListClient({ posts }: { posts: Post[] }) {
           <SelectItem value="published">{t("postForm.published")}</SelectItem>
         </SelectContent>
       </Select>
-      <Button render={<Link to="/admin/posts/new" />}>{t("admin.newPost")}</Button>
+      <Button nativeButton={false} render={<Link to="/admin/posts/new" />}>
+        {t("admin.newPost")}
+      </Button>
     </>
   );
 

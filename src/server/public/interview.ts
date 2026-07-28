@@ -40,9 +40,11 @@ export async function searchInterviewNotesImpl(data: { q: string }) {
   return searchPublishedInterviewNotes(data.q, 20);
 }
 
+/* v8 ignore start -- RPC boundary, unreachable under vitest (see AGENTS.md). */
 export const searchInterviewNotesFn = createServerFn({ method: "GET" })
   .validator((data: unknown) => z.object({ q: z.string().min(1) }).parse(data))
   .handler(({ data }) => searchInterviewNotesImpl(data));
+/* v8 ignore stop */
 
 export async function interviewDataImpl() {
   const { getInterviewSections, getInterviewNoteCountsBySection, getRecentInterviewNotes } =
@@ -99,9 +101,11 @@ export async function sectionDataImpl(data: { slug: string }) {
   };
 }
 
+/* v8 ignore start -- RPC boundary, unreachable under vitest (see AGENTS.md). */
 export const sectionDataFn = createServerFn({ method: "GET" })
   .validator(slugInput)
   .handler(({ data }) => sectionDataImpl(data));
+/* v8 ignore stop */
 
 export async function noteDataImpl(data: { section: string; slug: string }) {
   const { getInterviewNote, getInterviewSectionBySlug } = await import("@/db/queries");
@@ -130,8 +134,10 @@ export async function noteDataImpl(data: { section: string; slug: string }) {
   };
 }
 
+/* v8 ignore start -- RPC boundary, unreachable under vitest (see AGENTS.md). */
 export const noteDataFn = createServerFn({ method: "GET" })
   .validator((data: unknown) =>
     z.object({ section: z.string().min(1), slug: z.string().min(1) }).parse(data),
   )
   .handler(({ data }) => noteDataImpl(data));
+/* v8 ignore stop */

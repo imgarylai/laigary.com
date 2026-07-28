@@ -81,9 +81,11 @@ export async function postDataImpl(data: { slug: string }) {
   };
 }
 
+/* v8 ignore start -- RPC boundary, unreachable under vitest (see AGENTS.md). */
 export const postDataFn = createServerFn({ method: "GET" })
   .validator(slugInput)
   .handler(({ data }) => postDataImpl(data));
+/* v8 ignore stop */
 
 export async function tagsDataImpl() {
   const { getTagsWithCounts } = await import("@/db/queries");
@@ -112,9 +114,11 @@ export async function tagDataImpl(data: { slug: string }) {
   };
 }
 
+/* v8 ignore start -- RPC boundary, unreachable under vitest (see AGENTS.md). */
 export const tagDataFn = createServerFn({ method: "GET" })
   .validator(slugInput)
   .handler(({ data }) => tagDataImpl(data));
+/* v8 ignore stop */
 
 export async function pageDataImpl(data: { slug: string }) {
   const { getPageBySlug } = await import("@/db/queries");
@@ -130,6 +134,8 @@ export async function pageDataImpl(data: { slug: string }) {
   };
 }
 
+/* v8 ignore start -- RPC boundary, unreachable under vitest (see AGENTS.md). */
 export const pageDataFn = createServerFn({ method: "GET" })
   .validator(slugInput)
   .handler(({ data }) => pageDataImpl(data));
+/* v8 ignore stop */

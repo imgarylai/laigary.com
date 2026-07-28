@@ -22,9 +22,13 @@ afterEach(() => cleanup());
 
 const section = { id: "s1", label: "LeetCode", noteCount: 3 };
 
-async function openAndConfirm() {
+async function open() {
   fireEvent.click(screen.getByRole("button", { name: "sectionList.delete" }));
-  const dialog = await screen.findByRole("dialog");
+  return screen.findByRole("dialog");
+}
+
+async function openAndConfirm() {
+  const dialog = await open();
   fireEvent.click(within(dialog).getByRole("button", { name: "sectionList.delete" }));
 }
 
@@ -48,5 +52,35 @@ describe("DeleteSectionButton", () => {
 
     await waitFor(() => expect(toast.error).toHaveBeenCalled());
     expect(invalidate).not.toHaveBeenCalled();
+  });
+});
+
+// Deleting a section cascades to every note under it (FK onDelete: cascade), so
+// the note count in this dialog is the last thing standing between a mis-click
+// and losing a section's worth of writing.
+describe("DeleteSectionButton warning", () => {
+  it("warns about the notes that would go with it", async () => {
+    render(<DeleteSectionButton section={{ ...section, noteCount: 3 }} />);
+
+    const dialog = await open();
+    expect(within(dialog).getByText("sectionList.deleteCascade")).toBeTruthy();
+  });
+
+  it("uses the softer copy for a section with no notes", async () => {
+    render(<DeleteSectionButton section={{ ...section, noteCount: 0 }} />);
+
+    const dialog = await open();
+    expect(within(dialog).getByText("sectionList.deleteEmpty")).toBeTruthy();
+    expect(within(dialog).queryByText("sectionList.deleteCascade")).toBeNull();
+  });
+
+  it("closes without deleting when cancelled", async () => {
+    render(<DeleteSectionButton section={section} />);
+
+    const dialog = await open();
+    fireEvent.click(within(dialog).getByRole("button", { name: "sectionForm.cancel" }));
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(deleteSectionFn).not.toHaveBeenCalled();
   });
 });

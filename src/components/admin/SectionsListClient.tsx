@@ -55,6 +55,7 @@ export function SectionsListClient({ sections }: { sections: Section[] }) {
             <Button
               variant="ghost"
               size="icon-sm"
+              nativeButton={false}
               render={
                 <Link
                   to="/interview/$section"

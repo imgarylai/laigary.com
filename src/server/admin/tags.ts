@@ -51,14 +51,20 @@ export async function deleteTagImpl(input: { id: string }): Promise<ActionResult
   }
 }
 
+/* v8 ignore start -- RPC boundary, unreachable under vitest (see AGENTS.md). */
 export const createTagFn = createServerFn({ method: "POST" })
   .validator((data: unknown) => tagCreateSchema.parse(data))
   .handler(({ data }) => createTagImpl(data));
+/* v8 ignore stop */
 
+/* v8 ignore start -- RPC boundary, unreachable under vitest (see AGENTS.md). */
 export const updateTagFn = createServerFn({ method: "POST" })
   .validator((data: unknown) => tagUpdateSchema.parse(data))
   .handler(({ data }) => updateTagImpl(data));
+/* v8 ignore stop */
 
+/* v8 ignore start -- RPC boundary, unreachable under vitest (see AGENTS.md). */
 export const deleteTagFn = createServerFn({ method: "POST" })
   .validator((data: unknown) => tagIdSchema.parse(data))
   .handler(({ data }) => deleteTagImpl(data));
+/* v8 ignore stop */

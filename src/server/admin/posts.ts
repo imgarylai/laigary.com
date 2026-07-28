@@ -75,14 +75,20 @@ export async function deletePostImpl(input: { id: string }): Promise<ActionResul
   }
 }
 
+/* v8 ignore start -- RPC boundary, unreachable under vitest (see AGENTS.md). */
 export const createPostFn = createServerFn({ method: "POST" })
   .validator((data: unknown) => postCreateSchema.parse(data))
   .handler(({ data }) => createPostImpl(data));
+/* v8 ignore stop */
 
+/* v8 ignore start -- RPC boundary, unreachable under vitest (see AGENTS.md). */
 export const updatePostFn = createServerFn({ method: "POST" })
   .validator((data: unknown) => postUpdateSchema.parse(data))
   .handler(({ data }) => updatePostImpl(data));
+/* v8 ignore stop */
 
+/* v8 ignore start -- RPC boundary, unreachable under vitest (see AGENTS.md). */
 export const deletePostFn = createServerFn({ method: "POST" })
   .validator((data: unknown) => postIdSchema.parse(data))
   .handler(({ data }) => deletePostImpl(data));
+/* v8 ignore stop */

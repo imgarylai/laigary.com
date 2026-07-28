@@ -23,6 +23,8 @@ export async function updateSettingsImpl(values: SettingsInput): Promise<ActionR
   return { ok: true };
 }
 
+/* v8 ignore start -- RPC boundary, unreachable under vitest (see AGENTS.md). */
 export const updateSettingsFn = createServerFn({ method: "POST" })
   .validator((data: unknown) => settingsSchema.parse(data))
   .handler(({ data }) => updateSettingsImpl(data));
+/* v8 ignore stop */

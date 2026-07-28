@@ -23,7 +23,15 @@ const columns: ColumnDef<Row, unknown>[] = [
   {
     accessorKey: "title",
     header: "Title",
-    cell: ({ row }) => <a href={`/edit/${row.original.id}`}>{row.original.title}</a>,
+    // preventDefault matches what the real cell does — these are router `Link`s,
+    // which cancel the browser navigation and route client-side. Letting the
+    // click through instead makes jsdom attempt a real document navigation it
+    // does not implement, and log a warning from a test that still passes.
+    cell: ({ row }) => (
+      <a href={`/edit/${row.original.id}`} onClick={(e) => e.preventDefault()}>
+        {row.original.title}
+      </a>
+    ),
   },
   {
     id: "actions",

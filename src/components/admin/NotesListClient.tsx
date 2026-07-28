@@ -77,7 +77,9 @@ export function NotesListClient({ notes }: { notes: Note[] }) {
       data={notes}
       searchPlaceholder={t("noteList.searchPlaceholder")}
       toolbar={
-        <Button render={<Link to="/admin/interview/notes/new" />}>{t("noteList.newNote")}</Button>
+        <Button nativeButton={false} render={<Link to="/admin/interview/notes/new" />}>
+          {t("noteList.newNote")}
+        </Button>
       }
       emptyMessage={t("admin.noNotes")}
       onRowActivate={(note) =>

@@ -37,6 +37,7 @@
 import { render } from "@testing-library/react";
 import { RouterProvider, createMemoryHistory, createRouter } from "@tanstack/react-router";
 import { vi } from "vitest";
+import { allowConsole } from "./console-guard";
 
 /**
  * Stub the browser APIs jsdom lacks that the site shell reaches for on mount:
@@ -82,8 +83,19 @@ export async function warmRouteTree(): Promise<void> {
  * The caller awaits whatever the route renders (`findByText`) rather than the
  * router's load, so a failing loader surfaces as a missing element rather than
  * a silent pass.
+ *
+ * __root's shell component IS `<html>`, so mounting it inside Testing
+ * Library's container `<div>` makes React log "In HTML, <html> cannot be a
+ * child of <div>" once per render — which the console guard would otherwise
+ * fail the test over. Rendering into `document` instead is the nesting the app
+ * really runs in and silences it, but Testing Library's `cleanup` cannot detach
+ * a container it does not own, so every render after the first comes up with an
+ * empty `<body>`. The container stays a div and this one message is declared as
+ * the harness artifact it is — spelled out in full, so a genuine nesting bug in
+ * a route still fails.
  */
 export async function renderRoute(path: string) {
+  allowConsole(/In HTML, <html> cannot be a child of <div>/);
   const { routeTree } = await import("@/routeTree.gen");
   const router = createRouter({
     routeTree,
