@@ -88,4 +88,23 @@ describe("NotesListClient", () => {
 
     expect(screen.getAllByText("Arrays").length).toBe(2);
   });
+
+  it("should offer to view the published row but not the draft one", async () => {
+    // row-actions.test.tsx proves NoteRowActions honours `published`; nothing
+    // proved this list DERIVES it from the row's status. Hardcode it true and a
+    // draft gets a "view live" link straight to a 404.
+    render(<NotesListClient notes={notes} />);
+    const menus = screen.getAllByRole("button", { name: "noteList.actions" });
+    const rowOf = (slugText: string) =>
+      menus.find((m) => m.closest("tr")?.textContent?.includes(slugText))!;
+
+    fireEvent.click(rowOf("Two Sum"));
+    expect(await screen.findByRole("menuitem", { name: /noteList.view/ })).toBeTruthy();
+
+    fireEvent.keyDown(document.activeElement ?? document.body, { key: "Escape" });
+    fireEvent.click(rowOf("Draft note"));
+
+    await screen.findByRole("menuitem", { name: /postList.edit/ });
+    expect(screen.queryByRole("menuitem", { name: /noteList.view/ })).toBeNull();
+  });
 });
