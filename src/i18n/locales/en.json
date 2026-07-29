@@ -418,7 +418,8 @@
     "works": {
       "lead": "Projects I have built, alone or with others.",
       "noneYet": "// no works yet.",
-      "back": "  — back to all works"
+      "back": "  — back to all works",
+      "stackLabel": "--stack"
     }
   },
   "workForm": {

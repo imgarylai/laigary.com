@@ -63,6 +63,11 @@ export const Route = createFileRoute("/_site/works/$slug")({
  * The `---` block above the heading, in the same shape the post page uses.
  * Every line whose value is absent is dropped rather than printed empty — a
  * work with no repo should not advertise a blank `repo:`.
+ *
+ * Stays plain text, including `stack:`. Frontmatter is a literal transcript of
+ * the file's own header; the clickable version of the stack is the `--stack`
+ * row below the article, exactly as the post page splits `tags:` from its
+ * `--tags` row.
  */
 function frontmatter(work: {
   title: string;
@@ -108,6 +113,22 @@ function WorkPage() {
             for it, so the body is conditional where a post's never is. */}
         {html ? <Prose html={html} /> : <p className="text-sm text-tm-fg">{work.summary}</p>}
       </article>
+
+      {work.tags.length > 0 && (
+        <div className="mt-8 border-t border-dashed border-tm-border pt-4">
+          <span className="mr-2.5 text-xs text-tm-muted">{t("blog.works.stackLabel")}</span>
+          {work.tags.map((tg) => (
+            <Link
+              key={tg.slug}
+              to="/tags/$slug"
+              params={{ slug: tg.slug }}
+              className="mr-2.5 text-xs text-tm-accent no-underline"
+            >
+              #{tg.name}
+            </Link>
+          ))}
+        </div>
+      )}
 
       {(work.projectUrl || work.repoUrl) && (
         <div className="mt-8 flex flex-col gap-1.5 border-t border-dashed border-tm-border pt-4">

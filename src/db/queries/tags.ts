@@ -1,9 +1,17 @@
 import { eq, asc } from "drizzle-orm";
-import { tags, postTags, interviewNoteTags, posts, interviewNotes } from "@/db/schema";
+import {
+  tags,
+  postTags,
+  interviewNoteTags,
+  workTags,
+  posts,
+  interviewNotes,
+  works,
+} from "@/db/schema";
 import { getDb } from "./_db";
 import { revalidateContent } from "./_revalidate";
 
-export type UsedByItem = { type: "post" | "note"; title: string; slug: string };
+export type UsedByItem = { type: "post" | "note" | "work"; title: string; slug: string };
 
 // Resolve a tag by its slug — name + slug only, no usage. Returns null for an
 // unknown slug. The /tags/$slug page uses this to get the display name before
@@ -23,17 +31,18 @@ export type TagWithUsage = {
   slug: string;
   postCount: number;
   noteCount: number;
+  workCount: number;
   usedBy: UsedByItem[];
 };
 
 export async function getTagsWithUsage(): Promise<TagWithUsage[]> {
   const db = await getDb();
 
-  // Three constant-count queries instead of a per-tag fan-out (previously
+  // Four constant-count queries instead of a per-tag fan-out (previously
   // 1 + 2N queries — a posts + notes lookup for every tag, i.e. an N+1 that
   // made the admin tags page stall on D1's per-query round-trips). Fetch the
-  // full tag list plus all post/note usage joined once, then group in memory.
-  const [allTags, postRows, noteRows] = await Promise.all([
+  // full tag list plus all usage joined once, then group in memory.
+  const [allTags, postRows, noteRows, workRows] = await Promise.all([
     db.select().from(tags),
     db
       .select({ tagId: postTags.tagId, title: posts.title, slug: posts.slug })
@@ -47,6 +56,10 @@ export async function getTagsWithUsage(): Promise<TagWithUsage[]> {
       })
       .from(interviewNoteTags)
       .innerJoin(interviewNotes, eq(interviewNotes.id, interviewNoteTags.noteId)),
+    db
+      .select({ tagId: workTags.tagId, title: works.title, slug: works.slug })
+      .from(workTags)
+      .innerJoin(works, eq(works.id, workTags.workId)),
   ]);
 
   const postsByTag = new Map<string, UsedByItem[]>();
@@ -63,14 +76,26 @@ export async function getTagsWithUsage(): Promise<TagWithUsage[]> {
     notesByTag.set(row.tagId, list);
   }
 
+  const worksByTag = new Map<string, UsedByItem[]>();
+  for (const row of workRows) {
+    const list = worksByTag.get(row.tagId) ?? [];
+    list.push({ type: "work", title: row.title, slug: row.slug });
+    worksByTag.set(row.tagId, list);
+  }
+
   return allTags.map((tag) => {
     const postUsage = postsByTag.get(tag.id) ?? [];
     const noteUsage = notesByTag.get(tag.id) ?? [];
+    const workUsage = worksByTag.get(tag.id) ?? [];
     return {
       ...tag,
       postCount: postUsage.length,
       noteCount: noteUsage.length,
-      usedBy: [...postUsage, ...noteUsage],
+      workCount: workUsage.length,
+      // Drafts are deliberately included here, as they are for posts and
+      // notes: this feeds the delete warning, and detaching a tag from an
+      // unpublished work still loses work the author did.
+      usedBy: [...postUsage, ...noteUsage, ...workUsage],
     };
   });
 }

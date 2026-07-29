@@ -2,7 +2,7 @@
 
 import { describe, it, expect } from "vitest";
 import { setupTestDb } from "../helpers/test-db";
-import { seedNote, seedPost, seedSection, seedTag } from "../../factories";
+import { seedNote, seedPost, seedSection, seedTag, seedWork } from "../../factories";
 
 const harness = setupTestDb();
 
@@ -91,6 +91,30 @@ describe("tag branch gaps", () => {
     expect(usage.usedBy).toEqual([{ type: "note", title: "Knapsack", slug: "knapsack" }]);
   });
 
+  it("getTagsWithUsage includes work usage alongside posts and notes", async () => {
+    // Under-reporting here is how a tag still carried by a work gets deleted
+    // from the admin list without the warning ever mentioning it.
+    const { createTag, getTagsWithUsage } = await import("@/db/queries");
+    const tag = await createTag({ name: "Cloudflare", slug: "cloudflare" });
+    await seedWork({ title: "laigary.com", slug: "laigary-com", tagIds: [tag.id] });
+
+    const [usage] = await getTagsWithUsage();
+    expect(usage.workCount).toBe(1);
+    expect(usage.postCount).toBe(0);
+    expect(usage.usedBy).toEqual([{ type: "work", title: "laigary.com", slug: "laigary-com" }]);
+  });
+
+  it("getTagsWithUsage counts a draft work, which still holds the tag", async () => {
+    // Unlike getTagsWithCounts, this feeds the delete warning — detaching a
+    // tag from an unpublished work still destroys work the author did.
+    const { createTag, getTagsWithUsage } = await import("@/db/queries");
+    const tag = await createTag({ name: "WIP", slug: "wip" });
+    await seedWork({ slug: "unpublished", status: "draft", tagIds: [tag.id] });
+
+    const [usage] = await getTagsWithUsage();
+    expect(usage.workCount).toBe(1);
+  });
+
   it("createTag rethrows non-conflict errors untouched", async () => {
     const { createTag, TagConflictError } = await import("@/db/queries");
     // NOT NULL violation — must NOT be converted into a TagConflictError.
@@ -144,6 +168,29 @@ describe("getTagsWithCounts", () => {
     expect(await getTagsWithCounts()).toEqual([{ name: "Greedy", slug: "greedy", count: 2 }]);
   });
 
+  it("adds a tag's work count so a works-only tag still appears", async () => {
+    // Without the works arm this tag ranks as nonexistent, /tags/$slug 404s,
+    // and the link the work's own page renders points at nothing.
+    const tag = await seedTag({ name: "Cloudflare", slug: "cloudflare" });
+    await seedWork({ slug: "w1", tagIds: [tag.id] });
+    const { getTagsWithCounts } = await import("@/db/queries");
+
+    expect(await getTagsWithCounts()).toEqual([
+      { name: "Cloudflare", slug: "cloudflare", count: 1 },
+    ]);
+  });
+
+  it("sums a tag carried by a post, a note and a work", async () => {
+    const tag = await seedTag({ name: "Go", slug: "go" });
+    const section = await seedSection({ slug: "coding" });
+    await seedPost({ slug: "p1", tagIds: [tag.id] });
+    await seedNote(section.id, { slug: "n1", tagIds: [tag.id] });
+    await seedWork({ slug: "w1", tagIds: [tag.id] });
+    const { getTagsWithCounts } = await import("@/db/queries");
+
+    expect(await getTagsWithCounts()).toEqual([{ name: "Go", slug: "go", count: 3 }]);
+  });
+
   it("leaves out tags whose only content is unpublished", async () => {
     const tag = await seedTag({ name: "Draft only", slug: "draft-only" });
     await seedPost({ slug: "wip", status: "draft", tagIds: [tag.id] });
@@ -152,9 +199,19 @@ describe("getTagsWithCounts", () => {
     expect(await getTagsWithCounts()).toEqual([]);
   });
 
-  // This aggregate makes SQLite scan the whole posts/notes tables, and /tags
-  // and the home page both run it on every navigation, so it is cached. What
-  // the cache must not do is outlive a publish.
+  it("leaves out a tag whose only work is a draft", async () => {
+    // The publish-gated half of the works arm — the assertion that can fail if
+    // the status filter is dropped from the new count query.
+    const tag = await seedTag({ name: "Secret", slug: "secret" });
+    await seedWork({ slug: "unpublished", status: "draft", tagIds: [tag.id] });
+    const { getTagsWithCounts } = await import("@/db/queries");
+
+    expect(await getTagsWithCounts()).toEqual([]);
+  });
+
+  // This aggregate makes SQLite scan the whole posts/notes/works tables, and
+  // /tags and the home page both run it on every navigation, so it is cached.
+  // What the cache must not do is outlive a publish.
   it("should serve counts from cache until a content mutation invalidates them", async () => {
     const tag = await seedTag({ name: "Greedy", slug: "greedy" });
     await seedPost({ slug: "p1", tagIds: [tag.id] });
@@ -174,5 +231,23 @@ describe("getTagsWithCounts", () => {
     // A real publish goes through createPost, which invalidates.
     await seedPost({ slug: "p3", tagIds: [tag.id] });
     expect(await getTagsWithCounts()).toEqual([{ name: "Greedy", slug: "greedy", count: 3 }]);
+  });
+
+  it("should invalidate the cached counts when a work is published", async () => {
+    // Works now feed this aggregate, so publishing one has to bust the same
+    // cache a post does. Without revalidateContent in the works mutations the
+    // new entry is invisible on /tags until something else happens to publish.
+    const tag = await seedTag({ name: "Cloudflare", slug: "cloudflare" });
+    await seedPost({ slug: "p1", tagIds: [tag.id] });
+    const { getTagsWithCounts } = await import("@/db/queries");
+    expect(await getTagsWithCounts()).toEqual([
+      { name: "Cloudflare", slug: "cloudflare", count: 1 },
+    ]);
+
+    await seedWork({ slug: "w1", tagIds: [tag.id] });
+
+    expect(await getTagsWithCounts()).toEqual([
+      { name: "Cloudflare", slug: "cloudflare", count: 2 },
+    ]);
   });
 });

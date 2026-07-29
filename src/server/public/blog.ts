@@ -98,18 +98,23 @@ export const tagsDataFn = createServerFn({ method: "GET" }).handler(tagsDataImpl
 // (posts and notes share the tags table). Unknown slugs, and tags whose content
 // is all drafts, come back null (→ 404) — matching what the sitemap advertises.
 export async function tagDataImpl(data: { slug: string }) {
-  const { getTagBySlug, getPublishedPosts, getPublishedNotesByTag } = await import("@/db/queries");
+  const { getTagBySlug, getPublishedPosts, getPublishedNotesByTag, getPublishedWorks } =
+    await import("@/db/queries");
   const tag = await getTagBySlug(data.slug);
   if (!tag) return null;
-  const [{ posts }, notes] = await Promise.all([
+  const [{ posts }, notes, { works }] = await Promise.all([
     getPublishedPosts({ tag: data.slug, limit: 500 }),
     getPublishedNotesByTag(data.slug),
+    getPublishedWorks({ tag: data.slug, limit: 200 }),
   ]);
-  if (posts.length === 0 && notes.length === 0) return null;
+  // A tag with nothing published behind it has no page — including works, or a
+  // tag carried only by a work would 404 the link its own work page renders.
+  if (posts.length === 0 && notes.length === 0 && works.length === 0) return null;
   return {
     tag: { name: tag.name, slug: tag.slug },
     posts,
     notes,
+    works,
     ...(await pageChrome(`#${tag.name}`)),
   };
 }

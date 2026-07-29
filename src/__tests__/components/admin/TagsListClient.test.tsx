@@ -40,6 +40,7 @@ function tag(over: Partial<Parameters<typeof TagsListClient>[0]["tags"][number]>
     slug: "go",
     postCount: 0,
     noteCount: 0,
+    workCount: 0,
     usedBy: [],
     ...over,
   };
@@ -57,10 +58,18 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("TagsListClient usage column", () => {
-  it("counts posts and notes together", () => {
-    render(<TagsListClient tags={[tag({ postCount: 2, noteCount: 3 })]} />);
+  it("counts posts, notes and works together", () => {
+    render(<TagsListClient tags={[tag({ postCount: 2, noteCount: 3, workCount: 1 })]} />);
 
-    expect(usageFor("go")).toBe("5");
+    expect(usageFor("go")).toBe("6");
+  });
+
+  it("counts a tag used only by works rather than showing it unused", () => {
+    // The mutation this catches: omitting workCount from the sum. A tech-stack
+    // tag carried only by a work then reads "—" and looks safe to delete.
+    render(<TagsListClient tags={[tag({ slug: "cloudflare", workCount: 2 })]} />);
+
+    expect(usageFor("cloudflare")).toBe("2");
   });
 
   it("counts a tag used only by notes rather than showing it unused", () => {

@@ -8,6 +8,7 @@ import {
   interviewNoteTags,
   pages,
   works,
+  workTags,
 } from "@/db/schema";
 import { getDb } from "./_db";
 
@@ -26,7 +27,7 @@ export type SitemapData = {
 export async function getSitemapData(): Promise<SitemapData> {
   const db = await getDb();
 
-  const [postRows, noteRows, sectionRows, tagRows, noteTagRows, workRows, pageRows] =
+  const [postRows, noteRows, sectionRows, tagRows, noteTagRows, workRows, workTagRows, pageRows] =
     await Promise.all([
       db
         .select({ slug: posts.slug, updatedAt: posts.updatedAt })
@@ -66,6 +67,13 @@ export async function getSitemapData(): Promise<SitemapData> {
         .from(works)
         .where(eq(works.status, "published"))
         .orderBy(desc(works.pinned), desc(works.year)),
+      db
+        .select({ tagSlug: tags.slug, updatedAt: max(works.updatedAt) })
+        .from(workTags)
+        .innerJoin(works, eq(works.id, workTags.workId))
+        .innerJoin(tags, eq(tags.id, workTags.tagId))
+        .where(eq(works.status, "published"))
+        .groupBy(tags.slug),
       db.select({ slug: pages.slug, updatedAt: pages.updatedAt }).from(pages),
     ]);
 
@@ -79,10 +87,11 @@ export async function getSitemapData(): Promise<SitemapData> {
     return ts ? [{ slug: s.slug, updatedAt: ts }] : [];
   });
 
-  // Merge post-tag and note-tag latest timestamps into one unified tag set —
-  // the /tags/$slug page lists both, so both must be crawlable.
+  // Merge post-, note- and work-tag latest timestamps into one unified tag set
+  // — the /tags/$slug page lists all three, so all three must be crawlable and
+  // a tag's lastmod must move when any of them is edited.
   const tagLatest = new Map<string, number>();
-  for (const r of [...tagRows, ...noteTagRows]) {
+  for (const r of [...tagRows, ...noteTagRows, ...workTagRows]) {
     if (r.updatedAt) tagLatest.set(r.tagSlug, Math.max(tagLatest.get(r.tagSlug) ?? 0, r.updatedAt));
   }
   const tagsWithLatest = [...tagLatest].map(([slug, updatedAt]) => ({ slug, updatedAt }));

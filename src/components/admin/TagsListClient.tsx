@@ -14,7 +14,8 @@ type Tag = {
   slug: string;
   postCount: number;
   noteCount: number;
-  usedBy: { type: "post" | "note"; title: string; slug: string }[];
+  workCount: number;
+  usedBy: { type: "post" | "note" | "work"; title: string; slug: string }[];
 };
 
 const route = getRouteApi("/admin/tags");
@@ -35,9 +36,9 @@ export function TagsListClient({ tags }: { tags: Tag[] }) {
       {
         id: "used",
         header: t("tagList.used"),
-        accessorFn: (row) => row.postCount + row.noteCount,
+        accessorFn: (row) => row.postCount + row.noteCount + row.workCount,
         cell: ({ row }) => {
-          const used = row.original.postCount + row.original.noteCount;
+          const used = row.original.postCount + row.original.noteCount + row.original.workCount;
           return used > 0 ? <span>{used}</span> : <span className="text-muted-foreground">—</span>;
         },
       },
