@@ -377,7 +377,8 @@
       "postsUnit": "篇文章",
       "tagsUnit": "個標籤",
       "updated": "更新於 {date}",
-      "cta": "  — 直接開始讀"
+      "cta": "  — 直接開始讀",
+      "descWorks": "我做過的東西"
     },
     "archive": {
       "filteredBy": "篩選",
@@ -413,6 +414,11 @@
       "notesArrow": "{count} 則筆記 →",
       "noneYet": "// 還沒有筆記。",
       "minRead": "{min} 分鐘閱讀"
+    },
+    "works": {
+      "lead": "我做過的專案，有些是一個人，有些不是。",
+      "noneYet": "// 還沒有作品。",
+      "back": "  — 回到所有作品"
     }
   },
   "workForm": {
@@ -438,7 +444,8 @@
     "status": "狀態",
     "updated": "更新時間",
     "actions": "操作",
-    "edit": "編輯"
+    "edit": "編輯",
+    "view": "檢視"
   },
   "deleteWork": {
     "delete": "刪除",

@@ -377,7 +377,8 @@
       "postsUnit": "posts",
       "tagsUnit": "tags",
       "updated": "updated {date}",
-      "cta": "  — jump straight to the writing"
+      "cta": "  — jump straight to the writing",
+      "descWorks": "things I've built"
     },
     "archive": {
       "filteredBy": "filtered by",
@@ -413,6 +414,11 @@
       "notesArrow": "{count} notes →",
       "noneYet": "// no notes yet.",
       "minRead": "{min} min read"
+    },
+    "works": {
+      "lead": "Projects I have built, alone or with others.",
+      "noneYet": "// no works yet.",
+      "back": "  — back to all works"
     }
   },
   "workForm": {
@@ -438,7 +444,8 @@
     "status": "Status",
     "updated": "Updated",
     "actions": "Actions",
-    "edit": "Edit"
+    "edit": "Edit",
+    "view": "View"
   },
   "deleteWork": {
     "delete": "Delete",

@@ -13,6 +13,18 @@ export function unixToIso(unix: number): string {
   return format(fromUnixTime(unix), "yyyy-MM-dd");
 }
 
+/**
+ * A work's editorial year, as one label: `2025` for a single year, `2021–2023`
+ * for a range. An `endYear` equal to `year` collapses back to the single form
+ * rather than rendering `2021–2021`.
+ *
+ * En dash, not a hyphen — this is a range, and the terminal type is monospace
+ * so the wider glyph still lines up.
+ */
+export function fmtYearRange(year: number, endYear: number | null): string {
+  return endYear && endYear !== year ? `${year}–${endYear}` : String(year);
+}
+
 /** Largest unit first; each entry is how many seconds one of that unit is. */
 const RELATIVE_UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
   ["year", 31_536_000],

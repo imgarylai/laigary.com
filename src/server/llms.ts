@@ -2,9 +2,11 @@ import {
   getInterviewSections,
   getPublishedNoteIndex,
   getPublishedPosts,
+  getPublishedWorks,
   getPagesList,
   getSiteSettings,
 } from "@/db/queries";
+import { fmtYearRange } from "@/lib/date";
 
 // Server-only: builds the /llms.txt content map (https://llmstxt.org) so AI
 // crawlers without MCP support still get a structured index of the site. The
@@ -12,11 +14,13 @@ import {
 
 const DEFAULT_SITE_URL = "https://laigary.com";
 const POSTS_LIMIT = 500;
+const WORKS_LIMIT = 200;
 
 export async function buildLlmsTxt(): Promise<string> {
-  const [settings, { posts }, pages, sections, notes] = await Promise.all([
+  const [settings, { posts }, { works }, pages, sections, notes] = await Promise.all([
     getSiteSettings(),
     getPublishedPosts({ limit: POSTS_LIMIT }),
+    getPublishedWorks({ limit: WORKS_LIMIT }),
     getPagesList(),
     getInterviewSections(),
     getPublishedNoteIndex(),
@@ -37,6 +41,17 @@ export async function buildLlmsTxt(): Promise<string> {
     for (const post of posts) {
       const excerpt = post.excerpt ? `: ${post.excerpt}` : "";
       lines.push(`- [${post.title}](${base}/posts/${post.slug})${excerpt}`);
+    }
+  }
+
+  if (works.length > 0) {
+    lines.push("", "## Works", "");
+    for (const work of works) {
+      // Year and summary both go inline: for a portfolio entry those are the
+      // two facts a crawler has no other way to get without fetching the page.
+      const summary = work.summary ? `: ${work.summary}` : "";
+      const year = fmtYearRange(work.year, work.endYear);
+      lines.push(`- [${work.title} (${year})](${base}/works/${work.slug})${summary}`);
     }
   }
 

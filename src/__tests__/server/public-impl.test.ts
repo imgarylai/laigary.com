@@ -5,7 +5,7 @@
 // branches, then the isolated input validators.
 import { describe, it, expect } from "vitest";
 import { setupTestDb } from "../db/helpers/test-db";
-import { seedPage, seedPost, seedSection, seedNote, seedTag } from "../factories";
+import { seedPage, seedPost, seedSection, seedNote, seedTag, seedWork } from "../factories";
 
 setupTestDb();
 
@@ -146,6 +146,48 @@ describe("tagsDataImpl", () => {
     const { tagsDataImpl } = await import("@/server/public");
     const data = await tagsDataImpl();
     expect(data.tags).toEqual([{ name: "Life", slug: "life", count: 2 }]);
+  });
+});
+
+describe("worksDataImpl", () => {
+  it("returns published works with the page title under the template", async () => {
+    await setSettings({ title_template: "%s | Blog" });
+    await seedWork({ slug: "live", status: "published" });
+    await seedWork({ slug: "wip", status: "draft" });
+    const { worksDataImpl } = await import("@/server/public");
+    const data = await worksDataImpl();
+    expect(data.works.map((w) => w.slug)).toEqual(["live"]);
+    expect(data.pageTitle).toBe("Works | Blog");
+  });
+});
+
+describe("workDataImpl", () => {
+  it("renders the case study markdown and uses the summary as the description", async () => {
+    await seedWork({
+      slug: "full",
+      title: "Full",
+      summary: "one liner",
+      contentMd: "some **bold**",
+    });
+    const { workDataImpl } = await import("@/server/public");
+    const data = await workDataImpl({ slug: "full" });
+    expect(data?.work.title).toBe("Full");
+    expect(data?.html).toContain("<strong>bold</strong>");
+    // summary is NOT NULL, so it wins over the body-text fallback.
+    expect(data?.description).toBe("one liner");
+  });
+
+  it("falls back to the body text when the summary is blank", async () => {
+    await seedWork({ slug: "nosummary", summary: "", contentMd: "the case study body" });
+    const { workDataImpl } = await import("@/server/public");
+    expect((await workDataImpl({ slug: "nosummary" }))?.description).toBe("the case study body");
+  });
+
+  it("returns null for a missing or draft slug", async () => {
+    await seedWork({ slug: "wip", status: "draft" });
+    const { workDataImpl } = await import("@/server/public");
+    expect(await workDataImpl({ slug: "nope" })).toBeNull();
+    expect(await workDataImpl({ slug: "wip" })).toBeNull();
   });
 });
 

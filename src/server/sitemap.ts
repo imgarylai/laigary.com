@@ -17,11 +17,14 @@ export async function buildSitemapXml(): Promise<string> {
   const base = (settings.site_url || DEFAULT_SITE_URL).replace(/\/$/, "");
 
   const entries: Entry[] = [{ loc: `${base}/`, priority: 1 }];
-  for (const path of ["/posts", "/tags", "/interview"]) {
+  for (const path of ["/posts", "/works", "/tags", "/interview"]) {
     entries.push({ loc: `${base}${path}`, priority: 0.6 });
   }
   for (const p of data.posts) {
     entries.push({ loc: `${base}/posts/${p.slug}`, lastmod: p.updatedAt, priority: 0.8 });
+  }
+  for (const w of data.works) {
+    entries.push({ loc: `${base}/works/${w.slug}`, lastmod: w.updatedAt, priority: 0.8 });
   }
   for (const t of data.tags) {
     entries.push({ loc: `${base}/tags/${t.slug}`, lastmod: t.updatedAt, priority: 0.5 });

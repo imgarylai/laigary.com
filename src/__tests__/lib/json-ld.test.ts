@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   blogPostingLd,
   breadcrumbLd,
+  creativeWorkLd,
   serializeJsonLd,
   techArticleLd,
   webPageLd,
@@ -129,5 +130,57 @@ describe("webPageLd", () => {
     expect(ld.url).toBe("https://laigary.com/about");
     expect(ld.image).toBe("https://laigary.com/api/og/pages/about");
     expect(ld.name).toBe("About");
+  });
+});
+
+describe("creativeWorkLd", () => {
+  const base = {
+    slug: "laigary-com",
+    title: "laigary.com",
+    summary: "personal site",
+    date: "2026-01-01",
+    year: 2021,
+    tags: ["go", "cloudflare"],
+    coverImageUrl: null,
+    projectUrl: null,
+  };
+
+  it("should build a CreativeWork pointing at the work url and its og image", () => {
+    const ld = creativeWorkLd(base);
+    expect(ld["@type"]).toBe("CreativeWork");
+    expect(ld.url).toBe("https://laigary.com/works/laigary-com");
+    expect(ld.image).toBe("https://laigary.com/api/og/works/laigary-com");
+    expect(ld.name).toBe("laigary.com");
+    expect(ld.description).toBe("personal site");
+    expect(ld.keywords).toBe("go, cloudflare");
+  });
+
+  it("should keep dateCreated (the editorial year) distinct from datePublished", () => {
+    // A work made in 2021 and written up in 2026 has two real dates; collapsing
+    // them would misdate the work itself.
+    const ld = creativeWorkLd(base);
+    expect(ld.dateCreated).toBe("2021");
+    expect(ld.datePublished).toBe("2026-01-01");
+  });
+
+  it("should prefer the cover image when one exists", () => {
+    const ld = creativeWorkLd({ ...base, coverImageUrl: "https://cdn.example.com/a.png" });
+    expect(ld.image).toBe("https://cdn.example.com/a.png");
+  });
+
+  it("should link the live project as sameAs and omit it otherwise", () => {
+    expect(creativeWorkLd({ ...base, projectUrl: "https://ex.com" }).sameAs).toBe("https://ex.com");
+    expect(creativeWorkLd(base)).not.toHaveProperty("sameAs");
+  });
+
+  it("should omit description and keywords when the summary and tags are empty", () => {
+    const ld = creativeWorkLd({ ...base, summary: "", tags: [] });
+    expect(ld).not.toHaveProperty("description");
+    expect(ld).not.toHaveProperty("keywords");
+  });
+
+  it("should emit dateModified when updatedAt is present and omit it otherwise", () => {
+    expect(creativeWorkLd({ ...base, updatedAt: "2026-02-02" }).dateModified).toBe("2026-02-02");
+    expect(creativeWorkLd(base)).not.toHaveProperty("dateModified");
   });
 });

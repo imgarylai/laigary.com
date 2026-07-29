@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { computeReadingTime, fmtDate, unixToIso } from "@/lib/date";
+import { computeReadingTime, fmtDate, unixToIso, fmtYearRange } from "@/lib/date";
 
 describe("computeReadingTime", () => {
   it("returns at least 1 minute for tiny content", () => {
@@ -37,5 +37,20 @@ describe("unixToIso", () => {
   it("converts unix seconds to yyyy-MM-dd", () => {
     // 2026-07-22T00:00:00Z
     expect(unixToIso(1784678400)).toBe("2026-07-22");
+  });
+});
+
+describe("fmtYearRange", () => {
+  it("should render a single year when there is no end year", () => {
+    expect(fmtYearRange(2025, null)).toBe("2025");
+  });
+
+  it("should render an en-dashed range when the work spans years", () => {
+    expect(fmtYearRange(2021, 2023)).toBe("2021–2023");
+  });
+
+  it("should collapse to one year when the end year equals the start", () => {
+    // Otherwise a work the author filled in on both fields reads "2021–2021".
+    expect(fmtYearRange(2021, 2021)).toBe("2021");
   });
 });

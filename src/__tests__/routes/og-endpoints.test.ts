@@ -11,10 +11,12 @@ import type { SiteBranding } from "@/server/og";
 const getPostBySlug = vi.fn();
 const getPageBySlug = vi.fn();
 const getInterviewNote = vi.fn();
+const getWorkBySlug = vi.fn();
 vi.mock("@/db/queries", () => ({
   getPostBySlug: (slug: string) => getPostBySlug(slug),
   getPageBySlug: (slug: string) => getPageBySlug(slug),
   getInterviewNote: (sect: string, slug: string) => getInterviewNote(sect, slug),
+  getWorkBySlug: (slug: string) => getWorkBySlug(slug),
 }));
 
 const articleTemplate = vi.fn();
@@ -46,6 +48,7 @@ const { Route: OgSiteRoute } = await import("@/routes/api/og");
 const { Route: OgPostRoute } = await import("@/routes/api/og.posts.$slug");
 const { Route: OgPageRoute } = await import("@/routes/api/og.pages.$slug");
 const { Route: OgNoteRoute } = await import("@/routes/api/og.interview.$sect.$slug");
+const { Route: OgWorkRoute } = await import("@/routes/api/og.works.$slug");
 
 type Ctx = { request: Request; params: Record<string, string> };
 
@@ -122,6 +125,45 @@ describe("/api/og/pages/$slug", () => {
 
     expect(articleTemplate).toHaveBeenCalledWith(
       expect.objectContaining({ title: "Page not found", kicker: "./gone.md" }),
+    );
+  });
+});
+
+describe("/api/og/works/$slug", () => {
+  it("labels the card with the work's year range, not its publish date", async () => {
+    // A portfolio card's meaningful date is when the thing was made; the entry
+    // may have gone up years later.
+    getWorkBySlug.mockResolvedValue({ title: "Ranged", year: 2021, endYear: 2023 });
+
+    await get(OgWorkRoute)({ request, params: { slug: "ranged" } });
+
+    expect(articleTemplate).toHaveBeenCalledWith({
+      title: "Ranged",
+      branding: branding.branding,
+      dateLabel: "2021–2023",
+      kicker: "./works/ranged.md",
+    });
+  });
+
+  it("collapses a single-year work to one label", async () => {
+    getWorkBySlug.mockResolvedValue({ title: "Single", year: 2025, endYear: null });
+
+    await get(OgWorkRoute)({ request, params: { slug: "single" } });
+
+    expect(articleTemplate).toHaveBeenCalledWith(expect.objectContaining({ dateLabel: "2025" }));
+  });
+
+  it("still renders a card when the work is missing", async () => {
+    getWorkBySlug.mockResolvedValue(null);
+
+    await get(OgWorkRoute)({ request, params: { slug: "gone" } });
+
+    expect(articleTemplate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: "Work not found",
+        dateLabel: null,
+        kicker: "./works/gone.md",
+      }),
     );
   });
 });

@@ -1,7 +1,8 @@
 import { useForm, Controller } from "react-hook-form";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { z } from "zod";
-import { useNavigate, useRouter } from "@tanstack/react-router";
+import { Link, useNavigate, useRouter } from "@tanstack/react-router";
+import { ArrowSquareOutIcon } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -179,9 +180,9 @@ export function WorkForm({
     if (!form.formState.isSubmitting) submit();
   });
 
-  // No "preview" action here yet, unlike PostForm and NoteForm: /works/$slug
-  // does not exist until the public-pages change, and a link to a route the
-  // tree has never heard of does not typecheck. It lands with that page.
+  // A published work has a live public page; link straight to it so the author
+  // can preview without going back to the list. Drafts have no public page.
+  const canPreview = isEdit && work?.status === "published" && !!work?.slug;
 
   const settings = (
     <>
@@ -354,6 +355,25 @@ export function WorkForm({
               saving={form.formState.isSubmitting}
               saved={isEdit}
             />
+            {canPreview && work && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                nativeButton={false}
+                render={
+                  <Link
+                    to="/works/$slug"
+                    params={{ slug: work.slug }}
+                    target="_blank"
+                    rel="noreferrer"
+                  />
+                }
+              >
+                <ArrowSquareOutIcon className="size-4" />
+                {t("postForm.preview")}
+              </Button>
+            )}
             <Button
               type="button"
               variant="ghost"

@@ -24,6 +24,7 @@ export const Route = createFileRoute("/_site")({
 const NAV_ITEMS: NavItem[] = [
   { label: "~", to: "/", cmd: fsCmd(FS_BLOG.home) },
   { label: "posts", to: "/posts", cmd: fsCmd(FS_BLOG.archive) },
+  { label: "works", to: "/works", cmd: fsCmd(FS_BLOG.works) },
   { label: "tags", to: "/tags", cmd: fsCmd(FS_BLOG.tags) },
   { label: "interview", to: "/interview", cmd: fsCmd(FS_INTERVIEW.home) },
   {
@@ -53,6 +54,14 @@ function SiteLayout() {
         label: fsCmd(FS_BLOG.archive),
         haystack: "posts archive all writing",
         onSelect: () => navigate({ to: "/posts" }),
+      },
+      {
+        kind: "page",
+        label: fsCmd(FS_BLOG.works),
+        // "projects" and 作品 are what someone reaching for this would type;
+        // the route is /works but the concept has three names.
+        haystack: "works projects portfolio 作品",
+        onSelect: () => navigate({ to: "/works" }),
       },
       {
         kind: "page",

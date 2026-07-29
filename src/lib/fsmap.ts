@@ -24,8 +24,9 @@ export interface FsNode {
   prompt: (ctx?: FsCtx) => string;
 }
 
-// Blog (root namespace = ~). `now` / `projects` / `subscribe` are intentionally
-// absent — the current design does not ship them.
+// Blog (root namespace = ~). `now` / `subscribe` are intentionally absent — the
+// current design does not ship them. (`projects` was on that list until the
+// portfolio landed; `works` below is that surface.)
 export const FS_BLOG = {
   home: { kind: "dir", path: "~", crumb: () => "", prompt: () => "$ ls ." },
   archive: {
@@ -39,6 +40,20 @@ export const FS_BLOG = {
     path: "~/posts/<slug>.md",
     crumb: (ctx = {}) => `posts/${ctx.slug ?? ""}.md`,
     prompt: (ctx = {}) => `$ cat ./posts/${ctx.slug ?? ""}.md`,
+  },
+  works: {
+    kind: "dir",
+    path: "~/works",
+    crumb: () => "works",
+    // `-l` rather than a bare `ls`: the listing carries a description and a
+    // year per row, which is the long format.
+    prompt: () => "$ ls -l ./works/",
+  },
+  work: {
+    kind: "file",
+    path: "~/works/<slug>.md",
+    crumb: (ctx = {}) => `works/${ctx.slug ?? ""}.md`,
+    prompt: (ctx = {}) => `$ cat ./works/${ctx.slug ?? ""}.md`,
   },
   tags: { kind: "dir", path: "~/tags", crumb: () => "tags", prompt: () => "$ ls ./tags/" },
   tag: {
@@ -101,6 +116,11 @@ export function breadcrumbForPath(pathname: string): string {
     return seg.length === 1
       ? FS_BLOG.archive.crumb()
       : FS_BLOG.post.crumb({ slug: truncateSlug(seg[1]) });
+  }
+  if (seg[0] === "works") {
+    return seg.length === 1
+      ? FS_BLOG.works.crumb()
+      : FS_BLOG.work.crumb({ slug: truncateSlug(seg[1]) });
   }
   if (seg[0] === "tags") {
     return seg.length === 1

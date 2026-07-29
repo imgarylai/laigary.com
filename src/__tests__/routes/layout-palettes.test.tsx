@@ -66,6 +66,7 @@ vi.mock("@/server/public", () => ({
     socialUrls: [],
   }),
   tagsDataFn: async () => ({ pageTitle: "T", siteName: "U", tags: [] }),
+  worksDataFn: async () => ({ pageTitle: "T", siteName: "U", works: [] }),
   tagDataFn: async () => ({
     pageTitle: "T",
     siteName: "U",
@@ -188,7 +189,14 @@ describe("blog palette", () => {
     await openPalette("blog.search.placeholder");
 
     // Rendered as fsmap commands, the same vocabulary as the header prompt.
-    for (const cmd of ["cd ~", "cd ./posts", "cd ./tags", "cd ./interview", "cat ./about.md"]) {
+    for (const cmd of [
+      "cd ~",
+      "cd ./posts",
+      "cd ./works",
+      "cd ./tags",
+      "cd ./interview",
+      "cat ./about.md",
+    ]) {
       expect(screen.getByText(cmd)).toBeTruthy();
     }
   });
@@ -211,6 +219,15 @@ describe("blog palette", () => {
     fireEvent.click(screen.getByText("cd ./interview"));
 
     await waitFor(() => expect(router.state.location.pathname).toBe("/interview"));
+  });
+
+  it("navigates to the works index when its row is picked", async () => {
+    const { router } = await renderRoute("/");
+    await openPalette("blog.search.placeholder");
+
+    fireEvent.click(screen.getByText("cd ./works"));
+
+    await waitFor(() => expect(router.state.location.pathname).toBe("/works"));
   });
 
   it("navigates to the tag index when its row is picked", async () => {

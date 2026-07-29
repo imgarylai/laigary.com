@@ -96,7 +96,12 @@ export function WorksListClient({ works }: { works: Work[] }) {
         enableSorting: false,
         meta: { headClassName: "w-10", cellClassName: "w-10 text-right" },
         cell: ({ row }) => (
-          <WorkRowActions workId={row.original.id} workTitle={row.original.title} />
+          <WorkRowActions
+            workId={row.original.id}
+            workSlug={row.original.slug}
+            workTitle={row.original.title}
+            published={row.original.status === "published"}
+          />
         ),
       },
     ];

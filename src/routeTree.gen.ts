@@ -28,6 +28,8 @@ import { Route as SitePostsIndexRouteImport } from './routes/_site/posts/index'
 import { Route as SitePostsSlugRouteImport } from './routes/_site/posts/$slug'
 import { Route as SiteTagsIndexRouteImport } from './routes/_site/tags/index'
 import { Route as SiteTagsSlugRouteImport } from './routes/_site/tags/$slug'
+import { Route as SiteWorksIndexRouteImport } from './routes/_site/works/index'
+import { Route as SiteWorksSlugRouteImport } from './routes/_site/works/$slug'
 import { Route as AdminInterviewIndexRouteImport } from './routes/admin/interview/index'
 import { Route as AdminInterviewSectionsRouteImport } from './routes/admin/interview/sections'
 import { Route as AdminPagesIndexRouteImport } from './routes/admin/pages/index'
@@ -45,6 +47,7 @@ import { Route as AdminPostsPostIdEditRouteImport } from './routes/admin/posts/$
 import { Route as AdminWorksWorkIdEditRouteImport } from './routes/admin/works/$workId/edit'
 import { Route as ApiOgPagesSlugRouteImport } from './routes/api/og.pages.$slug'
 import { Route as ApiOgPostsSlugRouteImport } from './routes/api/og.posts.$slug'
+import { Route as ApiOgWorksSlugRouteImport } from './routes/api/og.works.$slug'
 import { Route as AdminInterviewNotesNoteIdEditRouteImport } from './routes/admin/interview/notes/$noteId/edit'
 import { Route as ApiOgInterviewSectSlugRouteImport } from './routes/api/og.interview.$sect.$slug'
 
@@ -142,6 +145,16 @@ const SiteTagsSlugRoute = SiteTagsSlugRouteImport.update({
   path: '/tags/$slug',
   getParentRoute: () => SiteRoute,
 } as any)
+const SiteWorksIndexRoute = SiteWorksIndexRouteImport.update({
+  id: '/works/',
+  path: '/works/',
+  getParentRoute: () => SiteRoute,
+} as any)
+const SiteWorksSlugRoute = SiteWorksSlugRouteImport.update({
+  id: '/works/$slug',
+  path: '/works/$slug',
+  getParentRoute: () => SiteRoute,
+} as any)
 const AdminInterviewIndexRoute = AdminInterviewIndexRouteImport.update({
   id: '/interview/',
   path: '/interview/',
@@ -228,6 +241,11 @@ const ApiOgPostsSlugRoute = ApiOgPostsSlugRouteImport.update({
   path: '/posts/$slug',
   getParentRoute: () => ApiOgRoute,
 } as any)
+const ApiOgWorksSlugRoute = ApiOgWorksSlugRouteImport.update({
+  id: '/works/$slug',
+  path: '/works/$slug',
+  getParentRoute: () => ApiOgRoute,
+} as any)
 const AdminInterviewNotesNoteIdEditRoute =
   AdminInterviewNotesNoteIdEditRouteImport.update({
     id: '/interview/notes/$noteId/edit',
@@ -257,6 +275,7 @@ export interface FileRoutesByFullPath {
   '/interview/': typeof InterviewIndexRoute
   '/posts/$slug': typeof SitePostsSlugRoute
   '/tags/$slug': typeof SiteTagsSlugRoute
+  '/works/$slug': typeof SiteWorksSlugRoute
   '/admin/interview/sections': typeof AdminInterviewSectionsRoute
   '/admin/pages/new': typeof AdminPagesNewRoute
   '/admin/posts/new': typeof AdminPostsNewRoute
@@ -264,6 +283,7 @@ export interface FileRoutesByFullPath {
   '/interview/$section/$slug': typeof InterviewSectionSlugRoute
   '/posts/': typeof SitePostsIndexRoute
   '/tags/': typeof SiteTagsIndexRoute
+  '/works/': typeof SiteWorksIndexRoute
   '/admin/interview/': typeof AdminInterviewIndexRoute
   '/admin/pages/': typeof AdminPagesIndexRoute
   '/admin/posts/': typeof AdminPostsIndexRoute
@@ -275,6 +295,7 @@ export interface FileRoutesByFullPath {
   '/admin/works/$workId/edit': typeof AdminWorksWorkIdEditRoute
   '/api/og/pages/$slug': typeof ApiOgPagesSlugRoute
   '/api/og/posts/$slug': typeof ApiOgPostsSlugRoute
+  '/api/og/works/$slug': typeof ApiOgWorksSlugRoute
   '/admin/interview/notes/': typeof AdminInterviewNotesIndexRoute
   '/admin/interview/notes/$noteId/edit': typeof AdminInterviewNotesNoteIdEditRoute
   '/api/og/interview/$sect/$slug': typeof ApiOgInterviewSectSlugRoute
@@ -294,6 +315,7 @@ export interface FileRoutesByTo {
   '/interview': typeof InterviewIndexRoute
   '/posts/$slug': typeof SitePostsSlugRoute
   '/tags/$slug': typeof SiteTagsSlugRoute
+  '/works/$slug': typeof SiteWorksSlugRoute
   '/admin/interview/sections': typeof AdminInterviewSectionsRoute
   '/admin/pages/new': typeof AdminPagesNewRoute
   '/admin/posts/new': typeof AdminPostsNewRoute
@@ -301,6 +323,7 @@ export interface FileRoutesByTo {
   '/interview/$section/$slug': typeof InterviewSectionSlugRoute
   '/posts': typeof SitePostsIndexRoute
   '/tags': typeof SiteTagsIndexRoute
+  '/works': typeof SiteWorksIndexRoute
   '/admin/interview': typeof AdminInterviewIndexRoute
   '/admin/pages': typeof AdminPagesIndexRoute
   '/admin/posts': typeof AdminPostsIndexRoute
@@ -312,6 +335,7 @@ export interface FileRoutesByTo {
   '/admin/works/$workId/edit': typeof AdminWorksWorkIdEditRoute
   '/api/og/pages/$slug': typeof ApiOgPagesSlugRoute
   '/api/og/posts/$slug': typeof ApiOgPostsSlugRoute
+  '/api/og/works/$slug': typeof ApiOgWorksSlugRoute
   '/admin/interview/notes': typeof AdminInterviewNotesIndexRoute
   '/admin/interview/notes/$noteId/edit': typeof AdminInterviewNotesNoteIdEditRoute
   '/api/og/interview/$sect/$slug': typeof ApiOgInterviewSectSlugRoute
@@ -335,6 +359,7 @@ export interface FileRoutesById {
   '/interview/': typeof InterviewIndexRoute
   '/_site/posts/$slug': typeof SitePostsSlugRoute
   '/_site/tags/$slug': typeof SiteTagsSlugRoute
+  '/_site/works/$slug': typeof SiteWorksSlugRoute
   '/admin/interview/sections': typeof AdminInterviewSectionsRoute
   '/admin/pages/new': typeof AdminPagesNewRoute
   '/admin/posts/new': typeof AdminPostsNewRoute
@@ -342,6 +367,7 @@ export interface FileRoutesById {
   '/interview/$section/$slug': typeof InterviewSectionSlugRoute
   '/_site/posts/': typeof SitePostsIndexRoute
   '/_site/tags/': typeof SiteTagsIndexRoute
+  '/_site/works/': typeof SiteWorksIndexRoute
   '/admin/interview/': typeof AdminInterviewIndexRoute
   '/admin/pages/': typeof AdminPagesIndexRoute
   '/admin/posts/': typeof AdminPostsIndexRoute
@@ -353,6 +379,7 @@ export interface FileRoutesById {
   '/admin/works/$workId/edit': typeof AdminWorksWorkIdEditRoute
   '/api/og/pages/$slug': typeof ApiOgPagesSlugRoute
   '/api/og/posts/$slug': typeof ApiOgPostsSlugRoute
+  '/api/og/works/$slug': typeof ApiOgWorksSlugRoute
   '/admin/interview/notes/': typeof AdminInterviewNotesIndexRoute
   '/admin/interview/notes/$noteId/edit': typeof AdminInterviewNotesNoteIdEditRoute
   '/api/og/interview/$sect/$slug': typeof ApiOgInterviewSectSlugRoute
@@ -376,6 +403,7 @@ export interface FileRouteTypes {
     | '/interview/'
     | '/posts/$slug'
     | '/tags/$slug'
+    | '/works/$slug'
     | '/admin/interview/sections'
     | '/admin/pages/new'
     | '/admin/posts/new'
@@ -383,6 +411,7 @@ export interface FileRouteTypes {
     | '/interview/$section/$slug'
     | '/posts/'
     | '/tags/'
+    | '/works/'
     | '/admin/interview/'
     | '/admin/pages/'
     | '/admin/posts/'
@@ -394,6 +423,7 @@ export interface FileRouteTypes {
     | '/admin/works/$workId/edit'
     | '/api/og/pages/$slug'
     | '/api/og/posts/$slug'
+    | '/api/og/works/$slug'
     | '/admin/interview/notes/'
     | '/admin/interview/notes/$noteId/edit'
     | '/api/og/interview/$sect/$slug'
@@ -413,6 +443,7 @@ export interface FileRouteTypes {
     | '/interview'
     | '/posts/$slug'
     | '/tags/$slug'
+    | '/works/$slug'
     | '/admin/interview/sections'
     | '/admin/pages/new'
     | '/admin/posts/new'
@@ -420,6 +451,7 @@ export interface FileRouteTypes {
     | '/interview/$section/$slug'
     | '/posts'
     | '/tags'
+    | '/works'
     | '/admin/interview'
     | '/admin/pages'
     | '/admin/posts'
@@ -431,6 +463,7 @@ export interface FileRouteTypes {
     | '/admin/works/$workId/edit'
     | '/api/og/pages/$slug'
     | '/api/og/posts/$slug'
+    | '/api/og/works/$slug'
     | '/admin/interview/notes'
     | '/admin/interview/notes/$noteId/edit'
     | '/api/og/interview/$sect/$slug'
@@ -453,6 +486,7 @@ export interface FileRouteTypes {
     | '/interview/'
     | '/_site/posts/$slug'
     | '/_site/tags/$slug'
+    | '/_site/works/$slug'
     | '/admin/interview/sections'
     | '/admin/pages/new'
     | '/admin/posts/new'
@@ -460,6 +494,7 @@ export interface FileRouteTypes {
     | '/interview/$section/$slug'
     | '/_site/posts/'
     | '/_site/tags/'
+    | '/_site/works/'
     | '/admin/interview/'
     | '/admin/pages/'
     | '/admin/posts/'
@@ -471,6 +506,7 @@ export interface FileRouteTypes {
     | '/admin/works/$workId/edit'
     | '/api/og/pages/$slug'
     | '/api/og/posts/$slug'
+    | '/api/og/works/$slug'
     | '/admin/interview/notes/'
     | '/admin/interview/notes/$noteId/edit'
     | '/api/og/interview/$sect/$slug'
@@ -623,6 +659,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SiteTagsSlugRouteImport
       parentRoute: typeof SiteRoute
     }
+    '/_site/works/': {
+      id: '/_site/works/'
+      path: '/works'
+      fullPath: '/works/'
+      preLoaderRoute: typeof SiteWorksIndexRouteImport
+      parentRoute: typeof SiteRoute
+    }
+    '/_site/works/$slug': {
+      id: '/_site/works/$slug'
+      path: '/works/$slug'
+      fullPath: '/works/$slug'
+      preLoaderRoute: typeof SiteWorksSlugRouteImport
+      parentRoute: typeof SiteRoute
+    }
     '/admin/interview/': {
       id: '/admin/interview/'
       path: '/interview'
@@ -742,6 +792,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiOgPostsSlugRouteImport
       parentRoute: typeof ApiOgRoute
     }
+    '/api/og/works/$slug': {
+      id: '/api/og/works/$slug'
+      path: '/works/$slug'
+      fullPath: '/api/og/works/$slug'
+      preLoaderRoute: typeof ApiOgWorksSlugRouteImport
+      parentRoute: typeof ApiOgRoute
+    }
     '/admin/interview/notes/$noteId/edit': {
       id: '/admin/interview/notes/$noteId/edit'
       path: '/interview/notes/$noteId/edit'
@@ -808,8 +865,10 @@ interface SiteRouteChildren {
   SiteIndexRoute: typeof SiteIndexRoute
   SitePostsSlugRoute: typeof SitePostsSlugRoute
   SiteTagsSlugRoute: typeof SiteTagsSlugRoute
+  SiteWorksSlugRoute: typeof SiteWorksSlugRoute
   SitePostsIndexRoute: typeof SitePostsIndexRoute
   SiteTagsIndexRoute: typeof SiteTagsIndexRoute
+  SiteWorksIndexRoute: typeof SiteWorksIndexRoute
 }
 
 const SiteRouteChildren: SiteRouteChildren = {
@@ -817,8 +876,10 @@ const SiteRouteChildren: SiteRouteChildren = {
   SiteIndexRoute: SiteIndexRoute,
   SitePostsSlugRoute: SitePostsSlugRoute,
   SiteTagsSlugRoute: SiteTagsSlugRoute,
+  SiteWorksSlugRoute: SiteWorksSlugRoute,
   SitePostsIndexRoute: SitePostsIndexRoute,
   SiteTagsIndexRoute: SiteTagsIndexRoute,
+  SiteWorksIndexRoute: SiteWorksIndexRoute,
 }
 
 const SiteRouteWithChildren = SiteRoute._addFileChildren(SiteRouteChildren)
@@ -842,12 +903,14 @@ const InterviewRouteWithChildren = InterviewRoute._addFileChildren(
 interface ApiOgRouteChildren {
   ApiOgPagesSlugRoute: typeof ApiOgPagesSlugRoute
   ApiOgPostsSlugRoute: typeof ApiOgPostsSlugRoute
+  ApiOgWorksSlugRoute: typeof ApiOgWorksSlugRoute
   ApiOgInterviewSectSlugRoute: typeof ApiOgInterviewSectSlugRoute
 }
 
 const ApiOgRouteChildren: ApiOgRouteChildren = {
   ApiOgPagesSlugRoute: ApiOgPagesSlugRoute,
   ApiOgPostsSlugRoute: ApiOgPostsSlugRoute,
+  ApiOgWorksSlugRoute: ApiOgWorksSlugRoute,
   ApiOgInterviewSectSlugRoute: ApiOgInterviewSectSlugRoute,
 }
 
