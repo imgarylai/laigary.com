@@ -60,6 +60,26 @@ describe("cached", () => {
     expect(load).toHaveBeenCalledTimes(2);
   });
 
+  it("should not evict a newer entry when an older load rejects late", async () => {
+    // The failing load's entry has already been replaced by the time it
+    // rejects. Deleting by key rather than by identity would throw away the
+    // good entry that succeeded in the meantime.
+    vi.useFakeTimers();
+    let fail: (e: Error) => void = () => {};
+    const slowFailure = vi.fn(() => new Promise<string>((_, reject) => (fail = reject)));
+    const fresh = vi.fn(async () => "fresh");
+
+    const rejected = cached("k", slowFailure, 1_000);
+    vi.advanceTimersByTime(1_001);
+    expect(await cached("k", fresh, 1_000)).toBe("fresh");
+
+    fail(new Error("D1_ERROR"));
+    await expect(rejected).rejects.toThrow("D1_ERROR");
+
+    expect(await cached("k", fresh, 1_000)).toBe("fresh");
+    expect(fresh).toHaveBeenCalledTimes(1);
+  });
+
   it("should not cache a rejected load", async () => {
     // A transient D1 error must not be served for a full TTL.
     const load = vi

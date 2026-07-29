@@ -93,6 +93,13 @@ describe("readCookie", () => {
     expect(readCookie(null, "locale")).toBeUndefined();
   });
 
+  it("should skip a segment carrying no value at all", () => {
+    // Flagless segments show up in forwarded Cookie headers; indexOf returning
+    // -1 there would slice the name from position 0 and match the wrong thing.
+    expect(readCookie("HttpOnly; locale=en", "locale")).toBe("en");
+    expect(readCookie("HttpOnly", "locale")).toBeUndefined();
+  });
+
   it("should not match a cookie whose name merely ends with the wanted one", () => {
     // `my_locale=en` must not answer a request for `locale`.
     expect(readCookie("my_locale=en", "locale")).toBeUndefined();

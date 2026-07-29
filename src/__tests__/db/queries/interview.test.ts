@@ -436,6 +436,21 @@ describe("getInterviewNotesBySection", () => {
     expect(result.total).toBe(1);
   });
 
+  it("should return nothing when the tag exists but carries no notes here", async () => {
+    // The chip row is per section, but a tag is global — one carried only by
+    // posts, or only by another section's notes, reaches this page as a filter
+    // that matches nothing.
+    const { createTag, getInterviewNotesBySection } = await import("@/db/queries");
+    const section = await seedSection();
+    await seedNote(section.id, { slug: "a" });
+    await createTag({ name: "Unused", slug: "unused" });
+
+    expect(await getInterviewNotesBySection("leetcode", { tagName: "Unused" })).toEqual({
+      notes: [],
+      total: 0,
+    });
+  });
+
   it("returns empty when section doesn't exist", async () => {
     const { getInterviewNotesBySection } = await import("@/db/queries");
     expect(await getInterviewNotesBySection("nope")).toEqual({ notes: [], total: 0 });
@@ -586,6 +601,11 @@ describe("getTagsInSection", () => {
 
     const tags = await getTagsInSection("leetcode");
     expect(tags.map((t) => t.slug)).toEqual(["alpha", "zeta"]);
+  });
+
+  it("should return no chips for an unknown section", async () => {
+    const { getTagsInSection } = await import("@/db/queries");
+    expect(await getTagsInSection("nope")).toEqual([]);
   });
 
   // Cached: the chip row costs a full scan of the section's notes plus a
