@@ -154,6 +154,16 @@ describe("read tools", () => {
     expect((await callTool("get_work", { slug: "nope" })).isError).toBe(true);
   });
 
+  it("get_work reports a work's stack as names, not join rows", async () => {
+    // Same call the post and note tools already get their own test for: the
+    // payload crosses a wire to a model, and a raw `{id, name, slug}` row is
+    // noise it has to parse around.
+    const tag = await seedTag({ name: "Cloudflare", slug: "cloudflare" });
+    await seedWork({ slug: "tagged", tagIds: [tag.id] });
+
+    expect(parseText(await callTool("get_work", { slug: "tagged" })).stack).toEqual(["Cloudflare"]);
+  });
+
   it("get_interview_note fetches published notes", async () => {
     const section = await seedSection({ slug: "coding" });
     await seedNote(section.id, { slug: "gas", title: "Gas Station" });
