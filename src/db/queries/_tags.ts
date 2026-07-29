@@ -1,8 +1,8 @@
 // Generic helper for fetching tags attached to a set of parent rows
-// (posts or interview notes), batched to stay under D1's parameter cap.
+// (posts, interview notes or works), batched to stay under D1's parameter cap.
 
 import { eq } from "drizzle-orm";
-import { tags, postTags, interviewNoteTags } from "@/db/schema";
+import { tags, postTags, interviewNoteTags, workTags } from "@/db/schema";
 import { chunk, inClause, type Db } from "./_db";
 
 export type PostTag = { name: string; slug: string };
@@ -14,6 +14,7 @@ const JUNCTIONS = {
     parentCol: interviewNoteTags.noteId,
     tagCol: interviewNoteTags.tagId,
   },
+  work: { table: workTags, parentCol: workTags.workId, tagCol: workTags.tagId },
 } as const;
 
 export type JunctionKind = keyof typeof JUNCTIONS;

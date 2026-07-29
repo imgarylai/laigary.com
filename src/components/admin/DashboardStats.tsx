@@ -11,6 +11,7 @@ export function DashboardStats({ stats }: { stats: Stats }) {
     { label: t("admin.drafts"), value: stats.postsDrafts },
     { label: t("admin.totalPosts"), value: stats.postsTotal },
     { label: t("admin.notes"), value: stats.notes },
+    { label: t("admin.totalWorks"), value: stats.works },
     { label: t("admin.pages"), value: stats.pages },
     { label: t("admin.tags"), value: stats.tags },
   ];

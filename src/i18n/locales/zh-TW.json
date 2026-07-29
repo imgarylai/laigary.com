@@ -12,7 +12,8 @@
     "siteDescription": "工程思維重構自我意識",
     "themeLight": "淺色",
     "themeDark": "深色",
-    "themeSystem": "跟隨系統"
+    "themeSystem": "跟隨系統",
+    "noWorksFound": "找不到作品。"
   },
   "admin": {
     "admin": "管理",
@@ -94,7 +95,11 @@
     "twitter": "Twitter / X",
     "linkedin": "LinkedIn",
     "whoami": "whoami",
-    "settingsSaved": "設定已儲存"
+    "settingsSaved": "設定已儲存",
+    "works": "作品集",
+    "newWork": "新增作品",
+    "editWork": "編輯作品",
+    "totalWorks": "作品總數"
   },
   "postForm": {
     "title": "標題",
@@ -409,5 +414,39 @@
       "noneYet": "// 還沒有筆記。",
       "minRead": "{min} 分鐘閱讀"
     }
+  },
+  "workForm": {
+    "settings": "作品設定",
+    "summary": "摘要",
+    "summaryPlaceholder": "一句話描述這個專案",
+    "year": "年份",
+    "endYear": "結束年份",
+    "endYearPlaceholder": "單一年份請留空",
+    "role": "角色",
+    "rolePlaceholder": "例如：獨立開發 · 設計與實作",
+    "projectUrl": "線上網址",
+    "repoUrl": "原始碼網址",
+    "stack": "技術棧",
+    "workCreated": "作品已建立",
+    "workUpdated": "作品已更新"
+  },
+  "workList": {
+    "searchPlaceholder": "搜尋作品...",
+    "all": "全部",
+    "title": "標題",
+    "year": "年份",
+    "status": "狀態",
+    "updated": "更新時間",
+    "actions": "操作",
+    "edit": "編輯"
+  },
+  "deleteWork": {
+    "delete": "刪除",
+    "deleteWork": "刪除作品",
+    "confirmMessage": "確定要刪除「{title}」嗎？此操作無法復原。",
+    "cancel": "取消",
+    "deleting": "刪除中...",
+    "workDeleted": "作品已刪除",
+    "deleteFailed": "刪除作品失敗"
   }
 }

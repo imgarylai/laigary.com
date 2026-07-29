@@ -5,7 +5,7 @@
 // the null/empty branches, then the isolated computeOgBrand cases.
 import { describe, it, expect } from "vitest";
 import { setupTestDb } from "../../db/helpers/test-db";
-import { seedNote, seedPage, seedPost, seedSection, seedTag } from "../../factories";
+import { seedNote, seedPage, seedPost, seedSection, seedTag, seedWork } from "../../factories";
 
 setupTestDb();
 
@@ -171,6 +171,34 @@ describe("newPostDataImpl / editPostDataImpl", () => {
     const { editPostDataImpl } = await import("@/server/admin/reads");
     expect((await editPostDataImpl({ id })).post?.title).toBe("Hello");
     expect((await editPostDataImpl({ id: "missing" })).post).toBeNull();
+  });
+});
+
+describe("listWorksImpl", () => {
+  it("returns every work regardless of status", async () => {
+    await seedWork({ slug: "live" });
+    await seedWork({ slug: "wip", status: "draft" });
+    const { listWorksImpl } = await import("@/server/admin/reads");
+    const works = await listWorksImpl();
+    expect(works.map((w) => w.slug).sort()).toEqual(["live", "wip"]);
+  });
+});
+
+describe("newWorkDataImpl / editWorkDataImpl", () => {
+  it("returns tags plus the og brand derived from settings", async () => {
+    await setSettings({ site_name: "Blog", site_url: "https://laigary.com" });
+    await seedTag();
+    const { newWorkDataImpl } = await import("@/server/admin/reads");
+    const data = await newWorkDataImpl();
+    expect(data.tags).toHaveLength(1);
+    expect(data.ogBrand).toBe("Blog | laigary.com");
+  });
+
+  it("editWorkDataImpl returns the work or null when missing", async () => {
+    const { id } = await seedWork({ title: "Hello" });
+    const { editWorkDataImpl } = await import("@/server/admin/reads");
+    expect((await editWorkDataImpl({ id })).work?.title).toBe("Hello");
+    expect((await editWorkDataImpl({ id: "missing" })).work).toBeNull();
   });
 });
 

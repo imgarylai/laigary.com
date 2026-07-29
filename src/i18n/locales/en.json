@@ -12,7 +12,8 @@
     "siteDescription": "Refactoring self-awareness with engineering mindset",
     "themeLight": "Light",
     "themeDark": "Dark",
-    "themeSystem": "System"
+    "themeSystem": "System",
+    "noWorksFound": "No works found."
   },
   "admin": {
     "admin": "Admin",
@@ -94,7 +95,11 @@
     "twitter": "Twitter / X",
     "linkedin": "LinkedIn",
     "whoami": "whoami",
-    "settingsSaved": "Settings saved"
+    "settingsSaved": "Settings saved",
+    "works": "Works",
+    "newWork": "New Work",
+    "editWork": "Edit Work",
+    "totalWorks": "Total Works"
   },
   "postForm": {
     "title": "Title",
@@ -409,5 +414,39 @@
       "noneYet": "// no notes yet.",
       "minRead": "{min} min read"
     }
+  },
+  "workForm": {
+    "settings": "Work settings",
+    "summary": "Summary",
+    "summaryPlaceholder": "One line describing the project",
+    "year": "Year",
+    "endYear": "End year",
+    "endYearPlaceholder": "Leave empty for a single year",
+    "role": "Role",
+    "rolePlaceholder": "e.g. Solo · design + build",
+    "projectUrl": "Live URL",
+    "repoUrl": "Repository URL",
+    "stack": "Stack",
+    "workCreated": "Work created",
+    "workUpdated": "Work updated"
+  },
+  "workList": {
+    "searchPlaceholder": "Search works...",
+    "all": "All",
+    "title": "Title",
+    "year": "Year",
+    "status": "Status",
+    "updated": "Updated",
+    "actions": "Actions",
+    "edit": "Edit"
+  },
+  "deleteWork": {
+    "delete": "Delete",
+    "deleteWork": "Delete work",
+    "confirmMessage": "Are you sure you want to delete \"{title}\"? This cannot be undone.",
+    "cancel": "Cancel",
+    "deleting": "Deleting...",
+    "workDeleted": "Work deleted",
+    "deleteFailed": "Failed to delete work"
   }
 }

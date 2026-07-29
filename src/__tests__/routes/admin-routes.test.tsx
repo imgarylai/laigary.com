@@ -45,6 +45,9 @@ const reads = vi.hoisted(() => ({
   getPageFn: vi.fn(),
   newPostDataFn: vi.fn(),
   editPostDataFn: vi.fn(),
+  listWorksFn: vi.fn(),
+  newWorkDataFn: vi.fn(),
+  editWorkDataFn: vi.fn(),
   newNoteDataFn: vi.fn(),
   editNoteDataFn: vi.fn(),
   searchLinkTargetsFn: vi.fn(),
@@ -67,6 +70,23 @@ const post = {
   pinned: false,
 };
 
+const work = {
+  id: "w1",
+  slug: "portfolio",
+  title: "Portfolio Piece",
+  summary: "one liner",
+  contentMd: "# hi",
+  coverImageUrl: null,
+  projectUrl: null,
+  repoUrl: null,
+  role: null,
+  year: 2021,
+  endYear: 2023,
+  status: "published" as const,
+  pinned: false,
+  tagIds: [],
+};
+
 const note = {
   id: "n1",
   slug: "two-sum",
@@ -85,6 +105,7 @@ beforeEach(() => {
     postsDrafts: 0,
     postsTotal: 0,
     notes: 0,
+    works: 0,
     pages: 0,
     tags: 0,
   });
@@ -97,6 +118,9 @@ beforeEach(() => {
   reads.getPageFn.mockResolvedValue({ id: "g1", slug: "about", title: "About", contentMd: "" });
   reads.newPostDataFn.mockResolvedValue({ tags: [], ogBrand: "Unconstrained" });
   reads.editPostDataFn.mockResolvedValue({ post, tags: [], ogBrand: "Unconstrained" });
+  reads.listWorksFn.mockResolvedValue([]);
+  reads.newWorkDataFn.mockResolvedValue({ tags: [], ogBrand: "Unconstrained" });
+  reads.editWorkDataFn.mockResolvedValue({ work, tags: [], ogBrand: "Unconstrained" });
   reads.newNoteDataFn.mockResolvedValue({ sections: [], tags: [] });
   reads.editNoteDataFn.mockResolvedValue({ note, sections: [], tags: [] });
   reads.searchLinkTargetsFn.mockResolvedValue([]);
@@ -139,6 +163,7 @@ describe("/admin/ (dashboard)", () => {
       postsDrafts: 2,
       postsTotal: 9,
       notes: 4,
+      works: 6,
       pages: 3,
       tags: 5,
     });
@@ -198,6 +223,58 @@ describe("/admin/posts", () => {
     const options = await optionsOf("admin/posts/$postId/edit");
 
     await expect(options.loader({ params: { postId: "gone" } } as never)).rejects.toBeDefined();
+  });
+});
+
+describe("/admin/works", () => {
+  it("lists the works its loader fetched", async () => {
+    reads.listWorksFn.mockResolvedValue([
+      {
+        id: "w1",
+        slug: "live",
+        title: "Live work",
+        status: "published",
+        pinned: false,
+        year: 2025,
+        updatedAt: HOUR_AGO,
+      },
+    ]);
+
+    await renderRoute("/admin/works");
+
+    expect(await screen.findByText("Live work")).toBeTruthy();
+  });
+
+  it("keeps ?status out of search when it is not a real status", async () => {
+    const options = await optionsOf("admin/works/index");
+    const parsed = options.validateSearch({ q: "go", status: "archived" } as never);
+
+    expect(parsed).toEqual({ q: "go", page: undefined, status: undefined });
+  });
+
+  it("opens an empty editor at /admin/works/new", async () => {
+    reads.newWorkDataFn.mockResolvedValue({ tags: [], ogBrand: "Brand" });
+
+    await renderRoute("/admin/works/new");
+
+    const title = (await screen.findByLabelText("postForm.title")) as HTMLInputElement;
+    expect(title.value).toBe("");
+  });
+
+  it("loads the work into the editor at /admin/works/$workId/edit", async () => {
+    await renderRoute("/admin/works/w1/edit");
+
+    const title = (await screen.findByLabelText("postForm.title")) as HTMLInputElement;
+    expect(title.value).toBe("Portfolio Piece");
+    expect(reads.editWorkDataFn).toHaveBeenCalledWith({ data: { id: "w1" } });
+  });
+
+  it("404s the editor for a work that no longer exists", async () => {
+    // Without the guard the component renders a form bound to `undefined`.
+    reads.editWorkDataFn.mockResolvedValue({ work: null, tags: [], ogBrand: "" });
+    const options = await optionsOf("admin/works/$workId/edit");
+
+    await expect(options.loader({ params: { workId: "gone" } } as never)).rejects.toBeDefined();
   });
 });
 

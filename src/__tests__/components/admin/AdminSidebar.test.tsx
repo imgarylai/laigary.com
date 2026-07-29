@@ -79,9 +79,20 @@ describe("AdminSidebar", () => {
     renderAt("/admin/posts/abc123/edit");
 
     expect(activeState("admin.posts")).toBe("true");
+    expect(activeState("admin.works")).toBe("false");
     expect(activeState("admin.pages")).toBe("false");
     expect(activeState("admin.tags")).toBe("false");
   });
+
+  it.each(["/admin/works", "/admin/works/new", "/admin/works/abc123/edit"])(
+    "should keep Works lit on %s",
+    (pathname) => {
+      renderAt(pathname);
+
+      expect(activeState("admin.works")).toBe("true");
+      expect(activeState("admin.posts")).toBe("false");
+    },
+  );
 
   it("should keep Pages lit while editing a page", () => {
     renderAt("/admin/pages/about/edit");

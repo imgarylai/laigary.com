@@ -1,5 +1,5 @@
 import { count, eq } from "drizzle-orm";
-import { posts, interviewNotes, pages, tags } from "@/db/schema";
+import { posts, interviewNotes, pages, tags, works } from "@/db/schema";
 import { getDb } from "./_db";
 
 export type DashboardStats = {
@@ -7,6 +7,7 @@ export type DashboardStats = {
   postsPublished: number;
   postsDrafts: number;
   notes: number;
+  works: number;
   pages: number;
   tags: number;
 };
@@ -15,10 +16,11 @@ export type DashboardStats = {
 // traffic/view tracking here (that would need a separate write path).
 export async function getDashboardStats(): Promise<DashboardStats> {
   const db = await getDb();
-  const [postsTotal, postsPublished, notes, pageCount, tagCount] = await Promise.all([
+  const [postsTotal, postsPublished, notes, workCount, pageCount, tagCount] = await Promise.all([
     db.select({ n: count() }).from(posts),
     db.select({ n: count() }).from(posts).where(eq(posts.status, "published")),
     db.select({ n: count() }).from(interviewNotes),
+    db.select({ n: count() }).from(works),
     db.select({ n: count() }).from(pages),
     db.select({ n: count() }).from(tags),
   ]);
@@ -29,6 +31,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     postsPublished: published,
     postsDrafts: total - published,
     notes: notes[0].n,
+    works: workCount[0].n,
     pages: pageCount[0].n,
     tags: tagCount[0].n,
   };
