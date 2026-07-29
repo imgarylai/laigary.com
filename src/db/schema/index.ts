@@ -5,3 +5,4 @@ export { pages } from "./pages";
 export { interviewSections, interviewNotes, interviewNoteTags } from "./interview";
 export { works, workTags } from "./works";
 export { siteSettings } from "./site-settings";
+export { cacheMeta } from "./cache-meta";

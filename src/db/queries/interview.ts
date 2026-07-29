@@ -3,7 +3,8 @@ import { interviewSections, interviewNotes, interviewNoteTags, tags } from "@/db
 import { unixToIso } from "@/lib/date";
 import { getDb, inClause, runBatch, type BatchWrites, type Db } from "./_db";
 import { fetchTagsByParentIds, type PostTag } from "./_tags";
-import { cached, cacheKeys, invalidateContentCaches } from "./_cache";
+import { cached, cacheKeys } from "./_cache";
+import { revalidateContent } from "./_revalidate";
 
 export type InterviewNoteWithTags = {
   id: string;
@@ -442,7 +443,7 @@ export async function createSection(input: {
     if (message.includes("UNIQUE")) throw new SectionConflictError();
     throw err;
   }
-  invalidateContentCaches();
+  await revalidateContent();
   return { id, slug: input.slug };
 }
 
@@ -463,7 +464,7 @@ export async function updateSection(
       sortOrder: input.sortOrder ?? existing.sortOrder,
     })
     .where(eq(interviewSections.id, id));
-  invalidateContentCaches();
+  await revalidateContent();
 }
 
 export async function deleteSection(id: string): Promise<void> {
@@ -474,7 +475,7 @@ export async function deleteSection(id: string): Promise<void> {
     .where(eq(interviewSections.id, id));
   if (!existing) throw new SectionNotFoundError(id);
   await db.delete(interviewSections).where(eq(interviewSections.id, id));
-  invalidateContentCaches();
+  await revalidateContent();
 }
 
 type NoteMutationInput = {
@@ -520,7 +521,7 @@ export async function createNote(input: NoteMutationInput): Promise<{ id: string
     if (message.includes("UNIQUE")) throw new NoteConflictError();
     throw err;
   }
-  invalidateContentCaches();
+  await revalidateContent();
   return { id, slug: input.slug };
 }
 
@@ -587,7 +588,7 @@ export async function updateNote(
     if (message.includes("UNIQUE")) throw new NoteConflictError();
     throw err;
   }
-  invalidateContentCaches();
+  await revalidateContent();
 }
 
 export async function deleteNote(id: string): Promise<void> {
@@ -598,7 +599,7 @@ export async function deleteNote(id: string): Promise<void> {
     .where(eq(interviewNotes.id, id));
   if (!existing) throw new NoteNotFoundError(id);
   await db.delete(interviewNotes).where(eq(interviewNotes.id, id));
-  invalidateContentCaches();
+  await revalidateContent();
 }
 
 export async function getInterviewNote(

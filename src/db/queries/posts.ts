@@ -3,7 +3,8 @@ import { posts, tags, postTags, interviewNotes, interviewNoteTags } from "@/db/s
 import { computeReadingTime, unixToIso } from "@/lib/date";
 import { getDb, inClause, runBatch, type BatchWrites } from "./_db";
 import { fetchTagsByParentIds, type PostTag } from "./_tags";
-import { cached, cacheKeys, invalidateContentCaches } from "./_cache";
+import { cached, cacheKeys } from "./_cache";
+import { revalidateContent } from "./_revalidate";
 
 export type PublicPost = {
   slug: string;
@@ -220,7 +221,7 @@ export async function createPost(input: PostMutationInput): Promise<{ id: string
     throw err;
   }
 
-  invalidateContentCaches();
+  await revalidateContent();
   return { id, slug: input.slug };
 }
 
@@ -276,7 +277,7 @@ export async function updatePost(
     throw err;
   }
 
-  invalidateContentCaches();
+  await revalidateContent();
   return { id, slug: input.slug ?? existing.slug };
 }
 
@@ -285,7 +286,7 @@ export async function deletePost(id: string): Promise<void> {
   const [existing] = await db.select({ id: posts.id }).from(posts).where(eq(posts.id, id));
   if (!existing) throw new PostNotFoundError(id);
   await db.delete(posts).where(eq(posts.id, id));
-  invalidateContentCaches();
+  await revalidateContent();
 }
 
 export async function getPostBySlug(slug: string): Promise<PublicPostDetail | null> {

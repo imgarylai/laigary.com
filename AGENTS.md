@@ -51,6 +51,25 @@ backfills go inside the generated file or via `drizzle-kit generate --custom`.
   `src/server/admin/interview.ts`; a note also carries its `sectionId`). When
   you add or change a feature on one (an admin action, a form field, a list
   column), mirror it on the other unless there's a reason not to.
+- Caching, two layers, both keyed off ONE call: every content mutation ends
+  with `await revalidateContent()` (`src/db/queries/_revalidate.ts`). Miss it
+  in a new mutation and the write is invisible for up to a day.
+  1. `src/db/queries/_cache.ts` — an isolate-local read-through cache for the
+     three queries every request re-ran: `getSiteSettings` (read twice a page,
+     by the layout shell and by `pageChrome`) and the two tag aggregates, which
+     SQLite answers by scanning the content table and walking the junction. No
+     index fixes those — `status = 'published'` matches nearly every row — so
+     not recomputing them per request is the only lever. 60s TTL bounds how
+     stale another isolate can get.
+  2. `src/start.ts` — a request middleware storing public documents in
+     `caches.default`. Cloudflare does not cache a Worker's own responses on
+     `Cache-Control` alone. The policy (what may be cached, and the key: locale
+     - content version) is in `src/lib/http-cache.ts`, pure and tested there
+       because the middleware itself only runs inside a Worker. `curl -I` a page
+       twice; the second should come back `x-edge-cache: HIT`.
+       Public list pages paginate SERVER-side (`sectionDataImpl`, page size in
+       `SECTION_PAGE_SIZE`). Do not reintroduce a `limit: 500` and slice in the
+       browser — that is what made the section listing the site's costliest query.
 - MCP endpoint (`/mcp`, `src/server/mcp/` + `src/routes/mcp.ts`): stateless
   Streamable HTTP JSON-RPC for AI clients. Read tools are public; write tools
   need `Authorization: Bearer <MCP_ADMIN_TOKEN>` (wrangler secret; unset =
