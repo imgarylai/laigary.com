@@ -2,6 +2,7 @@
 
 import { describe, it, expect } from "vitest";
 import { setupTestDb } from "../helpers/test-db";
+import { seedWork } from "../../factories";
 
 setupTestDb();
 
@@ -41,11 +42,17 @@ describe("getSitemapData", () => {
 
     await upsertPage("about", { title: "About", contentMd: "hi" });
 
+    await seedWork({ slug: "portfolio", status: "published" });
+    // A draft work must stay out of the sitemap — that is the half of this
+    // assertion that can actually fail.
+    await seedWork({ slug: "wip-work", status: "draft" });
+
     const data = await getSitemapData();
     expect(data.posts.map((p) => p.slug)).toEqual(["hello"]);
     expect(data.tags.map((t) => t.slug).sort()).toEqual(["arrays", "go"]);
     expect(data.sections.map((s) => s.slug)).toEqual(["leetcode"]);
     expect(data.notes.map((n) => `${n.sectionSlug}/${n.slug}`)).toEqual(["leetcode/two-sum"]);
+    expect(data.works.map((w) => w.slug)).toEqual(["portfolio"]);
     expect(data.pages.map((p) => p.slug)).toEqual(["about"]);
   });
 });

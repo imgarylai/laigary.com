@@ -6,6 +6,9 @@ describe("breadcrumbForPath", () => {
     expect(breadcrumbForPath("/")).toBe("");
     expect(breadcrumbForPath("/posts")).toBe("posts");
     expect(breadcrumbForPath("/posts/hello-world")).toBe("posts/hello-world.md");
+    expect(breadcrumbForPath("/works")).toBe("works");
+    expect(breadcrumbForPath("/laigary-com")).toBe("laigary-com.md");
+    expect(breadcrumbForPath("/works/laigary-com")).toBe("works/laigary-com.md");
     expect(breadcrumbForPath("/tags")).toBe("tags");
     expect(breadcrumbForPath("/tags/life")).toBe("tags/life");
     expect(breadcrumbForPath("/about")).toBe("about.md");
@@ -36,6 +39,8 @@ describe("fsCmd", () => {
   it("emits cd for dirs and cat for files", () => {
     expect(fsCmd(FS_BLOG.archive)).toBe("cd ./posts");
     expect(fsCmd(FS_BLOG.post, { slug: "x" })).toBe("cat ./posts/x.md");
+    expect(fsCmd(FS_BLOG.works)).toBe("cd ./works");
+    expect(fsCmd(FS_BLOG.work, { slug: "x" })).toBe("cat ./works/x.md");
     expect(fsCmd(FS_INTERVIEW.section, { sect: "leetcode" })).toBe("cd ./interview/leetcode");
   });
 
@@ -56,6 +61,7 @@ describe("prompt lines", () => {
   it("derives the blog prompts from fsmap nodes", () => {
     expect(FS_BLOG.home.prompt()).toBe("$ ls .");
     expect(FS_BLOG.archive.prompt()).toBe("$ ls -R ./posts/");
+    expect(FS_BLOG.works.prompt()).toBe("$ ls -l ./works/");
     expect(FS_BLOG.tags.prompt()).toBe("$ ls ./tags/");
     expect(FS_BLOG.post.prompt({ slug: "hello" })).toBe("$ cat ./posts/hello.md");
     expect(FS_BLOG.page.prompt({ slug: "about" })).toBe("$ cat ./about.md");

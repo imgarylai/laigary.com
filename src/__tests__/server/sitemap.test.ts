@@ -8,6 +8,7 @@ vi.mock("@/db/queries", () => ({
     tags: [{ slug: "go", updatedAt: 1000 }],
     sections: [{ slug: "leetcode", updatedAt: 2000 }],
     notes: [{ slug: "two-sum", sectionSlug: "leetcode", updatedAt: 2000 }],
+    works: [{ slug: "portfolio", updatedAt: 4000 }],
     pages: [{ slug: "about", updatedAt: 3000 }],
   })),
   getPublishedPosts: vi.fn(async () => ({
@@ -49,6 +50,8 @@ describe("buildSitemapXml", () => {
     expect(xml).toContain("<loc>https://ex.com/</loc>");
     expect(xml).toContain("<loc>https://ex.com/posts</loc>");
     expect(xml).toContain("https://ex.com/posts/hello");
+    expect(xml).toContain("<loc>https://ex.com/works</loc>");
+    expect(xml).toContain("https://ex.com/works/portfolio");
     expect(xml).toContain("https://ex.com/tags/go");
     expect(xml).toContain("<loc>https://ex.com/interview/leetcode</loc>");
     expect(xml).toContain("https://ex.com/interview/leetcode/two-sum");

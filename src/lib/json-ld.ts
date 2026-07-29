@@ -113,6 +113,49 @@ export function techArticleLd(note: NoteLdInput): Record<string, unknown> {
   };
 }
 
+export interface WorkLdInput {
+  slug: string;
+  title: string;
+  summary: string;
+  date: string;
+  /** Last-edit ISO date; emitted as dateModified when present. */
+  updatedAt?: string;
+  year: number;
+  tags: string[];
+  coverImageUrl: string | null;
+  /** The live project, linked as sameAs — the same work at another URL. */
+  projectUrl: string | null;
+}
+
+/**
+ * Portfolio entries. `CreativeWork` rather than `SoftwareApplication`: the
+ * latter requires `applicationCategory` and `operatingSystem`, neither of
+ * which a work carries, and half these entries are sites rather than software.
+ *
+ * `dateCreated` is the editorial year (when the thing was made); `datePublished`
+ * is when the entry went up on this site. They are genuinely different dates
+ * for anything written up years after the fact.
+ */
+export function creativeWorkLd(work: WorkLdInput): Record<string, unknown> {
+  const url = `${SITE_ORIGIN}/works/${work.slug}`;
+  return {
+    "@context": "https://schema.org",
+    "@type": "CreativeWork",
+    name: work.title,
+    ...(work.summary ? { description: work.summary } : {}),
+    dateCreated: String(work.year),
+    datePublished: work.date,
+    ...(work.updatedAt ? { dateModified: work.updatedAt } : {}),
+    url,
+    mainEntityOfPage: url,
+    ...(work.projectUrl ? { sameAs: work.projectUrl } : {}),
+    ...(work.tags.length > 0 ? { keywords: work.tags.join(", ") } : {}),
+    image: work.coverImageUrl ?? `${SITE_ORIGIN}/api/og/works/${work.slug}`,
+    inLanguage: "zh-TW",
+    author: AUTHOR,
+  };
+}
+
 /**
  * Serialize for embedding in a <script> tag. `<` is escaped so content like a
  * title containing `</script>` cannot break out of the tag.

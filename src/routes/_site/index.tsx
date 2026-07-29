@@ -60,6 +60,9 @@ function Home() {
       meta: `${postCount} ${t("blog.home.postsUnit")}`,
       to: "/posts",
     },
+    // `meta: "→"` like ./interview/ rather than a count, so homeDataImpl needs
+    // no extra query for a number nobody reads on the way past.
+    { label: "./works/", desc: t("blog.home.descWorks"), meta: "→", to: "/works" },
     {
       label: "./tags/",
       desc: t("blog.home.descTags"),

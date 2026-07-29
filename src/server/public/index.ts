@@ -21,6 +21,8 @@ export {
   pageDataFn,
 } from "./blog";
 
+export { worksDataImpl, worksDataFn, workDataImpl, workDataFn } from "./works";
+
 export {
   mapInterviewSections,
   interviewShellImpl,

@@ -7,6 +7,7 @@ import {
   interviewNotes,
   interviewNoteTags,
   pages,
+  works,
 } from "@/db/schema";
 import { getDb } from "./_db";
 
@@ -15,6 +16,7 @@ export type SitemapData = {
   tags: { slug: string; updatedAt: number }[];
   sections: { slug: string; updatedAt: number }[];
   notes: { slug: string; sectionSlug: string; updatedAt: number }[];
+  works: { slug: string; updatedAt: number }[];
   pages: { slug: string; updatedAt: number }[];
 };
 
@@ -24,42 +26,48 @@ export type SitemapData = {
 export async function getSitemapData(): Promise<SitemapData> {
   const db = await getDb();
 
-  const [postRows, noteRows, sectionRows, tagRows, noteTagRows, pageRows] = await Promise.all([
-    db
-      .select({ slug: posts.slug, updatedAt: posts.updatedAt })
-      .from(posts)
-      .where(eq(posts.status, "published"))
-      .orderBy(desc(posts.publishedAt)),
-    db
-      .select({
-        slug: interviewNotes.slug,
-        sectionSlug: interviewSections.slug,
-        updatedAt: interviewNotes.updatedAt,
-      })
-      .from(interviewNotes)
-      .innerJoin(interviewSections, eq(interviewSections.id, interviewNotes.sectionId))
-      .where(eq(interviewNotes.status, "published"))
-      .orderBy(desc(interviewNotes.publishedAt)),
-    db
-      .select({ slug: interviewSections.slug })
-      .from(interviewSections)
-      .orderBy(asc(interviewSections.sortOrder)),
-    db
-      .select({ tagSlug: tags.slug, updatedAt: max(posts.updatedAt) })
-      .from(postTags)
-      .innerJoin(posts, eq(posts.id, postTags.postId))
-      .innerJoin(tags, eq(tags.id, postTags.tagId))
-      .where(eq(posts.status, "published"))
-      .groupBy(tags.slug),
-    db
-      .select({ tagSlug: tags.slug, updatedAt: max(interviewNotes.updatedAt) })
-      .from(interviewNoteTags)
-      .innerJoin(interviewNotes, eq(interviewNotes.id, interviewNoteTags.noteId))
-      .innerJoin(tags, eq(tags.id, interviewNoteTags.tagId))
-      .where(eq(interviewNotes.status, "published"))
-      .groupBy(tags.slug),
-    db.select({ slug: pages.slug, updatedAt: pages.updatedAt }).from(pages),
-  ]);
+  const [postRows, noteRows, sectionRows, tagRows, noteTagRows, workRows, pageRows] =
+    await Promise.all([
+      db
+        .select({ slug: posts.slug, updatedAt: posts.updatedAt })
+        .from(posts)
+        .where(eq(posts.status, "published"))
+        .orderBy(desc(posts.publishedAt)),
+      db
+        .select({
+          slug: interviewNotes.slug,
+          sectionSlug: interviewSections.slug,
+          updatedAt: interviewNotes.updatedAt,
+        })
+        .from(interviewNotes)
+        .innerJoin(interviewSections, eq(interviewSections.id, interviewNotes.sectionId))
+        .where(eq(interviewNotes.status, "published"))
+        .orderBy(desc(interviewNotes.publishedAt)),
+      db
+        .select({ slug: interviewSections.slug })
+        .from(interviewSections)
+        .orderBy(asc(interviewSections.sortOrder)),
+      db
+        .select({ tagSlug: tags.slug, updatedAt: max(posts.updatedAt) })
+        .from(postTags)
+        .innerJoin(posts, eq(posts.id, postTags.postId))
+        .innerJoin(tags, eq(tags.id, postTags.tagId))
+        .where(eq(posts.status, "published"))
+        .groupBy(tags.slug),
+      db
+        .select({ tagSlug: tags.slug, updatedAt: max(interviewNotes.updatedAt) })
+        .from(interviewNoteTags)
+        .innerJoin(interviewNotes, eq(interviewNotes.id, interviewNoteTags.noteId))
+        .innerJoin(tags, eq(tags.id, interviewNoteTags.tagId))
+        .where(eq(interviewNotes.status, "published"))
+        .groupBy(tags.slug),
+      db
+        .select({ slug: works.slug, updatedAt: works.updatedAt })
+        .from(works)
+        .where(eq(works.status, "published"))
+        .orderBy(desc(works.pinned), desc(works.year)),
+      db.select({ slug: pages.slug, updatedAt: pages.updatedAt }).from(pages),
+    ]);
 
   // Latest published-note updatedAt per section (drop sections with no notes).
   const sectionLatest = new Map<string, number>();
@@ -79,5 +87,12 @@ export async function getSitemapData(): Promise<SitemapData> {
   }
   const tagsWithLatest = [...tagLatest].map(([slug, updatedAt]) => ({ slug, updatedAt }));
 
-  return { posts: postRows, tags: tagsWithLatest, sections, notes: noteRows, pages: pageRows };
+  return {
+    posts: postRows,
+    tags: tagsWithLatest,
+    sections,
+    notes: noteRows,
+    works: workRows,
+    pages: pageRows,
+  };
 }
