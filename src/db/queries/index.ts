@@ -73,6 +73,20 @@ export {
   NoteNotFoundError,
 } from "./interview";
 
+export type { PublicWork, PublicWorkDetail, AdminWork, AdminWorkDetail } from "./works";
+export {
+  getPublishedWorks,
+  getWorkBySlug,
+  getAdminWorks,
+  getAllAdminWorks,
+  getAdminWorkById,
+  createWork,
+  updateWork,
+  deleteWork,
+  WorkConflictError,
+  WorkNotFoundError,
+} from "./works";
+
 export { getPageBySlug, getAllPages, getPagesList, upsertPage, type PageListItem } from "./pages";
 
 export { getSiteSettings, getSiteSetting, updateSiteSettings } from "./site";

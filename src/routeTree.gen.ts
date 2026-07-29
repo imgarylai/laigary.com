@@ -34,12 +34,15 @@ import { Route as AdminPagesIndexRouteImport } from './routes/admin/pages/index'
 import { Route as AdminPagesNewRouteImport } from './routes/admin/pages/new'
 import { Route as AdminPostsIndexRouteImport } from './routes/admin/posts/index'
 import { Route as AdminPostsNewRouteImport } from './routes/admin/posts/new'
+import { Route as AdminWorksIndexRouteImport } from './routes/admin/works/index'
+import { Route as AdminWorksNewRouteImport } from './routes/admin/works/new'
 import { Route as InterviewSectionIndexRouteImport } from './routes/interview/$section/index'
 import { Route as InterviewSectionSlugRouteImport } from './routes/interview/$section/$slug'
 import { Route as AdminInterviewNotesIndexRouteImport } from './routes/admin/interview/notes/index'
 import { Route as AdminInterviewNotesNewRouteImport } from './routes/admin/interview/notes/new'
 import { Route as AdminPagesSlugEditRouteImport } from './routes/admin/pages/$slug/edit'
 import { Route as AdminPostsPostIdEditRouteImport } from './routes/admin/posts/$postId/edit'
+import { Route as AdminWorksWorkIdEditRouteImport } from './routes/admin/works/$workId/edit'
 import { Route as ApiOgPagesSlugRouteImport } from './routes/api/og.pages.$slug'
 import { Route as ApiOgPostsSlugRouteImport } from './routes/api/og.posts.$slug'
 import { Route as AdminInterviewNotesNoteIdEditRouteImport } from './routes/admin/interview/notes/$noteId/edit'
@@ -169,6 +172,16 @@ const AdminPostsNewRoute = AdminPostsNewRouteImport.update({
   path: '/posts/new',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const AdminWorksIndexRoute = AdminWorksIndexRouteImport.update({
+  id: '/works/',
+  path: '/works/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminWorksNewRoute = AdminWorksNewRouteImport.update({
+  id: '/works/new',
+  path: '/works/new',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const InterviewSectionIndexRoute = InterviewSectionIndexRouteImport.update({
   id: '/$section/',
   path: '/$section/',
@@ -198,6 +211,11 @@ const AdminPagesSlugEditRoute = AdminPagesSlugEditRouteImport.update({
 const AdminPostsPostIdEditRoute = AdminPostsPostIdEditRouteImport.update({
   id: '/posts/$postId/edit',
   path: '/posts/$postId/edit',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminWorksWorkIdEditRoute = AdminWorksWorkIdEditRouteImport.update({
+  id: '/works/$workId/edit',
+  path: '/works/$workId/edit',
   getParentRoute: () => AdminRouteRoute,
 } as any)
 const ApiOgPagesSlugRoute = ApiOgPagesSlugRouteImport.update({
@@ -242,16 +260,19 @@ export interface FileRoutesByFullPath {
   '/admin/interview/sections': typeof AdminInterviewSectionsRoute
   '/admin/pages/new': typeof AdminPagesNewRoute
   '/admin/posts/new': typeof AdminPostsNewRoute
+  '/admin/works/new': typeof AdminWorksNewRoute
   '/interview/$section/$slug': typeof InterviewSectionSlugRoute
   '/posts/': typeof SitePostsIndexRoute
   '/tags/': typeof SiteTagsIndexRoute
   '/admin/interview/': typeof AdminInterviewIndexRoute
   '/admin/pages/': typeof AdminPagesIndexRoute
   '/admin/posts/': typeof AdminPostsIndexRoute
+  '/admin/works/': typeof AdminWorksIndexRoute
   '/interview/$section/': typeof InterviewSectionIndexRoute
   '/admin/interview/notes/new': typeof AdminInterviewNotesNewRoute
   '/admin/pages/$slug/edit': typeof AdminPagesSlugEditRoute
   '/admin/posts/$postId/edit': typeof AdminPostsPostIdEditRoute
+  '/admin/works/$workId/edit': typeof AdminWorksWorkIdEditRoute
   '/api/og/pages/$slug': typeof ApiOgPagesSlugRoute
   '/api/og/posts/$slug': typeof ApiOgPostsSlugRoute
   '/admin/interview/notes/': typeof AdminInterviewNotesIndexRoute
@@ -276,16 +297,19 @@ export interface FileRoutesByTo {
   '/admin/interview/sections': typeof AdminInterviewSectionsRoute
   '/admin/pages/new': typeof AdminPagesNewRoute
   '/admin/posts/new': typeof AdminPostsNewRoute
+  '/admin/works/new': typeof AdminWorksNewRoute
   '/interview/$section/$slug': typeof InterviewSectionSlugRoute
   '/posts': typeof SitePostsIndexRoute
   '/tags': typeof SiteTagsIndexRoute
   '/admin/interview': typeof AdminInterviewIndexRoute
   '/admin/pages': typeof AdminPagesIndexRoute
   '/admin/posts': typeof AdminPostsIndexRoute
+  '/admin/works': typeof AdminWorksIndexRoute
   '/interview/$section': typeof InterviewSectionIndexRoute
   '/admin/interview/notes/new': typeof AdminInterviewNotesNewRoute
   '/admin/pages/$slug/edit': typeof AdminPagesSlugEditRoute
   '/admin/posts/$postId/edit': typeof AdminPostsPostIdEditRoute
+  '/admin/works/$workId/edit': typeof AdminWorksWorkIdEditRoute
   '/api/og/pages/$slug': typeof ApiOgPagesSlugRoute
   '/api/og/posts/$slug': typeof ApiOgPostsSlugRoute
   '/admin/interview/notes': typeof AdminInterviewNotesIndexRoute
@@ -314,16 +338,19 @@ export interface FileRoutesById {
   '/admin/interview/sections': typeof AdminInterviewSectionsRoute
   '/admin/pages/new': typeof AdminPagesNewRoute
   '/admin/posts/new': typeof AdminPostsNewRoute
+  '/admin/works/new': typeof AdminWorksNewRoute
   '/interview/$section/$slug': typeof InterviewSectionSlugRoute
   '/_site/posts/': typeof SitePostsIndexRoute
   '/_site/tags/': typeof SiteTagsIndexRoute
   '/admin/interview/': typeof AdminInterviewIndexRoute
   '/admin/pages/': typeof AdminPagesIndexRoute
   '/admin/posts/': typeof AdminPostsIndexRoute
+  '/admin/works/': typeof AdminWorksIndexRoute
   '/interview/$section/': typeof InterviewSectionIndexRoute
   '/admin/interview/notes/new': typeof AdminInterviewNotesNewRoute
   '/admin/pages/$slug/edit': typeof AdminPagesSlugEditRoute
   '/admin/posts/$postId/edit': typeof AdminPostsPostIdEditRoute
+  '/admin/works/$workId/edit': typeof AdminWorksWorkIdEditRoute
   '/api/og/pages/$slug': typeof ApiOgPagesSlugRoute
   '/api/og/posts/$slug': typeof ApiOgPostsSlugRoute
   '/admin/interview/notes/': typeof AdminInterviewNotesIndexRoute
@@ -352,16 +379,19 @@ export interface FileRouteTypes {
     | '/admin/interview/sections'
     | '/admin/pages/new'
     | '/admin/posts/new'
+    | '/admin/works/new'
     | '/interview/$section/$slug'
     | '/posts/'
     | '/tags/'
     | '/admin/interview/'
     | '/admin/pages/'
     | '/admin/posts/'
+    | '/admin/works/'
     | '/interview/$section/'
     | '/admin/interview/notes/new'
     | '/admin/pages/$slug/edit'
     | '/admin/posts/$postId/edit'
+    | '/admin/works/$workId/edit'
     | '/api/og/pages/$slug'
     | '/api/og/posts/$slug'
     | '/admin/interview/notes/'
@@ -386,16 +416,19 @@ export interface FileRouteTypes {
     | '/admin/interview/sections'
     | '/admin/pages/new'
     | '/admin/posts/new'
+    | '/admin/works/new'
     | '/interview/$section/$slug'
     | '/posts'
     | '/tags'
     | '/admin/interview'
     | '/admin/pages'
     | '/admin/posts'
+    | '/admin/works'
     | '/interview/$section'
     | '/admin/interview/notes/new'
     | '/admin/pages/$slug/edit'
     | '/admin/posts/$postId/edit'
+    | '/admin/works/$workId/edit'
     | '/api/og/pages/$slug'
     | '/api/og/posts/$slug'
     | '/admin/interview/notes'
@@ -423,16 +456,19 @@ export interface FileRouteTypes {
     | '/admin/interview/sections'
     | '/admin/pages/new'
     | '/admin/posts/new'
+    | '/admin/works/new'
     | '/interview/$section/$slug'
     | '/_site/posts/'
     | '/_site/tags/'
     | '/admin/interview/'
     | '/admin/pages/'
     | '/admin/posts/'
+    | '/admin/works/'
     | '/interview/$section/'
     | '/admin/interview/notes/new'
     | '/admin/pages/$slug/edit'
     | '/admin/posts/$postId/edit'
+    | '/admin/works/$workId/edit'
     | '/api/og/pages/$slug'
     | '/api/og/posts/$slug'
     | '/admin/interview/notes/'
@@ -629,6 +665,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPostsNewRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/admin/works/': {
+      id: '/admin/works/'
+      path: '/works'
+      fullPath: '/admin/works/'
+      preLoaderRoute: typeof AdminWorksIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/works/new': {
+      id: '/admin/works/new'
+      path: '/works/new'
+      fullPath: '/admin/works/new'
+      preLoaderRoute: typeof AdminWorksNewRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/interview/$section/': {
       id: '/interview/$section/'
       path: '/$section'
@@ -671,6 +721,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPostsPostIdEditRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/admin/works/$workId/edit': {
+      id: '/admin/works/$workId/edit'
+      path: '/works/$workId/edit'
+      fullPath: '/admin/works/$workId/edit'
+      preLoaderRoute: typeof AdminWorksWorkIdEditRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/api/og/pages/$slug': {
       id: '/api/og/pages/$slug'
       path: '/pages/$slug'
@@ -709,12 +766,15 @@ interface AdminRouteRouteChildren {
   AdminInterviewSectionsRoute: typeof AdminInterviewSectionsRoute
   AdminPagesNewRoute: typeof AdminPagesNewRoute
   AdminPostsNewRoute: typeof AdminPostsNewRoute
+  AdminWorksNewRoute: typeof AdminWorksNewRoute
   AdminInterviewIndexRoute: typeof AdminInterviewIndexRoute
   AdminPagesIndexRoute: typeof AdminPagesIndexRoute
   AdminPostsIndexRoute: typeof AdminPostsIndexRoute
+  AdminWorksIndexRoute: typeof AdminWorksIndexRoute
   AdminInterviewNotesNewRoute: typeof AdminInterviewNotesNewRoute
   AdminPagesSlugEditRoute: typeof AdminPagesSlugEditRoute
   AdminPostsPostIdEditRoute: typeof AdminPostsPostIdEditRoute
+  AdminWorksWorkIdEditRoute: typeof AdminWorksWorkIdEditRoute
   AdminInterviewNotesIndexRoute: typeof AdminInterviewNotesIndexRoute
   AdminInterviewNotesNoteIdEditRoute: typeof AdminInterviewNotesNoteIdEditRoute
 }
@@ -726,12 +786,15 @@ const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminInterviewSectionsRoute: AdminInterviewSectionsRoute,
   AdminPagesNewRoute: AdminPagesNewRoute,
   AdminPostsNewRoute: AdminPostsNewRoute,
+  AdminWorksNewRoute: AdminWorksNewRoute,
   AdminInterviewIndexRoute: AdminInterviewIndexRoute,
   AdminPagesIndexRoute: AdminPagesIndexRoute,
   AdminPostsIndexRoute: AdminPostsIndexRoute,
+  AdminWorksIndexRoute: AdminWorksIndexRoute,
   AdminInterviewNotesNewRoute: AdminInterviewNotesNewRoute,
   AdminPagesSlugEditRoute: AdminPagesSlugEditRoute,
   AdminPostsPostIdEditRoute: AdminPostsPostIdEditRoute,
+  AdminWorksWorkIdEditRoute: AdminWorksWorkIdEditRoute,
   AdminInterviewNotesIndexRoute: AdminInterviewNotesIndexRoute,
   AdminInterviewNotesNoteIdEditRoute: AdminInterviewNotesNoteIdEditRoute,
 }

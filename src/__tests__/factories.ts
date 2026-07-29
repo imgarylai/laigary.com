@@ -78,6 +78,35 @@ export async function seedPost(
   });
 }
 
+export async function seedWork(
+  over: Partial<{
+    title: string;
+    slug: string;
+    summary: string;
+    contentMd: string;
+    coverImageUrl: string;
+    projectUrl: string;
+    repoUrl: string;
+    role: string;
+    year: number;
+    endYear: number | null;
+    status: "draft" | "published";
+    pinned: boolean;
+    tagIds: string[];
+  }> = {},
+) {
+  const { createWork } = await import("@/db/queries");
+  const i = uniq();
+  return createWork({
+    title: `Work ${i}`,
+    slug: `work-${i}`,
+    summary: `Summary of work ${i}`,
+    year: 2020 + (i % 6),
+    status: "published",
+    ...over,
+  });
+}
+
 export async function seedPage(
   over: Partial<{ slug: string; title: string; contentMd: string }> = {},
 ) {

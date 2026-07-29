@@ -4,6 +4,8 @@ import type {
   AdminInterviewNote,
   AdminPost,
   AdminPostDetail,
+  AdminWork,
+  AdminWorkDetail,
   PageListItem,
   Tag,
   TagWithUsage,
@@ -258,4 +260,41 @@ export async function editPostDataImpl(data: {
 export const editPostDataFn = createServerFn({ method: "GET" })
   .validator((data: unknown) => z.object({ id: z.string().min(1) }).parse(data))
   .handler(({ data }) => editPostDataImpl(data));
+/* v8 ignore stop */
+
+// The admin works table searches / sorts / paginates client-side, so the loader
+// takes the full list.
+export async function listWorksImpl(): Promise<AdminWork[]> {
+  const { getAllAdminWorks } = await import("@/db/queries");
+  return getAllAdminWorks();
+}
+
+export const listWorksFn = createServerFn({ method: "GET" }).handler(listWorksImpl);
+
+// New-work form: available tags + the OG brand line.
+export async function newWorkDataImpl(): Promise<{ tags: Tag[]; ogBrand: string }> {
+  const { getAllTags, getSiteSettings } = await import("@/db/queries");
+  const [tags, settings] = await Promise.all([getAllTags(), getSiteSettings()]);
+  return { tags, ogBrand: computeOgBrand(settings) };
+}
+
+export const newWorkDataFn = createServerFn({ method: "GET" }).handler(newWorkDataImpl);
+
+// Edit-work form: the work being edited (null when missing) + tags + OG brand.
+export async function editWorkDataImpl(data: {
+  id: string;
+}): Promise<{ work: AdminWorkDetail | null; tags: Tag[]; ogBrand: string }> {
+  const { getAdminWorkById, getAllTags, getSiteSettings } = await import("@/db/queries");
+  const [work, tags, settings] = await Promise.all([
+    getAdminWorkById(data.id),
+    getAllTags(),
+    getSiteSettings(),
+  ]);
+  return { work, tags, ogBrand: computeOgBrand(settings) };
+}
+
+/* v8 ignore start -- RPC boundary, unreachable under vitest (see AGENTS.md). */
+export const editWorkDataFn = createServerFn({ method: "GET" })
+  .validator((data: unknown) => z.object({ id: z.string().min(1) }).parse(data))
+  .handler(({ data }) => editWorkDataImpl(data));
 /* v8 ignore stop */

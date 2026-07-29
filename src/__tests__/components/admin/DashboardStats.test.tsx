@@ -21,6 +21,7 @@ describe("DashboardStats", () => {
           postsPublished: 5,
           postsDrafts: 2,
           notes: 3,
+          works: 6,
           pages: 1,
           tags: 4,
         }}
@@ -30,6 +31,7 @@ describe("DashboardStats", () => {
     expect(screen.getByText("admin.drafts").previousSibling?.textContent).toBe("2");
     expect(screen.getByText("admin.totalPosts").previousSibling?.textContent).toBe("7");
     expect(screen.getByText("admin.notes").previousSibling?.textContent).toBe("3");
+    expect(screen.getByText("admin.totalWorks").previousSibling?.textContent).toBe("6");
     expect(screen.getByText("admin.pages").previousSibling?.textContent).toBe("1");
     expect(screen.getByText("admin.tags").previousSibling?.textContent).toBe("4");
   });

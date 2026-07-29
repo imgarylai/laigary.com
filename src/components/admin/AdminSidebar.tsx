@@ -2,6 +2,7 @@ import { Link, useLocation } from "@tanstack/react-router";
 import {
   HouseIcon,
   ArticleIcon,
+  BriefcaseIcon,
   TagIcon,
   FileTextIcon,
   ChatsIcon,
@@ -32,6 +33,7 @@ export function AdminSidebar() {
   const navItems = [
     { title: t("admin.dashboard"), href: "/admin", icon: HouseIcon },
     { title: t("admin.posts"), href: "/admin/posts", icon: ArticleIcon },
+    { title: t("admin.works"), href: "/admin/works", icon: BriefcaseIcon },
     { title: t("admin.tags"), href: "/admin/tags", icon: TagIcon },
     { title: t("admin.pages"), href: "/admin/pages", icon: FileTextIcon },
   ];

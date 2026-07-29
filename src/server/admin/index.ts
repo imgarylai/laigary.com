@@ -12,6 +12,7 @@ export {
   updateNoteFn,
   deleteNoteFn,
 } from "./interview";
+export { createWorkFn, updateWorkFn, deleteWorkFn } from "./works";
 export { updateSettingsFn } from "./settings";
 
 export type { ActionResult } from "./_shared";
