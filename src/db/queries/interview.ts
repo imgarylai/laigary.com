@@ -54,9 +54,18 @@ async function attachTags(db: Db, notes: RawNote[]): Promise<InterviewNoteWithTa
   }));
 }
 
+/**
+ * Every section, in display order.
+ *
+ * Cached (see `_cache.ts`). A handful of rows, but the interview layout reads it
+ * on every navigation in the sub-site and three admin forms read it too — it
+ * was the second most-called query on the site at 4.4k calls in half an hour.
+ */
 export async function getInterviewSections() {
-  const db = await getDb();
-  return db.select().from(interviewSections).orderBy(asc(interviewSections.sortOrder));
+  return cached(cacheKeys.interviewSections, async () => {
+    const db = await getDb();
+    return db.select().from(interviewSections).orderBy(asc(interviewSections.sortOrder));
+  });
 }
 
 export type NoteByTag = {
@@ -123,14 +132,29 @@ export async function getInterviewSectionBySlug(slug: string) {
   return section ?? null;
 }
 
+/**
+ * Published note count per section.
+ *
+ * Cached (see `_cache.ts`), and it has to be: counting every published note
+ * means examining every row, so the cost is one row read per note in the corpus
+ * no matter which index serves it. At ~900 notes and 5.3k calls in half an hour
+ * this query alone read 4.79M rows — 73% of the database's entire read volume —
+ * to return three numbers that only change when a note is written.
+ *
+ * Not fixable with an index: `status = 'published'` matches nearly every row,
+ * so there is nothing to narrow. Not recomputing it per request is the only
+ * lever there is.
+ */
 export async function getInterviewNoteCountsBySection(): Promise<Map<string, number>> {
-  const db = await getDb();
-  const rows = await db
-    .select({ sectionId: interviewNotes.sectionId, total: count() })
-    .from(interviewNotes)
-    .where(eq(interviewNotes.status, "published"))
-    .groupBy(interviewNotes.sectionId);
-  return new Map(rows.map((r) => [r.sectionId, r.total]));
+  return cached(cacheKeys.sectionNoteCounts, async () => {
+    const db = await getDb();
+    const rows = await db
+      .select({ sectionId: interviewNotes.sectionId, total: count() })
+      .from(interviewNotes)
+      .where(eq(interviewNotes.status, "published"))
+      .groupBy(interviewNotes.sectionId);
+    return new Map(rows.map((r) => [r.sectionId, r.total]));
+  });
 }
 
 export async function getRecentInterviewNotes(limit: number): Promise<InterviewNoteWithTags[]> {

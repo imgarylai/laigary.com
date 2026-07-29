@@ -108,6 +108,20 @@ describe("invalidate", () => {
 });
 
 describe("invalidateContentCaches", () => {
+  it("should drop a cached entry it was never told about", async () => {
+    // The list-of-prefixes version of this function did not cover a key added
+    // later, and the page served a stale count until the TTL lapsed. Inverting
+    // it — everything except settings — is what makes a new cached query safe
+    // by default, so this test guards the inversion, not a specific key.
+    const load = vi.fn(async () => "value");
+    await cached("something:nobody:enumerated", load);
+
+    invalidateContentCaches();
+    await cached("something:nobody:enumerated", load);
+
+    expect(load).toHaveBeenCalledTimes(2);
+  });
+
   it("should drop tag aggregates and leave site settings alone", async () => {
     // A post edit changes tag counts but not the settings map; dropping both
     // would make every save pay for a settings reload it does not need.
