@@ -54,6 +54,7 @@ export {
   getInterviewNoteCountsBySection,
   getRecentInterviewNotes,
   getInterviewNotesBySection,
+  getPinnedInterviewNotes,
   searchPublishedInterviewNotes,
   searchAdminInterviewNotes,
   getTagsInSection,

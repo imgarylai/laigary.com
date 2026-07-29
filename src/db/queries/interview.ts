@@ -3,6 +3,7 @@ import { interviewSections, interviewNotes, interviewNoteTags, tags } from "@/db
 import { unixToIso } from "@/lib/date";
 import { getDb, inClause, runBatch, type BatchWrites, type Db } from "./_db";
 import { fetchTagsByParentIds, type PostTag } from "./_tags";
+import { cached, cacheKeys, invalidateContentCaches } from "./_cache";
 
 export type InterviewNoteWithTags = {
   id: string;
@@ -142,9 +143,38 @@ export async function getRecentInterviewNotes(limit: number): Promise<InterviewN
   return attachTags(db, notes);
 }
 
+export type SectionNotesOptions = {
+  /** Filter by tag slug — the canonical identifier, used by internal callers. */
+  tag?: string;
+  /**
+   * Filter by tag NAME. The section page's `?tag=` chips carry names (that is
+   * what the URLs already indexed point at), and a name is not derivable from
+   * a slug without another lookup, so the filter accepts either identifier
+   * rather than making the caller translate.
+   */
+  tagName?: string;
+  /**
+   * Leave pinned notes out. The section page renders them in their own block
+   * above the chronological list, so including them here would show them
+   * twice — and paginating a list whose first rows are pinned would push a
+   * different note off page 1 on every pin.
+   */
+  excludePinned?: boolean;
+  limit?: number;
+  offset?: number;
+};
+
+/**
+ * One page of a section's published notes, plus the unpaginated total.
+ *
+ * `limit` is a real page size, not a "fetch everything" ceiling: the caller
+ * used to ask for 500 and slice in the browser, which made every section view
+ * (and every hover preload of one) read the whole table — `content_md`
+ * included — to render 20 rows.
+ */
 export async function getInterviewNotesBySection(
   sectionSlug: string,
-  opts?: { tag?: string; limit?: number; offset?: number },
+  opts?: SectionNotesOptions,
 ): Promise<{ notes: InterviewNoteWithTags[]; total: number }> {
   const db = await getDb();
   const section = await getInterviewSectionBySlug(sectionSlug);
@@ -155,23 +185,23 @@ export async function getInterviewNotesBySection(
 
   // Resolve tag filter to a list of note ids first.
   let tagNoteIds: string[] | null = null;
-  if (opts?.tag) {
+  if (opts?.tag || opts?.tagName) {
     const tagResult = await db
       .select({ noteId: interviewNoteTags.noteId })
       .from(interviewNoteTags)
       .innerJoin(tags, eq(tags.id, interviewNoteTags.tagId))
-      .where(eq(tags.slug, opts.tag));
+      .where(opts.tag ? eq(tags.slug, opts.tag) : eq(tags.name, opts.tagName!));
     tagNoteIds = tagResult.map((r) => r.noteId);
     if (tagNoteIds.length === 0) return { notes: [], total: 0 };
   }
 
-  const baseConditions = [
+  const conditions = [
     eq(interviewNotes.sectionId, section.id),
     eq(interviewNotes.status, "published"),
   ];
-  const where = tagNoteIds
-    ? and(...baseConditions, inClause(interviewNotes.id, tagNoteIds))
-    : and(...baseConditions);
+  if (opts?.excludePinned) conditions.push(eq(interviewNotes.pinned, 0));
+  if (tagNoteIds) conditions.push(inClause(interviewNotes.id, tagNoteIds));
+  const where = and(...conditions);
 
   const [{ total }] = await db.select({ total: count() }).from(interviewNotes).where(where);
 
@@ -185,6 +215,31 @@ export async function getInterviewNotesBySection(
 
   const notes = await attachTags(db, rows);
   return { notes, total };
+}
+
+// The section page's pinned block: every pinned published note in the section,
+// newest first. Its own query because the block sits outside pagination — it
+// renders in full on page 1 and not at all on the rest.
+export async function getPinnedInterviewNotes(
+  sectionSlug: string,
+): Promise<InterviewNoteWithTags[]> {
+  const db = await getDb();
+  const section = await getInterviewSectionBySlug(sectionSlug);
+  if (!section) return [];
+
+  const rows = await db
+    .select()
+    .from(interviewNotes)
+    .where(
+      and(
+        eq(interviewNotes.sectionId, section.id),
+        eq(interviewNotes.status, "published"),
+        eq(interviewNotes.pinned, 1),
+      ),
+    )
+    .orderBy(desc(interviewNotes.createdAt));
+
+  return attachTags(db, rows);
 }
 
 // Cross-section title search for published notes — backs the ⌘K palette's
@@ -232,6 +287,14 @@ export async function searchAdminInterviewNotes(
 export async function getTagsInSection(
   sectionSlug: string,
 ): Promise<{ name: string; slug: string }[]> {
+  return cached(cacheKeys.tagsInSection(sectionSlug), () => loadTagsInSection(sectionSlug));
+}
+
+// Cached (see `_cache.ts`). SQLite drives this join from `interview_notes` and
+// scans it whole — every published note in the section, then a junction and a
+// tags lookup each — so the ~30 chips this returns cost ~2k rows read. The
+// section filter narrows nothing when a section holds the entire corpus.
+async function loadTagsInSection(sectionSlug: string): Promise<{ name: string; slug: string }[]> {
   const db = await getDb();
   const section = await getInterviewSectionBySlug(sectionSlug);
   if (!section) return [];
@@ -289,23 +352,43 @@ export async function getAdminInterviewNotes(opts?: {
 // Every note (all sections/statuses) for the admin table, newest first. The
 // admin table searches / sorts / paginates client-side, so it takes the full
 // set — same pattern as posts.
+//
+// Sections are fetched separately and joined in memory rather than with an
+// INNER JOIN. There are a handful of sections and hundreds of notes, and
+// SQLite charges a section lookup per note row: the join made this read three
+// rows for every note returned. Two queries, one row read per note.
 export async function getAllAdminInterviewNotes(): Promise<AdminInterviewNote[]> {
   const db = await getDb();
-  const rows = await db
-    .select({
-      id: interviewNotes.id,
-      slug: interviewNotes.slug,
-      title: interviewNotes.title,
-      status: interviewNotes.status,
-      pinned: interviewNotes.pinned,
-      sectionId: interviewNotes.sectionId,
-      sectionLabel: interviewSections.label,
-      sectionSlug: interviewSections.slug,
-    })
-    .from(interviewNotes)
-    .innerJoin(interviewSections, eq(interviewSections.id, interviewNotes.sectionId))
-    .orderBy(desc(interviewNotes.updatedAt));
-  return rows.map((r) => ({ ...r, pinned: r.pinned === 1 }));
+  const [rows, sections] = await Promise.all([
+    db
+      .select({
+        id: interviewNotes.id,
+        slug: interviewNotes.slug,
+        title: interviewNotes.title,
+        status: interviewNotes.status,
+        pinned: interviewNotes.pinned,
+        sectionId: interviewNotes.sectionId,
+      })
+      .from(interviewNotes)
+      .orderBy(desc(interviewNotes.updatedAt)),
+    db
+      .select({
+        id: interviewSections.id,
+        label: interviewSections.label,
+        slug: interviewSections.slug,
+      })
+      .from(interviewSections),
+  ]);
+
+  const sectionById = new Map(sections.map((s) => [s.id, s]));
+  return rows.map((r) => ({
+    ...r,
+    pinned: r.pinned === 1,
+    // A note cannot outlive its section (FK cascade), so the fallbacks only
+    // cover a section deleted between the two reads above.
+    sectionLabel: sectionById.get(r.sectionId)?.label ?? "",
+    sectionSlug: sectionById.get(r.sectionId)?.slug ?? "",
+  }));
 }
 
 export class SectionConflictError extends Error {
@@ -359,6 +442,7 @@ export async function createSection(input: {
     if (message.includes("UNIQUE")) throw new SectionConflictError();
     throw err;
   }
+  invalidateContentCaches();
   return { id, slug: input.slug };
 }
 
@@ -379,6 +463,7 @@ export async function updateSection(
       sortOrder: input.sortOrder ?? existing.sortOrder,
     })
     .where(eq(interviewSections.id, id));
+  invalidateContentCaches();
 }
 
 export async function deleteSection(id: string): Promise<void> {
@@ -389,6 +474,7 @@ export async function deleteSection(id: string): Promise<void> {
     .where(eq(interviewSections.id, id));
   if (!existing) throw new SectionNotFoundError(id);
   await db.delete(interviewSections).where(eq(interviewSections.id, id));
+  invalidateContentCaches();
 }
 
 type NoteMutationInput = {
@@ -434,6 +520,7 @@ export async function createNote(input: NoteMutationInput): Promise<{ id: string
     if (message.includes("UNIQUE")) throw new NoteConflictError();
     throw err;
   }
+  invalidateContentCaches();
   return { id, slug: input.slug };
 }
 
@@ -500,6 +587,7 @@ export async function updateNote(
     if (message.includes("UNIQUE")) throw new NoteConflictError();
     throw err;
   }
+  invalidateContentCaches();
 }
 
 export async function deleteNote(id: string): Promise<void> {
@@ -510,6 +598,7 @@ export async function deleteNote(id: string): Promise<void> {
     .where(eq(interviewNotes.id, id));
   if (!existing) throw new NoteNotFoundError(id);
   await db.delete(interviewNotes).where(eq(interviewNotes.id, id));
+  invalidateContentCaches();
 }
 
 export async function getInterviewNote(

@@ -15,8 +15,6 @@ import { canonicalLink, ogMeta } from "@/lib/og-meta";
 import { useI18n } from "@/i18n/I18nProvider";
 import { FS_INTERVIEW } from "@/lib/fsmap";
 
-const PAGE_SIZE = 20;
-
 type SectionSearch = { page?: number; tag?: string };
 
 export const Route = createFileRoute("/interview/$section/")({
@@ -24,8 +22,13 @@ export const Route = createFileRoute("/interview/$section/")({
     page: Number(search.page) > 1 ? Math.floor(Number(search.page)) : undefined,
     tag: typeof search.tag === "string" && search.tag ? search.tag : undefined,
   }),
-  loader: async ({ params }) => {
-    const data = await sectionDataFn({ data: { slug: params.section } });
+  // Page and tag are part of the loader key now that the server paginates and
+  // filters: without them the loader would keep serving page 1 for every page.
+  loaderDeps: ({ search }) => ({ page: search.page, tag: search.tag }),
+  loader: async ({ params, deps }) => {
+    const data = await sectionDataFn({
+      data: { slug: params.section, page: deps.page, tag: deps.tag },
+    });
     if (!data) throw notFound();
     return data;
   },
@@ -48,21 +51,23 @@ export const Route = createFileRoute("/interview/$section/")({
 });
 
 function SectionPage() {
-  const { section, notes, tags } = Route.useLoaderData();
-  const { page, tag } = Route.useSearch();
+  const {
+    section,
+    notes: pageItems,
+    pinned: pinnedNotes,
+    tags,
+    page: safePage,
+    pageSize,
+    total,
+  } = Route.useLoaderData();
+  const { tag } = Route.useSearch();
   const navigate = useNavigate();
   const { t } = useI18n();
 
-  // Pinned notes render in their own block above the years; keep them out of
-  // the chronological list unless a tag filter is active (then they compete
-  // on tags like any other note).
-  const pinnedNotes = notes.filter((n) => n.pinned);
-  // Note tags carry names (no separate slug is surfaced), so filter by name.
-  const filtered = tag ? notes.filter((n) => n.tags.includes(tag)) : notes.filter((n) => !n.pinned);
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const safePage = Math.min(page ?? 1, totalPages);
-  const start = (safePage - 1) * PAGE_SIZE;
-  const pageItems = filtered.slice(start, start + PAGE_SIZE);
+  // Pagination, the tag filter and the pinned/chronological split all happen
+  // server-side — the loader returns exactly the rows this page renders.
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const start = (safePage - 1) * pageSize;
 
   // Year sections over the current page, same shape as the posts archive
   // (design: Blog.html TmArchive — `./{year}/` accent headers).
@@ -149,7 +154,7 @@ function SectionPage() {
         </section>
       )}
 
-      {filtered.length === 0 ? (
+      {pageItems.length === 0 ? (
         <TmEmpty>{t("blog.interview.noneYet")}</TmEmpty>
       ) : (
         years.map((y) => (
@@ -173,7 +178,7 @@ function SectionPage() {
         totalPages={totalPages}
         from={start + 1}
         to={start + pageItems.length}
-        total={filtered.length}
+        total={total}
         onPage={goPage}
       />
     </TmPage>

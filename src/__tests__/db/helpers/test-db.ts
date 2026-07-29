@@ -7,6 +7,7 @@ import { drizzle } from "drizzle-orm/better-sqlite3";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterAll, beforeEach, vi } from "vitest";
+import { clearQueryCache } from "@/db/queries/_cache";
 
 const MIGRATIONS_DIR = join(process.cwd(), "migrations");
 
@@ -95,6 +96,11 @@ export function setupTestDb() {
 
   beforeEach(() => {
     harness.truncateAll();
+    // The query cache is module state, so it outlives `truncateAll` — without
+    // this, one test's settings map or tag counts are served to the next one,
+    // whose rows were just deleted. Tests are shuffled, so that reads as a
+    // random failure rather than as an ordering bug.
+    clearQueryCache();
   });
 
   afterAll(() => {

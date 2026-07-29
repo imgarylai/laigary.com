@@ -223,7 +223,7 @@ describe("sectionDataImpl", () => {
     expect(data?.section).toEqual({ slug: "coding", label: "Coding", blurb: "algos" });
     expect(data?.tags).toEqual(["greedy"]);
     expect(data?.notes.map((n) => n.slug)).toEqual(["gas"]);
-    expect(data?.notes[0].tags).toEqual(["greedy"]);
+    expect(data?.total).toBe(1);
   });
 
   it("returns null for an unknown section", async () => {
@@ -231,14 +231,80 @@ describe("sectionDataImpl", () => {
     expect(await sectionDataImpl({ slug: "nope" })).toBeNull();
   });
 
-  it("should expose pinned as a boolean on mapped notes", async () => {
+  it("should return pinned notes in their own block and out of the list when on page 1", async () => {
     const section = await seedSection({ slug: "coding", label: "Coding" });
     await seedNote(section.id, { slug: "pin", pinned: true });
     await seedNote(section.id, { slug: "norm" });
     const { sectionDataImpl } = await import("@/server/public");
     const data = await sectionDataImpl({ slug: "coding" });
-    const bySlug = Object.fromEntries(data!.notes.map((n) => [n.slug, n.pinned]));
-    expect(bySlug).toEqual({ pin: true, norm: false });
+    expect(data?.pinned.map((n) => n.slug)).toEqual(["pin"]);
+    expect(data?.notes.map((n) => n.slug)).toEqual(["norm"]);
+    // The pinned note is excluded from the paginated list, so it is excluded
+    // from its total too — otherwise the pager counts a row it never renders.
+    expect(data?.total).toBe(1);
+  });
+
+  it("should page the list server-side when more notes exist than fit on a page", async () => {
+    const { SECTION_PAGE_SIZE, sectionDataImpl } = await import("@/server/public");
+    const section = await seedSection({ slug: "coding" });
+    for (let i = 0; i < SECTION_PAGE_SIZE + 3; i++) {
+      await seedNote(section.id, { slug: `note-${i}` });
+    }
+
+    const first = await sectionDataImpl({ slug: "coding" });
+    expect(first?.notes).toHaveLength(SECTION_PAGE_SIZE);
+    expect(first?.total).toBe(SECTION_PAGE_SIZE + 3);
+
+    const second = await sectionDataImpl({ slug: "coding", page: 2 });
+    expect(second?.notes).toHaveLength(3);
+    expect(second?.page).toBe(2);
+    // No note appears on both pages.
+    const seen = new Set(first!.notes.map((n) => n.slug));
+    expect(second!.notes.some((n) => seen.has(n.slug))).toBe(false);
+  });
+
+  it("should omit the pinned block beyond page 1", async () => {
+    const { SECTION_PAGE_SIZE, sectionDataImpl } = await import("@/server/public");
+    const section = await seedSection({ slug: "coding" });
+    await seedNote(section.id, { slug: "pin", pinned: true });
+    for (let i = 0; i < SECTION_PAGE_SIZE + 1; i++) {
+      await seedNote(section.id, { slug: `note-${i}` });
+    }
+    const data = await sectionDataImpl({ slug: "coding", page: 2 });
+    expect(data?.pinned).toEqual([]);
+  });
+
+  it("should filter the list by tag name when a tag is given", async () => {
+    const section = await seedSection({ slug: "coding" });
+    const greedy = await seedTag({ name: "Greedy", slug: "greedy" });
+    await seedNote(section.id, { slug: "gas", tagIds: [greedy.id] });
+    await seedNote(section.id, { slug: "other" });
+    const { sectionDataImpl } = await import("@/server/public");
+    // The `?tag=` chips link by name, not slug — the two differ here on case.
+    const data = await sectionDataImpl({ slug: "coding", tag: "Greedy" });
+    expect(data?.notes.map((n) => n.slug)).toEqual(["gas"]);
+    expect(data?.total).toBe(1);
+  });
+
+  it("should keep pinned notes in the list when a tag filter is active", async () => {
+    const section = await seedSection({ slug: "coding" });
+    const greedy = await seedTag({ name: "Greedy", slug: "greedy" });
+    await seedNote(section.id, { slug: "pin", pinned: true, tagIds: [greedy.id] });
+    const { sectionDataImpl } = await import("@/server/public");
+    const data = await sectionDataImpl({ slug: "coding", tag: "Greedy" });
+    expect(data?.notes.map((n) => n.slug)).toEqual(["pin"]);
+    expect(data?.pinned).toEqual([]);
+  });
+
+  it("should fall back to the last page when the requested page is past the end", async () => {
+    const { SECTION_PAGE_SIZE, sectionDataImpl } = await import("@/server/public");
+    const section = await seedSection({ slug: "coding" });
+    for (let i = 0; i < SECTION_PAGE_SIZE + 1; i++) {
+      await seedNote(section.id, { slug: `note-${i}` });
+    }
+    const data = await sectionDataImpl({ slug: "coding", page: 99 });
+    expect(data?.page).toBe(2);
+    expect(data?.notes).toHaveLength(1);
   });
 });
 

@@ -1,0 +1,1 @@
+CREATE INDEX `idx_interview_notes_section_listing` ON `interview_notes` (`section_id`,`status`,`pinned`,`created_at`);

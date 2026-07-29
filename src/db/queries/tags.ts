@@ -1,6 +1,7 @@
 import { eq, asc } from "drizzle-orm";
 import { tags, postTags, interviewNoteTags, posts, interviewNotes } from "@/db/schema";
 import { getDb } from "./_db";
+import { invalidateContentCaches } from "./_cache";
 
 export type UsedByItem = { type: "post" | "note"; title: string; slug: string };
 
@@ -110,6 +111,7 @@ export async function createTag(input: { name: string; slug: string }): Promise<
     if (message.includes("UNIQUE")) throw new TagConflictError();
     throw err;
   }
+  invalidateContentCaches();
   return { id, name: input.name, slug: input.slug };
 }
 
@@ -127,6 +129,7 @@ export async function updateTag(id: string, input: { name: string }): Promise<Ta
     if (message.includes("UNIQUE")) throw new TagConflictError("Tag name already exists");
     throw err;
   }
+  invalidateContentCaches();
   return { id, name: input.name, slug: existing.slug };
 }
 
@@ -137,4 +140,5 @@ export async function deleteTag(id: string): Promise<void> {
   const [existing] = await db.select({ id: tags.id }).from(tags).where(eq(tags.id, id));
   if (!existing) throw new TagNotFoundError(id);
   await db.delete(tags).where(eq(tags.id, id));
+  invalidateContentCaches();
 }
