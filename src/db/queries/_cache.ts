@@ -65,6 +65,8 @@ export const cacheKeys = {
   siteSettings: "site:settings",
   tagCounts: "tags:counts",
   tagsInSection: (sectionSlug: string) => `tags:section:${sectionSlug}`,
+  interviewSections: "sections:all",
+  sectionNoteCounts: "sections:noteCounts",
 } as const;
 
 /** Drop one entry. */
@@ -73,20 +75,21 @@ export function invalidate(key: string): void {
 }
 
 /**
- * Drop every cached tag aggregate.
+ * Drop everything derived from content.
  *
- * Called by the mutations that feed those aggregates: posts, interview notes
- * and sections, works, and the tags themselves. Works joined that list when
- * `getTagsWithCounts` grew a works arm — before that they shared the `tags`
- * table but no aggregate counted them. Deliberately
- * coarse — these entries cost one cheap query to rebuild, and a mutation is
- * rare enough that precision buys nothing but a way to forget a call site.
- * Site settings are NOT dropped here; `updateSiteSettings` invalidates its own
- * key, so a post edit doesn't throw away the settings read too.
+ * Written as "everything EXCEPT the settings map" rather than as a list of
+ * content prefixes, and that inversion is the point: the list version silently
+ * failed to cover a key added later. Every entry here rebuilds with one cheap
+ * query, and a mutation is rare, so the cost of being too coarse is nil — while
+ * the cost of missing a key is a page that serves a stale count until the TTL
+ * lapses.
+ *
+ * Site settings are the one exclusion: `updateSiteSettings` invalidates its own
+ * key, so a post edit shouldn't throw away the settings read too.
  */
 export function invalidateContentCaches(): void {
   for (const key of store.keys()) {
-    if (key.startsWith("tags:")) store.delete(key);
+    if (key !== cacheKeys.siteSettings) store.delete(key);
   }
 }
 

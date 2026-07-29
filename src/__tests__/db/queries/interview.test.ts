@@ -669,6 +669,49 @@ describe("getAllAdminInterviewNotes", () => {
   });
 });
 
+// The single most expensive query on the site before it was cached: counting
+// published notes examines every row, so it read ~900 rows per call to return
+// three numbers, ~5.3k times in half an hour.
+describe("getInterviewNoteCountsBySection caching", () => {
+  it("should serve counts from cache until a note mutation invalidates them", async () => {
+    const { createNote, getInterviewNoteCountsBySection } = await import("@/db/queries");
+    const section = await seedSection();
+    await createNote({ slug: "n1", sectionId: section.id, title: "N1", status: "published" });
+    expect((await getInterviewNoteCountsBySection()).get(section.id)).toBe(1);
+
+    // Insert behind the query layer's back — a stale count here is the proof
+    // that the second read never reached the database.
+    harness.sqlite
+      .prepare(
+        "INSERT INTO interview_notes (id, slug, section_id, title, content_md, status) VALUES ('x','n2',?,'N2','','published')",
+      )
+      .run(section.id);
+    expect((await getInterviewNoteCountsBySection()).get(section.id)).toBe(1);
+
+    // A real publish goes through createNote, which invalidates.
+    await createNote({ slug: "n3", sectionId: section.id, title: "N3", status: "published" });
+    expect((await getInterviewNoteCountsBySection()).get(section.id)).toBe(3);
+  });
+});
+
+describe("getInterviewSections caching", () => {
+  it("should serve the section list from cache until a section mutation invalidates it", async () => {
+    const { createSection, getInterviewSections } = await import("@/db/queries");
+    await seedSection();
+    expect((await getInterviewSections()).map((s) => s.slug)).toEqual(["leetcode"]);
+
+    harness.sqlite
+      .prepare(
+        "INSERT INTO interview_sections (id, slug, label, blurb, icon, sort_order) VALUES ('x','behind','B','','',9)",
+      )
+      .run();
+    expect((await getInterviewSections()).map((s) => s.slug)).toEqual(["leetcode"]);
+
+    await createSection({ slug: "system-design", label: "SD", blurb: "", icon: "", sortOrder: 1 });
+    expect((await getInterviewSections()).map((s) => s.slug)).toContain("system-design");
+  });
+});
+
 describe("getPinnedInterviewNotes", () => {
   it("should return only published pinned notes in the section", async () => {
     const { createNote, getPinnedInterviewNotes } = await import("@/db/queries");
