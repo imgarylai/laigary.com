@@ -6,6 +6,7 @@ import {
   D1Database,
   R2Bucket,
   TanStackStart,
+  Zone,
 } from "alchemy/cloudflare";
 import { CloudflareStateStore } from "alchemy/state";
 
@@ -27,6 +28,34 @@ const app = await alchemy("laigary", {
   // needed. (Local deploys touching the R2 secrets need it set locally too.)
   password: process.env.ALCHEMY_STATE_TOKEN,
   stateStore: process.env.CI ? (scope) => new CloudflareStateStore(scope) : undefined,
+});
+
+// The laigary.com zone. It already exists — Alchemy's create call comes back
+// "already exists" and it adopts the live zone rather than making a second one.
+//
+// `delete: false` is NOT redundant despite what the prop's docs say. The delete
+// handler guards on `props.delete !== false`, so leaving it unset means an
+// `alchemy destroy` would delete the ZONE — DNS, certificates and all — not
+// just this app's resources.
+//
+// browserCacheTtl: 0 is Cloudflare's "Respect Existing Headers". The default is
+// 14400, and the zone applies it to what a Worker stores via the Cache API: a
+// cache hit came back rewritten to `max-age=14400`, telling browsers to hold a
+// page for four hours. src/start.ts re-stamps `Cache-Control` on its way out so
+// HTML is already correct either way; this fixes the same rewrite for
+// everything else the zone fronts (R2 assets, static files), which has no such
+// middleware to correct it.
+//
+// Note that Alchemy applies `alwaysUseHttps: "on"` whether or not it is listed
+// here — it defaults the value in rather than leaving the setting alone. It is
+// spelled out so the zone state this file asserts is the zone state it applies.
+export const zone = await Zone("laigary-com", {
+  name: "laigary.com",
+  delete: false,
+  settings: {
+    browserCacheTtl: 0,
+    alwaysUseHttps: "on",
+  },
 });
 
 // D1 database. `migrationsDir` makes Alchemy apply migrations/*.sql on deploy

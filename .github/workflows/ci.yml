@@ -9,7 +9,10 @@ name: CI
 # Required repository secrets (Settings → Secrets and variables → Actions):
 #   CLOUDFLARE_API_TOKEN   — Workers Scripts:Edit + Workers KV Storage:Edit (for the
 #                            Alchemy state worker) + Account Settings:Read + the
-#                            Access/Zone/D1/R2 scopes Alchemy provisions.
+#                            Access/Zone/D1/R2 scopes Alchemy provisions. Zone
+#                            Settings:Edit specifically: alchemy.run.ts asserts the
+#                            zone's browser cache TTL, so a token without it fails
+#                            the deploy rather than skipping that resource.
 #   CLOUDFLARE_ACCOUNT_ID  — target account id.
 #   ALCHEMY_STATE_TOKEN    — the account-wide Alchemy state-store token (same value
 #                            across every Alchemy project so they share the one
