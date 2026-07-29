@@ -24,6 +24,23 @@ export const EDGE_CACHE_CONTROL = "public, max-age=0, s-maxage=86400";
  */
 const UNCACHEABLE_PREFIXES = ["/admin", "/api", "/mcp", "/_serverFn"];
 
+/**
+ * Whether a request of this method may be ANSWERED from the cache.
+ *
+ * HEAD qualifies: uptime monitors and some crawlers use it, and without this
+ * every one of those ran a full SSR render and its D1 queries. It reads the
+ * entry a GET stored — the cache key is always built as a GET — and only the
+ * headers come back.
+ *
+ * Storing is a narrower question and stays GET-only at the call site: whether a
+ * HEAD render still carries a body by the time the middleware sees it is a
+ * runtime detail, and an empty one stored under the GET key would serve blank
+ * pages to everyone after it.
+ */
+export function isCacheableMethod(method: string): boolean {
+  return method === "GET" || method === "HEAD";
+}
+
 /** Whether a document request for `pathname` may be served from a shared cache. */
 export function isCacheablePath(pathname: string): boolean {
   return !UNCACHEABLE_PREFIXES.some(

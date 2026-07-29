@@ -2,6 +2,7 @@ import { createMiddleware, createStart } from "@tanstack/react-start";
 import {
   EDGE_CACHE_CONTROL,
   cacheKeyUrl,
+  isCacheableMethod,
   isCacheablePath,
   isCacheableResponse,
   readCookie,
@@ -24,10 +25,11 @@ import {
 // reaches the server — next-themes reads localStorage and paints before hydration.
 const edgeCache = createMiddleware({ type: "request" }).server(async (ctx) => {
   const cache = getEdgeCache();
+  const method = ctx.request.method;
   if (
     !cache ||
     ctx.handlerType !== "router" ||
-    ctx.request.method !== "GET" ||
+    !isCacheableMethod(method) ||
     !isCacheablePath(ctx.pathname)
   ) {
     return ctx.next();
@@ -45,14 +47,19 @@ const edgeCache = createMiddleware({ type: "request" }).server(async (ctx) => {
     method: "GET",
   });
 
+  // A HEAD is answered from the entry a GET stored — the key is a GET either
+  // way. Its body is dropped here rather than left to the runtime to strip.
   const hit = await cache.match(key);
-  if (hit) return mark(hit, "HIT");
+  if (hit) return mark(method === "HEAD" ? new Response(null, hit) : hit, "HIT");
 
   const { response } = await ctx.next();
   if (!isCacheableResponse(response)) return response;
 
   const stamped = mark(response, "MISS");
-  await cache.put(key, stamped.clone());
+  // GET only. A HEAD render's body may already be gone by the time it reaches
+  // here, and storing an empty one under the GET key would serve blank pages
+  // to every reader after it.
+  if (method === "GET") await cache.put(key, stamped.clone());
   return stamped;
 });
 
@@ -70,9 +77,8 @@ const edgeCache = createMiddleware({ type: "request" }).server(async (ctx) => {
  * without this, a reader who had already loaded the page would not see that
  * for another four hours.
  *
- * `x-edge-cache` makes the layer verifiable from outside. Check it with a GET
- * (`curl -s -D - -o /dev/null`), not `curl -I` — that sends HEAD, which this
- * middleware passes straight through.
+ * `x-edge-cache` makes the layer verifiable from outside: `curl -s -D - -o
+ * /dev/null` twice on a page, and the second should say HIT.
  */
 function mark(response: Response, state: "HIT" | "MISS"): Response {
   const copy = new Response(response.body, response);
