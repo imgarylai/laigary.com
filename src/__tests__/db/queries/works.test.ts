@@ -156,6 +156,34 @@ describe("updateWork", () => {
     expect((await getAdminWorkById(id))?.endYear).toBeNull();
   });
 
+  it("clears an optional field sent as an empty string but keeps it when omitted", async () => {
+    // Each of these is an `input.x !== undefined ? input.x || null : existing.x`
+    // ternary with three outcomes. The form sends "" to mean "I removed this",
+    // so `?? null` instead of `|| null` would store an empty string that later
+    // renders as href="" and as an og:image of "".
+    const { updateWork, getWorkBySlug } = await import("@/db/queries");
+    const { id, slug } = await seedWork({
+      projectUrl: "https://example.com",
+      repoUrl: "https://github.com/x/y",
+      coverImageUrl: "https://cdn.example.com/a.png",
+      role: "Solo",
+    });
+
+    await updateWork(id, { title: "Renamed" });
+    const untouched = await getWorkBySlug(slug);
+    expect(untouched?.projectUrl).toBe("https://example.com");
+    expect(untouched?.repoUrl).toBe("https://github.com/x/y");
+    expect(untouched?.coverImageUrl).toBe("https://cdn.example.com/a.png");
+    expect(untouched?.role).toBe("Solo");
+
+    await updateWork(id, { projectUrl: "", repoUrl: "", coverImageUrl: "", role: "" });
+    const cleared = await getWorkBySlug(slug);
+    expect(cleared?.projectUrl).toBeNull();
+    expect(cleared?.repoUrl).toBeNull();
+    expect(cleared?.coverImageUrl).toBeNull();
+    expect(cleared?.role).toBeNull();
+  });
+
   it("replaces tag links when tagIds is provided", async () => {
     const { updateWork, getWorkBySlug } = await import("@/db/queries");
     const tagA = await seedTag("A", "a");

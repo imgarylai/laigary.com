@@ -203,6 +203,22 @@ describe("WorkForm", () => {
     expect(navigate).not.toHaveBeenCalled();
   });
 
+  it("should report a failed save on an existing work and stay on the editor", async () => {
+    // The create path has its own failure branch; this is the update one, and
+    // getting it wrong loses the author's edit behind a success toast.
+    updateWorkFn.mockResolvedValue({ ok: false, error: "boom" });
+    render(<WorkForm work={existingWork} availableTags={tags} ogBrand="Unconstrained" />);
+
+    fireEvent.change(screen.getByLabelText("postForm.title"), { target: { value: "Renamed" } });
+    fireEvent.click(screen.getByRole("button", { name: "postForm.update" }));
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("boom"));
+    expect(invalidate).not.toHaveBeenCalled();
+    // Clearing the flag here would tell the author their work is safe when it
+    // is not.
+    expect(screen.getByText("postForm.unsavedChanges")).toBeTruthy();
+  });
+
   it("should leave an existing work's slug alone when its title is edited", async () => {
     updateWorkFn.mockResolvedValue({ ok: true, data: { id: "w1", slug: "original-slug" } });
     render(<WorkForm work={existingWork} availableTags={tags} ogBrand="Unconstrained" />);
