@@ -63,13 +63,15 @@ backfills go inside the generated file or via `drizzle-kit generate --custom`.
      stale another isolate can get.
   2. `src/start.ts` — a request middleware storing public documents in
      `caches.default`. Cloudflare does not cache a Worker's own responses on
-     `Cache-Control` alone. The policy (what may be cached, and the key: locale
-     - content version) is in `src/lib/http-cache.ts`, pure and tested there
-       because the middleware itself only runs inside a Worker. `curl -I` a page
-       twice; the second should come back `x-edge-cache: HIT`.
-       Public list pages paginate SERVER-side (`sectionDataImpl`, page size in
-       `SECTION_PAGE_SIZE`). Do not reintroduce a `limit: 500` and slice in the
-       browser — that is what made the section listing the site's costliest query.
+     `Cache-Control` alone. The policy (what may be cached, and the key —
+     resolved locale plus content version) is in `src/lib/http-cache.ts`, pure
+     and tested there because the middleware itself only runs inside a Worker.
+     `curl -I` a page twice; the second should say `x-edge-cache: HIT`.
+
+  Public list pages paginate SERVER-side (`sectionDataImpl`, page size in
+  `SECTION_PAGE_SIZE`). Do not reintroduce a `limit: 500` and slice in the
+  browser — that is what made the section listing the site's costliest query.
+
 - MCP endpoint (`/mcp`, `src/server/mcp/` + `src/routes/mcp.ts`): stateless
   Streamable HTTP JSON-RPC for AI clients. Read tools are public; write tools
   need `Authorization: Bearer <MCP_ADMIN_TOKEN>` (wrangler secret; unset =
