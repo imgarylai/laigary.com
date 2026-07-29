@@ -40,6 +40,7 @@ const db = await D1Database("laigary-db", {
 // R2 bucket for uploads.
 const assets = await R2Bucket("laigary-assets", {
   name: "laigary-assets",
+  domains: "assets.laigary.com",
 });
 
 // The TanStack Start worker.
