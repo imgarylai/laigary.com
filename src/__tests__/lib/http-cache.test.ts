@@ -8,10 +8,28 @@ import { describe, it, expect } from "vitest";
 import {
   EDGE_CACHE_CONTROL,
   cacheKeyUrl,
+  isCacheableMethod,
   isCacheablePath,
   isCacheableResponse,
   readCookie,
 } from "@/lib/http-cache";
+
+describe("isCacheableMethod", () => {
+  it("should answer GET and HEAD from the cache", () => {
+    // HEAD is what uptime monitors send. Excluding it meant every one of them
+    // ran a full SSR render and its D1 queries.
+    expect(isCacheableMethod("GET")).toBe(true);
+    expect(isCacheableMethod("HEAD")).toBe(true);
+  });
+
+  it("should refuse methods that change state or carry a body", () => {
+    expect(isCacheableMethod("POST")).toBe(false);
+    expect(isCacheableMethod("PUT")).toBe(false);
+    expect(isCacheableMethod("DELETE")).toBe(false);
+    expect(isCacheableMethod("PATCH")).toBe(false);
+    expect(isCacheableMethod("OPTIONS")).toBe(false);
+  });
+});
 
 describe("isCacheablePath", () => {
   it("should allow the public pages", () => {
