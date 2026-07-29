@@ -213,3 +213,71 @@ describe("/works/$slug", () => {
     await expect(options.loader({ params: { slug: "gone" } })).rejects.toBeDefined();
   });
 });
+
+// `head` is a plain function on Route.options, so it needs no router. What it
+// decides is the share card and the structured data — neither of which any
+// rendering assertion above can see.
+describe("/works/$slug head", () => {
+  type HeadOut = {
+    meta: Record<string, string>[];
+    links: unknown[];
+    scripts: { children: string }[];
+  };
+
+  async function head(loaderData: unknown): Promise<HeadOut> {
+    const options = (await import("@/routes/_site/works/$slug")).Route.options as unknown as {
+      head: (arg: { loaderData: unknown }) => HeadOut;
+    };
+    return options.head({ loaderData });
+  }
+
+  function loaded(w: Record<string, unknown>) {
+    return { work: w, html: "", description: "d", pageTitle: "T", siteName: "Unconstrained" };
+  }
+
+  const ogImage = (out: HeadOut) =>
+    out.meta.find((m) => m.property === "og:image")?.content ??
+    out.meta.find((m) => m.name === "og:image")?.content;
+
+  it("falls back to the generated card when a work has no cover image", async () => {
+    const out = await head(loaded(work("nocover")));
+
+    expect(ogImage(out)).toBe("https://laigary.com/api/og/works/nocover");
+  });
+
+  it("prefers the uploaded cover image when there is one", async () => {
+    const out = await head(
+      loaded(work("withcover", { coverImageUrl: "https://cdn.example.com/a.png" })),
+    );
+
+    expect(ogImage(out)).toBe("https://cdn.example.com/a.png");
+  });
+
+  it("omits og:description entirely rather than emitting an empty one", async () => {
+    // `|| undefined`, not `??` — a work with no summary and no write-up yields
+    // "", and an empty og:description is worse than none at all.
+    const out = await head({ ...loaded(work("nodesc")), description: "" });
+
+    expect(out.meta.find((m) => m.property === "og:description")).toBeUndefined();
+  });
+
+  it("emits CreativeWork structured data carrying the editorial year", async () => {
+    const out = await head(loaded(work("rich", { year: 2021, endYear: 2023 })));
+    const ld = JSON.parse(out.scripts[0].children);
+
+    expect(ld["@type"]).toBe("CreativeWork");
+    // dateCreated is the year the thing was made, not when the entry went up.
+    expect(ld.dateCreated).toBe("2021");
+    expect(ld.url).toBe("https://laigary.com/works/rich");
+  });
+
+  it("emits nothing rather than throwing before the loader has resolved", async () => {
+    // head runs against undefined loaderData on the way in; a bare property
+    // access here would take the whole route down.
+    const out = await head(undefined);
+
+    expect(out.meta).toEqual([]);
+    expect(out.scripts).toEqual([]);
+    expect(out.links).toEqual([]);
+  });
+});

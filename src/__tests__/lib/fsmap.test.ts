@@ -23,6 +23,11 @@ describe("breadcrumbForPath", () => {
     expect(FS_BLOG.tag.prompt()).toBe('$ grep -rl "#" ./posts/');
   });
 
+  it("falls back to an empty slug when the work node is called with no context", () => {
+    expect(FS_BLOG.work.crumb()).toBe("works/.md");
+    expect(FS_BLOG.work.prompt()).toBe("$ cat ./works/.md");
+  });
+
   it("maps interview routes to the interview namespace", () => {
     expect(breadcrumbForPath("/interview")).toBe("interview");
     expect(breadcrumbForPath("/interview/leetcode")).toBe("interview/leetcode");
