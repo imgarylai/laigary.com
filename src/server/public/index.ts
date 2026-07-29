@@ -31,6 +31,7 @@ export {
   searchInterviewNotesFn,
   interviewDataImpl,
   interviewDataFn,
+  SECTION_PAGE_SIZE,
   sectionDataImpl,
   sectionDataFn,
   noteDataImpl,

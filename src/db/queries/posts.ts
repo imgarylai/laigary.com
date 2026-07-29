@@ -3,6 +3,7 @@ import { posts, tags, postTags, interviewNotes, interviewNoteTags } from "@/db/s
 import { computeReadingTime, unixToIso } from "@/lib/date";
 import { getDb, inClause, runBatch, type BatchWrites } from "./_db";
 import { fetchTagsByParentIds, type PostTag } from "./_tags";
+import { cached, cacheKeys, invalidateContentCaches } from "./_cache";
 
 export type PublicPost = {
   slug: string;
@@ -219,6 +220,7 @@ export async function createPost(input: PostMutationInput): Promise<{ id: string
     throw err;
   }
 
+  invalidateContentCaches();
   return { id, slug: input.slug };
 }
 
@@ -274,6 +276,7 @@ export async function updatePost(
     throw err;
   }
 
+  invalidateContentCaches();
   return { id, slug: input.slug ?? existing.slug };
 }
 
@@ -282,6 +285,7 @@ export async function deletePost(id: string): Promise<void> {
   const [existing] = await db.select({ id: posts.id }).from(posts).where(eq(posts.id, id));
   if (!existing) throw new PostNotFoundError(id);
   await db.delete(posts).where(eq(posts.id, id));
+  invalidateContentCaches();
 }
 
 export async function getPostBySlug(slug: string): Promise<PublicPostDetail | null> {
@@ -412,6 +416,14 @@ export async function getAdminPosts(opts?: {
 export async function getTagsWithCounts(): Promise<
   { name: string; slug: string; count: number }[]
 > {
+  return cached(cacheKeys.tagCounts, loadTagsWithCounts);
+}
+
+// Cached (see `_cache.ts`). Both halves make SQLite scan the content table and
+// walk the junction row by row — ~3k rows read per call, on a query the home
+// page and /tags both run on every navigation. Indexes don't help: `status =
+// 'published'` matches nearly every row, so there is nothing to narrow.
+async function loadTagsWithCounts(): Promise<{ name: string; slug: string; count: number }[]> {
   const db = await getDb();
 
   const [postCounts, noteCounts] = await Promise.all([

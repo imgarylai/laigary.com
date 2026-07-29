@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { DEFAULT_SITE_NAME, pageChrome, pickSocial, renderMd, slugInput } from "./_shared";
+import { DEFAULT_SITE_NAME, pageChrome, pickSocial, renderMd } from "./_shared";
 
 // Interview sub-site read server functions — same Impl/wrapper split as blog.ts.
 
@@ -74,36 +74,93 @@ export async function interviewDataImpl() {
 
 export const interviewDataFn = createServerFn({ method: "GET" }).handler(interviewDataImpl);
 
-export async function sectionDataImpl(data: { slug: string }) {
-  const { getInterviewSectionBySlug, getInterviewNotesBySection, getTagsInSection } =
-    await import("@/db/queries");
+/** Rows per page of a section listing. Shared with the route that renders it. */
+export const SECTION_PAGE_SIZE = 20;
+
+/**
+ * One page of a section listing.
+ *
+ * Paginated and tag-filtered on the server. It used to fetch 500 notes with
+ * their full markdown and let the browser slice 20 out of them, which made
+ * this the single most expensive query on the site — and it ran again on every
+ * hover preload of a section link.
+ *
+ * The pinned block is fetched separately and only for page 1 of the unfiltered
+ * list, matching where the page renders it.
+ */
+export async function sectionDataImpl(data: { slug: string; page?: number; tag?: string }) {
+  const {
+    getInterviewSectionBySlug,
+    getInterviewNotesBySection,
+    getPinnedInterviewNotes,
+    getTagsInSection,
+  } = await import("@/db/queries");
   const { unixToIso, computeReadingTime } = await import("@/lib/date");
   const section = await getInterviewSectionBySlug(data.slug);
   if (!section) return null;
-  const [{ notes }, sectionTags] = await Promise.all([
-    getInterviewNotesBySection(data.slug, { limit: 500 }),
+
+  const page = Math.max(1, Math.trunc(data.page ?? 1));
+  const tag = data.tag;
+  const wantsPinned = page === 1 && !tag;
+
+  const listOpts = {
+    tagName: tag,
+    // A tag filter competes on tags alone, so pinned notes stay in the list
+    // there — the pinned block is hidden while a filter is active.
+    excludePinned: !tag,
+    limit: SECTION_PAGE_SIZE,
+  };
+
+  let [{ notes, total }, pinnedNotes, sectionTags] = await Promise.all([
+    getInterviewNotesBySection(data.slug, { ...listOpts, offset: (page - 1) * SECTION_PAGE_SIZE }),
+    wantsPinned ? getPinnedInterviewNotes(data.slug) : Promise.resolve([]),
     getTagsInSection(data.slug),
   ]);
+
+  // A hand-edited `?page=` past the end used to land on the last page, back
+  // when the browser held the whole list and clamped locally. Re-fetch rather
+  // than show an empty list — the extra query only runs on that dead end.
+  let resolvedPage = page;
+  if (notes.length === 0 && total > 0) {
+    resolvedPage = Math.ceil(total / SECTION_PAGE_SIZE);
+    ({ notes } = await getInterviewNotesBySection(data.slug, {
+      ...listOpts,
+      offset: (resolvedPage - 1) * SECTION_PAGE_SIZE,
+    }));
+  }
+
+  const toRow = (n: (typeof notes)[number]) => ({
+    slug: n.slug,
+    title: n.title,
+    date: unixToIso(n.createdAt),
+    minutes: computeReadingTime(n.contentMd),
+  });
+
   return {
     ...(await pageChrome(section.label)),
     section: { slug: section.slug, label: section.label, blurb: section.blurb },
-    // Tag names drive the `--filter` chip row; notes carry names too, so the
-    // `?tag=` filter matches by name (consistent with note-detail tag links).
+    // Tag names drive the `--filter` chip row, and the `?tag=` value the chips
+    // link to — kept as names so URLs already out there keep resolving.
     tags: sectionTags.map((t) => t.name),
-    notes: notes.map((n) => ({
-      slug: n.slug,
-      title: n.title,
-      date: unixToIso(n.createdAt),
-      minutes: computeReadingTime(n.contentMd),
-      pinned: n.pinned === 1,
-      tags: n.tags.map((t) => t.name),
-    })),
+    notes: notes.map(toRow),
+    pinned: pinnedNotes.map(toRow),
+    page: resolvedPage,
+    pageSize: SECTION_PAGE_SIZE,
+    total,
   };
 }
 
 /* v8 ignore start -- RPC boundary, unreachable under vitest (see AGENTS.md). */
 export const sectionDataFn = createServerFn({ method: "GET" })
-  .validator(slugInput)
+  .validator((data: unknown) =>
+    z
+      .object({
+        slug: z.string().min(1),
+        page: z.number().int().positive().optional(),
+        tag: z.string().min(1).optional(),
+      })
+      .parse(data),
+  )
   .handler(({ data }) => sectionDataImpl(data));
 /* v8 ignore stop */
 

@@ -394,6 +394,48 @@ describe("getInterviewNotesBySection", () => {
     expect(last.notes.map((n) => n.slug)).toEqual(["n1", "n0"]);
   });
 
+  it("should filter by tag name when given one instead of a slug", async () => {
+    // The section page's `?tag=` chips carry names, and a name is not a slug —
+    // filtering the URL value against `tags.slug` matches nothing at all.
+    const { createNote, createTag, getInterviewNotesBySection } = await import("@/db/queries");
+    const section = await seedSection();
+    const dp = await createTag({ name: "Dynamic Programming", slug: "dp" });
+    await createNote({
+      slug: "a",
+      sectionId: section.id,
+      title: "A",
+      tagIds: [dp.id],
+      status: "published",
+    });
+    await createNote({ slug: "b", sectionId: section.id, title: "B", status: "published" });
+
+    const byName = await getInterviewNotesBySection("leetcode", {
+      tagName: "Dynamic Programming",
+    });
+    expect(byName.notes.map((n) => n.slug)).toEqual(["a"]);
+    expect(byName.total).toBe(1);
+  });
+
+  it("should leave pinned notes out of the list and its total when asked to", async () => {
+    // The section page renders pinned notes in their own block above the list,
+    // so counting them in the total would size the pager for rows it never
+    // shows — and the last page would come back short.
+    const { createNote, getInterviewNotesBySection } = await import("@/db/queries");
+    const section = await seedSection();
+    await createNote({
+      slug: "pin",
+      sectionId: section.id,
+      title: "Pin",
+      pinned: true,
+      status: "published",
+    });
+    await createNote({ slug: "plain", sectionId: section.id, title: "Plain", status: "published" });
+
+    const result = await getInterviewNotesBySection("leetcode", { excludePinned: true });
+    expect(result.notes.map((n) => n.slug)).toEqual(["plain"]);
+    expect(result.total).toBe(1);
+  });
+
   it("returns empty when section doesn't exist", async () => {
     const { getInterviewNotesBySection } = await import("@/db/queries");
     expect(await getInterviewNotesBySection("nope")).toEqual({ notes: [], total: 0 });
@@ -545,6 +587,43 @@ describe("getTagsInSection", () => {
     const tags = await getTagsInSection("leetcode");
     expect(tags.map((t) => t.slug)).toEqual(["alpha", "zeta"]);
   });
+
+  // Cached: the chip row costs a full scan of the section's notes plus a
+  // junction walk, on a query every section view runs. It still has to notice
+  // a publish.
+  it("should serve the chip row from cache until a note mutation invalidates it", async () => {
+    const { createNote, createTag, getTagsInSection } = await import("@/db/queries");
+    const section = await seedSection();
+    const alpha = await createTag({ name: "Alpha", slug: "alpha" });
+    const zeta = await createTag({ name: "Zeta", slug: "zeta" });
+    await createNote({
+      slug: "n1",
+      sectionId: section.id,
+      title: "N1",
+      tagIds: [alpha.id],
+      status: "published",
+    });
+    expect((await getTagsInSection("leetcode")).map((t) => t.slug)).toEqual(["alpha"]);
+
+    // Link zeta behind the query layer's back — a stale row here proves the
+    // second read never reached the database.
+    harness.sqlite
+      .prepare(
+        "INSERT INTO interview_note_tags (note_id, tag_id) SELECT id, ? FROM interview_notes WHERE slug = 'n1'",
+      )
+      .run(zeta.id);
+    expect((await getTagsInSection("leetcode")).map((t) => t.slug)).toEqual(["alpha"]);
+
+    // A real note write invalidates.
+    await createNote({
+      slug: "n2",
+      sectionId: section.id,
+      title: "N2",
+      tagIds: [zeta.id],
+      status: "published",
+    });
+    expect((await getTagsInSection("leetcode")).map((t) => t.slug)).toEqual(["alpha", "zeta"]);
+  });
 });
 
 describe("getAllAdminInterviewNotes", () => {
@@ -567,6 +646,39 @@ describe("getAllAdminInterviewNotes", () => {
       sectionLabel: "LeetCode",
       status: "published",
     });
+  });
+});
+
+describe("getPinnedInterviewNotes", () => {
+  it("should return only published pinned notes in the section", async () => {
+    const { createNote, getPinnedInterviewNotes } = await import("@/db/queries");
+    const section = await seedSection();
+    const other = await seedSection("system-design", "System Design");
+    await createNote({
+      slug: "pin",
+      sectionId: section.id,
+      title: "Pin",
+      pinned: true,
+      status: "published",
+    });
+    // Each of these fails a different clause of the WHERE.
+    await createNote({ slug: "plain", sectionId: section.id, title: "Plain", status: "published" });
+    await createNote({ slug: "draft", sectionId: section.id, title: "Draft", pinned: true });
+    await createNote({
+      slug: "elsewhere",
+      sectionId: other.id,
+      title: "Elsewhere",
+      pinned: true,
+      status: "published",
+    });
+
+    const pinned = await getPinnedInterviewNotes("leetcode");
+    expect(pinned.map((n) => n.slug)).toEqual(["pin"]);
+  });
+
+  it("should return nothing for an unknown section", async () => {
+    const { getPinnedInterviewNotes } = await import("@/db/queries");
+    expect(await getPinnedInterviewNotes("nope")).toEqual([]);
   });
 });
 

@@ -1,21 +1,33 @@
 import { eq } from "drizzle-orm";
 import { siteSettings } from "@/db/schema";
 import { getDb, runBatch, type BatchWrites } from "./_db";
+import { cached, cacheKeys, invalidate } from "./_cache";
 
+/**
+ * The whole settings map.
+ *
+ * Cached (see `_cache.ts`): this is the single most-called query on the site —
+ * every page reads it twice, once for the layout shell and once for
+ * `pageChrome` — while the table itself is ~18 rows that change only when the
+ * settings form is submitted.
+ */
 export async function getSiteSettings(): Promise<Record<string, string>> {
-  const db = await getDb();
-  const rows = await db.select().from(siteSettings);
-  const map: Record<string, string> = {};
-  for (const row of rows) {
-    map[row.key] = row.value;
-  }
-  return map;
+  return cached(cacheKeys.siteSettings, async () => {
+    const db = await getDb();
+    const rows = await db.select().from(siteSettings);
+    const map: Record<string, string> = {};
+    for (const row of rows) {
+      map[row.key] = row.value;
+    }
+    return map;
+  });
 }
 
+// Single key. Served off the cached map rather than its own SELECT — the map
+// is one small query and is almost always already in the cache.
 export async function getSiteSetting(key: string): Promise<string | null> {
-  const db = await getDb();
-  const [row] = await db.select().from(siteSettings).where(eq(siteSettings.key, key));
-  return row?.value ?? null;
+  const settings = await getSiteSettings();
+  return settings[key] ?? null;
 }
 
 export async function updateSiteSettings(values: Record<string, string>): Promise<void> {
@@ -39,4 +51,5 @@ export async function updateSiteSettings(values: Record<string, string>): Promis
   );
 
   await runBatch(db, writes);
+  invalidate(cacheKeys.siteSettings);
 }

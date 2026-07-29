@@ -3,7 +3,7 @@
 import { describe, it, expect } from "vitest";
 import { setupTestDb } from "../helpers/test-db";
 
-setupTestDb();
+const harness = setupTestDb();
 
 describe("updateSiteSettings", () => {
   it("inserts new keys", async () => {
@@ -61,5 +61,22 @@ describe("getSiteSetting", () => {
   it("returns null for unknown key", async () => {
     const { getSiteSetting } = await import("@/db/queries");
     expect(await getSiteSetting("nope")).toBeNull();
+  });
+});
+
+describe("getSiteSettings caching", () => {
+  it("should serve the map from cache until a write through the query layer invalidates it", async () => {
+    const { updateSiteSettings, getSiteSettings } = await import("@/db/queries");
+    await updateSiteSettings({ site_name: "v1" });
+    expect(await getSiteSettings()).toEqual({ site_name: "v1" });
+
+    // Write behind the query layer's back — the cache has no way to see this,
+    // so a stale read here is the proof that the second call never hit D1.
+    harness.sqlite.prepare("UPDATE site_settings SET value = 'v2' WHERE key = 'site_name'").run();
+    expect(await getSiteSettings()).toEqual({ site_name: "v1" });
+
+    // The settings form goes through updateSiteSettings, which does invalidate.
+    await updateSiteSettings({ site_name: "v3" });
+    expect(await getSiteSettings()).toEqual({ site_name: "v3" });
   });
 });

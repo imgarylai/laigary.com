@@ -35,6 +35,17 @@ export const interviewNotes = sqliteTable(
   (table) => [
     index("idx_interview_notes_section").on(table.sectionId),
     index("idx_interview_notes_status_published").on(table.status, table.publishedAt),
+    // Backs the section listing, which filters on (section_id, status) and
+    // orders by (pinned, created_at). Without it SQLite scans the table and
+    // sorts into a temp B-tree — 450 rows read to return 20. Key order matches
+    // the query's; the DESC ordering is served by scanning the index backwards,
+    // so the columns are stored ascending.
+    index("idx_interview_notes_section_listing").on(
+      table.sectionId,
+      table.status,
+      table.pinned,
+      table.createdAt,
+    ),
   ],
 );
 

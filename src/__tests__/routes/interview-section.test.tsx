@@ -1,10 +1,12 @@
 // @vitest-environment jsdom
 //
-// The /interview/$section listing. Mirrors the posts archive (pinned block,
-// `?tag=` filter, pagination, year grouping) with two differences that are
-// exactly where a shared-by-copy implementation drifts: the page holds 20 not
-// 8, and notes carry tag *names* rather than slugs, so the filter matches on a
-// different field. Both are pinned here.
+// The /interview/$section listing. Paging, the `?tag=` filter and the
+// pinned/chronological split are the SERVER's job now (the page used to hold
+// all 500 notes and slice them in the browser, which is what made the section
+// query the most expensive one on the site) — those rules are pinned in
+// server/public-impl. What is left here is the half that stayed client-side:
+// that the component renders the page it is handed, and that the URL state it
+// owns reaches the loader intact.
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, screen, waitFor } from "@testing-library/react";
 import { installShellStubs, renderRoute, warmRouteTree } from "../helpers/router";
@@ -39,6 +41,8 @@ const { searchInterviewNotes } = vi.hoisted(() => ({
   ),
 }));
 
+// Takes the argument object so the tests can assert what the loader forwards —
+// `page` and `tag` are the whole reason the loader has deps now.
 const sectionDataFn = vi.fn();
 vi.mock("@/server/public", () => ({
   interviewShellFn: async () => ({
@@ -47,28 +51,44 @@ vi.mock("@/server/public", () => ({
     social: { github: null, twitter: null, linkedin: null, email: null },
   }),
   searchInterviewNotesFn: searchInterviewNotes,
-  sectionDataFn: () => sectionDataFn(),
+  sectionDataFn: (opts: unknown) => sectionDataFn(opts),
 }));
 
 installShellStubs();
 
-function note(slug: string, date: string, extra: Record<string, unknown> = {}) {
-  return { slug, title: `Note ${slug}`, date, minutes: 4, pinned: false, tags: [], ...extra };
+const PAGE_SIZE = 20;
+
+function note(slug: string, date: string) {
+  return { slug, title: `Note ${slug}`, date, minutes: 4 };
 }
 
-function withSection(notes: unknown[], tags: string[] = [], blurb: string | null = null) {
+type SectionOverrides = {
+  tags?: string[];
+  blurb?: string | null;
+  pinned?: ReturnType<typeof note>[];
+  page?: number;
+  total?: number;
+};
+
+// Stands in for one already-paginated response. `total` defaults to the number
+// of rows handed over, i.e. "this is the only page".
+function withSection(notes: ReturnType<typeof note>[], over: SectionOverrides = {}) {
   sectionDataFn.mockResolvedValue({
     pageTitle: "Coding",
     siteName: "Unconstrained",
-    section: { slug: "coding", label: "Coding", blurb },
-    tags,
+    section: { slug: "coding", label: "Coding", blurb: over.blurb ?? null },
+    tags: over.tags ?? [],
     notes,
+    pinned: over.pinned ?? [],
+    page: over.page ?? 1,
+    pageSize: PAGE_SIZE,
+    total: over.total ?? notes.length,
   });
 }
 
-/** 22 notes — two more than one 20-item page holds. */
-function twentyTwoNotes() {
-  return Array.from({ length: 22 }, (_, i) =>
+/** A full page of 20 rows, with a 22-row total behind it. */
+function fullFirstPage() {
+  return Array.from({ length: PAGE_SIZE }, (_, i) =>
     note(`n${String(i).padStart(2, "0")}`, `2025-06-${String((i % 28) + 1).padStart(2, "0")}`),
   );
 }
@@ -81,7 +101,7 @@ afterEach(() => cleanup());
 
 describe("/interview/$section", () => {
   it("renders the section heading and its blurb", async () => {
-    withSection([note("a", "2025-03-02")], [], "How I practise algorithms.");
+    withSection([note("a", "2025-03-02")], { blurb: "How I practise algorithms." });
 
     await renderRoute("/interview/coding");
 
@@ -111,69 +131,75 @@ describe("/interview/$section", () => {
     ]);
   });
 
-  it("lifts pinned notes into their own block and out of the year list", async () => {
-    withSection([note("pin", "2025-01-01", { pinned: true }), note("plain", "2025-02-02")]);
+  it("renders the pinned block above the year list", async () => {
+    withSection([note("plain", "2025-02-02")], { pinned: [note("pin", "2025-01-01")] });
 
     await renderRoute("/interview/coding");
 
     await screen.findByText("./pinned/");
+    // Once, in the pinned block — the server keeps it out of the paged list.
     expect(screen.getAllByText("Note pin")).toHaveLength(1);
     expect(screen.getByText("Note plain")).toBeTruthy();
   });
 
-  it("holds 20 notes to a page, not the archive's 8", async () => {
-    withSection(twentyTwoNotes());
+  it("omits the pinned block when the server sends none", async () => {
+    withSection([note("plain", "2025-02-02")]);
+
+    await renderRoute("/interview/coding");
+
+    await screen.findByText("Note plain");
+    expect(screen.queryByText("./pinned/")).toBeNull();
+  });
+
+  it("should forward the page and tag from the URL to the loader", async () => {
+    withSection([note("dp", "2025-05-05")], { tags: ["dynamic programming"], page: 2, total: 22 });
+
+    await renderRoute("/interview/coding?page=2&tag=dynamic%20programming");
+
+    await screen.findByText("Note dp");
+    expect(sectionDataFn).toHaveBeenCalledWith({
+      data: { slug: "coding", page: 2, tag: "dynamic programming" },
+    });
+  });
+
+  it("should send no page or tag when the URL carries neither", async () => {
+    withSection([note("a", "2025-03-02")]);
+
+    await renderRoute("/interview/coding");
+
+    await screen.findByText("Note a");
+    expect(sectionDataFn).toHaveBeenCalledWith({
+      data: { slug: "coding", page: undefined, tag: undefined },
+    });
+  });
+
+  it("should size the pager from the server's total, not the rows on screen", async () => {
+    withSection(fullFirstPage(), { total: 22 });
 
     await renderRoute("/interview/coding");
 
     await screen.findByText("Note n00");
-    // The 20th is on page one; the 21st is not.
+    // 22 rows over a 20-row page is two pages; only the first 20 are here.
+    expect(screen.getByRole("button", { name: "2" })).toBeTruthy();
     expect(screen.getByText("Note n19")).toBeTruthy();
     expect(screen.queryByText("Note n20")).toBeNull();
   });
 
-  it("clamps a page number past the end back to the last real page", async () => {
-    withSection(twentyTwoNotes());
+  it("should follow the server's page number when it differs from the URL", async () => {
+    // What a `?page=99` past the end resolves to: the server clamps and says
+    // which page it actually returned, and the pager has to believe it.
+    withSection([note("n20", "2025-06-21"), note("n21", "2025-06-22")], { page: 2, total: 22 });
 
     await renderRoute("/interview/coding?page=99");
 
     expect(await screen.findByText("Note n20")).toBeTruthy();
     expect(screen.getByText("Note n21")).toBeTruthy();
-  });
-
-  it("filters by tag name rather than slug", async () => {
-    withSection(
-      [
-        note("dp", "2025-05-05", { tags: ["dynamic programming"] }),
-        note("other", "2025-04-04", { tags: ["graphs"] }),
-      ],
-      ["dynamic programming", "graphs"],
-    );
-
-    await renderRoute("/interview/coding?tag=dynamic%20programming");
-
-    expect(await screen.findByText("Note dp")).toBeTruthy();
-    expect(screen.queryByText("Note other")).toBeNull();
-  });
-
-  it("lets pinned notes compete on tags while a filter is active", async () => {
-    withSection(
-      [
-        note("pin", "2025-05-05", { pinned: true, tags: ["graphs"] }),
-        note("plain", "2025-04-04", { tags: ["graphs"] }),
-      ],
-      ["graphs"],
-    );
-
-    await renderRoute("/interview/coding?tag=graphs");
-
-    await screen.findByText("Note pin");
-    expect(screen.queryByText("./pinned/")).toBeNull();
-    expect(screen.getByText("Note plain")).toBeTruthy();
+    // Page 2 is the one marked current, even though the URL said 99.
+    expect(screen.getByRole("button", { name: "2" }).className).toContain("border-tm-accent");
   });
 
   it("renders the filter chips and marks the active one", async () => {
-    withSection([note("a", "2025-03-02", { tags: ["graphs"] })], ["graphs", "trees"]);
+    withSection([note("a", "2025-03-02")], { tags: ["graphs", "trees"] });
 
     await renderRoute("/interview/coding?tag=graphs");
 
@@ -184,7 +210,7 @@ describe("/interview/$section", () => {
   });
 
   it("marks `all` active when no tag is applied", async () => {
-    withSection([note("a", "2025-03-02")], ["graphs"]);
+    withSection([note("a", "2025-03-02")], { tags: ["graphs"] });
 
     await renderRoute("/interview/coding");
 
@@ -202,19 +228,15 @@ describe("/interview/$section", () => {
   });
 
   it("shows the empty state when a tag matches nothing", async () => {
-    withSection([note("a", "2025-03-02", { tags: ["graphs"] })], ["graphs"]);
+    withSection([], { tags: ["graphs"] });
 
     await renderRoute("/interview/coding?tag=trees");
 
     expect(await screen.findByText("blog.interview.noneYet")).toBeTruthy();
-    expect(screen.queryByText("Note a")).toBeNull();
   });
 
   it("keeps the tag in the URL when paging", async () => {
-    withSection(
-      twentyTwoNotes().map((n) => ({ ...n, tags: ["graphs"] })),
-      ["graphs"],
-    );
+    withSection(fullFirstPage(), { tags: ["graphs"], total: 22 });
 
     const { router } = await renderRoute("/interview/coding?tag=graphs");
     await screen.findByText("Note n00");

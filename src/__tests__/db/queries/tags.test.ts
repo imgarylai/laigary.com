@@ -4,7 +4,7 @@ import { describe, it, expect } from "vitest";
 import { setupTestDb } from "../helpers/test-db";
 import { seedNote, seedPost, seedSection, seedTag } from "../../factories";
 
-setupTestDb();
+const harness = setupTestDb();
 
 describe("tags queries", () => {
   it("createTag inserts a new row", async () => {
@@ -150,5 +150,29 @@ describe("getTagsWithCounts", () => {
     const { getTagsWithCounts } = await import("@/db/queries");
 
     expect(await getTagsWithCounts()).toEqual([]);
+  });
+
+  // This aggregate makes SQLite scan the whole posts/notes tables, and /tags
+  // and the home page both run it on every navigation, so it is cached. What
+  // the cache must not do is outlive a publish.
+  it("should serve counts from cache until a content mutation invalidates them", async () => {
+    const tag = await seedTag({ name: "Greedy", slug: "greedy" });
+    await seedPost({ slug: "p1", tagIds: [tag.id] });
+    const { getTagsWithCounts } = await import("@/db/queries");
+    expect(await getTagsWithCounts()).toEqual([{ name: "Greedy", slug: "greedy", count: 1 }]);
+
+    // Link a second post to the tag without going through the query layer: a
+    // stale count here proves the read was served from memory.
+    harness.sqlite
+      .prepare(
+        "INSERT INTO posts (id, slug, title, content_md, status, published_at) VALUES ('x', 'p2', 'P2', '', 'published', 1)",
+      )
+      .run();
+    harness.sqlite.prepare("INSERT INTO post_tags (post_id, tag_id) VALUES ('x', ?)").run(tag.id);
+    expect(await getTagsWithCounts()).toEqual([{ name: "Greedy", slug: "greedy", count: 1 }]);
+
+    // A real publish goes through createPost, which invalidates.
+    await seedPost({ slug: "p3", tagIds: [tag.id] });
+    expect(await getTagsWithCounts()).toEqual([{ name: "Greedy", slug: "greedy", count: 3 }]);
   });
 });
