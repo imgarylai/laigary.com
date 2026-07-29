@@ -136,8 +136,94 @@ const TOOLS: Tool[] = [
     },
   },
   {
+    name: "search_works",
+    description:
+      "Search published portfolio works by title, optionally filtered by tech-stack tag slug. " +
+      "Returns the whole portfolio when given no arguments.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: { type: "string", description: "Title substring to match" },
+        tag: { type: "string", description: "Tech-stack tag slug filter, e.g. 'go'" },
+        limit: { type: "number", description: "Max results (default 50)" },
+      },
+    },
+    requiresAuth: false,
+    validate: (args) =>
+      z
+        .object({
+          query: z.string().optional(),
+          tag: z.string().optional(),
+          limit: z.number().int().min(1).max(100).optional(),
+        })
+        .parse(args ?? {}),
+    run: async (args: { query?: string; tag?: string; limit?: number }) => {
+      const { getPublishedWorks } = await import("@/db/queries");
+      const { fmtYearRange } = await import("@/lib/date");
+      // Reads through the public query function, so drafts are excluded by
+      // construction rather than by a filter this tool has to remember.
+      const { works, total } = await getPublishedWorks({
+        query: args.query,
+        tag: args.tag,
+        limit: args.limit ?? 50,
+      });
+      return {
+        total,
+        works: works.map((w) => ({
+          slug: w.slug,
+          title: w.title,
+          summary: w.summary,
+          // Both the raw years and the rendered label: the first is filterable,
+          // the second is what the site itself shows.
+          year: w.year,
+          endYear: w.endYear,
+          yearLabel: fmtYearRange(w.year, w.endYear),
+          role: w.role,
+          projectUrl: w.projectUrl,
+          repoUrl: w.repoUrl,
+          stack: w.tags.map((t) => t.name),
+        })),
+      };
+    },
+  },
+  {
+    name: "get_work",
+    description: "Fetch one published portfolio work (markdown case study included) by slug.",
+    inputSchema: {
+      type: "object",
+      properties: { slug: { type: "string" } },
+      required: ["slug"],
+    },
+    requiresAuth: false,
+    validate: (args) => z.object({ slug: z.string().min(1) }).parse(args),
+    run: async (args: { slug: string }) => {
+      const { getWorkBySlug } = await import("@/db/queries");
+      const { fmtYearRange } = await import("@/lib/date");
+      const work = await getWorkBySlug(args.slug);
+      if (!work) return fail(`No published work with slug "${args.slug}"`);
+      return {
+        slug: work.slug,
+        title: work.title,
+        summary: work.summary,
+        year: work.year,
+        endYear: work.endYear,
+        yearLabel: fmtYearRange(work.year, work.endYear),
+        role: work.role,
+        projectUrl: work.projectUrl,
+        repoUrl: work.repoUrl,
+        stack: work.tags.map((t) => t.name),
+        // Often empty — a work can ship as a link plus a summary with no case
+        // study written for it.
+        contentMd: work.contentMd,
+      };
+    },
+  },
+  {
     name: "list_tags",
-    description: "All tags in use on published posts, with usage counts.",
+    // One namespace across all three content types — the description said
+    // "posts" back when that was the whole story.
+    description:
+      "All tags in use on published posts, interview notes and works, with combined usage counts.",
     inputSchema: { type: "object", properties: {} },
     requiresAuth: false,
     validate: (args) =>

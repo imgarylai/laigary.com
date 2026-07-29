@@ -27,12 +27,18 @@ export type PublicWorkDetail = PublicWork & {
 
 export async function getPublishedWorks(opts?: {
   tag?: string;
+  query?: string;
   limit?: number;
   offset?: number;
 }): Promise<{ works: PublicWork[]; total: number }> {
   const db = await getDb();
   const limit = opts?.limit ?? 100;
   const offset = opts?.offset ?? 0;
+
+  const conditions = [eq(works.status, "published")];
+  if (opts?.query) {
+    conditions.push(like(works.title, `%${opts.query}%`));
+  }
 
   // Resolve the tag filter to a list of work ids first, same as the posts feed.
   let tagWorkIds: string[] | null = null;
@@ -46,8 +52,9 @@ export async function getPublishedWorks(opts?: {
     if (tagWorkIds.length === 0) return { works: [], total: 0 };
   }
 
-  const published = eq(works.status, "published");
-  const where = tagWorkIds ? and(published, inClause(works.id, tagWorkIds)) : published;
+  const where = tagWorkIds
+    ? and(...conditions, inClause(works.id, tagWorkIds))
+    : and(...conditions);
 
   const [{ total }] = await db.select({ total: count() }).from(works).where(where);
 

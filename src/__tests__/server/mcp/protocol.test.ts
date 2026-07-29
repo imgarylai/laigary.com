@@ -5,7 +5,7 @@
 // unauthenticated tools/list and refused at call time.
 import { describe, it, expect, vi } from "vitest";
 import { setupTestDb } from "../../db/helpers/test-db";
-import { seedNote, seedPost, seedSection, seedTag } from "../../factories";
+import { seedNote, seedPost, seedSection, seedTag, seedWork } from "../../factories";
 
 setupTestDb();
 
@@ -60,6 +60,10 @@ describe("protocol layer", () => {
   it("hides write tools from unauthenticated tools/list", async () => {
     const anon = ((await rpc("tools/list")).body as RpcBody).result!.tools!.map((t) => t.name);
     expect(anon).toContain("search_posts");
+    // Works are read-only over MCP — there is no create/update counterpart, so
+    // both tools must be reachable without a token.
+    expect(anon).toContain("search_works");
+    expect(anon).toContain("get_work");
     expect(anon).not.toContain("create_post");
 
     const authed = ((await rpc("tools/list", {}, true)).body as RpcBody).result!.tools!.map(
@@ -97,6 +101,57 @@ describe("read tools", () => {
     await seedPost({ title: "Hello", slug: "hello", tagIds: [tag.id] });
 
     expect(parseText(await callTool("get_post", { slug: "hello" })).tags).toEqual(["Life"]);
+  });
+
+  it("search_works returns published works with their stack and year label", async () => {
+    const tag = await seedTag({ name: "Cloudflare", slug: "cloudflare" });
+    await seedWork({
+      title: "laigary.com",
+      slug: "laigary-com",
+      summary: "the site",
+      year: 2021,
+      endYear: 2023,
+      role: "Solo",
+      projectUrl: "https://laigary.com",
+      tagIds: [tag.id],
+    });
+    await seedWork({ title: "WIP", slug: "wip-work", status: "draft" });
+
+    const result = parseText(await callTool("search_works", { query: "laigary" }));
+    // The draft is excluded by construction — the tool reads through
+    // getPublishedWorks rather than filtering on its own.
+    expect(result.total).toBe(1);
+    expect(result.works[0]).toMatchObject({
+      slug: "laigary-com",
+      yearLabel: "2021–2023",
+      role: "Solo",
+      projectUrl: "https://laigary.com",
+      repoUrl: null,
+      stack: ["Cloudflare"],
+    });
+  });
+
+  it("search_works honours the tag filter and returns everything with no arguments", async () => {
+    const go = await seedTag({ name: "Go", slug: "go" });
+    await seedWork({ slug: "w-go", tagIds: [go.id] });
+    await seedWork({ slug: "w-other" });
+
+    const tagged = parseText(await callTool("search_works", { tag: "go" })) as {
+      works: { slug: string }[];
+    };
+    expect(tagged.works.map((w) => w.slug)).toEqual(["w-go"]);
+    // A portfolio is small enough that "no arguments" is a useful call.
+    expect(parseText(await callTool("search_works", {})).total).toBe(2);
+  });
+
+  it("get_work returns the case study and flags drafts as errors", async () => {
+    await seedWork({ slug: "full", contentMd: "# case study" });
+    await seedWork({ slug: "hidden", status: "draft" });
+
+    expect(parseText(await callTool("get_work", { slug: "full" })).contentMd).toBe("# case study");
+    // A draft must be indistinguishable from a missing slug over the wire.
+    expect((await callTool("get_work", { slug: "hidden" })).isError).toBe(true);
+    expect((await callTool("get_work", { slug: "nope" })).isError).toBe(true);
   });
 
   it("get_interview_note fetches published notes", async () => {
@@ -387,6 +442,69 @@ describe("partial-branch sweeps", () => {
       expect((await getInterviewNote("coding", "typo"))?.updatedAt).toBe(1_893_456_000);
     } finally {
       vi.useRealTimers();
+    }
+  });
+});
+
+// Every tool declares its shape twice: an `inputSchema` the model reads and a
+// zod `validate` the server enforces. Nothing links them, so they drift — a
+// field marked required in the schema but optional in the validator lets a
+// malformed call through, and the reverse rejects calls the model was told to
+// make. Swept across the whole registry rather than per tool, so a new one is
+// covered the day it lands.
+describe("tool schema / validator agreement", () => {
+  type ToolShape = {
+    name: string;
+    inputSchema: {
+      properties?: Record<string, { type?: string }>;
+      required?: string[];
+    };
+    validate: (args: unknown) => unknown;
+  };
+
+  /** A value the validator should accept for a property of the declared type. */
+  function sample(type: string | undefined): unknown {
+    if (type === "number") return 1;
+    if (type === "boolean") return true;
+    if (type === "array") return ["x"];
+    // Lowercase and hyphen-free, so it satisfies the slug regexes too.
+    return "x";
+  }
+
+  function fullArgs(tool: ToolShape): Record<string, unknown> {
+    const props = tool.inputSchema.properties ?? {};
+    return Object.fromEntries(
+      (tool.inputSchema.required ?? []).map((key) => [key, sample(props[key]?.type)]),
+    );
+  }
+
+  it("declares every required field as a real property", async () => {
+    const { getTools } = await import("@/server/mcp/tools");
+    for (const tool of getTools(true) as unknown as ToolShape[]) {
+      const props = Object.keys(tool.inputSchema.properties ?? {});
+      for (const key of tool.inputSchema.required ?? []) {
+        expect(props, `${tool.name}.required lists "${key}"`).toContain(key);
+      }
+    }
+  });
+
+  it("rejects a call missing any field its schema marks required", async () => {
+    const { getTools } = await import("@/server/mcp/tools");
+    for (const tool of getTools(true) as unknown as ToolShape[]) {
+      const required = tool.inputSchema.required ?? [];
+      if (required.length === 0) continue;
+
+      // The complete set must pass, or the sweep below proves nothing.
+      expect(() => tool.validate(fullArgs(tool)), `${tool.name} accepts a full call`).not.toThrow();
+
+      for (const omitted of required) {
+        const args = fullArgs(tool);
+        delete args[omitted];
+        expect(
+          () => tool.validate(args),
+          `${tool.name} should reject a call without "${omitted}"`,
+        ).toThrow();
+      }
     }
   });
 });

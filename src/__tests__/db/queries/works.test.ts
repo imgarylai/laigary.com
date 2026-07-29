@@ -293,6 +293,29 @@ describe("getPublishedWorks", () => {
     expect(onlyA.works.map((w) => w.slug)).toEqual(["w1"]);
   });
 
+  it("filters by title substring", async () => {
+    const { getPublishedWorks } = await import("@/db/queries");
+    await seedWork({ slug: "site", title: "laigary.com" });
+    await seedWork({ slug: "tool", title: "Some CLI" });
+
+    const { works, total } = await getPublishedWorks({ query: "laigary" });
+    expect(works.map((w) => w.slug)).toEqual(["site"]);
+    expect(total).toBe(1);
+  });
+
+  it("applies the title filter and the tag filter together", async () => {
+    // Either one alone would return two rows here, so this fails if the query
+    // condition is dropped when a tag filter is also present.
+    const { getPublishedWorks } = await import("@/db/queries");
+    const go = await seedTag("Go", "go");
+    await seedWork({ slug: "go-cli", title: "Go CLI", tagIds: [go.id] });
+    await seedWork({ slug: "go-api", title: "Go API", tagIds: [go.id] });
+    await seedWork({ slug: "other-cli", title: "Other CLI" });
+
+    const { works } = await getPublishedWorks({ query: "CLI", tag: "go" });
+    expect(works.map((w) => w.slug)).toEqual(["go-cli"]);
+  });
+
   it("returns empty for an unknown tag", async () => {
     const { getPublishedWorks } = await import("@/db/queries");
     expect(await getPublishedWorks({ tag: "nope" })).toEqual({ works: [], total: 0 });
