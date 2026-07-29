@@ -3,6 +3,7 @@ import { works, workTags, tags } from "@/db/schema";
 import { unixToIso } from "@/lib/date";
 import { getDb, inClause, runBatch, type BatchWrites } from "./_db";
 import { fetchTagsByParentIds, type PostTag } from "./_tags";
+import { revalidateContent } from "./_revalidate";
 
 export type PublicWork = {
   slug: string;
@@ -198,6 +199,7 @@ export async function createWork(input: WorkMutationInput): Promise<{ id: string
     throw err;
   }
 
+  await revalidateContent();
   return { id, slug: input.slug };
 }
 
@@ -260,6 +262,7 @@ export async function updateWork(
     throw err;
   }
 
+  await revalidateContent();
   return { id, slug: input.slug ?? existing.slug };
 }
 
@@ -268,6 +271,7 @@ export async function deleteWork(id: string): Promise<void> {
   const [existing] = await db.select({ id: works.id }).from(works).where(eq(works.id, id));
   if (!existing) throw new WorkNotFoundError(id);
   await db.delete(works).where(eq(works.id, id));
+  await revalidateContent();
 }
 
 export type AdminWork = {
