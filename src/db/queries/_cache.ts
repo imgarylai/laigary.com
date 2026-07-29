@@ -76,9 +76,9 @@ export function invalidate(key: string): void {
  * Drop every cached tag aggregate.
  *
  * Called by the mutations that feed those aggregates: posts, interview notes
- * and sections, and the tags themselves. Works are not a caller — they share
- * the `tags` table but no tag aggregate counts them; add the call here if that
- * ever changes. Deliberately
+ * and sections, works, and the tags themselves. Works joined that list when
+ * `getTagsWithCounts` grew a works arm — before that they shared the `tags`
+ * table but no aggregate counted them. Deliberately
  * coarse — these entries cost one cheap query to rebuild, and a mutation is
  * rare enough that precision buys nothing but a way to forget a call site.
  * Site settings are NOT dropped here; `updateSiteSettings` invalidates its own
