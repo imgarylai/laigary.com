@@ -14,21 +14,30 @@ import {
 import { useI18n } from "@/i18n/I18nProvider";
 import { deleteTagFn } from "@/server/admin/tags";
 
-// Deleting a tag also drops its post/note associations (junction rows). Warn
-// when the tag is still in use so it isn't removed by accident.
-type UsedBy = { type: "post" | "note"; title: string; slug: string };
+// Deleting a tag also drops its post/note/work associations (junction rows).
+// Warn when the tag is still in use so it isn't removed by accident.
+type UsedBy = { type: "post" | "note" | "work"; title: string; slug: string };
 
 export function DeleteTagButton({
   tag,
 }: {
-  tag: { id: string; name: string; postCount: number; noteCount: number; usedBy: UsedBy[] };
+  tag: {
+    id: string;
+    name: string;
+    postCount: number;
+    noteCount: number;
+    workCount: number;
+    usedBy: UsedBy[];
+  };
 }) {
   const router = useRouter();
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  const usage = tag.postCount + tag.noteCount;
+  // Every content type that carries the tag, or the warning under-reports what
+  // the delete would detach.
+  const usage = tag.postCount + tag.noteCount + tag.workCount;
 
   async function handleDelete() {
     setDeleting(true);

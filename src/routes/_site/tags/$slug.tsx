@@ -5,6 +5,7 @@ import { canonicalLink, ogMeta } from "@/lib/og-meta";
 import { PromptLine, TmPage, TmRowLink, TmRowCells } from "@/features/terminal";
 import { useI18n } from "@/i18n/I18nProvider";
 import { FS_BLOG } from "@/lib/fsmap";
+import { fmtYearRange } from "@/lib/date";
 
 // Crawlable topic page for one tag — the URL the sitemap advertises. The
 // archive keeps its `?tag=` filter for old links; internal tag chips point
@@ -48,7 +49,7 @@ export const Route = createFileRoute("/_site/tags/$slug")({
 });
 
 function TagPage() {
-  const { tag, posts, notes } = Route.useLoaderData();
+  const { tag, posts, notes, works } = Route.useLoaderData();
   const { t } = useI18n();
 
   const byYear = new Map<string, typeof posts>();
@@ -68,7 +69,7 @@ function TagPage() {
           {tag.name}
         </h1>
         <span className="text-xs text-tm-muted">
-          {posts.length + notes.length} {t("blog.tags.postsUnit")}
+          {posts.length + notes.length + works.length} {t("blog.tags.postsUnit")}
         </span>
       </div>
 
@@ -82,6 +83,24 @@ function TagPage() {
           ))}
         </section>
       ))}
+
+      {works.length > 0 && (
+        <section>
+          <pre className="mt-7 mb-1.5 text-sm text-tm-accent">./works/</pre>
+          {works.map((w) => (
+            <TmRowLink key={w.slug} to="/works/$slug" params={{ slug: w.slug }}>
+              {/* The year sits where a post's date does, and the role takes the
+                  reading-time slot — a work has neither a meaningful day nor a
+                  reading time. */}
+              <TmRowCells
+                date={fmtYearRange(w.year, w.endYear)}
+                title={w.title}
+                read={w.role ?? ""}
+              />
+            </TmRowLink>
+          ))}
+        </section>
+      )}
 
       {notes.length > 0 && (
         <section>

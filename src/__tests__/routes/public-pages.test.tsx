@@ -158,6 +158,7 @@ describe("/tags/$slug", () => {
           date: "2025-05-05",
         },
       ],
+      works: [],
     });
 
     await renderRoute("/tags/go");
@@ -178,12 +179,70 @@ describe("/tags/$slug", () => {
       tag: { slug: "go", name: "go" },
       posts: [{ slug: "p1", title: "Post One", date: "2025-03-02", readingTime: 3, tags: [] }],
       notes: [],
+      works: [],
     });
 
     await renderRoute("/tags/go");
 
     await screen.findByText("Post One");
     expect(screen.queryByText("./interview/")).toBeNull();
+    expect(screen.queryByText("./works/")).toBeNull();
+  });
+
+  it("lists the tag's works in their own block, labelled by year and role", async () => {
+    tagDataFn.mockResolvedValue({
+      ...chrome,
+      tag: { slug: "cloudflare", name: "cloudflare" },
+      posts: [],
+      notes: [],
+      works: [
+        {
+          slug: "laigary-com",
+          title: "laigary.com",
+          year: 2021,
+          endYear: 2023,
+          role: "Solo",
+          summary: "",
+          tags: [],
+        },
+      ],
+    });
+
+    await renderRoute("/tags/cloudflare");
+
+    // A works-only tag has a page at all — that is the whole point of this
+    // change; before it, tagDataImpl returned null and this 404'd.
+    expect(await screen.findByText("./works/")).toBeTruthy();
+    expect(screen.getByText("laigary.com")).toBeTruthy();
+    // The year takes the date slot and the role the reading-time slot: a work
+    // has neither a meaningful day nor a reading time.
+    expect(screen.getByText("2021–2023")).toBeTruthy();
+    expect(screen.getByText("Solo")).toBeTruthy();
+  });
+
+  it("counts works towards the tag's entry total", async () => {
+    tagDataFn.mockResolvedValue({
+      ...chrome,
+      tag: { slug: "go", name: "go" },
+      posts: [{ slug: "p1", title: "Post One", date: "2025-03-02", readingTime: 3, tags: [] }],
+      notes: [],
+      works: [
+        {
+          slug: "w1",
+          title: "Work One",
+          year: 2025,
+          endYear: null,
+          role: null,
+          summary: "",
+          tags: [],
+        },
+      ],
+    });
+
+    await renderRoute("/tags/go");
+
+    // Summing posts and notes alone would read "1" and undercount the page.
+    expect(await screen.findByText(/^2 /)).toBeTruthy();
   });
 });
 

@@ -125,11 +125,29 @@ describe("tagDataImpl", () => {
     expect(data?.notes.map((n) => n.slug)).toEqual(["stack"]);
   });
 
+  it("should resolve a works-only tag instead of 404ing", async () => {
+    // The works detail page renders a link to /tags/<stack tag>. Without the
+    // works arm here, a tag carried only by works returns null and that link
+    // 404s — which is exactly why the stack line shipped as plain text until
+    // this change.
+    const tag = await seedTag({ name: "Cloudflare", slug: "cloudflare" });
+    await seedWork({ title: "laigary.com", slug: "laigary-com", tagIds: [tag.id] });
+    const { tagDataImpl } = await import("@/server/public");
+
+    const data = await tagDataImpl({ slug: "cloudflare" });
+    expect(data?.posts).toEqual([]);
+    expect(data?.notes).toEqual([]);
+    expect(data?.works.map((w) => w.slug)).toEqual(["laigary-com"]);
+  });
+
   it("should return null when the tag is unknown or all its content is drafts", async () => {
     const tag = await seedTag({ name: "WIP", slug: "wip" });
     await seedPost({ status: "draft", tagIds: [tag.id] });
     const section = await seedSection({ slug: "s", label: "S" });
     await seedNote(section.id, { status: "draft", tagIds: [tag.id] });
+    // A draft work must not keep the page alive either — the three-way empty
+    // check has to gate on all three, not just posts and notes.
+    await seedWork({ status: "draft", tagIds: [tag.id] });
     const { tagDataImpl } = await import("@/server/public");
 
     expect(await tagDataImpl({ slug: "nope" })).toBeNull();

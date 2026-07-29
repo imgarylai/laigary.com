@@ -179,6 +179,26 @@ describe("/works/$slug", () => {
     expect(pre).not.toContain("repo:");
   });
 
+  it("renders the stack as links into the shared tag namespace", async () => {
+    // These shipped as plain text until the tag surfaces learned about works —
+    // before that a works-only tag pointed at a /tags page that 404'd.
+    withWork(work("tagged", { tags: [{ name: "go", slug: "go" }] }));
+
+    await renderRoute("/works/tagged");
+
+    const link = (await screen.findByText("#go")).closest("a")!;
+    expect(link.getAttribute("href")).toBe("/tags/go");
+  });
+
+  it("renders no stack row for an untagged work", async () => {
+    withWork(work("untagged"));
+
+    await renderRoute("/works/untagged");
+
+    await screen.findByRole("heading", { name: "Work untagged" });
+    expect(screen.queryByText("blog.works.stackLabel")).toBeNull();
+  });
+
   it("links out to the live site and the repository", async () => {
     withWork(
       work("linked", { projectUrl: "https://example.com", repoUrl: "https://github.com/x/y" }),

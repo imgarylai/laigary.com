@@ -42,14 +42,17 @@ describe("getSitemapData", () => {
 
     await upsertPage("about", { title: "About", contentMd: "hi" });
 
-    await seedWork({ slug: "portfolio", status: "published" });
+    // Tagged, so the tag-latest merge has a works arm to exercise: the tag is
+    // carried ONLY by this work, so it must still reach the sitemap.
+    const workTag = await createTag({ name: "Cloudflare", slug: "cloudflare" });
+    await seedWork({ slug: "portfolio", status: "published", tagIds: [workTag.id] });
     // A draft work must stay out of the sitemap — that is the half of this
     // assertion that can actually fail.
     await seedWork({ slug: "wip-work", status: "draft" });
 
     const data = await getSitemapData();
     expect(data.posts.map((p) => p.slug)).toEqual(["hello"]);
-    expect(data.tags.map((t) => t.slug).sort()).toEqual(["arrays", "go"]);
+    expect(data.tags.map((t) => t.slug).sort()).toEqual(["arrays", "cloudflare", "go"]);
     expect(data.sections.map((s) => s.slug)).toEqual(["leetcode"]);
     expect(data.notes.map((n) => `${n.sectionSlug}/${n.slug}`)).toEqual(["leetcode/two-sum"]);
     expect(data.works.map((w) => w.slug)).toEqual(["portfolio"]);

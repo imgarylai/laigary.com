@@ -1,5 +1,13 @@
 import { eq, desc, asc, count, and, like, lt, gt, type SQL } from "drizzle-orm";
-import { posts, tags, postTags, interviewNotes, interviewNoteTags } from "@/db/schema";
+import {
+  posts,
+  tags,
+  postTags,
+  interviewNotes,
+  interviewNoteTags,
+  works,
+  workTags,
+} from "@/db/schema";
 import { computeReadingTime, unixToIso } from "@/lib/date";
 import { getDb, inClause, runBatch, type BatchWrites } from "./_db";
 import { fetchTagsByParentIds, type PostTag } from "./_tags";
@@ -410,10 +418,10 @@ export async function getAdminPosts(opts?: {
   return { items: rows.map((r) => ({ ...r, pinned: r.pinned === 1 })), total };
 }
 
-// Tags carrying published content, with the combined count of published posts
-// and interview notes — one unified namespace across both content types. A tag
-// used only by notes still appears (so /tags/$slug resolves and the tag lands
-// in the sitemap). Ordered by count, descending.
+// Tags carrying published content, with the combined count of published posts,
+// interview notes and works — one unified namespace across all three content
+// types. A tag used only by works still appears (so /tags/$slug resolves and
+// the tag lands in the sitemap). Ordered by count, descending.
 export async function getTagsWithCounts(): Promise<
   { name: string; slug: string; count: number }[]
 > {
@@ -427,7 +435,7 @@ export async function getTagsWithCounts(): Promise<
 async function loadTagsWithCounts(): Promise<{ name: string; slug: string; count: number }[]> {
   const db = await getDb();
 
-  const [postCounts, noteCounts] = await Promise.all([
+  const [postCounts, noteCounts, workCounts] = await Promise.all([
     db
       .select({ name: tags.name, slug: tags.slug, count: count() })
       .from(tags)
@@ -442,10 +450,17 @@ async function loadTagsWithCounts(): Promise<{ name: string; slug: string; count
       .innerJoin(interviewNotes, eq(interviewNotes.id, interviewNoteTags.noteId))
       .where(eq(interviewNotes.status, "published"))
       .groupBy(tags.id, tags.name, tags.slug),
+    db
+      .select({ name: tags.name, slug: tags.slug, count: count() })
+      .from(tags)
+      .innerJoin(workTags, eq(tags.id, workTags.tagId))
+      .innerJoin(works, eq(works.id, workTags.workId))
+      .where(eq(works.status, "published"))
+      .groupBy(tags.id, tags.name, tags.slug),
   ]);
 
   const merged = new Map<string, { name: string; slug: string; count: number }>();
-  for (const row of [...postCounts, ...noteCounts]) {
+  for (const row of [...postCounts, ...noteCounts, ...workCounts]) {
     const existing = merged.get(row.slug);
     if (existing) existing.count += row.count;
     else merged.set(row.slug, { name: row.name, slug: row.slug, count: row.count });

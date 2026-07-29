@@ -20,7 +20,7 @@ vi.mock("@/i18n/I18nProvider", () => ({
 beforeEach(() => vi.clearAllMocks());
 afterEach(() => cleanup());
 
-const tag = { id: "t1", name: "go", postCount: 2, noteCount: 0, usedBy: [] };
+const tag = { id: "t1", name: "go", postCount: 2, noteCount: 0, workCount: 0, usedBy: [] };
 
 async function open() {
   fireEvent.click(screen.getByRole("button", { name: "tagList.delete" }));
@@ -66,9 +66,11 @@ describe("DeleteTagButton warning", () => {
           ...tag,
           postCount: 1,
           noteCount: 1,
+          workCount: 1,
           usedBy: [
             { type: "post", title: "Hello World", slug: "hello" },
             { type: "note", title: "Two Sum", slug: "two-sum" },
+            { type: "work", title: "Portfolio Piece", slug: "portfolio" },
           ],
         }}
       />,
@@ -76,13 +78,17 @@ describe("DeleteTagButton warning", () => {
 
     const dialog = await open();
     expect(within(dialog).getByText("admin.deleteTagInUse")).toBeTruthy();
-    // Both kinds of user are listed; counting posts alone would drop the note.
+    // All three kinds of user are listed; counting posts alone would drop the
+    // note, and omitting works would under-report what the delete detaches.
     expect(within(dialog).getByText(/Hello World/)).toBeTruthy();
     expect(within(dialog).getByText(/Two Sum/)).toBeTruthy();
+    expect(within(dialog).getByText(/Portfolio Piece/)).toBeTruthy();
   });
 
   it("says the tag is unused when nothing references it", async () => {
-    render(<DeleteTagButton tag={{ ...tag, postCount: 0, noteCount: 0, usedBy: [] }} />);
+    render(
+      <DeleteTagButton tag={{ ...tag, postCount: 0, noteCount: 0, workCount: 0, usedBy: [] }} />,
+    );
 
     const dialog = await open();
     expect(within(dialog).getByText("admin.deleteTagUnused")).toBeTruthy();
