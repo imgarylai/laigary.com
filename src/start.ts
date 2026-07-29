@@ -52,7 +52,6 @@ const edgeCache = createMiddleware({ type: "request" }).server(async (ctx) => {
   if (!isCacheableResponse(response)) return response;
 
   const stamped = mark(response, "MISS");
-  stamped.headers.set("Cache-Control", EDGE_CACHE_CONTROL);
   await cache.put(key, stamped.clone());
   return stamped;
 });
@@ -61,12 +60,24 @@ const edgeCache = createMiddleware({ type: "request" }).server(async (ctx) => {
  * Copy a response so its headers can be written to, tagging how it was served.
  *
  * Rebuilt rather than mutated because a Response from the router (or from the
- * cache) can have immutable headers. `x-edge-cache` makes the layer verifiable
- * from outside — `curl -I` twice on a page and the second should say HIT.
+ * cache) can have immutable headers.
+ *
+ * `Cache-Control` is re-applied on BOTH paths, not just before `cache.put`.
+ * Cloudflare rewrites the stored copy's `max-age` to the zone's Browser Cache
+ * TTL (4 hours by default), so a hit came back telling browsers to hold the
+ * page for four hours — exactly what `max-age=0` exists to prevent. The edge
+ * entry is retired by the content version the moment anything is published;
+ * without this, a reader who had already loaded the page would not see that
+ * for another four hours.
+ *
+ * `x-edge-cache` makes the layer verifiable from outside. Check it with a GET
+ * (`curl -s -D - -o /dev/null`), not `curl -I` — that sends HEAD, which this
+ * middleware passes straight through.
  */
 function mark(response: Response, state: "HIT" | "MISS"): Response {
   const copy = new Response(response.body, response);
   copy.headers.set("x-edge-cache", state);
+  copy.headers.set("Cache-Control", EDGE_CACHE_CONTROL);
   return copy;
 }
 
