@@ -287,7 +287,8 @@
     "actions": "Actions",
     "view": "View",
     "searchPlaceholder": "Search pages…",
-    "newPage": "New page"
+    "newPage": "New page",
+    "edit": "Edit"
   },
   "pageForm": {
     "title": "Title",
@@ -456,5 +457,14 @@
     "deleting": "Deleting...",
     "workDeleted": "Work deleted",
     "deleteFailed": "Failed to delete work"
+  },
+  "deletePage": {
+    "delete": "Delete",
+    "deletePage": "Delete page",
+    "confirmMessage": "Are you sure you want to delete \"{title}\"? This cannot be undone.",
+    "cancel": "Cancel",
+    "deleting": "Deleting...",
+    "pageDeleted": "Page deleted",
+    "deleteFailed": "Failed to delete page"
   }
 }

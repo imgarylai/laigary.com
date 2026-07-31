@@ -1,9 +1,9 @@
 import { useMemo } from "react";
 import { Link, getRouteApi } from "@tanstack/react-router";
-import { ArrowSquareOutIcon } from "@phosphor-icons/react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "./DataTable";
+import { PageRowActions } from "./PageRowActions";
 import { useI18n } from "@/i18n/I18nProvider";
 
 type Page = {
@@ -57,28 +57,11 @@ export function PagesListClient({ pages }: { pages: Page[] }) {
       },
       {
         id: "actions",
-        header: t("pageList.actions"),
+        header: "",
         enableSorting: false,
-        meta: { headClassName: "text-right", cellClassName: "text-right" },
+        meta: { headClassName: "w-10", cellClassName: "w-10 text-right" },
         cell: ({ row }) => (
-          <div className="flex items-center justify-end">
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              nativeButton={false}
-              render={
-                <Link
-                  to="/$slug"
-                  params={{ slug: row.original.slug }}
-                  target="_blank"
-                  rel="noreferrer"
-                  title={t("pageList.view")}
-                />
-              }
-            >
-              <ArrowSquareOutIcon className="size-4" />
-            </Button>
-          </div>
+          <PageRowActions pageSlug={row.original.slug} pageTitle={row.original.title} />
         ),
       },
     ];

@@ -94,6 +94,32 @@ describe("content mutations", () => {
     expect(await getContentVersion()).not.toBe(before);
   });
 
+  it("should move the version when a page is created or edited", async () => {
+    // The bug this covers: page writes used to skip revalidation entirely, so
+    // an edited /about served its previous body for a full day.
+    const { upsertPage } = await import("@/db/queries");
+    const { getContentVersion } = await import("@/db/queries/_revalidate");
+
+    const before = await getContentVersion();
+    await upsertPage("about", { title: "About", contentMd: "v1" });
+    const afterCreate = await getContentVersion();
+    expect(afterCreate).not.toBe(before);
+
+    await upsertPage("about", { contentMd: "v2" });
+    expect(await getContentVersion()).not.toBe(afterCreate);
+  });
+
+  it("should move the version when a page is deleted", async () => {
+    const { upsertPage, deletePage } = await import("@/db/queries");
+    const { getContentVersion } = await import("@/db/queries/_revalidate");
+    await upsertPage("now", { title: "Now", contentMd: "body" });
+
+    const before = await getContentVersion();
+    await deletePage("now");
+
+    expect(await getContentVersion()).not.toBe(before);
+  });
+
   it("should move the version when a tag is renamed", async () => {
     // A rename changes the chip row and every tag page that lists it.
     const { updateTag } = await import("@/db/queries");
