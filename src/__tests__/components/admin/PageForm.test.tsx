@@ -14,6 +14,11 @@ const { upsertPageFn, navigate, invalidate, toast } = vi.hoisted(() => ({
 vi.mock("@/server/admin/pages", () => ({ upsertPageFn }));
 vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => navigate,
+  Link: ({ to, children, ...rest }: { to: string; children?: React.ReactNode }) => (
+    <a href={to} {...rest}>
+      {children}
+    </a>
+  ),
   // The editor's navigation guard calls this; an idle resolver means nothing is
   // currently blocked, which is the state every test here starts in.
   useBlocker: () => ({ status: "idle" }),
@@ -111,5 +116,27 @@ describe("PageForm", () => {
     fireEvent.click(screen.getByRole("button", { name: "pageForm.update" }));
 
     await waitFor(() => expect(invalidate).toHaveBeenCalled());
+  });
+});
+
+// The other three editors (post, note, work) all carry an open-in-new-tab link
+// beside Save; the page editor was the only one with no way to see its result.
+describe("PageForm preview link", () => {
+  it("should link an existing page to its public url in a new tab", () => {
+    render(<PageForm page={{ slug: "about", title: "About", contentMd: "hi" }} />);
+
+    // Base UI's useRender merges role="button" onto the anchor, so the element
+    // is an <a> with a button role — query it the way the DOM exposes it.
+    const preview = screen.getByRole("button", { name: "postForm.preview" });
+    expect(preview.getAttribute("href")).toBe("/$slug");
+    expect(preview.getAttribute("target")).toBe("_blank");
+    expect(preview.getAttribute("rel")).toBe("noreferrer");
+  });
+
+  it("should not offer a preview for a page that has never been saved", () => {
+    // A slug typed into the new-page form has no public URL behind it yet.
+    render(<PageForm />);
+
+    expect(screen.queryByRole("button", { name: "postForm.preview" })).toBeNull();
   });
 });
