@@ -27,6 +27,7 @@ const EXPECTED_ERROR_NAMES = new Set([
   "NoteNotFoundError",
   "WorkConflictError",
   "WorkNotFoundError",
+  "PageNotFoundError",
   "UploadConflictError",
 ]);
 

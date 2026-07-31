@@ -3,7 +3,7 @@
 // schemas are exported from the per-domain modules for unit testing.
 export { createPostFn, updatePostFn, deletePostFn } from "./posts";
 export { createTagFn, updateTagFn, deleteTagFn } from "./tags";
-export { upsertPageFn } from "./pages";
+export { upsertPageFn, deletePageFn } from "./pages";
 export {
   createSectionFn,
   updateSectionFn,

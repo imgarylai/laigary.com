@@ -25,6 +25,8 @@ vi.mock("@tanstack/react-router", () => ({
     </a>
   ),
 }));
+vi.mock("@/server/admin/pages", () => ({ deletePageFn: vi.fn() }));
+vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 vi.mock("@/i18n/I18nProvider", () => ({
   useI18n: () => ({ t: (k: string) => k, locale: locale.value }),
 }));
@@ -54,13 +56,18 @@ describe("PagesListClient rows", () => {
     expect(cells[1].textContent).toBe("/about");
   });
 
-  it("links the title to the editor and the icon to the live page", () => {
+  it("links the title to the editor", () => {
     render(<PagesListClient pages={[page({ slug: "about" })]} />);
 
     expect(screen.getByText("About").getAttribute("href")).toBe("/admin/pages/$slug/edit");
-    const view = screen.getByTitle("pageList.view");
-    expect(view.getAttribute("href")).toBe("/$slug");
-    expect(view.getAttribute("target")).toBe("_blank");
+  });
+
+  it("gives every row the same `⋯` menu the other admin lists have", () => {
+    // Pages used to carry a lone view icon here, so there was no way to delete
+    // one from the UI at all.
+    render(<PagesListClient pages={[page({ slug: "about" }), page({ id: "g2", slug: "now" })]} />);
+
+    expect(screen.getAllByRole("button", { name: "pageList.actions" }).length).toBe(2);
   });
 
   it("formats the updated date in the active UI locale", () => {

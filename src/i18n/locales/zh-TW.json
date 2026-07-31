@@ -287,7 +287,8 @@
     "actions": "操作",
     "view": "檢視",
     "searchPlaceholder": "搜尋頁面…",
-    "newPage": "新增頁面"
+    "newPage": "新增頁面",
+    "edit": "編輯"
   },
   "pageForm": {
     "title": "標題",
@@ -456,5 +457,14 @@
     "deleting": "刪除中...",
     "workDeleted": "作品已刪除",
     "deleteFailed": "刪除作品失敗"
+  },
+  "deletePage": {
+    "delete": "刪除",
+    "deletePage": "刪除頁面",
+    "confirmMessage": "確定要刪除「{title}」嗎？此操作無法復原。",
+    "cancel": "取消",
+    "deleting": "刪除中...",
+    "pageDeleted": "頁面已刪除",
+    "deleteFailed": "刪除頁面失敗"
   }
 }

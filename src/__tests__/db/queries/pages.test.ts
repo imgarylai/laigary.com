@@ -76,3 +76,31 @@ describe("upsertPage partial updates", () => {
     expect(page?.contentMd).toBe("v2");
   });
 });
+
+describe("deletePage", () => {
+  it("should remove the row so the public page stops resolving", async () => {
+    const { upsertPage, deletePage, getPageBySlug, getAllPages } = await import("@/db/queries");
+    await upsertPage("now", { title: "Now", contentMd: "body" });
+    await upsertPage("about", { title: "About", contentMd: "body" });
+
+    await deletePage("now");
+
+    expect(await getPageBySlug("now")).toBeNull();
+    expect((await getAllPages()).map((p) => p.slug)).toEqual(["about"]);
+  });
+
+  it("should throw PageNotFoundError for a slug that is not there", async () => {
+    const { deletePage } = await import("@/db/queries");
+    await expect(deletePage("missing")).rejects.toMatchObject({ name: "PageNotFoundError" });
+  });
+
+  it("should leave the other pages alone", async () => {
+    const { upsertPage, deletePage, getPageBySlug } = await import("@/db/queries");
+    await upsertPage("about", { title: "About", contentMd: "keep me" });
+    await upsertPage("now", { title: "Now", contentMd: "drop me" });
+
+    await deletePage("now");
+
+    expect(await getPageBySlug("about")).toMatchObject({ contentMd: "keep me" });
+  });
+});

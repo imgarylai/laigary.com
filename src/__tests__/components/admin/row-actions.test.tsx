@@ -9,6 +9,7 @@ import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import { isSelfHandledTarget } from "@/components/admin/DataTable";
 import { PostRowActions } from "@/components/admin/PostRowActions";
 import { NoteRowActions } from "@/components/admin/NoteRowActions";
+import { PageRowActions } from "@/components/admin/PageRowActions";
 
 vi.mock("@tanstack/react-router", () => ({
   useRouter: () => ({ invalidate: vi.fn() }),
@@ -20,6 +21,7 @@ vi.mock("@tanstack/react-router", () => ({
 }));
 vi.mock("@/server/admin/posts", () => ({ deletePostFn: vi.fn() }));
 vi.mock("@/server/admin/interview", () => ({ deleteNoteFn: vi.fn() }));
+vi.mock("@/server/admin/pages", () => ({ deletePageFn: vi.fn() }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 vi.mock("@/i18n/I18nProvider", () => ({
   useI18n: () => ({ t: (k: string) => k, locale: "en" }),
@@ -179,5 +181,42 @@ describe("NoteRowActions", () => {
 
     expect(await screen.findByRole("dialog")).toBeTruthy();
     expect(screen.getByText("noteList.deleteTitle")).toBeTruthy();
+  });
+});
+
+// Pages reached the `⋯` menu last: the list used to offer a lone view icon, so
+// there was no delete affordance anywhere in the admin UI.
+describe("PageRowActions", () => {
+  const openPageMenu = () =>
+    fireEvent.click(screen.getByRole("button", { name: "pageList.actions" }));
+
+  it("should offer edit, view and delete", () => {
+    render(<PageRowActions pageSlug="about" pageTitle="About" />);
+    openPageMenu();
+
+    expect(screen.getByRole("menuitem", { name: "pageList.edit" })).toBeTruthy();
+    expect(screen.getByRole("menuitem", { name: "pageList.view" })).toBeTruthy();
+    expect(screen.getByRole("menuitem", { name: "deletePage.delete" })).toBeTruthy();
+  });
+
+  it("should point edit at the editor and view at the public url", () => {
+    render(<PageRowActions pageSlug="about" pageTitle="About" />);
+    openPageMenu();
+
+    expect(screen.getByRole("menuitem", { name: "pageList.edit" }).getAttribute("href")).toBe(
+      "/admin/pages/$slug/edit",
+    );
+    const view = screen.getByRole("menuitem", { name: "pageList.view" });
+    expect(view.getAttribute("href")).toBe("/$slug");
+    expect(view.getAttribute("target")).toBe("_blank");
+  });
+
+  it("should open the delete confirmation rather than deleting straight away", async () => {
+    render(<PageRowActions pageSlug="about" pageTitle="About" />);
+    openPageMenu();
+
+    fireEvent.click(screen.getByRole("menuitem", { name: "deletePage.delete" }));
+
+    expect(await screen.findByRole("dialog")).toBeTruthy();
   });
 });

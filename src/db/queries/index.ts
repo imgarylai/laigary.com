@@ -88,7 +88,15 @@ export {
   WorkNotFoundError,
 } from "./works";
 
-export { getPageBySlug, getAllPages, getPagesList, upsertPage, type PageListItem } from "./pages";
+export {
+  getPageBySlug,
+  getAllPages,
+  getPagesList,
+  upsertPage,
+  deletePage,
+  PageNotFoundError,
+  type PageListItem,
+} from "./pages";
 
 export { getSiteSettings, getSiteSetting, updateSiteSettings } from "./site";
 

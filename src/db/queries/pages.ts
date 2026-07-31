@@ -1,6 +1,14 @@
 import { eq } from "drizzle-orm";
 import { pages } from "@/db/schema";
 import { getDb } from "./_db";
+import { revalidateContent } from "./_revalidate";
+
+export class PageNotFoundError extends Error {
+  constructor(slug: string) {
+    super(`Page ${slug} not found`);
+    this.name = "PageNotFoundError";
+  }
+}
 
 export async function getPageBySlug(slug: string) {
   const db = await getDb();
@@ -48,5 +56,16 @@ export async function upsertPage(
     });
   }
 
+  await revalidateContent();
   return { slug };
+}
+
+// Keyed by slug like the rest of this module: the admin routes address a page
+// by slug, and upsertPage treats it as the identity of the row.
+export async function deletePage(slug: string): Promise<void> {
+  const db = await getDb();
+  const [existing] = await db.select({ id: pages.id }).from(pages).where(eq(pages.slug, slug));
+  if (!existing) throw new PageNotFoundError(slug);
+  await db.delete(pages).where(eq(pages.slug, slug));
+  await revalidateContent();
 }
