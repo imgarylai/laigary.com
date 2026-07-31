@@ -1,7 +1,8 @@
 import { useForm, Controller } from "react-hook-form";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { z } from "zod";
-import { useNavigate, useRouter } from "@tanstack/react-router";
+import { Link, useNavigate, useRouter } from "@tanstack/react-router";
+import { ArrowSquareOutIcon } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -99,6 +100,23 @@ export function PageForm({ page }: { page?: { slug: string; title: string; conte
               saving={form.formState.isSubmitting}
               saved={isEdit}
             />
+            {/* Only once the page exists — a slug that has never been saved has
+                no public URL to open. Pages have no draft state, so an existing
+                page is always viewable. */}
+            {isEdit && page && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                nativeButton={false}
+                render={
+                  <Link to="/$slug" params={{ slug: page.slug }} target="_blank" rel="noreferrer" />
+                }
+              >
+                <ArrowSquareOutIcon className="size-4" />
+                {t("postForm.preview")}
+              </Button>
+            )}
             <Button
               type="button"
               variant="ghost"
