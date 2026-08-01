@@ -10,6 +10,19 @@ import { Editor } from "@tiptap/react";
 import { looksLikeMarkdown, isVerbatimContext } from "@/components/admin/editor/markdown-paste";
 import { createExtensions } from "@/components/admin/editor/extensions";
 
+// The image-paste case below hands a real File to the upload plugin, and
+// compressImage would drag browser-image-compression into jsdom, where it
+// throws "Expected an Uint8Array" from inside its worker — outside uploadAt's
+// try/catch, so it surfaced as an unhandled error rather than a failed test.
+// Same stubs editor-image-upload.test.ts uses.
+const { uploadFile, compressImage, toast } = vi.hoisted(() => ({
+  uploadFile: vi.fn(async () => "https://cdn.example.com/shot.png"),
+  compressImage: vi.fn(async (file: File) => file),
+  toast: { error: vi.fn(), success: vi.fn() },
+}));
+vi.mock("@/lib/upload-client", () => ({ uploadFile, compressImage, getCroppedBlob: vi.fn() }));
+vi.mock("sonner", () => ({ toast }));
+
 describe("looksLikeMarkdown", () => {
   it.each([
     ["an ATX heading", "# Title"],
@@ -186,14 +199,16 @@ describe("handlePaste", () => {
     editor.destroy();
   });
 
-  it("should leave a clipboard image to the upload plugin", () => {
+  it("should leave a clipboard image to the upload plugin", async () => {
     const editor = editorWith();
     const file = new File(["x"], "shot.png", { type: "image/png" });
 
-    // Not asserting the return value — the upload plugin claims this one. What
-    // matters is that no markdown was inserted in its place.
     paste(editor, pasteEvent({ text: "# Title", files: [file] }));
 
+    // Waiting for the image to land proves the upload plugin claimed the paste,
+    // and keeps the editor alive until its async work is done — destroying it
+    // mid-flight would dispatch onto a torn-down view.
+    await vi.waitFor(() => expect(editor.getHTML()).toContain("<img"));
     expect(editor.getHTML()).not.toContain("<h1");
     editor.destroy();
   });
