@@ -59,20 +59,53 @@ export function isCacheableResponse(response: Response): boolean {
 }
 
 /**
+ * Query parameters that change what a public page renders.
+ *
+ * `page` and `tag` are the only two any public route reads (`/posts` and
+ * `/interview/$section` declare them in `validateSearch`; the section route
+ * also puts them in `loaderDeps`, so they select the rows the server returns).
+ *
+ * ADD TO THIS LIST WHEN A PUBLIC ROUTE GAINS A SEARCH PARAM — otherwise the
+ * edge answers `?newParam=x` with the document rendered without it.
+ */
+const CACHE_KEY_PARAMS = ["page", "tag"] as const;
+
+/**
  * The URL a cached page is filed under.
  *
- * The request URL alone is not enough. The locale is resolved server-side and
- * baked into the HTML (from a cookie, else `Accept-Language`), so two visitors
- * on the same URL can be owed different documents — keying on it is what keeps
- * a zh-TW reader's page away from an English one. The content version is what
- * makes the day-long TTL safe: publishing bumps it, every previously cached
- * page is filed under a key nobody asks for again, and the next request
- * re-renders.
+ * Three things beyond the path decide which document a visitor is owed:
+ *
+ * The locale is resolved server-side and baked into the HTML (from a cookie,
+ * else `Accept-Language`), so two visitors on the same URL can be owed
+ * different documents — keying on it keeps a zh-TW reader's page away from an
+ * English one. The content version is what makes the day-long TTL safe:
+ * publishing bumps it, every previously cached page is filed under a key nobody
+ * asks for again, and the next request re-renders.
+ *
+ * Everything else in the query string is DROPPED, which is the opposite of the
+ * obvious approach and the more important half of this function. Keying on the
+ * request's own query string meant `?utm_source=twitter` on a shared link
+ * missed the entry `/` had already stored, and — the part that actually
+ * matters — that the number of cache keys per page was unbounded: anything
+ * appending `?a=1`, `?a=2`, … got a full SSR render and its D1 queries every
+ * time, with the cache unable to absorb any of it. An allowlist bounds the keys
+ * per page at (locales x versions x page x tag) no matter what arrives.
+ *
+ * Dropping them is safe because nothing else varies with them: canonical and
+ * `og:url` are built from `SITE_ORIGIN` plus a clean path, never from the
+ * request URL. Rebuilding the query string from the allowlist also normalises
+ * its order, so `?tag=go&page=2` and `?page=2&tag=go` stop being two entries.
  */
 export function cacheKeyUrl(requestUrl: string, locale: string, version: string): string {
   const url = new URL(requestUrl);
-  url.searchParams.set("__locale", locale);
-  url.searchParams.set("__v", version);
+  const params = new URLSearchParams();
+  for (const name of CACHE_KEY_PARAMS) {
+    const value = url.searchParams.get(name);
+    if (value !== null) params.set(name, value);
+  }
+  params.set("__locale", locale);
+  params.set("__v", version);
+  url.search = params.toString();
   return url.toString();
 }
 

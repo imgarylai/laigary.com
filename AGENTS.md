@@ -64,9 +64,14 @@ backfills go inside the generated file or via `drizzle-kit generate --custom`.
   2. `src/start.ts` — a request middleware storing public documents in
      `caches.default`. Cloudflare does not cache a Worker's own responses on
      `Cache-Control` alone. The policy (what may be cached, and the key —
-     resolved locale plus content version) is in `src/lib/http-cache.ts`, pure
-     and tested there because the middleware itself only runs inside a Worker.
-     `curl -I` a page twice; the second should say `x-edge-cache: HIT`.
+     path, resolved locale, content version, and an ALLOWLIST of search params)
+     is in `src/lib/http-cache.ts`, pure and tested there because the middleware
+     itself only runs inside a Worker. Give a public route a new search param
+     and you must add it to `CACHE_KEY_PARAMS`, or the edge answers that param
+     with the document rendered without it. Verify with
+     `curl -s -D - -o /dev/null` twice on a public page; the second should say
+     `x-edge-cache: HIT`. Not `curl -I` — that sends HEAD, which is answered
+     from the cache but never stores, so it reports MISS forever.
 
   Public list pages paginate SERVER-side (`sectionDataImpl`, page size in
   `SECTION_PAGE_SIZE`). Do not reintroduce a `limit: 500` and slice in the
