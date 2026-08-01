@@ -347,13 +347,16 @@ describe("plain paste", () => {
     editor.destroy();
   });
 
-  it("should still leave a clipboard image to the upload plugin", () => {
+  it("should still leave a clipboard image to the upload plugin", async () => {
     const editor = editorWith();
     const file = new File(["x"], "shot.png", { type: "image/png" });
     pressPlainPaste(editor);
 
     paste(editor, pasteEvent({ text: "# Title", files: [file] }));
 
+    // Same wait as the markdown-paste case: the upload is async, and tearing
+    // the editor down mid-flight dispatches onto a destroyed view.
+    await vi.waitFor(() => expect(editor.getHTML()).toContain("<img"));
     expect(editor.getHTML()).not.toContain("# Title");
     editor.destroy();
   });
