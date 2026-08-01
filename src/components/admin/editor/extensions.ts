@@ -22,6 +22,7 @@ import { LinkSuggestion } from "./link-suggestion";
 import { CodeBlockCardExtension } from "./code-block";
 import { createSlashSuggestion, type SlashDialogs } from "./slash-suggestion";
 import { ImageUpload, type ImageUploadMessages } from "./image-upload";
+import { MarkdownPaste } from "./markdown-paste";
 import { createLowlight } from "lowlight";
 import { CODE_LANGUAGE_GRAMMARS } from "@/lib/code-languages";
 
@@ -67,6 +68,9 @@ export function createExtensions({
     // Paste or drop an image straight into the document (see image-upload.ts).
     ImageUpload.configure({ messages: uploadMessages }),
     Markdown,
+    // Markdown only wires up getMarkdown()/setContent; pasted markdown source
+    // needs its own clipboard handler (see markdown-paste.ts).
+    MarkdownPaste,
     Placeholder.configure({ placeholder }),
     // Keep the harmless typographic replacements (em-dash, ellipsis, arrows, …)
     // but turn OFF smart quotes. Straight ' and " were being auto-rewritten to
