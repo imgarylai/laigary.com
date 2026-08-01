@@ -1,0 +1,200 @@
+// @vitest-environment jsdom
+//
+// Pasting markdown source into the editor used to land as literal text — a
+// table stayed a row of pipes. The detection half is deliberately conservative:
+// text that is not markdown has to paste exactly as it did before, because
+// parsing it collapses single newlines and turns stray `*` into emphasis.
+
+import { describe, it, expect, vi } from "vitest";
+import { Editor } from "@tiptap/react";
+import { looksLikeMarkdown, isVerbatimContext } from "@/components/admin/editor/markdown-paste";
+import { createExtensions } from "@/components/admin/editor/extensions";
+
+describe("looksLikeMarkdown", () => {
+  it.each([
+    ["an ATX heading", "# Title"],
+    ["a deeper heading", "### Section"],
+    ["a fenced code block", "```python\nprint(1)\n```"],
+    ["a blockquote", "> quoted"],
+    ["a bullet list", "- one\n- two"],
+    ["a task list", "- [ ] todo"],
+    ["an ordered list", "1. first\n2. second"],
+    ["a thematic break", "before\n\n---\n\nafter"],
+    ["a link", "see [docs](https://example.com) for more"],
+    ["an image", "![alt](https://example.com/a.png)"],
+    ["bold text", "this is **important** here"],
+    ["italic text", "this is *subtle* here"],
+    ["underscore italic", "this is _subtle_ here"],
+    ["strikethrough", "this is ~~gone~~ now"],
+    ["inline code", "run `pnpm test` first"],
+    ["a table", "| Lang | Year |\n| --- | --- |\n| Go | 2009 |"],
+  ])("should detect %s", (_name, text) => {
+    expect(looksLikeMarkdown(text)).toBe(true);
+  });
+
+  it.each([
+    ["a plain sentence", "Just some ordinary text."],
+    ["multi-line plain text", "台北市信義區\n松高路 11 號\n02-1234-5678"],
+    ["a bare url", "https://example.com/a/b?c=d"],
+    ["arithmetic with asterisks", "the area is a * b * c"],
+    ["snake_case identifiers", "call user_name_field then user_id_field"],
+    ["console output with a pipe", "cat file | grep foo"],
+    ["a single pipe row without a delimiter", "| not | really | a table |"],
+    ["an empty string", ""],
+  ])("should leave %s alone", (_name, text) => {
+    expect(looksLikeMarkdown(text)).toBe(false);
+  });
+
+  it("should require both halves of a table before claiming one", () => {
+    // The delimiter row is what separates a real table from piped output.
+    expect(looksLikeMarkdown("| a | b |\n| c | d |")).toBe(false);
+    expect(looksLikeMarkdown("| a | b |\n| --- | --- |\n| c | d |")).toBe(true);
+  });
+});
+
+function editorWith(content = "") {
+  return new Editor({ extensions: createExtensions({ placeholder: "" }), content });
+}
+
+describe("isVerbatimContext", () => {
+  it("should report a caret in ordinary text as parseable", () => {
+    const editor = editorWith("<p>hello</p>");
+    editor.commands.setTextSelection(2);
+    expect(isVerbatimContext(editor.state)).toBe(false);
+    editor.destroy();
+  });
+
+  it("should protect the inside of a code block", () => {
+    // Pasting into a code block is how code gets quoted; rewriting it there
+    // would destroy the very thing being pasted.
+    const editor = editorWith("<pre><code>print(1)</code></pre>");
+    editor.commands.setTextSelection(3);
+    expect(isVerbatimContext(editor.state)).toBe(true);
+    editor.destroy();
+  });
+
+  it("should protect an inline code span", () => {
+    const editor = editorWith("<p><code>npm i</code></p>");
+    editor.commands.setTextSelection(3);
+    expect(isVerbatimContext(editor.state)).toBe(true);
+    editor.destroy();
+  });
+});
+
+// The whole point: markdown handed to insertContent has to come back as real
+// nodes, and survive the round-trip to the markdown the form stores.
+describe("markdown insertion", () => {
+  it("should turn pasted markdown into real nodes", () => {
+    const editor = editorWith();
+    editor.commands.insertContent(
+      "| Lang | Year |\n| --- | --- |\n| Go | 2009 |\n\nA [link](https://example.com) and **bold**.\n\n- one\n- two",
+      { contentType: "markdown" },
+    );
+
+    const html = editor.getHTML();
+    expect(html).toContain("<table");
+    expect(html).toContain('href="https://example.com"');
+    expect(html).toContain("<strong");
+    expect(html).toContain("<ul");
+    editor.destroy();
+  });
+
+  it("should round-trip back to equivalent markdown", () => {
+    // The form stores markdown, so a paste that renders correctly but
+    // serialises to something else would corrupt the note on save.
+    const editor = editorWith();
+    editor.commands.insertContent("## Title\n\n- one\n- two\n\n`code` and **bold**", {
+      contentType: "markdown",
+    });
+
+    const md = editor.getMarkdown();
+    expect(md).toContain("## Title");
+    expect(md).toContain("- one");
+    expect(md).toContain("`code`");
+    expect(md).toContain("**bold**");
+    editor.destroy();
+  });
+});
+
+/**
+ * A paste event shaped like the real one. `types` matters: a copy from a web
+ * page carries text/html alongside the plain text, and that is the case the
+ * handler has to decline.
+ */
+function pasteEvent(data: { text?: string; html?: string; files?: readonly File[] }) {
+  const types: string[] = [];
+  if (data.text !== undefined) types.push("text/plain");
+  if (data.html !== undefined) types.push("text/html");
+  // Answering only for the types actually on the clipboard matters: the code
+  // block extension asks for `vscode-editor-data` and JSON.parses whatever
+  // comes back, so a catch-all stub throws before this handler is reached.
+  const values: Record<string, string | undefined> = {
+    "text/plain": data.text,
+    "text/html": data.html,
+  };
+  return {
+    clipboardData: {
+      types,
+      files: data.files ?? [],
+      getData: (type: string) => values[type] ?? "",
+    },
+    preventDefault: vi.fn(),
+  } as unknown as ClipboardEvent;
+}
+
+/** Dispatch through ProseMirror itself, so plugin ordering is under test too. */
+function paste(editor: Editor, event: ClipboardEvent): boolean {
+  return (
+    editor.view.someProp("handlePaste", (fn) =>
+      fn(editor.view, event, editor.state.selection.content()),
+    ) ?? false
+  );
+}
+
+describe("handlePaste", () => {
+  it("should convert pasted markdown into nodes", () => {
+    const editor = editorWith();
+
+    expect(paste(editor, pasteEvent({ text: "| a | b |\n| --- | --- |\n| 1 | 2 |" }))).toBe(true);
+    expect(editor.getHTML()).toContain("<table");
+    editor.destroy();
+  });
+
+  it("should decline plain text so it pastes the way it always did", () => {
+    const editor = editorWith();
+
+    expect(paste(editor, pasteEvent({ text: "line one\nline two" }))).toBe(false);
+    editor.destroy();
+  });
+
+  it("should decline when the clipboard also carries html", () => {
+    // A copy from a web page: ProseMirror's own parsing knows the source
+    // structure and beats re-deriving it from the plain-text fallback.
+    const editor = editorWith();
+
+    const handled = paste(editor, pasteEvent({ text: "# Title", html: "<h1>Title</h1>" }));
+
+    expect(handled).toBe(false);
+    editor.destroy();
+  });
+
+  it("should decline inside a code block even when the text is markdown", () => {
+    const editor = editorWith("<pre><code>x</code></pre>");
+    editor.commands.setTextSelection(2);
+
+    expect(paste(editor, pasteEvent({ text: "# Title" }))).toBe(false);
+    editor.destroy();
+  });
+
+  it("should leave a clipboard image to the upload plugin", () => {
+    const editor = editorWith();
+    const file = new File(["x"], "shot.png", { type: "image/png" });
+
+    // Not asserting the return value — the upload plugin claims this one. What
+    // matters is that no markdown was inserted in its place.
+    paste(editor, pasteEvent({ text: "# Title", files: [file] }));
+
+    expect(editor.getHTML()).not.toContain("<h1");
+    editor.destroy();
+  });
+});
