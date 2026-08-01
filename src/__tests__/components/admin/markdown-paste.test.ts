@@ -5,9 +5,15 @@
 // text that is not markdown has to paste exactly as it did before, because
 // parsing it collapses single newlines and turns stray `*` into emphasis.
 
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import { Editor } from "@tiptap/react";
-import { looksLikeMarkdown, isVerbatimContext } from "@/components/admin/editor/markdown-paste";
+import {
+  looksLikeMarkdown,
+  isVerbatimContext,
+  plainTextContent,
+  resetPlainPasteRequest,
+  PLAIN_PASTE_WINDOW_MS,
+} from "@/components/admin/editor/markdown-paste";
 import { createExtensions } from "@/components/admin/editor/extensions";
 
 // The image-paste case below hands a real File to the upload plugin, and
@@ -63,6 +69,11 @@ describe("looksLikeMarkdown", () => {
     expect(looksLikeMarkdown("| a | b |\n| c | d |")).toBe(false);
     expect(looksLikeMarkdown("| a | b |\n| --- | --- |\n| c | d |")).toBe(true);
   });
+});
+
+afterEach(() => {
+  resetPlainPasteRequest();
+  vi.useRealTimers();
 });
 
 function editorWith(content = "") {
@@ -210,6 +221,140 @@ describe("handlePaste", () => {
     // mid-flight would dispatch onto a torn-down view.
     await vi.waitFor(() => expect(editor.getHTML()).toContain("<img"));
     expect(editor.getHTML()).not.toContain("<h1");
+    editor.destroy();
+  });
+});
+
+describe("plainTextContent", () => {
+  it("should split blank-line-separated blocks into paragraphs", () => {
+    expect(plainTextContent("one\n\ntwo")).toEqual([
+      { type: "paragraph", content: [{ type: "text", text: "one" }] },
+      { type: "paragraph", content: [{ type: "text", text: "two" }] },
+    ]);
+  });
+
+  it("should keep single newlines as hard breaks inside one paragraph", () => {
+    // Plain text pasted from a terminal or an address block is laid out by its
+    // line breaks; collapsing them would lose the only structure it has.
+    expect(plainTextContent("one\ntwo")).toEqual([
+      {
+        type: "paragraph",
+        content: [
+          { type: "text", text: "one" },
+          { type: "hardBreak" },
+          { type: "text", text: "two" },
+        ],
+      },
+    ]);
+  });
+
+  it("should emit no empty text node for a blank line", () => {
+    // An empty text node is not a valid ProseMirror node.
+    const [paragraph] = plainTextContent("one\n\ntwo");
+    expect(paragraph.content?.every((node) => node.type !== "text" || node.text)).toBe(true);
+  });
+
+  it("should carry markdown through untouched", () => {
+    const [paragraph] = plainTextContent("# Title");
+    expect(paragraph).toEqual({
+      type: "paragraph",
+      content: [{ type: "text", text: "# Title" }],
+    });
+  });
+});
+
+// ⌘⇧V is the one escape hatch from everything else this file does: it has to
+// beat the markdown conversion AND ProseMirror's html parsing.
+describe("plain paste", () => {
+  /**
+   * Press the shortcut the way ProseMirror delivers it.
+   *
+   * ctrlKey, not metaKey: prosemirror-keymap resolves `Mod-` against
+   * `navigator.platform`, which jsdom reports as an empty string, so the
+   * binding normalises to Ctrl- here and to Meta- on a real Mac.
+   */
+  function pressPlainPaste(editor: Editor) {
+    const handled = editor.view.someProp("handleKeyDown", (fn) =>
+      fn(editor.view, new KeyboardEvent("keydown", { key: "v", ctrlKey: true, shiftKey: true })),
+    );
+    // The shortcut must NOT claim the event — the browser still has to run its
+    // own paste for a clipboard event to arrive at all.
+    expect(handled ?? false).toBe(false);
+  }
+
+  it("should paste markdown as literal text instead of converting it", () => {
+    const editor = editorWith();
+    pressPlainPaste(editor);
+
+    expect(paste(editor, pasteEvent({ text: "# Title" }))).toBe(true);
+
+    const html = editor.getHTML();
+    expect(html).not.toContain("<h1");
+    expect(html).toContain("# Title");
+    editor.destroy();
+  });
+
+  it("should drop formatting when the clipboard carries html", () => {
+    // The case the issue was originally about: pasting from a browser drags
+    // marks in every time.
+    const editor = editorWith();
+    pressPlainPaste(editor);
+
+    expect(
+      paste(editor, pasteEvent({ text: "bold text", html: "<p><strong>bold text</strong></p>" })),
+    ).toBe(true);
+
+    const html = editor.getHTML();
+    expect(html).not.toContain("<strong");
+    expect(html).toContain("bold text");
+    editor.destroy();
+  });
+
+  it("should apply to one paste only", () => {
+    const editor = editorWith();
+    pressPlainPaste(editor);
+    paste(editor, pasteEvent({ text: "# One" }));
+
+    // Second paste, no second keystroke: markdown converts again.
+    paste(editor, pasteEvent({ text: "# Two" }));
+
+    const html = editor.getHTML();
+    expect(html).toContain("# One");
+    expect(html).toContain("<h1");
+    editor.destroy();
+  });
+
+  it("should lapse when no paste follows the keystroke", () => {
+    // A ⌘⇧V that the platform never turns into a paste must not silently
+    // change whatever gets pasted minutes later.
+    vi.useFakeTimers();
+    const editor = editorWith();
+    pressPlainPaste(editor);
+    vi.advanceTimersByTime(PLAIN_PASTE_WINDOW_MS + 1);
+
+    paste(editor, pasteEvent({ text: "# Title" }));
+
+    expect(editor.getHTML()).toContain("<h1");
+    editor.destroy();
+  });
+
+  it("should leave a code block to ProseMirror's verbatim insert", () => {
+    const editor = editorWith("<pre><code>x</code></pre>");
+    editor.commands.setTextSelection(2);
+    pressPlainPaste(editor);
+
+    expect(paste(editor, pasteEvent({ text: "# Title" }))).toBe(false);
+    editor.destroy();
+  });
+
+  it("should still leave a clipboard image to the upload plugin", () => {
+    const editor = editorWith();
+    const file = new File(["x"], "shot.png", { type: "image/png" });
+    pressPlainPaste(editor);
+
+    paste(editor, pasteEvent({ text: "# Title", files: [file] }));
+
+    expect(editor.getHTML()).not.toContain("# Title");
     editor.destroy();
   });
 });
