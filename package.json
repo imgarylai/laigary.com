@@ -27,7 +27,7 @@
   "dependencies": {
     "@aarkue/tiptap-math-extension": "1.4.0",
     "@base-ui/react": "1.6.0",
-    "@cloudflare/vite-plugin": "1.48.0",
+    "@cloudflare/vite-plugin": "1.49.0",
     "@fontsource-variable/jetbrains-mono": "5.3.0",
     "@hookform/resolvers": "5.5.7",
     "@phosphor-icons/react": "2.1.10",
@@ -134,7 +134,7 @@
     "typescript": "7.0.2",
     "vite": "8.2.0",
     "vitest": "4.1.10",
-    "wrangler": "4.115.0"
+    "wrangler": "4.116.0"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
