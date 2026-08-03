@@ -109,6 +109,16 @@ describe("listNotesImpl", () => {
     expect(result.total).toBe(1);
   });
 
+  it("passes a known sort column through to the query", async () => {
+    const section = await seedSection({ slug: "coding", label: "Coding" });
+    await seedNote(section.id, { slug: "a", title: "Charlie" });
+    await seedNote(section.id, { slug: "b", title: "Alpha" });
+    const { listNotesImpl } = await import("@/server/admin/reads");
+
+    const result = await listNotesImpl({ sort: "title", dir: "asc" });
+    expect(result.items.map((n) => n.title)).toEqual(["Alpha", "Charlie"]);
+  });
+
   it("falls back to the default ordering for a sort column it does not know", async () => {
     // `?sort=` is hand-editable. An unknown column is a stale URL, not a
     // request worth 500-ing over.

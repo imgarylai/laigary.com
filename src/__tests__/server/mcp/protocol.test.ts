@@ -265,6 +265,20 @@ describe("write tools", () => {
     expect((await getInterviewNote("coding", "gas"))?.title).toBe("New");
   });
 
+  it("update_interview_note reports a slug pair that matches no note", async () => {
+    // The tool addresses notes by (section, slug) but edits by id, so a miss
+    // has to come back as a tool error rather than an update of nothing.
+    const section = await seedSection({ slug: "coding" });
+    await seedNote(section.id, { slug: "gas", title: "Gas" });
+
+    const result = await callTool(
+      "update_interview_note",
+      { section: "coding", slug: "absent", title: "New" },
+      true,
+    );
+    expect(result.isError).toBe(true);
+  });
+
   it("surfaces domain conflicts as tool errors", async () => {
     await seedPost({ slug: "taken" });
     const result = await callTool(

@@ -118,3 +118,91 @@ describe("DataTable", () => {
     expect(onPageChange).not.toHaveBeenCalled();
   });
 });
+
+// Server-driven mode: `data` is one page the server already filtered and
+// sorted, and `rowCount` is what the pager divides. The table has to stop
+// doing all three itself, or it filters an already-filtered page and pages a
+// list it can only see 20 rows of.
+describe("DataTable server-driven mode", () => {
+  it("pages by rowCount rather than by the rows it was handed", () => {
+    render(
+      <DataTable
+        columns={columns}
+        data={data}
+        searchPlaceholder="search"
+        pageSize={20}
+        rowCount={100}
+      />,
+    );
+    // 3 rows on screen but 100 behind them: 5 pages, not 1.
+    expect(screen.getByText("pagination.page 1/5")).toBeDefined();
+  });
+
+  it("renders the page it was given instead of re-filtering it", () => {
+    render(
+      <DataTable
+        columns={columns}
+        data={data}
+        searchPlaceholder="search"
+        globalFilter="alph"
+        onGlobalFilterChange={vi.fn()}
+        rowCount={3}
+      />,
+    );
+    // A client-side filter would cut this to the one matching row. The server
+    // already applied the filter, so every row it returned must be shown.
+    expect(bodyRowText()).toHaveLength(3);
+  });
+
+  it("reports a sort instead of reordering the page itself", () => {
+    const onSortingChange = vi.fn();
+    render(
+      <DataTable
+        columns={columns}
+        data={data}
+        searchPlaceholder="search"
+        sorting={[]}
+        onSortingChange={onSortingChange}
+        rowCount={100}
+      />,
+    );
+
+    fireEvent.click(screen.getByText("Name"));
+
+    expect(onSortingChange).toHaveBeenCalledWith([{ id: "name", desc: false }]);
+    // Unsorted locally — the next page from the server is what reorders it.
+    expect(bodyRowText()?.[0]).toContain("Bravo");
+  });
+
+  it("re-seeds the search box when the filter changes from outside", () => {
+    // Back/forward navigation rewrites `q` without anyone typing. The box keeps
+    // a draft copy for the debounce, so it has to notice that and catch up —
+    // otherwise it shows the previous search forever.
+    const { rerender } = render(
+      <DataTable
+        columns={columns}
+        data={data}
+        searchPlaceholder="search"
+        globalFilter="alph"
+        onGlobalFilterChange={vi.fn()}
+        filterDebounceMs={300}
+        rowCount={3}
+      />,
+    );
+    expect((screen.getByPlaceholderText("search") as HTMLInputElement).value).toBe("alph");
+
+    rerender(
+      <DataTable
+        columns={columns}
+        data={data}
+        searchPlaceholder="search"
+        globalFilter=""
+        onGlobalFilterChange={vi.fn()}
+        filterDebounceMs={300}
+        rowCount={3}
+      />,
+    );
+
+    expect((screen.getByPlaceholderText("search") as HTMLInputElement).value).toBe("");
+  });
+});
