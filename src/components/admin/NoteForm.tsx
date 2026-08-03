@@ -17,7 +17,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { useI18n } from "@/i18n/I18nProvider";
 import { useSaveShortcut } from "@/hooks/use-save-shortcut";
-import { slugify } from "@/lib/slug";
+import { useSlugAutofill } from "@/hooks/use-slug-autofill";
 import { TagsCombobox, type TagOption } from "./TagsCombobox";
 import { TiptapEditor } from "./TiptapEditor";
 import { EditorShell } from "./EditorShell";
@@ -80,11 +80,13 @@ export function NoteForm({
     },
   });
 
-  function handleTitleChange(title: string) {
-    if (!isEdit && !form.formState.dirtyFields.slug) {
-      form.setValue("slug", slugify(title));
-    }
-  }
+  // Auto-fill the slug from the title until the author edits it by hand, and
+  // only for new notes (never rewrite an existing note's public URL).
+  const slugAutofill = useSlugAutofill({
+    enabled: !isEdit,
+    getSlug: () => form.getValues("slug"),
+    setSlug: (value) => form.setValue("slug", value),
+  });
 
   const submit = form.handleSubmit(async (values) => {
     // Split the two paths so the create result's `data` narrows (update returns
@@ -118,6 +120,8 @@ export function NoteForm({
         return;
       }
       toast.success(t("admin.noteCreated"));
+      // The note has a saved slug now; the title is free to keep changing.
+      slugAutofill.stop();
       // Clears isDirty, which the save-state indicator and the navigation guard
       // both read. Without it the form stays dirty forever after the first
       // edit, so the guard would block the redirect this save is about to make.
@@ -150,7 +154,7 @@ export function NoteForm({
             {...field}
             onChange={(e) => {
               field.onChange(e);
-              handleTitleChange(e.target.value);
+              slugAutofill.fromTitle(e.target.value);
             }}
           />
           <FieldError errors={[fieldState.error]} />

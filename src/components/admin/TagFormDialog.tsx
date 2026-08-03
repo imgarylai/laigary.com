@@ -16,7 +16,7 @@ import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/i18n/I18nProvider";
-import { slugify } from "@/lib/slug";
+import { useSlugAutofill } from "@/hooks/use-slug-autofill";
 import { createTagFn, updateTagFn } from "@/server/admin/tags";
 
 const schema = z.object({
@@ -42,8 +42,18 @@ export function TagFormDialog({ tag }: { tag?: { id: string; name: string; slug:
     defaultValues: { name: tag?.name ?? "", slug: tag?.slug ?? "" },
   });
 
+  // Auto-fill slug from name for new tags until edited by hand.
+  const slugAutofill = useSlugAutofill({
+    enabled: !isEdit,
+    getSlug: () => form.getValues("slug"),
+    setSlug: (value) => form.setValue("slug", value),
+  });
+
   function reset() {
     form.reset({ name: tag?.name ?? "", slug: tag?.slug ?? "" });
+    // The dialog is reused for the next new tag, so the autofill has to forget
+    // the tag just typed along with the field values.
+    slugAutofill.reset();
   }
 
   const onSubmit = form.handleSubmit(async (values) => {
@@ -87,12 +97,7 @@ export function TagFormDialog({ tag }: { tag?: { id: string; name: string; slug:
               id="tag-name"
               placeholder={t("tagForm.namePlaceholder")}
               {...form.register("name", {
-                onChange: (e) => {
-                  // Auto-fill slug from name for new tags until edited by hand.
-                  if (!isEdit && !form.formState.dirtyFields.slug) {
-                    form.setValue("slug", slugify(e.target.value));
-                  }
-                },
+                onChange: (e) => slugAutofill.fromTitle(e.target.value),
               })}
             />
             <FieldError errors={[form.formState.errors.name]} />

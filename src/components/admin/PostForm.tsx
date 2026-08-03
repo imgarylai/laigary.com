@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/i18n/I18nProvider";
 import { useSaveShortcut } from "@/hooks/use-save-shortcut";
-import { slugify } from "@/lib/slug";
+import { useSlugAutofill } from "@/hooks/use-slug-autofill";
 import { createPostFn, updatePostFn } from "@/server/admin/posts";
 import {
   postFormSchema,
@@ -57,15 +57,13 @@ export function PostForm({
     },
   });
 
-  const slugManuallyEdited = form.formState.dirtyFields.slug;
-
-  function handleTitleChange(title: string) {
-    // Auto-fill the slug from the title until the author edits it by hand, and
-    // only for new posts (never rewrite an existing post's public URL).
-    if (!slugManuallyEdited && !isEdit) {
-      form.setValue("slug", slugify(title));
-    }
-  }
+  // Auto-fill the slug from the title until the author edits it by hand, and
+  // only for new posts (never rewrite an existing post's public URL).
+  const slugAutofill = useSlugAutofill({
+    enabled: !isEdit,
+    getSlug: () => form.getValues("slug"),
+    setSlug: (value) => form.setValue("slug", value),
+  });
 
   async function onSubmit(values: PostFormValues) {
     const result = postId
@@ -78,6 +76,9 @@ export function PostForm({
     }
 
     toast.success(isEdit ? t("postForm.postUpdated") : t("postForm.postCreated"));
+
+    // The post has a saved slug now; the title is free to keep changing.
+    slugAutofill.stop();
 
     // Clears isDirty, which the save-state indicator and the navigation guard
     // both read. Without it the form stays dirty forever after the first edit,
@@ -168,7 +169,7 @@ export function PostForm({
       >
         {({ showPreview }) => (
           <>
-            <TitleField control={form.control} onValueChange={handleTitleChange} />
+            <TitleField control={form.control} onValueChange={slugAutofill.fromTitle} />
             <ContentField control={form.control} showPreview={showPreview} />
           </>
         )}

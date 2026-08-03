@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/i18n/I18nProvider";
-import { slugify } from "@/lib/slug";
+import { useSlugAutofill } from "@/hooks/use-slug-autofill";
 import { createSectionFn, updateSectionFn } from "@/server/admin/interview";
 
 const schema = z.object({
@@ -62,6 +62,20 @@ export function SectionFormDialog({ section }: { section?: Section }) {
     defaultValues: defaults,
   });
 
+  // Auto-fill the slug from the label for new sections until edited by hand.
+  const slugAutofill = useSlugAutofill({
+    enabled: !isEdit,
+    getSlug: () => form.getValues("slug"),
+    setSlug: (value) => form.setValue("slug", value),
+  });
+
+  // The dialog is reused for the next new section, so the autofill has to
+  // forget the section just typed along with the field values.
+  function reset() {
+    form.reset(defaults);
+    slugAutofill.reset();
+  }
+
   const onSubmit = form.handleSubmit(async (values) => {
     const result = isEdit
       ? await updateSectionFn({
@@ -81,7 +95,7 @@ export function SectionFormDialog({ section }: { section?: Section }) {
     }
     toast.success(isEdit ? t("admin.sectionUpdated") : t("admin.sectionCreated"));
     setOpen(false);
-    form.reset(defaults);
+    reset();
     router.invalidate();
   });
 
@@ -90,7 +104,7 @@ export function SectionFormDialog({ section }: { section?: Section }) {
       open={open}
       onOpenChange={(v) => {
         setOpen(v);
-        if (!v) form.reset(defaults);
+        if (!v) reset();
       }}
     >
       <DialogTrigger
@@ -113,11 +127,7 @@ export function SectionFormDialog({ section }: { section?: Section }) {
               <Input
                 id="section-label"
                 {...form.register("label", {
-                  onChange: (e) => {
-                    if (!isEdit && !form.formState.dirtyFields.slug) {
-                      form.setValue("slug", slugify(e.target.value));
-                    }
-                  },
+                  onChange: (e) => slugAutofill.fromTitle(e.target.value),
                 })}
               />
               <FieldError errors={[form.formState.errors.label]} />
