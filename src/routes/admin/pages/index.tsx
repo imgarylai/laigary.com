@@ -3,10 +3,12 @@ import { listPagesFn } from "@/server/admin/reads";
 import { parseListSearch } from "@/components/admin/list-search";
 import { PagesListClient } from "@/components/admin/PagesListClient";
 import { useI18n } from "@/i18n/I18nProvider";
+import { adminPageTitle } from "@/components/admin/admin-location";
 
 export const Route = createFileRoute("/admin/pages/")({
   validateSearch: parseListSearch,
   loader: () => listPagesFn(),
+  head: (ctx) => ({ meta: [{ title: adminPageTitle(ctx) }] }),
   component: PagesPage,
 });
 

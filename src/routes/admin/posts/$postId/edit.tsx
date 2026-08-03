@@ -1,6 +1,7 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { editPostDataFn } from "@/server/admin/reads";
 import { PostForm } from "@/components/admin/PostForm";
+import { adminPageTitle } from "@/components/admin/admin-location";
 
 export const Route = createFileRoute("/admin/posts/$postId/edit")({
   loader: async ({ params }) => {
@@ -8,6 +9,9 @@ export const Route = createFileRoute("/admin/posts/$postId/edit")({
     if (!data.post) throw notFound();
     return { post: data.post, tags: data.tags, ogBrand: data.ogBrand };
   },
+  // The post's own title leads the tab — a dozen open editors are otherwise
+  // indistinguishable, which is the whole reason this route names itself.
+  head: (ctx) => ({ meta: [{ title: adminPageTitle(ctx, ctx.loaderData?.post.title) }] }),
   component: EditPostPage,
 });
 

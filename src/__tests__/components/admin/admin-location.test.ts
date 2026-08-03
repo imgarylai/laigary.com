@@ -3,8 +3,10 @@
 // and between them the editor gave no indication of where you were.
 
 import { describe, it, expect } from "vitest";
+import { defaultLocale, getTranslation } from "@/i18n";
 import {
   ADMIN_BREADCRUMB_KEYS,
+  adminPageTitle,
   breadcrumbKeyFor,
   isSectionActive,
 } from "@/components/admin/admin-location";
@@ -53,6 +55,45 @@ describe("breadcrumbKeyFor", () => {
     for (const [route, key] of Object.entries(ADMIN_BREADCRUMB_KEYS)) {
       expect(key, route).toMatch(/^admin\./);
     }
+  });
+});
+
+describe("adminPageTitle", () => {
+  /** The slice of a head() context a title is built from: the leaf's pattern. */
+  const ctx = (fullPath: string) => ({ match: { fullPath } });
+
+  it("should lead with the entity when editing one", () => {
+    // Subject first is the whole point: browsers truncate the tail, so with the
+    // section leading, every open editor tab would read "Edit Post…".
+    expect(adminPageTitle(ctx("/admin/posts/$postId/edit"), "Hello World")).toBe(
+      "Hello World · Edit Post · Admin",
+    );
+  });
+
+  it("should name the section when there is no entity", () => {
+    expect(adminPageTitle(ctx("/admin/posts/"))).toBe("Posts · Admin");
+    expect(adminPageTitle(ctx("/admin/settings"))).toBe("Settings · Admin");
+  });
+
+  it("should drop the entity segment when a draft has no title yet", () => {
+    // A brand-new post is saved untitled; " · · Admin" would be worse than the
+    // plain section name.
+    expect(adminPageTitle(ctx("/admin/posts/$postId/edit"), "   ")).toBe("Edit Post · Admin");
+    expect(adminPageTitle(ctx("/admin/posts/$postId/edit"), null)).toBe("Edit Post · Admin");
+  });
+
+  it("should read its labels from the default locale's dictionary", () => {
+    // Not the request locale: head() runs outside React, and the router gives it
+    // pre-load snapshots of the ancestor matches, so the locale the root loader
+    // resolved is not readable there. Hardcoding the copy here instead would
+    // fork the labels from the ones the header renders.
+    expect(adminPageTitle(ctx("/admin/interview/notes/"))).toBe(
+      `${getTranslation(defaultLocale, "admin.interviewNotes")} · ${getTranslation(defaultLocale, "admin.admin")}`,
+    );
+  });
+
+  it("should still identify the admin for a route with no label", () => {
+    expect(adminPageTitle(ctx("/admin/somewhere-new"))).toBe("Admin");
   });
 });
 

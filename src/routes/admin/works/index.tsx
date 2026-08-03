@@ -3,10 +3,12 @@ import { listWorksFn } from "@/server/admin/reads";
 import { parseWorksListSearch } from "./-list-search";
 import { WorksListClient } from "@/components/admin/WorksListClient";
 import { useI18n } from "@/i18n/I18nProvider";
+import { adminPageTitle } from "@/components/admin/admin-location";
 
 export const Route = createFileRoute("/admin/works/")({
   validateSearch: parseWorksListSearch,
   loader: () => listWorksFn(),
+  head: (ctx) => ({ meta: [{ title: adminPageTitle(ctx) }] }),
   component: WorksPage,
 });
 
