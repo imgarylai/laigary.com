@@ -47,6 +47,7 @@ export {
 
 export type {
   InterviewNoteWithTags,
+  LiveInterviewNote,
   AdminInterviewNote,
   PublishedNoteIndexEntry,
   NoteByTag,

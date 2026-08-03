@@ -65,7 +65,7 @@ export async function interviewDataImpl() {
       slug: n.slug,
       title: n.title,
       section: sections.find((s) => s.id === n.sectionId)?.slug ?? "",
-      date: unixToIso(n.publishedAt ?? n.createdAt),
+      date: unixToIso(n.publishedAt),
       minutes: computeReadingTime(n.contentMd),
       tags: n.tags.map((t) => t.name),
     })),
@@ -132,7 +132,7 @@ export async function sectionDataImpl(data: { slug: string; page?: number; tag?:
   const toRow = (n: (typeof notes)[number]) => ({
     slug: n.slug,
     title: n.title,
-    date: unixToIso(n.publishedAt ?? n.createdAt),
+    date: unixToIso(n.publishedAt),
     minutes: computeReadingTime(n.contentMd),
   });
 
@@ -178,7 +178,7 @@ export async function noteDataImpl(data: { section: string; slug: string }) {
       section: data.section,
       sectionLabel: section?.label ?? data.section,
       title: note.title,
-      date: unixToIso(note.publishedAt ?? note.createdAt),
+      date: unixToIso(note.publishedAt),
       updatedAt: unixToIso(note.updatedAt),
       minutes: computeReadingTime(note.contentMd),
       // Keep {name, slug} so the detail page can link tags to the unified
