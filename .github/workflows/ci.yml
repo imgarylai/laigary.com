@@ -24,6 +24,10 @@ name: CI
 #   CODECOV_TOKEN          — Codecov upload token (coverage from the Test leg).
 #   MCP_ADMIN_TOKEN        — bearer token for the MCP write tools (/mcp). Optional:
 #                            without it the MCP server runs read-only.
+#   GOOGLE_CLIENT_ID       — Google OAuth client id for the Access "Sign in with
+#   GOOGLE_CLIENT_SECRET     Google" IdP. Optional: without both, the IdP block in
+#                            alchemy.run.ts is skipped and Access keeps accepting
+#                            every account IdP.
 on:
   push:
     branches: [main]
@@ -108,6 +112,8 @@ jobs:
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           MCP_ADMIN_TOKEN: ${{ secrets.MCP_ADMIN_TOKEN }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
 
   deploy:
     name: Deploy
@@ -138,3 +144,7 @@ jobs:
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           MCP_ADMIN_TOKEN: ${{ secrets.MCP_ADMIN_TOKEN }}
+          # Google OAuth IdP credentials, baked into the Access IdP via
+          # alchemy.secret. Without them the IdP block is skipped.
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
