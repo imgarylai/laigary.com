@@ -57,9 +57,7 @@
       "indexes": {
         "idx_interview_note_tags_tag_id": {
           "name": "idx_interview_note_tags_tag_id",
-          "columns": [
-            "tag_id"
-          ],
+          "columns": ["tag_id"],
           "isUnique": false
         }
       },
@@ -68,12 +66,8 @@
           "name": "interview_note_tags_note_id_interview_notes_id_fk",
           "tableFrom": "interview_note_tags",
           "tableTo": "interview_notes",
-          "columnsFrom": [
-            "note_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["note_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -81,22 +75,15 @@
           "name": "interview_note_tags_tag_id_tags_id_fk",
           "tableFrom": "interview_note_tags",
           "tableTo": "tags",
-          "columnsFrom": [
-            "tag_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["tag_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
         "interview_note_tags_note_id_tag_id_pk": {
-          "columns": [
-            "note_id",
-            "tag_id"
-          ],
+          "columns": ["note_id", "tag_id"],
           "name": "interview_note_tags_note_id_tag_id_pk"
         }
       },
@@ -192,41 +179,27 @@
       "indexes": {
         "idx_interview_notes_section": {
           "name": "idx_interview_notes_section",
-          "columns": [
-            "section_id"
-          ],
+          "columns": ["section_id"],
           "isUnique": false
         },
         "idx_interview_notes_status_published": {
           "name": "idx_interview_notes_status_published",
-          "columns": [
-            "status",
-            "published_at"
-          ],
+          "columns": ["status", "published_at"],
           "isUnique": false
         },
         "idx_interview_notes_section_listing": {
           "name": "idx_interview_notes_section_listing",
-          "columns": [
-            "section_id",
-            "status",
-            "pinned",
-            "published_at"
-          ],
+          "columns": ["section_id", "status", "pinned", "published_at"],
           "isUnique": false
         },
         "idx_interview_notes_updated_at": {
           "name": "idx_interview_notes_updated_at",
-          "columns": [
-            "updated_at"
-          ],
+          "columns": ["updated_at"],
           "isUnique": false
         },
         "idx_interview_notes_published_at": {
           "name": "idx_interview_notes_published_at",
-          "columns": [
-            "published_at"
-          ],
+          "columns": ["published_at"],
           "isUnique": false
         }
       },
@@ -235,12 +208,8 @@
           "name": "interview_notes_section_id_interview_sections_id_fk",
           "tableFrom": "interview_notes",
           "tableTo": "interview_sections",
-          "columnsFrom": [
-            "section_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["section_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -299,9 +268,7 @@
       "indexes": {
         "interview_sections_slug_unique": {
           "name": "interview_sections_slug_unique",
-          "columns": [
-            "slug"
-          ],
+          "columns": ["slug"],
           "isUnique": true
         }
       },
@@ -353,16 +320,12 @@
       "indexes": {
         "pages_slug_unique": {
           "name": "pages_slug_unique",
-          "columns": [
-            "slug"
-          ],
+          "columns": ["slug"],
           "isUnique": true
         },
         "idx_pages_slug": {
           "name": "idx_pages_slug",
-          "columns": [
-            "slug"
-          ],
+          "columns": ["slug"],
           "isUnique": false
         }
       },
@@ -392,9 +355,7 @@
       "indexes": {
         "idx_post_tags_tag_id": {
           "name": "idx_post_tags_tag_id",
-          "columns": [
-            "tag_id"
-          ],
+          "columns": ["tag_id"],
           "isUnique": false
         }
       },
@@ -403,12 +364,8 @@
           "name": "post_tags_post_id_posts_id_fk",
           "tableFrom": "post_tags",
           "tableTo": "posts",
-          "columnsFrom": [
-            "post_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["post_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -416,22 +373,15 @@
           "name": "post_tags_tag_id_tags_id_fk",
           "tableFrom": "post_tags",
           "tableTo": "tags",
-          "columnsFrom": [
-            "tag_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["tag_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
         "post_tags_post_id_tag_id_pk": {
-          "columns": [
-            "post_id",
-            "tag_id"
-          ],
+          "columns": ["post_id", "tag_id"],
           "name": "post_tags_post_id_tag_id_pk"
         }
       },
@@ -526,24 +476,17 @@
       "indexes": {
         "posts_slug_unique": {
           "name": "posts_slug_unique",
-          "columns": [
-            "slug"
-          ],
+          "columns": ["slug"],
           "isUnique": true
         },
         "idx_posts_status_published": {
           "name": "idx_posts_status_published",
-          "columns": [
-            "status",
-            "published_at"
-          ],
+          "columns": ["status", "published_at"],
           "isUnique": false
         },
         "idx_posts_slug": {
           "name": "idx_posts_slug",
-          "columns": [
-            "slug"
-          ],
+          "columns": ["slug"],
           "isUnique": false
         }
       },
@@ -612,16 +555,12 @@
       "indexes": {
         "tags_name_unique": {
           "name": "tags_name_unique",
-          "columns": [
-            "name"
-          ],
+          "columns": ["name"],
           "isUnique": true
         },
         "tags_slug_unique": {
           "name": "tags_slug_unique",
-          "columns": [
-            "slug"
-          ],
+          "columns": ["slug"],
           "isUnique": true
         }
       },
@@ -680,9 +619,7 @@
       "indexes": {
         "uploads_r2_key_unique": {
           "name": "uploads_r2_key_unique",
-          "columns": [
-            "r2_key"
-          ],
+          "columns": ["r2_key"],
           "isUnique": true
         }
       },
@@ -712,9 +649,7 @@
       "indexes": {
         "idx_work_tags_tag_id": {
           "name": "idx_work_tags_tag_id",
-          "columns": [
-            "tag_id"
-          ],
+          "columns": ["tag_id"],
           "isUnique": false
         }
       },
@@ -723,12 +658,8 @@
           "name": "work_tags_work_id_works_id_fk",
           "tableFrom": "work_tags",
           "tableTo": "works",
-          "columnsFrom": [
-            "work_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["work_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -736,22 +667,15 @@
           "name": "work_tags_tag_id_tags_id_fk",
           "tableFrom": "work_tags",
           "tableTo": "tags",
-          "columnsFrom": [
-            "tag_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["tag_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
         "work_tags_work_id_tag_id_pk": {
-          "columns": [
-            "work_id",
-            "tag_id"
-          ],
+          "columns": ["work_id", "tag_id"],
           "name": "work_tags_work_id_tag_id_pk"
         }
       },
@@ -883,24 +807,17 @@
       "indexes": {
         "works_slug_unique": {
           "name": "works_slug_unique",
-          "columns": [
-            "slug"
-          ],
+          "columns": ["slug"],
           "isUnique": true
         },
         "idx_works_status_published": {
           "name": "idx_works_status_published",
-          "columns": [
-            "status",
-            "published_at"
-          ],
+          "columns": ["status", "published_at"],
           "isUnique": false
         },
         "idx_works_slug": {
           "name": "idx_works_slug",
-          "columns": [
-            "slug"
-          ],
+          "columns": ["slug"],
           "isUnique": false
         }
       },

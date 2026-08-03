@@ -1006,3 +1006,91 @@ describe("scheduled notes", () => {
     expect(await searchPublishedInterviewNotes("tomorrow")).toEqual([]);
   });
 });
+
+// The admin table's DEFAULT ordering, which main's suite covers only for
+// explicitly-requested sorts — and which is now a separate branch in the query
+// (publish date needs the NULLs-last expression the other columns do not).
+describe("admin notes default ordering", () => {
+  it("should order by publish date, not by the last edit", async () => {
+    // The fixture violates the property: the older note is the one edited most
+    // recently, so an `updatedAt` default puts it first and a publish-date
+    // default does not.
+    const { createNote, updateNote, getAdminInterviewNotes } = await import("@/db/queries");
+    const section = await seedSection();
+    const now = Math.floor(Date.now() / 1000);
+    const old = await createNote({
+      slug: "old",
+      sectionId: section.id,
+      title: "Old",
+      status: "published",
+      publishedAt: now - 90_000,
+    });
+    await createNote({
+      slug: "recent",
+      sectionId: section.id,
+      title: "Recent",
+      status: "published",
+      publishedAt: now - 100,
+    });
+    await updateNote(old.id, { title: "Old, retouched" });
+
+    const { items } = await getAdminInterviewNotes();
+    expect(items.map((n) => n.slug)).toEqual(["recent", "old"]);
+  });
+
+  it("should sink undated drafts below the dated notes rather than floating them to the top", async () => {
+    // SQLite sorts NULL first on a DESC ordering, so the naive version puts
+    // every draft above the whole archive.
+    const { createNote, getAdminInterviewNotes } = await import("@/db/queries");
+    const section = await seedSection();
+    await createNote({ slug: "draft", sectionId: section.id, title: "Draft" });
+    await createNote({
+      slug: "live",
+      sectionId: section.id,
+      title: "Live",
+      status: "published",
+      publishedAt: 1_000_000,
+    });
+
+    const { items } = await getAdminInterviewNotes();
+    expect(items.map((n) => n.slug)).toEqual(["live", "draft"]);
+  });
+
+  it("should still sort oldest-first when the publish-date column is asked for ascending", async () => {
+    // The NULLs-last expression is fixed, but the date itself has to follow the
+    // requested direction — sharing one branch, it would be easy to pin both.
+    const { createNote, getAdminInterviewNotes } = await import("@/db/queries");
+    const section = await seedSection();
+    await createNote({
+      slug: "older",
+      sectionId: section.id,
+      title: "Older",
+      status: "published",
+      publishedAt: 1_000_000,
+    });
+    await createNote({
+      slug: "newer",
+      sectionId: section.id,
+      title: "Newer",
+      status: "published",
+      publishedAt: 2_000_000,
+    });
+
+    const { items } = await getAdminInterviewNotes({ sort: "publishedAt", dir: "asc" });
+    expect(items.map((n) => n.slug)).toEqual(["older", "newer"]);
+  });
+
+  it("should carry the publish date on the rows so the table can show what it sorted by", async () => {
+    const { createNote, getAdminInterviewNotes } = await import("@/db/queries");
+    const section = await seedSection();
+    await createNote({
+      slug: "live",
+      sectionId: section.id,
+      title: "Live",
+      status: "published",
+      publishedAt: 1_700_000_000,
+    });
+
+    expect((await getAdminInterviewNotes()).items[0].publishedAt).toBe(1_700_000_000);
+  });
+});
