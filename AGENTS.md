@@ -31,6 +31,20 @@ backfills go inside the generated file or via `drizzle-kit generate --custom`.
 - Merging to `main` auto-deploys to production via Alchemy. The deploy job only
   runs on the `main` ref; `workflow_dispatch` on another branch runs checks
   only (safe way to re-trigger CI when GitHub drops a `pull_request` event).
+  PRs get `Deploy (dry run)` — `alchemy run --stage prod`, Alchemy's read-only
+  phase — so credential, entrypoint and state-store breakage surfaces before
+  merge instead of on `main`. A PR that ADDS an Alchemy resource fails that leg
+  ("not found and running in 'read' phase") because prod state has nothing for
+  it yet; that one is expected, and the deploy leg creates it on merge.
+- Deploy-time dependency trap: alchemy's `safeFetch` does a bare
+  `import("undici")` for its fetch dispatcher, but declares undici only as a
+  devDependency — so at runtime it resolves through pnpm's hoisted store, and a
+  bump elsewhere (jsdom v30 → undici 8) silently handed it a major whose
+  dispatcher Node's built-in fetch cannot drive: every Cloudflare API call died
+  with `invalid onRequestStart method`. `packageExtensions` in
+  pnpm-workspace.yaml pins undici inside alchemy's own `node_modules`; the guard
+  is `src/__tests__/infra/alchemy-undici.test.ts`, which fails if resolution
+  drifts off the major alchemy develops against.
 - lint-staged quirk: a commit whose only staged file is `src/routeTree.gen.ts`
   fails the pre-commit hook (oxlint "no files to lint") — use `--no-verify`.
 

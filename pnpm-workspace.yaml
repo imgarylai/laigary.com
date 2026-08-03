@@ -7,3 +7,16 @@ allowBuilds:
 minimumReleaseAgeExclude:
   - use-wg@2.0.5
   - satori@0.28.1
+# alchemy's safeFetch does `await import("undici")` and passes `new Agent()` to
+# Node's fetch as its dispatcher, but undici is only a devDependency of alchemy —
+# so at runtime that bare import falls through to whatever pnpm hoisted into
+# node_modules/.pnpm/node_modules. Bumping jsdom to v30 pulled undici 8 into the
+# tree and it won the hoist, so every Cloudflare API call in `alchemy deploy`
+# died with `fetch failed` / `invalid onRequestStart method`: undici 8 asserts the
+# new handler interface, and the handler Node's built-in fetch passes down is the
+# v7 one. Giving alchemy the undici major it develops against (^7.14.0) resolves
+# the import inside its own node_modules and leaves jsdom on undici 8.
+packageExtensions:
+  alchemy:
+    dependencies:
+      undici: ^7.28.0
