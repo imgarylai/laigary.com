@@ -7,7 +7,6 @@ import { cached, cacheKeys } from "./_cache";
 import { revalidateContent } from "./_revalidate";
 import { liveNotes, resolvePublishedAt, unixNow } from "./_visibility";
 
-
 export type InterviewNoteWithTags = {
   id: string;
   slug: string;
