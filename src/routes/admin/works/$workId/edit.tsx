@@ -1,6 +1,7 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { editWorkDataFn } from "@/server/admin/reads";
 import { WorkForm } from "@/components/admin/WorkForm";
+import { adminPageTitle } from "@/components/admin/admin-location";
 
 export const Route = createFileRoute("/admin/works/$workId/edit")({
   loader: async ({ params }) => {
@@ -8,6 +9,7 @@ export const Route = createFileRoute("/admin/works/$workId/edit")({
     if (!data.work) throw notFound();
     return { work: data.work, tags: data.tags, ogBrand: data.ogBrand };
   },
+  head: (ctx) => ({ meta: [{ title: adminPageTitle(ctx, ctx.loaderData?.work.title) }] }),
   component: EditWorkPage,
 });
 

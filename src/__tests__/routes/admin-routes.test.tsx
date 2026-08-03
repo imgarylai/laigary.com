@@ -15,6 +15,7 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, screen } from "@testing-library/react";
 import { installShellStubs, renderRoute, warmRouteTree } from "../helpers/router";
+import { ADMIN_BREADCRUMB_KEYS } from "@/components/admin/admin-location";
 
 // See helpers/router for why each of these is load-bearing.
 vi.mock("@/lib/og/render", () => ({ renderOgPng: vi.fn() }));
@@ -153,6 +154,83 @@ describe("/admin layout", () => {
     // Sidebar nav and header both render around the outlet.
     expect(await screen.findByText("admin.menu")).toBeTruthy();
     expect(screen.getAllByText("admin.dashboard").length).toBeGreaterThan(0);
+  });
+});
+
+describe("admin tab titles", () => {
+  // Every admin page used to inherit the layout's bare "Admin", so a row of
+  // open editors was unreadable — the tab is the only thing telling two post
+  // editors apart. Each route now names itself, and the editors lead with the
+  // entity they loaded.
+  const TITLES: Array<[module: string, fullPath: string, expected: string, loaderData?: unknown]> =
+    [
+      ["admin/index", "/admin/", "Dashboard · Admin"],
+      ["admin/posts/index", "/admin/posts/", "Posts · Admin"],
+      ["admin/posts/new", "/admin/posts/new", "New Post · Admin"],
+      [
+        "admin/posts/$postId/edit",
+        "/admin/posts/$postId/edit",
+        "Hello World · Edit Post · Admin",
+        { post },
+      ],
+      ["admin/works/index", "/admin/works/", "Works · Admin"],
+      ["admin/works/new", "/admin/works/new", "New Work · Admin"],
+      [
+        "admin/works/$workId/edit",
+        "/admin/works/$workId/edit",
+        "Portfolio Piece · Edit Work · Admin",
+        { work },
+      ],
+      ["admin/pages/index", "/admin/pages/", "Pages · Admin"],
+      ["admin/pages/new", "/admin/pages/new", "New Page · Admin"],
+      [
+        "admin/pages/$slug/edit",
+        "/admin/pages/$slug/edit",
+        "About · Edit Page · Admin",
+        { slug: "about", title: "About", contentMd: "" },
+      ],
+      ["admin/interview/sections", "/admin/interview/sections", "Interview Sections · Admin"],
+      ["admin/interview/notes/index", "/admin/interview/notes/", "Interview Notes · Admin"],
+      ["admin/interview/notes/new", "/admin/interview/notes/new", "New Note · Admin"],
+      [
+        "admin/interview/notes/$noteId/edit",
+        "/admin/interview/notes/$noteId/edit",
+        "Two Sum · Edit Note · Admin",
+        { note },
+      ],
+      ["admin/tags", "/admin/tags", "Tags · Admin"],
+      ["admin/settings", "/admin/settings", "Settings · Admin"],
+    ];
+
+  it.each(TITLES)("titles %s", async (module, fullPath, expected, loaderData) => {
+    const options = await optionsOf(module);
+    const head = options.head({ match: { fullPath }, loaderData } as never) as {
+      meta: Record<string, string>[];
+    };
+
+    expect(head.meta).toContainEqual({ title: expected });
+  });
+
+  it("titles every admin route that renders", async () => {
+    // The map is exhaustive by type, so a route added later shows up here as a
+    // missing case rather than as another tab reading "Admin".
+    const rendering = Object.keys(ADMIN_BREADCRUMB_KEYS).filter(
+      // The layout is never the leaf, and /admin/interview only redirects.
+      (path) => path !== "/admin" && path !== "/admin/interview/",
+    );
+
+    expect(TITLES.map(([, fullPath]) => fullPath).sort()).toEqual(rendering.sort());
+  });
+
+  it("falls back to the section name for an untitled draft", async () => {
+    // A post saved before it is named would otherwise render " · Edit Post".
+    const options = await optionsOf("admin/posts/$postId/edit");
+    const head = options.head({
+      match: { fullPath: "/admin/posts/$postId/edit" },
+      loaderData: { post: { ...post, title: "" } },
+    } as never) as { meta: Record<string, string>[] };
+
+    expect(head.meta).toContainEqual({ title: "Edit Post · Admin" });
   });
 });
 

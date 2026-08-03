@@ -1,4 +1,5 @@
 import type { FileRouteTypes } from "@/routeTree.gen";
+import { defaultLocale, getTranslation } from "@/i18n";
 
 /** Every route under /admin, straight from the generated route tree. */
 export type AdminRoutePath = Extract<FileRouteTypes["fullPaths"], `/admin${string}`>;
@@ -47,6 +48,46 @@ export const ADMIN_BREADCRUMB_KEYS: Record<AdminRoutePath, string> = {
 export function breadcrumbKeyFor(fullPath: string | undefined): string | undefined {
   if (!fullPath) return undefined;
   return ADMIN_BREADCRUMB_KEYS[fullPath as AdminRoutePath];
+}
+
+/**
+ * The slice of a route's `head()` context this module needs. Structural on
+ * purpose: the real `RouteMatch` generics differ per route, and all a title
+ * needs is the leaf's route *pattern*.
+ */
+export type AdminHeadCtx = { match: { fullPath: string } };
+
+/** Separates the segments of an admin tab title. */
+const TITLE_SEP = " · ";
+
+/**
+ * The browser-tab title for an admin page: `<subject> · <section> · Admin`,
+ * e.g. `Hello World · Edit Post · Admin`.
+ *
+ * Subject first so a row of pinned tabs stays readable — browsers truncate the
+ * tail, and with the section first every open editor would read `Edit Post…`,
+ * which is the "every tab just says Admin" problem one level down. `subject` is
+ * the entity being edited; list and "new" pages have none and drop the segment,
+ * as does an untitled draft.
+ *
+ * The section label comes from the same map the header breadcrumb uses, so a
+ * renamed route updates both or neither.
+ *
+ * Always in the default locale, like every other title in the app. `head()`
+ * runs outside React, so there is no i18n context to read, and the request
+ * locale is not reachable either: the router hands `head()` the *live* leaf
+ * match but only pre-load snapshots of its ancestors, so the root loader's
+ * resolved locale reads back as undefined there.
+ */
+export function adminPageTitle(ctx: AdminHeadCtx, subject?: string | null): string {
+  const key = breadcrumbKeyFor(ctx.match.fullPath);
+  return [
+    subject?.trim(),
+    key ? getTranslation(defaultLocale, key) : undefined,
+    getTranslation(defaultLocale, "admin.admin"),
+  ]
+    .filter(Boolean)
+    .join(TITLE_SEP);
 }
 
 /**

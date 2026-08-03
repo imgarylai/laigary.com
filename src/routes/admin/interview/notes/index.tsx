@@ -3,10 +3,12 @@ import { listNotesFn } from "@/server/admin/reads";
 import { parseListSearch } from "@/components/admin/list-search";
 import { NotesListClient } from "@/components/admin/NotesListClient";
 import { useI18n } from "@/i18n/I18nProvider";
+import { adminPageTitle } from "@/components/admin/admin-location";
 
 export const Route = createFileRoute("/admin/interview/notes/")({
   validateSearch: parseListSearch,
   loader: () => listNotesFn(),
+  head: (ctx) => ({ meta: [{ title: adminPageTitle(ctx) }] }),
   component: NotesPage,
 });
 
