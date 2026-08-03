@@ -1,0 +1,1 @@
+CREATE INDEX `idx_interview_notes_updated_at` ON `interview_notes` (`updated_at`);

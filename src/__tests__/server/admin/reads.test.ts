@@ -75,9 +75,49 @@ describe("listNotesImpl", () => {
     const section = await seedSection({ slug: "coding", label: "Coding" });
     await seedNote(section.id, { slug: "gas" });
     const { listNotesImpl } = await import("@/server/admin/reads");
-    const notes = await listNotesImpl();
-    expect(notes).toHaveLength(1);
-    expect(notes[0].sectionLabel).toBe("Coding");
+    const { items, total, pageSize } = await listNotesImpl();
+    expect(items).toHaveLength(1);
+    expect(items[0].sectionLabel).toBe("Coding");
+    expect(total).toBe(1);
+    expect(pageSize).toBeGreaterThan(0);
+  });
+
+  it("turns a page number into an offset", async () => {
+    const section = await seedSection({ slug: "coding", label: "Coding" });
+    const { listNotesImpl } = await import("@/server/admin/reads");
+    const { pageSize } = await listNotesImpl();
+    for (let i = 0; i < pageSize + 1; i++) {
+      await seedNote(section.id, { slug: `n${i}`, title: `Note ${i}` });
+    }
+
+    const first = await listNotesImpl();
+    const second = await listNotesImpl({ page: 2 });
+    expect(first.items).toHaveLength(pageSize);
+    expect(second.items).toHaveLength(1);
+    // Both pages report the same total; only the window moves.
+    expect(second.total).toBe(pageSize + 1);
+  });
+
+  it("passes the search term through to the query", async () => {
+    const section = await seedSection({ slug: "coding", label: "Coding" });
+    await seedNote(section.id, { slug: "a", title: "Two Sum" });
+    await seedNote(section.id, { slug: "b", title: "Binary Search" });
+    const { listNotesImpl } = await import("@/server/admin/reads");
+
+    const result = await listNotesImpl({ q: "sum" });
+    expect(result.items.map((n) => n.title)).toEqual(["Two Sum"]);
+    expect(result.total).toBe(1);
+  });
+
+  it("falls back to the default ordering for a sort column it does not know", async () => {
+    // `?sort=` is hand-editable. An unknown column is a stale URL, not a
+    // request worth 500-ing over.
+    const section = await seedSection({ slug: "coding", label: "Coding" });
+    await seedNote(section.id, { slug: "a", title: "A" });
+    const { listNotesImpl } = await import("@/server/admin/reads");
+
+    const result = await listNotesImpl({ sort: "contentMd; drop table", dir: "asc" });
+    expect(result.items).toHaveLength(1);
   });
 });
 

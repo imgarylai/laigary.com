@@ -502,14 +502,12 @@ const TOOLS: Tool[] = [
       tagNames?: string[];
       touchUpdatedAt?: boolean;
     }) => {
-      const { getAllAdminInterviewNotes, updateNote } = await import("@/db/queries");
-      const note = (await getAllAdminInterviewNotes()).find(
-        (n) => n.sectionSlug === args.section && n.slug === args.slug,
-      );
-      if (!note) return fail(`No note "${args.slug}" in section "${args.section}"`);
+      const { getInterviewNoteIdBySlug, updateNote } = await import("@/db/queries");
+      const noteId = await getInterviewNoteIdBySlug(args.section, args.slug);
+      if (!noteId) return fail(`No note "${args.slug}" in section "${args.section}"`);
       const tagIds = args.tagNames ? await resolveTagNames(args.tagNames) : undefined;
       await updateNote(
-        note.id,
+        noteId,
         {
           title: args.title,
           contentMd: args.contentMd,

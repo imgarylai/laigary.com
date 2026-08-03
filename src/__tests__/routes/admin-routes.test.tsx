@@ -113,7 +113,7 @@ beforeEach(() => {
   reads.listPostsFn.mockResolvedValue([]);
   reads.listTagsFn.mockResolvedValue([]);
   reads.listPagesFn.mockResolvedValue([]);
-  reads.listNotesFn.mockResolvedValue([]);
+  reads.listNotesFn.mockResolvedValue({ items: [], total: 0, pageSize: 20 });
   reads.listSectionsFn.mockResolvedValue([]);
   reads.getSettingsFn.mockResolvedValue({});
   reads.getPageFn.mockResolvedValue({ id: "g1", slug: "about", title: "About", contentMd: "" });
@@ -449,18 +449,22 @@ describe("/admin/interview", () => {
   });
 
   it("lists the notes its loader fetched", async () => {
-    reads.listNotesFn.mockResolvedValue([
-      {
-        id: "n1",
-        slug: "two-sum",
-        title: "Two Sum",
-        status: "published",
-        pinned: false,
-        sectionId: "s1",
-        sectionLabel: "Arrays",
-        sectionSlug: "arrays",
-      },
-    ]);
+    reads.listNotesFn.mockResolvedValue({
+      items: [
+        {
+          id: "n1",
+          slug: "two-sum",
+          title: "Two Sum",
+          status: "published",
+          pinned: false,
+          sectionId: "s1",
+          sectionLabel: "Arrays",
+          sectionSlug: "arrays",
+        },
+      ],
+      total: 1,
+      pageSize: 20,
+    });
 
     await renderRoute("/admin/interview/notes");
 

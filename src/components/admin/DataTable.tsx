@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   type ColumnDef,
   type RowData,
@@ -55,10 +55,15 @@ export function isSelfHandledTarget(target: EventTarget | null): boolean {
   );
 }
 
-// Shared admin list table (posts / notes / tags). Data is loaded in full and
-// searched / sorted / paginated client-side — fine at this blog's scale and it
-// keeps every list snappy with no per-interaction round-trip. Each list just
-// supplies its column defs and optional toolbar filters.
+// Shared admin list table (posts / notes / tags).
+//
+// Two modes. By default the caller hands over every row and the table searches
+// / sorts / paginates client-side — fine at this blog's scale and it keeps a
+// list snappy with no per-interaction round-trip. Pass `rowCount` and the table
+// switches to server-driven: `data` is already the page, and search / sort /
+// page changes are reported to the caller to turn into a new query. That mode
+// exists for lists where "load everything" got expensive — see
+// `getAdminInterviewNotes`.
 export function DataTable<T>({
   columns,
   data,
@@ -68,8 +73,12 @@ export function DataTable<T>({
   emptyMessage,
   globalFilter: controlledFilter,
   onGlobalFilterChange,
+  filterDebounceMs = 0,
   pageIndex: controlledPageIndex,
   onPageChange,
+  sorting: controlledSorting,
+  onSortingChange,
+  rowCount,
   onRowActivate,
 }: {
   columns: ColumnDef<T, unknown>[];
@@ -86,14 +95,31 @@ export function DataTable<T>({
       the filter outside the table (e.g. in the route's search params). */
   globalFilter?: string;
   onGlobalFilterChange?: (value: string) => void;
+  /** Hold `onGlobalFilterChange` back until typing pauses for this long. Only
+      worth setting when a filter change costs a round-trip; 0 reports every
+      keystroke, which is what a client-side filter wants. */
+  filterDebounceMs?: number;
   /** Controlled 0-based page index — pass together with onPageChange to hold
       the current page outside the table (e.g. in the route's search params) so
       a reload restores it. Omit both to let the table page internally. */
   pageIndex?: number;
   onPageChange?: (index: number) => void;
+  /** Controlled sort. Required in server-driven mode, where the sort decides
+      which rows the page contains rather than just their order on screen. */
+  sorting?: SortingState;
+  onSortingChange?: (sorting: SortingState) => void;
+  /** Total rows behind `data`. Passing it declares `data` to be one page that
+      the server already filtered and sorted, and the table stops doing any of
+      those three itself. */
+  rowCount?: number;
 }) {
   const { t } = useI18n();
-  const [sorting, setSorting] = useState<SortingState>([]);
+  const serverDriven = rowCount !== undefined;
+
+  const [internalSorting, setInternalSorting] = useState<SortingState>([]);
+  const sorting = controlledSorting ?? internalSorting;
+  const setSorting = onSortingChange ?? setInternalSorting;
+
   const [internalFilter, setInternalFilter] = useState("");
   const globalFilter = controlledFilter ?? internalFilter;
   const setGlobalFilter = onGlobalFilterChange ?? setInternalFilter;
@@ -106,7 +132,9 @@ export function DataTable<T>({
     data,
     columns,
     state: { sorting, globalFilter, pagination: { pageIndex, pageSize } },
-    onSortingChange: setSorting,
+    onSortingChange: (updater) => {
+      setSorting(functionalUpdate(updater, sorting));
+    },
     onGlobalFilterChange: (updater) => {
       const next = typeof updater === "function" ? updater(globalFilter) : updater;
       setGlobalFilter(typeof next === "string" ? next : "");
@@ -115,6 +143,10 @@ export function DataTable<T>({
       setPageIndex(functionalUpdate(updater, { pageIndex, pageSize }).pageIndex);
     },
     globalFilterFn: "includesString",
+    manualPagination: serverDriven,
+    manualSorting: serverDriven,
+    manualFiltering: serverDriven,
+    rowCount,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
@@ -130,6 +162,35 @@ export function DataTable<T>({
     if (pageCount > 0 && pageIndex > pageCount - 1) setPageIndex(pageCount - 1);
   }, [pageCount, pageIndex, setPageIndex]);
 
+  // The search box keeps its own copy of the text so it stays responsive while
+  // a debounced change is still pending. `pushedFilter` is the last value this
+  // component handed upwards; anything else arriving from outside (back/forward
+  // navigation, a cleared filter) is an external change and re-seeds the box —
+  // without that check, the resync would fight the user mid-word.
+  const [draftFilter, setDraftFilter] = useState(globalFilter);
+  const pushedFilter = useRef(globalFilter);
+  const debounceTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  useEffect(() => {
+    if (globalFilter !== pushedFilter.current) {
+      pushedFilter.current = globalFilter;
+      setDraftFilter(globalFilter);
+    }
+  }, [globalFilter]);
+
+  useEffect(() => () => clearTimeout(debounceTimer.current), []);
+
+  function handleFilterInput(value: string) {
+    setDraftFilter(value);
+    clearTimeout(debounceTimer.current);
+    const push = () => {
+      pushedFilter.current = value;
+      setGlobalFilter(value);
+    };
+    if (filterDebounceMs > 0) debounceTimer.current = setTimeout(push, filterDebounceMs);
+    else push();
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
@@ -137,8 +198,8 @@ export function DataTable<T>({
           <MagnifyingGlassIcon className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder={searchPlaceholder ?? t("dataTable.searchPlaceholder")}
-            value={globalFilter}
-            onChange={(e) => setGlobalFilter(e.target.value)}
+            value={draftFilter}
+            onChange={(e) => handleFilterInput(e.target.value)}
             className="pl-9"
           />
         </div>

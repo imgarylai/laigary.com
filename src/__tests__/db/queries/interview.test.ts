@@ -646,26 +646,41 @@ describe("getTagsInSection", () => {
   });
 });
 
-describe("getAllAdminInterviewNotes", () => {
-  it("should include note slug and section slug when listing for the admin table", async () => {
-    const { createNote, getAllAdminInterviewNotes } = await import("@/db/queries");
+describe("getInterviewNoteIdBySlug", () => {
+  it("should resolve a section/note slug pair to the note id", async () => {
+    const { createNote, getInterviewNoteIdBySlug } = await import("@/db/queries");
     const section = await seedSection();
-    await createNote({
+    const note = await createNote({
       slug: "two-sum",
       sectionId: section.id,
       title: "Two Sum",
       status: "published",
     });
 
-    const notes = await getAllAdminInterviewNotes();
-    expect(notes).toHaveLength(1);
-    // slug pair feeds the admin table's view-live-page link (/interview/$sect/$slug)
-    expect(notes[0]).toMatchObject({
-      slug: "two-sum",
-      sectionSlug: "leetcode",
-      sectionLabel: "LeetCode",
-      status: "published",
+    expect(await getInterviewNoteIdBySlug("leetcode", "two-sum")).toBe(note.id);
+  });
+
+  it("should resolve drafts too, since the MCP write tools edit them", async () => {
+    const { createNote, getInterviewNoteIdBySlug } = await import("@/db/queries");
+    const section = await seedSection();
+    const note = await createNote({
+      slug: "wip",
+      sectionId: section.id,
+      title: "WIP",
+      status: "draft",
     });
+
+    expect(await getInterviewNoteIdBySlug("leetcode", "wip")).toBe(note.id);
+  });
+
+  it("should return null when the slug pair matches nothing", async () => {
+    const { createNote, getInterviewNoteIdBySlug } = await import("@/db/queries");
+    const section = await seedSection();
+    await createNote({ slug: "two-sum", sectionId: section.id, title: "Two Sum" });
+
+    // Right note slug, wrong section — the pair has to match, not either half.
+    expect(await getInterviewNoteIdBySlug("system-design", "two-sum")).toBeNull();
+    expect(await getInterviewNoteIdBySlug("leetcode", "absent")).toBeNull();
   });
 });
 
@@ -760,6 +775,68 @@ describe("getAdminInterviewNotes", () => {
     const page = await getAdminInterviewNotes({ limit: 2, offset: 2 });
     expect(page.items).toHaveLength(1);
     expect(page.total).toBe(3);
+  });
+
+  it("filters by title substring and totals the matches, not the table", async () => {
+    // The pager divides `total`, so a search that narrowed the rows but left
+    // the total alone would page over results that are not there.
+    const { getAdminInterviewNotes } = await import("@/db/queries");
+    const section = await seedSection();
+    await seedNote(section.id, { slug: "a", title: "Two Sum" });
+    await seedNote(section.id, { slug: "b", title: "Three Sum" });
+    await seedNote(section.id, { slug: "c", title: "Binary Search" });
+
+    const result = await getAdminInterviewNotes({ q: "sum" });
+    expect(result.items.map((n) => n.title).sort()).toEqual(["Three Sum", "Two Sum"]);
+    expect(result.total).toBe(2);
+  });
+
+  it("ignores a blank search rather than matching on empty string", async () => {
+    const { getAdminInterviewNotes } = await import("@/db/queries");
+    const section = await seedSection();
+    await seedNote(section.id, { slug: "a" });
+
+    expect((await getAdminInterviewNotes({ q: "   " })).total).toBe(1);
+  });
+
+  it("orders by the requested column in the requested direction", async () => {
+    const { getAdminInterviewNotes } = await import("@/db/queries");
+    const section = await seedSection();
+    await seedNote(section.id, { slug: "a", title: "Charlie" });
+    await seedNote(section.id, { slug: "b", title: "Alpha" });
+    await seedNote(section.id, { slug: "c", title: "Bravo" });
+
+    const asc = await getAdminInterviewNotes({ sort: "title", dir: "asc" });
+    expect(asc.items.map((n) => n.title)).toEqual(["Alpha", "Bravo", "Charlie"]);
+
+    const desc = await getAdminInterviewNotes({ sort: "title", dir: "desc" });
+    expect(desc.items.map((n) => n.title)).toEqual(["Charlie", "Bravo", "Alpha"]);
+  });
+
+  it("sorts by section label, which only the SQL join can reach", async () => {
+    // The label lives on the other table. An in-memory join sees just the page
+    // SQL already picked, so this ordering is the reason the JOIN came back.
+    const { getAdminInterviewNotes } = await import("@/db/queries");
+    const zulu = await seedSection("zulu", "Zulu");
+    const alpha = await seedSection("alpha", "Alpha");
+    await seedNote(zulu.id, { slug: "z" });
+    await seedNote(alpha.id, { slug: "a" });
+
+    const result = await getAdminInterviewNotes({ sort: "sectionLabel", dir: "asc" });
+    expect(result.items.map((n) => n.sectionLabel)).toEqual(["Alpha", "Zulu"]);
+  });
+
+  it("recounts after a write instead of serving the cached total", async () => {
+    // The unfiltered total is cached, so a create has to invalidate it — a
+    // stale count sizes the pager for a note that is no longer there (or hides
+    // one that is).
+    const { createNote, getAdminInterviewNotes } = await import("@/db/queries");
+    const section = await seedSection();
+    await seedNote(section.id, { slug: "a" });
+    expect((await getAdminInterviewNotes()).total).toBe(1);
+
+    await createNote({ slug: "b", sectionId: section.id, title: "B" });
+    expect((await getAdminInterviewNotes()).total).toBe(2);
   });
 });
 

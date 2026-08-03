@@ -9,7 +9,9 @@ import { NotesListClient } from "@/components/admin/NotesListClient";
 
 const { navigate, useSearch } = vi.hoisted(() => ({
   navigate: vi.fn(),
-  useSearch: vi.fn<() => { q?: string; page?: number }>(() => ({})),
+  useSearch: vi.fn<() => { q?: string; page?: number; sort?: string; dir?: "asc" | "desc" }>(
+    () => ({}),
+  ),
 }));
 
 vi.mock("@tanstack/react-router", () => ({
@@ -50,6 +52,19 @@ const notes = [
   },
 ];
 
+// The list is server-paginated: `notes` is one page and `total` is what the
+// pager divides, so a test that wants two pages says so with `total` rather
+// than by handing over more rows than a page holds.
+function renderList(props: { notes?: typeof notes; total?: number } = {}) {
+  const rows = props.notes ?? notes;
+  return render(<NotesListClient notes={rows} total={props.total ?? rows.length} pageSize={20} />);
+}
+
+/** One page of rows out of 21 — enough total for a second page to exist. */
+const twoPages = { total: 21 };
+/** Enough total that `?page=4` is a real page and not snapped back into range. */
+const manyPages = { total: 100 };
+
 beforeEach(() => {
   vi.clearAllMocks();
   useSearch.mockReturnValue({});
@@ -58,7 +73,7 @@ afterEach(cleanup);
 
 describe("NotesListClient", () => {
   it("should translate the status rather than printing the stored value", () => {
-    render(<NotesListClient notes={notes} />);
+    renderList();
 
     expect(screen.getByText("postForm.published")).toBeTruthy();
     expect(screen.getByText("postForm.draft")).toBeTruthy();
@@ -66,14 +81,14 @@ describe("NotesListClient", () => {
   });
 
   it("should carry no delete button on the row itself", () => {
-    render(<NotesListClient notes={notes} />);
+    renderList();
 
     expect(screen.queryByRole("button", { name: "noteList.delete" })).toBeNull();
     expect(screen.getAllByRole("button", { name: "noteList.actions" }).length).toBe(2);
   });
 
   it("should open the editor when a row is clicked", () => {
-    render(<NotesListClient notes={notes} />);
+    renderList();
 
     fireEvent.click(screen.getByText("postForm.published").closest("tr")!);
 
@@ -84,7 +99,7 @@ describe("NotesListClient", () => {
   });
 
   it("should show the section a note belongs to", () => {
-    render(<NotesListClient notes={notes} />);
+    renderList();
 
     expect(screen.getAllByText("Arrays").length).toBe(2);
   });
@@ -93,7 +108,7 @@ describe("NotesListClient", () => {
     // row-actions.test.tsx proves NoteRowActions honours `published`; nothing
     // proved this list DERIVES it from the row's status. Hardcode it true and a
     // draft gets a "view live" link straight to a 404.
-    render(<NotesListClient notes={notes} />);
+    renderList();
     const menus = screen.getAllByRole("button", { name: "noteList.actions" });
     const rowOf = (slugText: string) =>
       menus.find((m) => m.closest("tr")?.textContent?.includes(slugText))!;
@@ -113,15 +128,8 @@ describe("NotesListClient", () => {
 // these prove the filter/pager state survives a reload, which is the whole
 // reason it lives in the URL rather than in component state.
 describe("NotesListClient url state", () => {
-  const many = Array.from({ length: 21 }, (_, i) => ({
-    ...notes[0],
-    id: `n${i}`,
-    slug: `note-${i}`,
-    title: `Note ${i}`,
-  }));
-
   it("pushes the search box value into the url", async () => {
-    render(<NotesListClient notes={notes} />);
+    renderList();
 
     fireEvent.change(screen.getByPlaceholderText("noteList.searchPlaceholder"), {
       target: { value: "two" },
@@ -134,7 +142,7 @@ describe("NotesListClient url state", () => {
 
   it("drops q from the url when the search box is cleared", async () => {
     useSearch.mockReturnValue({ q: "two" });
-    render(<NotesListClient notes={notes} />);
+    renderList();
 
     fireEvent.change(screen.getByPlaceholderText("noteList.searchPlaceholder"), {
       target: { value: "" },
@@ -146,7 +154,7 @@ describe("NotesListClient url state", () => {
   });
 
   it("pushes the page number into the url", async () => {
-    render(<NotesListClient notes={many} />);
+    renderList(twoPages);
 
     fireEvent.click(screen.getByText("pagination.next"));
 
@@ -158,12 +166,94 @@ describe("NotesListClient url state", () => {
   it("drops page from the url on the way back to the first page", async () => {
     // Page 1 is the default view, so it stays out of the URL entirely.
     useSearch.mockReturnValue({ page: 2 });
-    render(<NotesListClient notes={many} />);
+    renderList(twoPages);
 
     fireEvent.click(screen.getByText("pagination.prev"));
 
     await waitFor(() => expect(navigate).toHaveBeenCalled());
     const search = navigate.mock.lastCall?.[0].search as (p: object) => object;
     expect(search({ page: 2 })).toEqual(expect.objectContaining({ page: undefined }));
+  });
+});
+
+// Server-driven mode moved three things out of the browser and into the query.
+// These cover what that move can get wrong: a sort the server never hears
+// about, a stale page number surviving a new result set, and a query per
+// keystroke.
+describe("NotesListClient server-driven list", () => {
+  it("puts the sorted column in the url so the server can order by it", async () => {
+    renderList();
+
+    fireEvent.click(screen.getByText("noteList.title"));
+
+    await waitFor(() => expect(navigate).toHaveBeenCalled());
+    const search = navigate.mock.lastCall?.[0].search as (p: object) => object;
+    expect(search({})).toEqual(expect.objectContaining({ sort: "title", dir: "asc" }));
+  });
+
+  it("reverses direction on a second click of the same column", async () => {
+    useSearch.mockReturnValue({ sort: "title", dir: "asc" });
+    renderList();
+
+    fireEvent.click(screen.getByText("noteList.title"));
+
+    await waitFor(() => expect(navigate).toHaveBeenCalled());
+    const search = navigate.mock.lastCall?.[0].search as (p: object) => object;
+    expect(search({})).toEqual(expect.objectContaining({ sort: "title", dir: "desc" }));
+  });
+
+  it("returns to page 1 when the search changes the result set", async () => {
+    // Page 4 of the old result set is not page 4 of the new one — keeping the
+    // number would land the author on an empty page.
+    useSearch.mockReturnValue({ page: 4 });
+    renderList(manyPages);
+
+    fireEvent.change(screen.getByPlaceholderText("noteList.searchPlaceholder"), {
+      target: { value: "two" },
+    });
+
+    await waitFor(() => expect(navigate).toHaveBeenCalled());
+    const search = navigate.mock.lastCall?.[0].search as (p: object) => object;
+    expect(search({ page: 4 })).toEqual(expect.objectContaining({ q: "two", page: undefined }));
+  });
+
+  it("returns to page 1 when the sort changes the result set", async () => {
+    useSearch.mockReturnValue({ page: 4 });
+    renderList(manyPages);
+
+    fireEvent.click(screen.getByText("noteList.title"));
+
+    await waitFor(() => expect(navigate).toHaveBeenCalled());
+    const search = navigate.mock.lastCall?.[0].search as (p: object) => object;
+    expect(search({ page: 4 })).toEqual(expect.objectContaining({ page: undefined }));
+  });
+
+  it("spends one navigation on a word typed a letter at a time", async () => {
+    // Each navigation re-runs the loader against D1. Without the debounce this
+    // is one query per keystroke, which is the shape of the problem the server
+    // pagination was meant to fix.
+    renderList();
+    const box = screen.getByPlaceholderText("noteList.searchPlaceholder");
+
+    fireEvent.change(box, { target: { value: "t" } });
+    fireEvent.change(box, { target: { value: "tw" } });
+    fireEvent.change(box, { target: { value: "two" } });
+
+    await waitFor(() => expect(navigate).toHaveBeenCalled());
+    expect(navigate).toHaveBeenCalledTimes(1);
+    const search = navigate.mock.lastCall?.[0].search as (p: object) => object;
+    expect(search({})).toEqual(expect.objectContaining({ q: "two" }));
+  });
+
+  it("keeps the typed text visible while the debounce is still pending", () => {
+    renderList();
+    const box = screen.getByPlaceholderText("noteList.searchPlaceholder") as HTMLInputElement;
+
+    fireEvent.change(box, { target: { value: "tw" } });
+
+    // The URL has not caught up yet, so a box bound straight to `q` would blank
+    // itself back out mid-word.
+    expect(box.value).toBe("tw");
+    expect(navigate).not.toHaveBeenCalled();
   });
 });

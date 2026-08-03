@@ -22,8 +22,15 @@
 // THIS isolate sees its own write immediately), and `CACHE_TTL_MS` bounds how
 // long any other isolate can serve a stale aggregate. That makes the cache
 // eventually consistent with a ceiling of one TTL, which is the trade the
-// public read paths want; anything needing read-your-writes (the admin lists,
-// `getTagsWithUsage`) deliberately does not go through here.
+// public read paths want; anything needing read-your-writes (the admin list
+// ROWS, `getTagsWithUsage`) deliberately does not go through here.
+//
+// `adminNoteCount` is the one admin-path entry, and it is only the total the
+// notes pager divides into page numbers — never the rows themselves. A count
+// has to examine every row no matter which index serves it, so leaving it
+// uncached would have made the page-20-rows change pointless. Worst case
+// another isolate reports a page total that is one note stale for a TTL; the
+// page the author is looking at is always live.
 
 /** How long a cached entry stays fresh. Also the staleness ceiling across isolates. */
 export const CACHE_TTL_MS = 60_000;
@@ -67,6 +74,7 @@ export const cacheKeys = {
   tagsInSection: (sectionSlug: string) => `tags:section:${sectionSlug}`,
   interviewSections: "sections:all",
   sectionNoteCounts: "sections:noteCounts",
+  adminNoteCount: "admin:noteCount",
 } as const;
 
 /** Drop one entry. */
