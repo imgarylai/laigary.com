@@ -60,7 +60,10 @@ backfills go inside the generated file or via `drizzle-kit generate --custom`.
      SQLite answers by scanning the content table and walking the junction. No
      index fixes those — `status = 'published'` matches nearly every row — so
      not recomputing them per request is the only lever. 60s TTL bounds how
-     stale another isolate can get.
+     stale another isolate can get. The admin notes pager's total is in here
+     too (`adminNoteCount`) — the one admin entry, and a count only, because a
+     COUNT examines every row however small the page is. Admin list ROWS still
+     read straight through.
   2. `src/start.ts` — a request middleware storing public documents in
      `caches.default`. Cloudflare does not cache a Worker's own responses on
      `Cache-Control` alone. The policy (what may be cached, and the key —
@@ -74,8 +77,25 @@ backfills go inside the generated file or via `drizzle-kit generate --custom`.
      from the cache but never stores, so it reports MISS forever.
 
   Public list pages paginate SERVER-side (`sectionDataImpl`, page size in
-  `SECTION_PAGE_SIZE`). Do not reintroduce a `limit: 500` and slice in the
-  browser — that is what made the section listing the site's costliest query.
+  `SECTION_PAGE_SIZE`), and so does the admin notes table
+  (`getAdminInterviewNotes`, `ADMIN_NOTES_PAGE_SIZE`) — its search and sort run
+  in SQL, keyed off the route's search params via `loaderDeps`. Do not
+  reintroduce a `limit: 500` and slice in the browser: that is what made the
+  section listing the site's costliest query, and then the notes list after it.
+  A LIMIT alone is not the fix — without an index for the ORDER BY, SQLite
+  still reads every row to find the newest page. Check `EXPLAIN QUERY PLAN`
+  says `USING INDEX` and not `USE TEMP B-TREE FOR ORDER BY`.
+
+  Three lists still load in full and page in the browser (posts, tags,
+  sections). That is fine while they are small; the notes table is the one that
+  outgrew it. `DataTable` supports both — pass `rowCount` to get the
+  server-driven mode.
+
+  Not everything expensive is a query. Admin routes are not edge-cached and
+  `defaultPreload: "intent"` runs a loader on every hover, so a cheap loader
+  still multiplies: the notes list ran 14k times in 12 hours across the sidebar.
+  `defaultPreloadStaleTime` (`src/router.tsx`) is what bounds that, and it is
+  safe to keep non-zero because every mutation form calls `router.invalidate()`.
 
 - MCP endpoint (`/mcp`, `src/server/mcp/` + `src/routes/mcp.ts`): stateless
   Streamable HTTP JSON-RPC for AI clients. Read tools are public; write tools

@@ -344,47 +344,66 @@ export type AdminInterviewNote = {
   sectionSlug: string;
 };
 
+/** Rows per page in the admin notes table. Shared by the query and the pager. */
+export const ADMIN_NOTES_PAGE_SIZE = 20;
+
+/** Sortable columns of the admin notes table, mapped to what SQL orders by. */
+const ADMIN_NOTE_SORTS = {
+  updatedAt: interviewNotes.updatedAt,
+  title: interviewNotes.title,
+  status: interviewNotes.status,
+  sectionLabel: interviewSections.label,
+} as const;
+
+export type AdminNoteSort = keyof typeof ADMIN_NOTE_SORTS;
+
+export function isAdminNoteSort(value: unknown): value is AdminNoteSort {
+  return typeof value === "string" && value in ADMIN_NOTE_SORTS;
+}
+
+/**
+ * One page of the admin notes table, filtered and sorted in SQL.
+ *
+ * This list used to load every note and search / sort / paginate in the
+ * browser. That is a fine default at this scale, but the admin routes are not
+ * edge-cached and the router preloads a route on hover, so the loader ran far
+ * more often than the author actually opened the page — 14k calls in 12 hours,
+ * each reading ~900 rows to render 20 of them (a full scan, then a temp B-tree
+ * for the sort), which came to 87% of the database's entire read volume.
+ *
+ * Three things make the page cheap, and all three are needed:
+ *   - LIMIT/OFFSET, so a page costs a page.
+ *   - `idx_interview_notes_updated_at`, without which the default ordering
+ *     still reads every row to find the newest 20.
+ *   - a cached total (see `countAdminNotes`), because COUNT examines every row
+ *     whatever the LIMIT is.
+ *
+ * The section JOIN is back. It was split into a second query when this loaded
+ * the whole table, where SQLite charged a section lookup per note and tripled
+ * the rows read; against 20 rows that cost is 20 lookups, and the join buys
+ * back sorting by section label — which an in-memory join cannot do, since it
+ * only sees the page SQL already chose.
+ */
 export async function getAdminInterviewNotes(opts?: {
+  /** Case-insensitive substring match on the title. */
+  q?: string;
+  sort?: AdminNoteSort;
+  dir?: "asc" | "desc";
   limit?: number;
   offset?: number;
 }): Promise<{ items: AdminInterviewNote[]; total: number }> {
   const db = await getDb();
-  const limit = opts?.limit ?? 20;
+  const limit = opts?.limit ?? ADMIN_NOTES_PAGE_SIZE;
   const offset = opts?.offset ?? 0;
+  const q = opts?.q?.trim() || undefined;
+  const where = q ? like(interviewNotes.title, `%${q}%`) : undefined;
 
-  const [{ total }] = await db.select({ total: count() }).from(interviewNotes);
+  // Newest-edited first is the default because it is the order the author
+  // works in; it is also the only ordering an index serves.
+  const sortColumn = ADMIN_NOTE_SORTS[opts?.sort ?? "updatedAt"];
+  const orderBy = opts?.dir === "asc" ? asc(sortColumn) : desc(sortColumn);
 
-  const rows = await db
-    .select({
-      id: interviewNotes.id,
-      slug: interviewNotes.slug,
-      title: interviewNotes.title,
-      status: interviewNotes.status,
-      pinned: interviewNotes.pinned,
-      sectionId: interviewNotes.sectionId,
-      sectionLabel: interviewSections.label,
-      sectionSlug: interviewSections.slug,
-    })
-    .from(interviewNotes)
-    .innerJoin(interviewSections, eq(interviewSections.id, interviewNotes.sectionId))
-    .orderBy(desc(interviewNotes.updatedAt))
-    .limit(limit)
-    .offset(offset);
-
-  return { items: rows.map((r) => ({ ...r, pinned: r.pinned === 1 })), total };
-}
-
-// Every note (all sections/statuses) for the admin table, newest first. The
-// admin table searches / sorts / paginates client-side, so it takes the full
-// set — same pattern as posts.
-//
-// Sections are fetched separately and joined in memory rather than with an
-// INNER JOIN. There are a handful of sections and hundreds of notes, and
-// SQLite charges a section lookup per note row: the join made this read three
-// rows for every note returned. Two queries, one row read per note.
-export async function getAllAdminInterviewNotes(): Promise<AdminInterviewNote[]> {
-  const db = await getDb();
-  const [rows, sections] = await Promise.all([
+  const [rows, total] = await Promise.all([
     db
       .select({
         id: interviewNotes.id,
@@ -393,27 +412,60 @@ export async function getAllAdminInterviewNotes(): Promise<AdminInterviewNote[]>
         status: interviewNotes.status,
         pinned: interviewNotes.pinned,
         sectionId: interviewNotes.sectionId,
+        sectionLabel: interviewSections.label,
+        sectionSlug: interviewSections.slug,
       })
       .from(interviewNotes)
-      .orderBy(desc(interviewNotes.updatedAt)),
-    db
-      .select({
-        id: interviewSections.id,
-        label: interviewSections.label,
-        slug: interviewSections.slug,
-      })
-      .from(interviewSections),
+      .innerJoin(interviewSections, eq(interviewSections.id, interviewNotes.sectionId))
+      .where(where)
+      .orderBy(orderBy)
+      .limit(limit)
+      .offset(offset),
+    countAdminNotes(q),
   ]);
 
-  const sectionById = new Map(sections.map((s) => [s.id, s]));
-  return rows.map((r) => ({
-    ...r,
-    pinned: r.pinned === 1,
-    // A note cannot outlive its section (FK cascade), so the fallbacks only
-    // cover a section deleted between the two reads above.
-    sectionLabel: sectionById.get(r.sectionId)?.label ?? "",
-    sectionSlug: sectionById.get(r.sectionId)?.slug ?? "",
-  }));
+  return { items: rows.map((r) => ({ ...r, pinned: r.pinned === 1 })), total };
+}
+
+/**
+ * Total rows behind the admin notes pager.
+ *
+ * The unfiltered total is cached: it changes only when the author writes (and
+ * every write calls `revalidateContent`), while the pager asks for it on every
+ * page view. A search total is not cached — the key space is whatever the
+ * author typed, and a search is a deliberate keystroke rather than a hover.
+ */
+async function countAdminNotes(q?: string): Promise<number> {
+  const load = async () => {
+    const db = await getDb();
+    const [row] = await db
+      .select({ total: count() })
+      .from(interviewNotes)
+      .where(q ? like(interviewNotes.title, `%${q}%`) : undefined);
+    return row.total;
+  };
+  return q ? load() : cached(cacheKeys.adminNoteCount, load);
+}
+
+/**
+ * Resolve a (section slug, note slug) pair to a note id, drafts included.
+ *
+ * The MCP write tools address notes the way a URL does, but act on them by id.
+ * They used to bridge that by loading every note and running `.find()` over the
+ * result — the whole table read to identify one row.
+ */
+export async function getInterviewNoteIdBySlug(
+  sectionSlug: string,
+  noteSlug: string,
+): Promise<string | null> {
+  const db = await getDb();
+  const [row] = await db
+    .select({ id: interviewNotes.id })
+    .from(interviewNotes)
+    .innerJoin(interviewSections, eq(interviewSections.id, interviewNotes.sectionId))
+    .where(and(eq(interviewSections.slug, sectionSlug), eq(interviewNotes.slug, noteSlug)))
+    .limit(1);
+  return row?.id ?? null;
 }
 
 export class SectionConflictError extends Error {

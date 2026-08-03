@@ -46,6 +46,12 @@ export const interviewNotes = sqliteTable(
       table.pinned,
       table.createdAt,
     ),
+    // Backs the admin notes table, which orders every unfiltered page by
+    // `updated_at DESC`. A LIMIT does not make that cheap on its own: without
+    // an index SQLite still has to read every row to find the newest 20, which
+    // is how this list came to read ~900 rows per call (a full scan plus a temp
+    // B-tree for the sort) to render one screen. Scanned backwards for DESC.
+    index("idx_interview_notes_updated_at").on(table.updatedAt),
   ],
 );
 

@@ -105,13 +105,43 @@ export async function listSectionsImpl(): Promise<SectionRow[]> {
 
 export const listSectionsFn = createServerFn({ method: "GET" }).handler(listSectionsImpl);
 
-// Interview notes admin list (full set; the table paginates client-side).
-export async function listNotesImpl(): Promise<AdminInterviewNote[]> {
-  const { getAllAdminInterviewNotes } = await import("@/db/queries");
-  return getAllAdminInterviewNotes();
+// Interview notes admin list — one page, filtered and sorted in SQL. The route
+// passes its search params straight through, so the URL is the query.
+export async function listNotesImpl(data?: {
+  q?: string;
+  page?: number;
+  sort?: string;
+  dir?: "asc" | "desc";
+}): Promise<{ items: AdminInterviewNote[]; total: number; pageSize: number }> {
+  const { getAdminInterviewNotes, isAdminNoteSort, ADMIN_NOTES_PAGE_SIZE } =
+    await import("@/db/queries");
+  const page = Math.max(1, data?.page ?? 1);
+  const { items, total } = await getAdminInterviewNotes({
+    q: data?.q,
+    // An unknown `sort` in a hand-edited URL falls back to the default rather
+    // than erroring — the column set is a UI detail, not a contract.
+    sort: isAdminNoteSort(data?.sort) ? data.sort : undefined,
+    dir: data?.dir,
+    limit: ADMIN_NOTES_PAGE_SIZE,
+    offset: (page - 1) * ADMIN_NOTES_PAGE_SIZE,
+  });
+  return { items, total, pageSize: ADMIN_NOTES_PAGE_SIZE };
 }
 
-export const listNotesFn = createServerFn({ method: "GET" }).handler(listNotesImpl);
+/* v8 ignore start -- RPC boundary, unreachable under vitest (see AGENTS.md). */
+export const listNotesFn = createServerFn({ method: "GET" })
+  .validator((data: unknown) =>
+    z
+      .object({
+        q: z.string().optional(),
+        page: z.number().int().positive().optional(),
+        sort: z.string().optional(),
+        dir: z.enum(["asc", "desc"]).optional(),
+      })
+      .parse(data ?? {}),
+  )
+  .handler(({ data }) => listNotesImpl(data));
+/* v8 ignore stop */
 
 // New-note form: the sections to pick from + available tags.
 export async function newNoteDataImpl(): Promise<{ sections: SectionOption[]; tags: Tag[] }> {

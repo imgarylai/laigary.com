@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Link, getRouteApi } from "@tanstack/react-router";
 import { PushPinIcon } from "@phosphor-icons/react";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef, SortingState } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "./DataTable";
 import { StatusBadge } from "./StatusBadge";
@@ -21,10 +21,30 @@ type Note = {
 
 const route = getRouteApi("/admin/interview/notes/");
 
-export function NotesListClient({ notes }: { notes: Note[] }) {
+// How long typing has to pause before the search reaches the URL. Every change
+// to the URL re-runs the loader against D1, so this is the difference between
+// one query per search and one per keystroke.
+const SEARCH_DEBOUNCE_MS = 300;
+
+export function NotesListClient({
+  notes,
+  total,
+  pageSize,
+}: {
+  notes: Note[];
+  total: number;
+  pageSize: number;
+}) {
   const { t } = useI18n();
-  const { q, page } = route.useSearch();
+  const { q, page, sort, dir } = route.useSearch();
   const navigate = route.useNavigate();
+
+  // No `?sort=` means the server's default (newest edited first), which is not
+  // one of the table's columns — so no header shows a sort arrow.
+  const sorting = useMemo<SortingState>(
+    () => (sort ? [{ id: sort, desc: dir !== "asc" }] : []),
+    [sort, dir],
+  );
 
   const columns = useMemo<ColumnDef<Note, unknown>[]>(
     () => [
@@ -85,9 +105,29 @@ export function NotesListClient({ notes }: { notes: Note[] }) {
       onRowActivate={(note) =>
         navigate({ to: "/admin/interview/notes/$noteId/edit", params: { noteId: note.id } })
       }
+      rowCount={total}
+      pageSize={pageSize}
       globalFilter={q ?? ""}
+      filterDebounceMs={SEARCH_DEBOUNCE_MS}
+      // Searching and re-sorting both rebuild the result set, so page 4 of the
+      // old one means nothing — drop back to the first page with the new query.
       onGlobalFilterChange={(v) =>
-        navigate({ search: (prev) => ({ ...prev, q: v || undefined }), replace: true })
+        navigate({
+          search: (prev) => ({ ...prev, q: v || undefined, page: undefined }),
+          replace: true,
+        })
+      }
+      sorting={sorting}
+      onSortingChange={(next) =>
+        navigate({
+          search: (prev) => ({
+            ...prev,
+            sort: next[0]?.id,
+            dir: next[0] ? (next[0].desc ? "desc" : "asc") : undefined,
+            page: undefined,
+          }),
+          replace: true,
+        })
       }
       pageIndex={(page ?? 1) - 1}
       onPageChange={(idx) =>
