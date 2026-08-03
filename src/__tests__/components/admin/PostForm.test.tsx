@@ -134,6 +134,7 @@ describe("PostForm", () => {
           tagIds: [],
           status: "draft",
           pinned: false,
+          publishedAt: null,
         }}
       />,
     );
@@ -165,6 +166,54 @@ describe("PostForm", () => {
     const arg = createPostFn.mock.calls[0][0].data;
     expect(arg.status).toBe("published");
     expect(arg.pinned).toBe(true);
+  });
+
+  it("should send the publish date the author picked as unix seconds", async () => {
+    // Form state carries the instant, not the input's local-time string — the
+    // conversion is the field's job and this is where it is proven.
+    createPostFn.mockResolvedValue({ ok: true, data: { id: "new-id" } });
+    render(<PostForm availableTags={tags} ogBrand="Unconstrained" />);
+
+    fireEvent.change(screen.getByLabelText("postForm.title"), { target: { value: "Dated" } });
+    fireEvent.change(screen.getByLabelText("body"), { target: { value: "the body" } });
+    openSettings();
+    fireEvent.change(screen.getByLabelText("postForm.publishedAt"), {
+      target: { value: "2026-07-22T00:00" },
+    });
+    fireEvent.keyDown(document.body, { key: "Escape" });
+    fireEvent.click(screen.getByRole("button", { name: "postForm.create" }));
+
+    await waitFor(() => expect(createPostFn).toHaveBeenCalledTimes(1));
+    // TZ is pinned to UTC in vitest.config.ts.
+    expect(createPostFn.mock.calls[0][0].data.publishedAt).toBe(1784678400);
+  });
+
+  it("should send no publish date when the author leaves the field empty", async () => {
+    // null means "stamp it when I publish", which is the default the editor
+    // has to keep offering.
+    createPostFn.mockResolvedValue({ ok: true, data: { id: "new-id" } });
+    render(<PostForm availableTags={tags} ogBrand="Unconstrained" />);
+
+    fireEvent.change(screen.getByLabelText("postForm.title"), { target: { value: "Undated" } });
+    fireEvent.change(screen.getByLabelText("body"), { target: { value: "the body" } });
+    fireEvent.click(screen.getByRole("button", { name: "postForm.create" }));
+
+    await waitFor(() => expect(createPostFn).toHaveBeenCalledTimes(1));
+    expect(createPostFn.mock.calls[0][0].data.publishedAt).toBeNull();
+  });
+
+  it("should warn that a future date hides the post instead of publishing it", async () => {
+    render(<PostForm availableTags={tags} ogBrand="Unconstrained" />);
+
+    openSettings();
+    const field = screen.getByLabelText("postForm.publishedAt");
+    fireEvent.change(field, { target: { value: "2020-01-01T00:00" } });
+    expect(screen.getByText("postForm.publishedAtHint")).toBeTruthy();
+
+    // Same field, a date on the other side of now: the copy has to move with it
+    // or it is not reporting anything.
+    fireEvent.change(field, { target: { value: "2099-01-01T00:00" } });
+    expect(screen.getByText("postForm.publishedAtScheduled")).toBeTruthy();
   });
 
   it("should say nothing about saving before the author touches anything", () => {
@@ -201,6 +250,7 @@ describe("PostForm", () => {
           tagIds: [],
           status: "draft",
           pinned: false,
+          publishedAt: null,
         }}
       />,
     );
@@ -230,6 +280,7 @@ describe("PostForm", () => {
           tagIds: [],
           status: "draft",
           pinned: false,
+          publishedAt: null,
         }}
       />,
     );

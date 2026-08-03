@@ -1,4 +1,4 @@
-import { eq, desc, asc, count, and, like, lt, gt, type SQL } from "drizzle-orm";
+import { eq, desc, asc, count, and, like, lt, gt, sql, type SQL } from "drizzle-orm";
 import {
   posts,
   tags,
@@ -13,6 +13,20 @@ import { getDb, inClause, runBatch, type BatchWrites } from "./_db";
 import { fetchTagsByParentIds, type PostTag } from "./_tags";
 import { cached, cacheKeys } from "./_cache";
 import { revalidateContent } from "./_revalidate";
+import { liveNotes, livePosts, resolvePublishedAt, unixNow } from "./_visibility";
+
+/**
+ * Admin-list ordering: newest publication first, with the not-yet-published
+ * (drafts, which have no `published_at`) after everything dated rather than
+ * before it — SQLite sorts NULL first on a DESC ordering, which would put every
+ * draft above the whole archive. `updated_at` breaks ties among them so the
+ * draft you were last in is the one at the top of that block.
+ */
+const adminOrder = [
+  sql`${posts.publishedAt} IS NULL`,
+  desc(posts.publishedAt),
+  desc(posts.updatedAt),
+];
 
 export type PublicPost = {
   slug: string;
@@ -40,7 +54,7 @@ export async function getPublishedPosts(opts?: {
   const limit = opts?.limit ?? 20;
   const offset = opts?.offset ?? 0;
 
-  const conditions = [eq(posts.status, "published")];
+  const conditions = [livePosts()];
   if (opts?.query) {
     conditions.push(like(posts.title, `%${opts.query}%`));
   }
@@ -113,22 +127,25 @@ export async function getAdjacentPosts(
   slug: string,
 ): Promise<{ prev: AdjacentPost | null; next: AdjacentPost | null }> {
   const db = await getDb();
+  const now = unixNow();
   const [current] = await db
     .select({ publishedAt: posts.publishedAt })
     .from(posts)
-    .where(and(eq(posts.slug, slug), eq(posts.status, "published")));
+    .where(and(eq(posts.slug, slug), livePosts(now)));
   if (!current?.publishedAt) return { prev: null, next: null };
 
   const [prev] = await db
     .select({ slug: posts.slug, title: posts.title })
     .from(posts)
-    .where(and(eq(posts.status, "published"), lt(posts.publishedAt, current.publishedAt)))
+    .where(and(livePosts(now), lt(posts.publishedAt, current.publishedAt)))
     .orderBy(desc(posts.publishedAt))
     .limit(1);
+  // `next` walks forward in time, so it is the one direction a scheduled post
+  // could leak into: `livePosts` is what keeps it out until it is due.
   const [next] = await db
     .select({ slug: posts.slug, title: posts.title })
     .from(posts)
-    .where(and(eq(posts.status, "published"), gt(posts.publishedAt, current.publishedAt)))
+    .where(and(livePosts(now), gt(posts.publishedAt, current.publishedAt)))
     .orderBy(asc(posts.publishedAt))
     .limit(1);
 
@@ -157,7 +174,7 @@ export async function getFeedPosts(limit: number): Promise<FeedPost[]> {
       publishedAt: posts.publishedAt,
     })
     .from(posts)
-    .where(eq(posts.status, "published"))
+    .where(livePosts())
     .orderBy(desc(posts.publishedAt))
     .limit(limit);
 
@@ -192,6 +209,13 @@ type PostMutationInput = {
   coverImageUrl?: string | null;
   status?: "draft" | "published";
   pinned?: boolean;
+  /**
+   * When this post is dated, as unix seconds. Three-valued on purpose:
+   * `undefined` leaves the decision to the mutation (stamp on publish, keep
+   * what is stored otherwise), a number sets that exact instant — a future one
+   * schedules the post — and `null` clears it back to automatic.
+   */
+  publishedAt?: number | null;
   tagIds?: string[];
 };
 
@@ -199,7 +223,7 @@ export async function createPost(input: PostMutationInput): Promise<{ id: string
   const db = await getDb();
   const id = crypto.randomUUID();
   const status = input.status ?? "draft";
-  const publishedAt = status === "published" ? Math.floor(Date.now() / 1000) : null;
+  const publishedAt = resolvePublishedAt(status, input.publishedAt, null);
 
   // One unit with the tag insert below: a bad tagId must not leave an untagged
   // post behind after the caller has been told the create failed.
@@ -242,10 +266,7 @@ export async function updatePost(
   if (!existing) throw new PostNotFoundError(id);
 
   const newStatus = input.status ?? existing.status;
-  let publishedAt = existing.publishedAt;
-  if (newStatus === "published" && existing.status !== "published") {
-    publishedAt = Math.floor(Date.now() / 1000);
-  }
+  const publishedAt = resolvePublishedAt(newStatus, input.publishedAt, existing.publishedAt);
 
   // Row edit and tag replacement are one unit: the tag write can fail on a
   // stale or bogus tagId, and committing the other two would leave the post
@@ -265,7 +286,7 @@ export async function updatePost(
         // is), so an edit that doesn't touch the pin control preserves it.
         pinned: input.pinned === undefined ? existing.pinned : input.pinned ? 1 : 0,
         publishedAt,
-        updatedAt: Math.floor(Date.now() / 1000),
+        updatedAt: unixNow(),
       })
       .where(eq(posts.id, id)),
   ];
@@ -300,7 +321,10 @@ export async function deletePost(id: string): Promise<void> {
 export async function getPostBySlug(slug: string): Promise<PublicPostDetail | null> {
   const db = await getDb();
   const [post] = await db.select().from(posts).where(eq(posts.slug, slug));
+  // A scheduled post has no public page before its date — the direct URL has to
+  // 404 like a draft's does, or the listing filter would only be a formality.
   if (!post || post.status !== "published") return null;
+  if (post.publishedAt === null || post.publishedAt > unixNow()) return null;
 
   const tagMap = await fetchTagsByParentIds(db, "post", [post.id]);
 
@@ -324,6 +348,7 @@ export type AdminPost = {
   title: string;
   status: string;
   pinned: boolean;
+  publishedAt: number | null;
   updatedAt: number;
 };
 
@@ -336,6 +361,7 @@ export type AdminPostDetail = {
   coverImageUrl: string | null;
   status: "draft" | "published";
   pinned: boolean;
+  publishedAt: number | null;
   tagIds: string[];
 };
 
@@ -360,12 +386,15 @@ export async function getAdminPostById(id: string): Promise<AdminPostDetail | nu
     coverImageUrl: post.coverImageUrl,
     status: post.status as "draft" | "published",
     pinned: post.pinned === 1,
+    publishedAt: post.publishedAt,
     tagIds: tagRows.map((r) => r.tagId),
   };
 }
 
-// Every post (all statuses) for the admin list, newest first. The admin table
-// searches / sorts / paginates client-side, so it takes the full set.
+// Every post (all statuses) for the admin list, newest PUBLICATION first — the
+// list mirrors the archive's order, so a typo fix does not shuffle the table.
+// The admin table searches / sorts / paginates client-side, so it takes the
+// full set.
 export async function getAllAdminPosts(): Promise<AdminPost[]> {
   const db = await getDb();
   return db
@@ -375,10 +404,11 @@ export async function getAllAdminPosts(): Promise<AdminPost[]> {
       title: posts.title,
       status: posts.status,
       pinned: posts.pinned,
+      publishedAt: posts.publishedAt,
       updatedAt: posts.updatedAt,
     })
     .from(posts)
-    .orderBy(desc(posts.updatedAt))
+    .orderBy(...adminOrder)
     .then((rows) => rows.map((r) => ({ ...r, pinned: r.pinned === 1 })));
 }
 
@@ -407,11 +437,12 @@ export async function getAdminPosts(opts?: {
       title: posts.title,
       status: posts.status,
       pinned: posts.pinned,
+      publishedAt: posts.publishedAt,
       updatedAt: posts.updatedAt,
     })
     .from(posts)
     .where(where)
-    .orderBy(desc(posts.updatedAt))
+    .orderBy(...adminOrder)
     .limit(limit)
     .offset(offset);
 
@@ -441,14 +472,14 @@ async function loadTagsWithCounts(): Promise<{ name: string; slug: string; count
       .from(tags)
       .innerJoin(postTags, eq(tags.id, postTags.tagId))
       .innerJoin(posts, eq(posts.id, postTags.postId))
-      .where(eq(posts.status, "published"))
+      .where(livePosts())
       .groupBy(tags.id, tags.name, tags.slug),
     db
       .select({ name: tags.name, slug: tags.slug, count: count() })
       .from(tags)
       .innerJoin(interviewNoteTags, eq(tags.id, interviewNoteTags.tagId))
       .innerJoin(interviewNotes, eq(interviewNotes.id, interviewNoteTags.noteId))
-      .where(eq(interviewNotes.status, "published"))
+      .where(liveNotes())
       .groupBy(tags.id, tags.name, tags.slug),
     db
       .select({ name: tags.name, slug: tags.slug, count: count() })

@@ -3,18 +3,41 @@
 // testable without a Workers runtime.
 
 /**
- * How long the edge holds a page.
+ * How long the edge holds a page, at most.
  *
  * A day, because the traffic this exists for is crawlers: they sweep hundreds
  * of distinct URLs once and come back tomorrow, so a short TTL expires before
  * the next sweep and buys almost nothing. Staleness is not the price of the
  * long TTL — the content version in the cache key retires every page the
  * moment something is published.
+ */
+export const EDGE_CACHE_MAX_AGE = 86_400;
+
+/**
+ * `Cache-Control` for a public document.
  *
  * `max-age=0` keeps browsers revalidating so a reader never holds a stale page
  * across a publish; `s-maxage` is the part the shared cache honours.
+ *
+ * `secondsUntilNextPublish` is the one thing that shortens it. The content
+ * version retires cached pages on every WRITE, but a scheduled post coming due
+ * is the single publish event with no write behind it — the row was already
+ * there, its date simply arrived. Capping the TTL at that moment is what makes
+ * the schedule real rather than "whenever this entry happened to expire". Pass
+ * null when nothing is scheduled.
+ *
+ * The floor of one second is not a rounding detail: a cap of zero would tell
+ * the shared cache not to store the page at all, so a schedule due in the next
+ * instant would knock every public page out of the cache instead of expiring
+ * one generation of them.
  */
-export const EDGE_CACHE_CONTROL = "public, max-age=0, s-maxage=86400";
+export function edgeCacheControl(secondsUntilNextPublish: number | null): string {
+  const sMaxAge =
+    secondsUntilNextPublish === null
+      ? EDGE_CACHE_MAX_AGE
+      : Math.min(EDGE_CACHE_MAX_AGE, Math.max(1, Math.ceil(secondsUntilNextPublish)));
+  return `public, max-age=0, s-maxage=${sMaxAge}`;
+}
 
 /**
  * Path prefixes that must never be cached.

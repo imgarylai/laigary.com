@@ -33,6 +33,7 @@ function EditPostPage() {
           tagIds: post.tagIds,
           status: post.status,
           pinned: post.pinned,
+          publishedAt: post.publishedAt,
         }}
       />
     </div>

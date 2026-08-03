@@ -75,6 +75,7 @@ export const cacheKeys = {
   interviewSections: "sections:all",
   sectionNoteCounts: "sections:noteCounts",
   adminNoteCount: "admin:noteCount",
+  nextScheduledPublish: "meta:nextScheduledPublish",
 } as const;
 
 /** Drop one entry. */

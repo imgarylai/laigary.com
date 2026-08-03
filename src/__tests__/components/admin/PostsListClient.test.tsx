@@ -41,6 +41,7 @@ const posts = [
     title: "Live post",
     status: "published",
     pinned: false,
+    publishedAt: HOUR_AGO,
     updatedAt: HOUR_AGO,
   },
   {
@@ -49,6 +50,7 @@ const posts = [
     title: "Draft post",
     status: "draft",
     pinned: true,
+    publishedAt: null,
     updatedAt: HOUR_AGO,
   },
 ];

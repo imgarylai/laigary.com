@@ -1,10 +1,22 @@
-import { eq, desc, count, and, asc, like } from "drizzle-orm";
+import { eq, desc, count, and, asc, like, sql } from "drizzle-orm";
 import { interviewSections, interviewNotes, interviewNoteTags, tags } from "@/db/schema";
 import { unixToIso } from "@/lib/date";
 import { getDb, inClause, runBatch, type BatchWrites, type Db } from "./_db";
 import { fetchTagsByParentIds, type PostTag } from "./_tags";
 import { cached, cacheKeys } from "./_cache";
 import { revalidateContent } from "./_revalidate";
+import { liveNotes, resolvePublishedAt, unixNow } from "./_visibility";
+
+/**
+ * The date a note carries publicly.
+ *
+ * `published_at` for everything (the `publish_date_ordering` migration
+ * backfilled it), with `created_at` behind it only so a note that somehow
+ * reaches a reader undated still prints a date rather than 1970.
+ */
+function noteDate(note: { publishedAt: number | null; createdAt: number }): string {
+  return unixToIso(note.publishedAt ?? note.createdAt);
+}
 
 export type InterviewNoteWithTags = {
   id: string;
@@ -87,21 +99,22 @@ export async function getPublishedNotesByTag(tagSlug: string): Promise<NoteByTag
       sectionSlug: interviewSections.slug,
       sectionLabel: interviewSections.label,
       title: interviewNotes.title,
+      publishedAt: interviewNotes.publishedAt,
       createdAt: interviewNotes.createdAt,
     })
     .from(interviewNoteTags)
     .innerJoin(tags, eq(tags.id, interviewNoteTags.tagId))
     .innerJoin(interviewNotes, eq(interviewNotes.id, interviewNoteTags.noteId))
     .innerJoin(interviewSections, eq(interviewSections.id, interviewNotes.sectionId))
-    .where(and(eq(tags.slug, tagSlug), eq(interviewNotes.status, "published")))
-    .orderBy(desc(interviewNotes.createdAt));
+    .where(and(eq(tags.slug, tagSlug), liveNotes()))
+    .orderBy(desc(interviewNotes.publishedAt));
 
   return rows.map((r) => ({
     slug: r.slug,
     sectionSlug: r.sectionSlug,
     sectionLabel: r.sectionLabel,
     title: r.title,
-    date: unixToIso(r.createdAt),
+    date: noteDate(r),
   }));
 }
 
@@ -119,8 +132,8 @@ export async function getPublishedNoteIndex(): Promise<PublishedNoteIndexEntry[]
     })
     .from(interviewNotes)
     .innerJoin(interviewSections, eq(interviewSections.id, interviewNotes.sectionId))
-    .where(eq(interviewNotes.status, "published"))
-    .orderBy(asc(interviewSections.sortOrder), desc(interviewNotes.createdAt));
+    .where(liveNotes())
+    .orderBy(asc(interviewSections.sortOrder), desc(interviewNotes.publishedAt));
 }
 
 export async function getInterviewSectionBySlug(slug: string) {
@@ -151,7 +164,7 @@ export async function getInterviewNoteCountsBySection(): Promise<Map<string, num
     const rows = await db
       .select({ sectionId: interviewNotes.sectionId, total: count() })
       .from(interviewNotes)
-      .where(eq(interviewNotes.status, "published"))
+      .where(liveNotes())
       .groupBy(interviewNotes.sectionId);
     return new Map(rows.map((r) => [r.sectionId, r.total]));
   });
@@ -162,8 +175,8 @@ export async function getRecentInterviewNotes(limit: number): Promise<InterviewN
   const notes = await db
     .select()
     .from(interviewNotes)
-    .where(eq(interviewNotes.status, "published"))
-    .orderBy(desc(interviewNotes.createdAt))
+    .where(liveNotes())
+    .orderBy(desc(interviewNotes.publishedAt))
     .limit(limit);
   return attachTags(db, notes);
 }
@@ -220,10 +233,7 @@ export async function getInterviewNotesBySection(
     if (tagNoteIds.length === 0) return { notes: [], total: 0 };
   }
 
-  const conditions = [
-    eq(interviewNotes.sectionId, section.id),
-    eq(interviewNotes.status, "published"),
-  ];
+  const conditions = [eq(interviewNotes.sectionId, section.id), liveNotes()];
   if (opts?.excludePinned) conditions.push(eq(interviewNotes.pinned, 0));
   if (tagNoteIds) conditions.push(inClause(interviewNotes.id, tagNoteIds));
   const where = and(...conditions);
@@ -234,7 +244,7 @@ export async function getInterviewNotesBySection(
     .select()
     .from(interviewNotes)
     .where(where)
-    .orderBy(desc(interviewNotes.pinned), desc(interviewNotes.createdAt))
+    .orderBy(desc(interviewNotes.pinned), desc(interviewNotes.publishedAt))
     .limit(limit)
     .offset(offset);
 
@@ -255,14 +265,8 @@ export async function getPinnedInterviewNotes(
   const rows = await db
     .select()
     .from(interviewNotes)
-    .where(
-      and(
-        eq(interviewNotes.sectionId, section.id),
-        eq(interviewNotes.status, "published"),
-        eq(interviewNotes.pinned, 1),
-      ),
-    )
-    .orderBy(desc(interviewNotes.createdAt));
+    .where(and(eq(interviewNotes.sectionId, section.id), liveNotes(), eq(interviewNotes.pinned, 1)))
+    .orderBy(desc(interviewNotes.publishedAt));
 
   return attachTags(db, rows);
 }
@@ -283,8 +287,8 @@ export async function searchPublishedInterviewNotes(
     })
     .from(interviewNotes)
     .innerJoin(interviewSections, eq(interviewSections.id, interviewNotes.sectionId))
-    .where(and(eq(interviewNotes.status, "published"), like(interviewNotes.title, `%${query}%`)))
-    .orderBy(desc(interviewNotes.createdAt))
+    .where(and(liveNotes(), like(interviewNotes.title, `%${query}%`)))
+    .orderBy(desc(interviewNotes.publishedAt))
     .limit(limit);
 }
 
@@ -328,7 +332,7 @@ async function loadTagsInSection(sectionSlug: string): Promise<{ name: string; s
     .from(interviewNoteTags)
     .innerJoin(tags, eq(tags.id, interviewNoteTags.tagId))
     .innerJoin(interviewNotes, eq(interviewNotes.id, interviewNoteTags.noteId))
-    .where(and(eq(interviewNotes.sectionId, section.id), eq(interviewNotes.status, "published")))
+    .where(and(eq(interviewNotes.sectionId, section.id), liveNotes()))
     .orderBy(asc(tags.name));
   return rows;
 }
@@ -339,6 +343,7 @@ export type AdminInterviewNote = {
   title: string;
   status: string;
   pinned: boolean;
+  publishedAt: number | null;
   sectionId: string;
   sectionLabel: string;
   sectionSlug: string;
@@ -349,6 +354,7 @@ export const ADMIN_NOTES_PAGE_SIZE = 20;
 
 /** Sortable columns of the admin notes table, mapped to what SQL orders by. */
 const ADMIN_NOTE_SORTS = {
+  publishedAt: interviewNotes.publishedAt,
   updatedAt: interviewNotes.updatedAt,
   title: interviewNotes.title,
   status: interviewNotes.status,
@@ -373,8 +379,10 @@ export function isAdminNoteSort(value: unknown): value is AdminNoteSort {
  *
  * Three things make the page cheap, and all three are needed:
  *   - LIMIT/OFFSET, so a page costs a page.
- *   - `idx_interview_notes_updated_at`, without which the default ordering
- *     still reads every row to find the newest 20.
+ *   - an index on the default sort column, without which the ordering still
+ *     reads every row to find the newest 20. That is
+ *     `idx_interview_notes_published_at` now the default is publish date;
+ *     `idx_interview_notes_updated_at` still backs the Updated column.
  *   - a cached total (see `countAdminNotes`), because COUNT examines every row
  *     whatever the LIMIT is.
  *
@@ -398,10 +406,23 @@ export async function getAdminInterviewNotes(opts?: {
   const q = opts?.q?.trim() || undefined;
   const where = q ? like(interviewNotes.title, `%${q}%`) : undefined;
 
-  // Newest-edited first is the default because it is the order the author
-  // works in; it is also the only ordering an index serves.
-  const sortColumn = ADMIN_NOTE_SORTS[opts?.sort ?? "updatedAt"];
-  const orderBy = opts?.dir === "asc" ? asc(sortColumn) : desc(sortColumn);
+  // Newest-PUBLISHED first is the default: the table mirrors the order readers
+  // see, so a typo fix does not move a note. (It was newest-EDITED, which is
+  // what made a two-year-old note jump to the top of the list on a fix.)
+  const sortKey = opts?.sort ?? "publishedAt";
+  const direction = opts?.dir === "asc" ? asc : desc;
+  // Drafts carry no publish date, and SQLite sorts NULL first — on the default
+  // descending order that would stack every draft above the whole archive.
+  // `updated_at` then breaks ties inside that block, so the draft last worked
+  // on leads it.
+  const orderBy =
+    sortKey === "publishedAt"
+      ? [
+          sql`${interviewNotes.publishedAt} IS NULL`,
+          direction(interviewNotes.publishedAt),
+          desc(interviewNotes.updatedAt),
+        ]
+      : [direction(ADMIN_NOTE_SORTS[sortKey])];
 
   const [rows, total] = await Promise.all([
     db
@@ -411,6 +432,7 @@ export async function getAdminInterviewNotes(opts?: {
         title: interviewNotes.title,
         status: interviewNotes.status,
         pinned: interviewNotes.pinned,
+        publishedAt: interviewNotes.publishedAt,
         sectionId: interviewNotes.sectionId,
         sectionLabel: interviewSections.label,
         sectionSlug: interviewSections.slug,
@@ -418,7 +440,7 @@ export async function getAdminInterviewNotes(opts?: {
       .from(interviewNotes)
       .innerJoin(interviewSections, eq(interviewSections.id, interviewNotes.sectionId))
       .where(where)
-      .orderBy(orderBy)
+      .orderBy(...orderBy)
       .limit(limit)
       .offset(offset),
     countAdminNotes(q),
@@ -561,6 +583,8 @@ type NoteMutationInput = {
   contentMd?: string;
   status?: "draft" | "published";
   pinned?: boolean;
+  /** Same three-valued contract as a post's — see `resolvePublishedAt`. */
+  publishedAt?: number | null;
   tagIds?: string[];
 };
 
@@ -568,7 +592,7 @@ export async function createNote(input: NoteMutationInput): Promise<{ id: string
   const db = await getDb();
   const id = crypto.randomUUID();
   const status = input.status ?? "draft";
-  const publishedAt = status === "published" ? Math.floor(Date.now() / 1000) : null;
+  const publishedAt = resolvePublishedAt(status, input.publishedAt, null);
 
   // One unit with the tag insert below — see createPost for why.
   const writes: BatchWrites = [
@@ -606,8 +630,9 @@ export type UpdateNoteOptions = {
    * Whether to stamp `updatedAt` with the current time. Defaults to true.
    *
    * Pass false for corrections that should not surface the note as freshly
-   * written — fixing a typo or a broken link is not new content, and several
-   * listings order by `updatedAt`, so touching it silently reorders them.
+   * written — fixing a typo or a broken link is not new content. Listings order
+   * by `publishedAt` now, so this no longer reorders them; what it still
+   * governs is the sitemap's `lastmod` and the "modified" date on the page.
    */
   touchUpdatedAt?: boolean;
 };
@@ -623,10 +648,11 @@ export async function updateNote(
   if (!existing) throw new NoteNotFoundError(id);
 
   const newStatus = input.status ?? existing.status;
-  let publishedAt = existing.publishedAt;
-  if (newStatus === "published" && existing.status !== "published") {
-    publishedAt = Math.floor(Date.now() / 1000);
-  }
+  const publishedAt = resolvePublishedAt(
+    newStatus as "draft" | "published",
+    input.publishedAt,
+    existing.publishedAt,
+  );
 
   // Row edit and tag replacement are one unit — see updatePost. Note the tag
   // writes previously sat outside the try/catch entirely, so a failure there
@@ -643,7 +669,7 @@ export async function updateNote(
         publishedAt,
         // Omitted entirely (not set to the old value) when preserving, so the
         // column keeps whatever is already stored.
-        ...(touchUpdatedAt ? { updatedAt: Math.floor(Date.now() / 1000) } : {}),
+        ...(touchUpdatedAt ? { updatedAt: unixNow() } : {}),
       })
       .where(eq(interviewNotes.id, id)),
   ];
@@ -688,12 +714,11 @@ export async function getInterviewNote(
   const [note] = await db
     .select()
     .from(interviewNotes)
+    // A scheduled note has no public page before its date — the direct URL has
+    // to 404 like a draft's does, or the listing filter would only be a
+    // formality.
     .where(
-      and(
-        eq(interviewNotes.sectionId, section.id),
-        eq(interviewNotes.slug, noteSlug),
-        eq(interviewNotes.status, "published"),
-      ),
+      and(eq(interviewNotes.sectionId, section.id), eq(interviewNotes.slug, noteSlug), liveNotes()),
     );
   if (!note) return null;
   const [withTags] = await attachTags(db, [note]);

@@ -1,7 +1,7 @@
 import { createMiddleware, createStart } from "@tanstack/react-start";
 import {
-  EDGE_CACHE_CONTROL,
   cacheKeyUrl,
+  edgeCacheControl,
   isCacheableMethod,
   isCacheablePath,
   isCacheableResponse,
@@ -35,10 +35,12 @@ const edgeCache = createMiddleware({ type: "request" }).server(async (ctx) => {
     return ctx.next();
   }
 
-  const [{ pickLocale }, { getContentVersion }] = await Promise.all([
-    import("@/server/locale"),
-    import("@/db/queries/_revalidate"),
-  ]);
+  const [{ pickLocale }, { getContentVersion }, { getNextScheduledPublishAt, unixNow }] =
+    await Promise.all([
+      import("@/server/locale"),
+      import("@/db/queries/_revalidate"),
+      import("@/db/queries/_visibility"),
+    ]);
   const locale = pickLocale(
     readCookie(ctx.request.headers.get("cookie"), "locale"),
     ctx.request.headers.get("accept-language") ?? undefined,
@@ -47,15 +49,21 @@ const edgeCache = createMiddleware({ type: "request" }).server(async (ctx) => {
     method: "GET",
   });
 
+  // How long this document may live: normally a day, but never past the moment
+  // a scheduled post or note comes due — that is the one publish with no write
+  // behind it to bump the content version.
+  const nextPublish = await getNextScheduledPublishAt();
+  const ttl = nextPublish === null ? null : nextPublish - unixNow();
+
   // A HEAD is answered from the entry a GET stored — the key is a GET either
   // way. Its body is dropped here rather than left to the runtime to strip.
   const hit = await cache.match(key);
-  if (hit) return mark(method === "HEAD" ? new Response(null, hit) : hit, "HIT");
+  if (hit) return mark(method === "HEAD" ? new Response(null, hit) : hit, "HIT", ttl);
 
   const { response } = await ctx.next();
   if (!isCacheableResponse(response)) return response;
 
-  const stamped = mark(response, "MISS");
+  const stamped = mark(response, "MISS", ttl);
   // GET only. A HEAD render's body may already be gone by the time it reaches
   // here, and storing an empty one under the GET key would serve blank pages
   // to every reader after it.
@@ -80,10 +88,10 @@ const edgeCache = createMiddleware({ type: "request" }).server(async (ctx) => {
  * `x-edge-cache` makes the layer verifiable from outside: `curl -s -D - -o
  * /dev/null` twice on a page, and the second should say HIT.
  */
-function mark(response: Response, state: "HIT" | "MISS"): Response {
+function mark(response: Response, state: "HIT" | "MISS", ttl: number | null): Response {
   const copy = new Response(response.body, response);
   copy.headers.set("x-edge-cache", state);
-  copy.headers.set("Cache-Control", EDGE_CACHE_CONTROL);
+  copy.headers.set("Cache-Control", edgeCacheControl(ttl));
   return copy;
 }
 

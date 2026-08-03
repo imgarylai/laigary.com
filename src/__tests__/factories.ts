@@ -40,6 +40,7 @@ export async function seedNote(
     contentMd: string;
     status: "draft" | "published";
     pinned: boolean;
+    publishedAt: number | null;
     tagIds: string[];
   }> = {},
 ) {
@@ -64,6 +65,7 @@ export async function seedPost(
     coverImageUrl: string;
     status: "draft" | "published";
     pinned: boolean;
+    publishedAt: number | null;
     tagIds: string[];
   }> = {},
 ) {

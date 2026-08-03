@@ -14,6 +14,34 @@ export function unixToIso(unix: number): string {
 }
 
 /**
+ * A unix timestamp as the `yyyy-MM-ddTHH:mm` an `<input type="datetime-local">`
+ * expects, in the READER'S zone.
+ *
+ * Local wall-clock is the whole point — the author picks "9am Tuesday" meaning
+ * their own 9am — which is also why nothing may call this while rendering on
+ * the server: the Worker runs in UTC, so an SSR pass and the hydrating browser
+ * would produce two different strings for the same instant. `PublishedAtInput`
+ * defers to after mount for exactly this reason.
+ */
+export function unixToDatetimeLocal(unix: number): string {
+  return format(fromUnixTime(unix), "yyyy-MM-dd'T'HH:mm");
+}
+
+/**
+ * The inverse: a datetime-local value back to unix seconds, or null when the
+ * field is empty (the author cleared it) or holds a half-typed date the browser
+ * handed over anyway.
+ */
+export function datetimeLocalToUnix(value: string): number | null {
+  if (!value) return null;
+  // `parseISO` reads an offset-less string as local time, which is what the
+  // input means by it.
+  const parsed = parseISO(value);
+  const ms = parsed.getTime();
+  return Number.isNaN(ms) ? null : Math.floor(ms / 1000);
+}
+
+/**
  * A work's editorial year, as one label: `2025` for a single year, `2021–2023`
  * for a range. An `endYear` equal to `year` collapses back to the single form
  * rather than rendering `2021–2021`.

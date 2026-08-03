@@ -532,3 +532,77 @@ describe("tool schema / validator agreement", () => {
     }
   });
 });
+
+// The MCP surface speaks ISO 8601 rather than the unix seconds the query layer
+// stores — an LLM composing JSON gets ISO right without being told, and the
+// offset in the string cannot be silently read as UTC.
+describe("publish dates over MCP", () => {
+  it("should store the ISO publish date a write tool was given", async () => {
+    const { getAdminPosts, getAdminPostById } = await import("@/db/queries");
+    await callTool(
+      "create_post",
+      {
+        title: "Dated",
+        slug: "dated",
+        contentMd: "body",
+        status: "published",
+        publishedAt: "2026-07-22T00:00:00Z",
+      },
+      true,
+    );
+
+    const post = (await getAdminPosts({ q: "Dated" })).items[0];
+    expect((await getAdminPostById(post.id))?.publishedAt).toBe(1784678400);
+  });
+
+  it("should keep a future-dated post off the public feed while the admin still sees it", async () => {
+    // The proof that the MCP path lands in the same scheduling model as the
+    // editor, rather than writing a date nothing reads.
+    const { getPublishedPosts, getAdminPosts } = await import("@/db/queries");
+    await callTool(
+      "create_post",
+      {
+        title: "Tomorrow",
+        slug: "tomorrow",
+        contentMd: "body",
+        status: "published",
+        publishedAt: new Date(Date.now() + 3_600_000).toISOString(),
+      },
+      true,
+    );
+
+    expect((await getPublishedPosts()).posts.map((p) => p.slug)).not.toContain("tomorrow");
+    expect((await getAdminPosts({ q: "Tomorrow" })).items).toHaveLength(1);
+  });
+
+  it("should refuse a publish date that is not a date at all", async () => {
+    const result = await callTool(
+      "create_post",
+      { title: "Bad", slug: "bad", contentMd: "body", publishedAt: "next tuesday" },
+      true,
+    );
+    expect(result.isError).toBe(true);
+  });
+
+  it("should schedule an interview note the same way it schedules a post", async () => {
+    const { getInterviewNote, getAdminInterviewNotes } = await import("@/db/queries");
+    const section = await seedSection({ slug: "coding", label: "Coding" });
+    await callTool(
+      "create_interview_note",
+      {
+        section: "coding",
+        title: "Tomorrow",
+        slug: "tomorrow",
+        contentMd: "body",
+        status: "published",
+        publishedAt: new Date(Date.now() + 3_600_000).toISOString(),
+      },
+      true,
+    );
+    expect(section).toBeTruthy();
+
+    expect(await getInterviewNote("coding", "tomorrow")).toBeNull();
+    const admin = await getAdminInterviewNotes();
+    expect(admin.items.map((n) => n.slug)).toContain("tomorrow");
+  });
+});

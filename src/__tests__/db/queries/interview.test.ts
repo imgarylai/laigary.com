@@ -13,18 +13,23 @@ const seedSection = (slug = "leetcode", label = "LeetCode") =>
  * Spread the given notes over distinct, ascending timestamps — listed oldest
  * first.
  *
- * `interview_notes.created_at`/`updated_at` come from the DB default, so notes
- * seeded in a tight loop all share one second and ordering is unobservable
- * rather than merely unasserted. Restamping makes chronology something the
- * query can actually get wrong.
+ * `interview_notes.created_at`/`updated_at` come from the DB default and
+ * `published_at` is stamped at publish time, so notes seeded in a tight loop
+ * all share one second and ordering is unobservable rather than merely
+ * unasserted. Restamping makes chronology something the query can actually get
+ * wrong.
+ *
+ * `published_at` moves with the other two because it is what the public
+ * listings order by; leaving it on the seeding clock would let a query that
+ * ignores the ordering entirely still pass.
  */
 function ageNotes(slugs: string[]) {
   const stmt = harness.sqlite.prepare(
-    "UPDATE interview_notes SET created_at = ?, updated_at = ? WHERE slug = ?",
+    "UPDATE interview_notes SET created_at = ?, updated_at = ?, published_at = ? WHERE slug = ? AND status = 'published'",
   );
   for (const [i, slug] of slugs.entries()) {
     const at = (i + 1) * 1_000_000;
-    stmt.run(at, at, slug);
+    stmt.run(at, at, at, slug);
   }
 }
 
@@ -695,10 +700,12 @@ describe("getInterviewNoteCountsBySection caching", () => {
     expect((await getInterviewNoteCountsBySection()).get(section.id)).toBe(1);
 
     // Insert behind the query layer's back — a stale count here is the proof
-    // that the second read never reached the database.
+    // that the second read never reached the database. `published_at` is spelt
+    // out because the count only sees rows that are due, and a hand-written row
+    // gets none of the stamping `createNote` does.
     harness.sqlite
       .prepare(
-        "INSERT INTO interview_notes (id, slug, section_id, title, content_md, status) VALUES ('x','n2',?,'N2','','published')",
+        "INSERT INTO interview_notes (id, slug, section_id, title, content_md, status, published_at) VALUES ('x','n2',?,'N2','','published',strftime('%s','now'))",
       )
       .run(section.id);
     expect((await getInterviewNoteCountsBySection()).get(section.id)).toBe(1);
@@ -883,5 +890,119 @@ describe("non-conflict error rethrow", () => {
     }).catch((e) => e);
     expect(err).toBeInstanceOf(Error);
     expect(err).not.toBeInstanceOf(NoteConflictError);
+  });
+});
+
+// Notes used to be listed and dated by `created_at`, which is when the row was
+// made, not when it was published. Every fixture below sets the two APART, so a
+// query still reading `created_at` fails rather than agreeing by coincidence.
+describe("notes ordered by publish date", () => {
+  /** Stamp a note's publish date and creation date independently. */
+  function stamp(slug: string, publishedAt: number, createdAt: number) {
+    harness.sqlite
+      .prepare("UPDATE interview_notes SET published_at = ?, created_at = ? WHERE slug = ?")
+      .run(publishedAt, createdAt, slug);
+  }
+
+  it("should list a section newest-published first even when creation order disagrees", async () => {
+    const { getInterviewNotesBySection } = await import("@/db/queries");
+    const section = await seedSection();
+    await seedNote(section.id, { slug: "written-first" });
+    await seedNote(section.id, { slug: "written-second" });
+    // Written first, published last.
+    stamp("written-first", 2_000_000, 1_000_000);
+    stamp("written-second", 1_000_000, 2_000_000);
+
+    const { notes } = await getInterviewNotesBySection("leetcode");
+    expect(notes.map((n) => n.slug)).toEqual(["written-first", "written-second"]);
+  });
+
+  it("should carry the publish date as the note's date, not the day it was drafted", async () => {
+    const { getInterviewNote } = await import("@/db/queries");
+    const section = await seedSection();
+    await seedNote(section.id, { slug: "n" });
+    stamp("n", 1_700_000_000, 1_000_000);
+
+    // 2023-11-14 UTC; TZ is pinned to UTC in vitest.config.ts.
+    expect((await getInterviewNote("leetcode", "n"))?.publishedAt).toBe(1_700_000_000);
+  });
+
+  it("should feed the recent list by publish date rather than creation order", async () => {
+    const { getRecentInterviewNotes } = await import("@/db/queries");
+    const section = await seedSection();
+    await seedNote(section.id, { slug: "a" });
+    await seedNote(section.id, { slug: "b" });
+    stamp("a", 2_000_000, 1_000_000);
+    stamp("b", 1_000_000, 2_000_000);
+
+    expect((await getRecentInterviewNotes(5)).map((n) => n.slug)).toEqual(["a", "b"]);
+  });
+});
+
+describe("scheduled notes", () => {
+  const HOUR = 3600;
+
+  async function seedAt(sectionId: string, slug: string, offset: number) {
+    const { createNote } = await import("@/db/queries");
+    return createNote({
+      slug,
+      sectionId,
+      title: slug,
+      contentMd: "body",
+      status: "published",
+      publishedAt: Math.floor(Date.now() / 1000) + offset,
+    });
+  }
+
+  it("should keep a future-dated note out of its section listing", async () => {
+    const { getInterviewNotesBySection } = await import("@/db/queries");
+    const section = await seedSection();
+    await seedAt(section.id, "live", -HOUR);
+    await seedAt(section.id, "tomorrow", HOUR);
+
+    const { notes, total } = await getInterviewNotesBySection("leetcode");
+    expect(notes.map((n) => n.slug)).toEqual(["live"]);
+    expect(total).toBe(1);
+  });
+
+  it("should 404 a scheduled note's own URL rather than only hiding it from lists", async () => {
+    const { getInterviewNote } = await import("@/db/queries");
+    const section = await seedSection();
+    await seedAt(section.id, "tomorrow", HOUR);
+    expect(await getInterviewNote("leetcode", "tomorrow")).toBeNull();
+  });
+
+  it("should leave a scheduled note out of the pinned block", async () => {
+    // The pinned block sits outside pagination and has its own query, so the
+    // listing filter does not cover it.
+    const { createNote, getPinnedInterviewNotes } = await import("@/db/queries");
+    const section = await seedSection();
+    await createNote({
+      slug: "tomorrow",
+      sectionId: section.id,
+      title: "Tomorrow",
+      status: "published",
+      pinned: true,
+      publishedAt: Math.floor(Date.now() / 1000) + HOUR,
+    });
+    expect(await getPinnedInterviewNotes("leetcode")).toEqual([]);
+  });
+
+  it("should not count a scheduled note in its section's total", async () => {
+    const { getInterviewNoteCountsBySection } = await import("@/db/queries");
+    const { clearQueryCache } = await import("@/db/queries/_cache");
+    const section = await seedSection();
+    await seedAt(section.id, "live", -HOUR);
+    await seedAt(section.id, "tomorrow", HOUR);
+
+    clearQueryCache();
+    expect((await getInterviewNoteCountsBySection()).get(section.id)).toBe(1);
+  });
+
+  it("should not surface a scheduled note through the palette search", async () => {
+    const { searchPublishedInterviewNotes } = await import("@/db/queries");
+    const section = await seedSection();
+    await seedAt(section.id, "tomorrow", HOUR);
+    expect(await searchPublishedInterviewNotes("tomorrow")).toEqual([]);
   });
 });

@@ -7,6 +7,7 @@ import { DataTable } from "./DataTable";
 import { StatusBadge } from "./StatusBadge";
 import { NoteRowActions } from "./NoteRowActions";
 import { useI18n } from "@/i18n/I18nProvider";
+import { PublishDateCell } from "./PublishDateCell";
 
 type Note = {
   id: string;
@@ -14,6 +15,7 @@ type Note = {
   title: string;
   status: string;
   pinned: boolean;
+  publishedAt: number | null;
   sectionId: string;
   sectionLabel: string;
   sectionSlug: string;
@@ -39,10 +41,11 @@ export function NotesListClient({
   const { q, page, sort, dir } = route.useSearch();
   const navigate = route.useNavigate();
 
-  // No `?sort=` means the server's default (newest edited first), which is not
-  // one of the table's columns — so no header shows a sort arrow.
+  // No `?sort=` means the server's default, newest published first — and that
+  // IS one of the table's columns now, so the header carries its arrow rather
+  // than leaving the table looking unsorted while it is not.
   const sorting = useMemo<SortingState>(
-    () => (sort ? [{ id: sort, desc: dir !== "asc" }] : []),
+    () => [{ id: sort ?? "publishedAt", desc: dir !== "asc" }],
     [sort, dir],
   );
 
@@ -71,6 +74,13 @@ export function NotesListClient({
         accessorKey: "status",
         header: t("noteList.status"),
         cell: ({ row }) => <StatusBadge status={row.original.status} />,
+      },
+      {
+        // Mirrors the post list: the column the table is ordered by is the one
+        // it shows.
+        accessorKey: "publishedAt",
+        header: t("noteList.published"),
+        cell: ({ row }) => <PublishDateCell publishedAt={row.original.publishedAt} />,
       },
       {
         id: "actions",

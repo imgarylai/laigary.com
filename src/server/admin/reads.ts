@@ -22,6 +22,7 @@ type NoteDetail = {
   contentMd: string;
   status: "draft" | "published";
   pinned: boolean;
+  publishedAt: number | null;
   tagIds: string[];
 } | null;
 
@@ -177,6 +178,7 @@ export async function editNoteDataImpl(data: {
       contentMd: note.contentMd,
       status: note.status as "draft" | "published",
       pinned: note.pinned === 1,
+      publishedAt: note.publishedAt,
       tagIds,
     },
     sections,
