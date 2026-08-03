@@ -202,6 +202,22 @@ describe("NotesListClient server-driven list", () => {
     expect(search({})).toEqual(expect.objectContaining({ sort: "title", dir: "desc" }));
   });
 
+  it("drops the sort from the url when a third click clears it", async () => {
+    // The header cycles asc → desc → unsorted. Leaving a stale `?sort=` behind
+    // on that last step would keep the server ordering by a column the table
+    // no longer shows as sorted.
+    useSearch.mockReturnValue({ sort: "title", dir: "desc" });
+    renderList();
+
+    fireEvent.click(screen.getByText("noteList.title"));
+
+    await waitFor(() => expect(navigate).toHaveBeenCalled());
+    const search = navigate.mock.lastCall?.[0].search as (p: object) => object;
+    expect(search({ sort: "title", dir: "desc" })).toEqual(
+      expect.objectContaining({ sort: undefined, dir: undefined }),
+    );
+  });
+
   it("returns to page 1 when the search changes the result set", async () => {
     // Page 4 of the old result set is not page 4 of the new one — keeping the
     // number would land the author on an empty page.
