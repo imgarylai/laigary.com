@@ -279,9 +279,35 @@ describe("PostForm", () => {
     expect(screen.getByTestId("editor").dataset.preview).toBe("true");
   });
 
+  it("should keep updating the slug as the title is typed out", async () => {
+    // A title arrives one keystroke at a time, not in one `change`. The guard
+    // used to be `!formState.dirtyFields.slug`, which react-hook-form flips to
+    // true on the keystroke after the first auto-fill (it re-diffs the whole
+    // form against defaultValues), so the slug froze two characters in:
+    // "十年部落格如一日" saved as "shih".
+    createPostFn.mockResolvedValue({ ok: true, data: { id: "new-id" } });
+    render(<PostForm availableTags={tags} ogBrand="Unconstrained" />);
+
+    const title = screen.getByLabelText("postForm.title");
+    openSettings();
+    const slug = screen.getByLabelText("postForm.slug") as HTMLInputElement;
+
+    for (const typed of ["十", "十年", "十年部", "十年部落", "十年部落格"]) {
+      fireEvent.change(title, { target: { value: typed } });
+    }
+    expect(slug.value).toBe("shih-nien-pu-lo-ko");
+
+    fireEvent.keyDown(document.body, { key: "Escape" });
+    fireEvent.change(screen.getByLabelText("body"), { target: { value: "the body" } });
+    fireEvent.click(screen.getByRole("button", { name: "postForm.create" }));
+
+    await waitFor(() => expect(createPostFn).toHaveBeenCalledTimes(1));
+    expect(createPostFn.mock.calls[0][0].data.slug).toBe("shih-nien-pu-lo-ko");
+  });
+
   it("should stop auto-filling the slug once the author has edited it by hand", async () => {
-    // The guard is `!slugManuallyEdited && !isEdit` — the edit-mode half is
-    // covered above, this is the dirty-field half. Without it, renaming the
+    // The guard is `enabled && the slug is still ours` — the edit-mode half is
+    // covered above, this is the hand-edited half. Without it, renaming the
     // title would silently throw away a hand-picked slug on a new post.
     createPostFn.mockResolvedValue({ ok: true, data: { id: "new-id" } });
     render(<PostForm availableTags={tags} ogBrand="Unconstrained" />);

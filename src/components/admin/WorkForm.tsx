@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useI18n } from "@/i18n/I18nProvider";
 import { useSaveShortcut } from "@/hooks/use-save-shortcut";
-import { slugify } from "@/lib/slug";
+import { useSlugAutofill } from "@/hooks/use-slug-autofill";
 import { TagsCombobox, type TagOption } from "./TagsCombobox";
 import { TiptapEditor } from "./TiptapEditor";
 import { CoverImageUpload } from "./CoverImageUpload";
@@ -137,13 +137,13 @@ export function WorkForm({
         },
   });
 
-  function handleTitleChange(title: string) {
-    // Auto-fill the slug from the title until the author edits it by hand, and
-    // only for new works (never rewrite an existing work's public URL).
-    if (!isEdit && !form.formState.dirtyFields.slug) {
-      form.setValue("slug", slugify(title));
-    }
-  }
+  // Auto-fill the slug from the title until the author edits it by hand, and
+  // only for new works (never rewrite an existing work's public URL).
+  const slugAutofill = useSlugAutofill({
+    enabled: !isEdit,
+    getSlug: () => form.getValues("slug"),
+    setSlug: (value) => form.setValue("slug", value),
+  });
 
   const submit = form.handleSubmit(async (values) => {
     // "" collapses the range back to a single year, and null is what the query
@@ -171,6 +171,8 @@ export function WorkForm({
         return;
       }
       toast.success(t("workForm.workCreated"));
+      // The work has a saved slug now; the title is free to keep changing.
+      slugAutofill.stop();
       form.reset(values);
       navigate({ to: "/admin/works/$workId/edit", params: { workId: result.data.id } });
     }
@@ -412,7 +414,7 @@ export function WorkForm({
                     {...field}
                     onChange={(e) => {
                       field.onChange(e);
-                      handleTitleChange(e.target.value);
+                      slugAutofill.fromTitle(e.target.value);
                     }}
                   />
                   <FieldError errors={[fieldState.error]} />

@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/i18n/I18nProvider";
 import { useSaveShortcut } from "@/hooks/use-save-shortcut";
-import { slugify } from "@/lib/slug";
+import { useSlugAutofill } from "@/hooks/use-slug-autofill";
 import { TiptapEditor } from "./TiptapEditor";
 import { EditorShell } from "./EditorShell";
 import { SaveState } from "./SaveState";
@@ -40,11 +40,13 @@ export function PageForm({ page }: { page?: { slug: string; title: string; conte
     defaultValues: page ?? { slug: "", title: "", contentMd: "" },
   });
 
-  function handleTitleChange(title: string) {
-    if (!isEdit && !form.formState.dirtyFields.slug) {
-      form.setValue("slug", slugify(title));
-    }
-  }
+  // Auto-fill the slug from the title until the author edits it by hand, and
+  // only for new pages (an existing page's slug is its identity).
+  const slugAutofill = useSlugAutofill({
+    enabled: !isEdit,
+    getSlug: () => form.getValues("slug"),
+    setSlug: (value) => form.setValue("slug", value),
+  });
 
   const submit = form.handleSubmit(async (values) => {
     const result = await upsertPageFn({ data: values });
@@ -53,6 +55,8 @@ export function PageForm({ page }: { page?: { slug: string; title: string; conte
       return;
     }
     toast.success(isEdit ? t("admin.pageUpdated") : t("admin.pageCreated"));
+    // The page has a saved slug now; the title is free to keep changing.
+    slugAutofill.stop();
     // Clears isDirty, which the save-state indicator and the navigation guard
     // both read. Without it the form stays dirty forever after the first
     // edit, so the guard would block the redirect this save is about to make.
@@ -155,7 +159,7 @@ export function PageForm({ page }: { page?: { slug: string; title: string; conte
                     {...field}
                     onChange={(e) => {
                       field.onChange(e);
-                      handleTitleChange(e.target.value);
+                      slugAutofill.fromTitle(e.target.value);
                     }}
                   />
                   <FieldError errors={[fieldState.error]} />
