@@ -139,6 +139,23 @@ describe("SectionFormDialog in edit mode", () => {
 });
 
 describe("SectionFormDialog cancel", () => {
+  it("discards the typing when the dialog is dismissed rather than cancelled", async () => {
+    // The cancel button calls setOpen(false) directly; Escape and an
+    // outside click come back through onOpenChange, which is the only path
+    // that has to reset the form itself.
+    render(<SectionFormDialog />);
+    openDialog("sectionList.newSection");
+    fireEvent.change(labelInput(), { target: { value: "Dismissed" } });
+
+    fireEvent.keyDown(document.body, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+
+    openDialog("sectionList.newSection");
+    expect(labelInput().value).toBe("");
+    expect(slugInput().value).toBe("");
+    expect(createSectionFn).not.toHaveBeenCalled();
+  });
+
   it("closes without submitting and discards the typing", async () => {
     render(<SectionFormDialog />);
     openDialog("sectionList.newSection");
