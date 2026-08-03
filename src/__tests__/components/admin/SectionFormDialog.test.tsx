@@ -56,6 +56,23 @@ describe("SectionFormDialog in create mode", () => {
     await waitFor(() => expect(slugInput().value).toBe("system-design"));
   });
 
+  it("derives the slug again for the next section the reopened dialog creates", async () => {
+    // One dialog instance serves every new section, so the autofill's memory of
+    // the slug it last wrote has to be cleared along with the field values —
+    // otherwise the second section's label would find a stale slug in the field
+    // and hand the whole thing over as if it had been typed by hand.
+    render(<SectionFormDialog />);
+    openDialog("sectionList.newSection");
+    fireEvent.change(labelInput(), { target: { value: "System Design" } });
+    fireEvent.click(screen.getByRole("button", { name: "sectionForm.create" }));
+    await waitFor(() => expect(createSectionFn).toHaveBeenCalled());
+
+    openDialog("sectionList.newSection");
+    fireEvent.change(labelInput(), { target: { value: "Behavioural" } });
+
+    await waitFor(() => expect(slugInput().value).toBe("behavioural"));
+  });
+
   it("sends sortOrder as a number, not the input's string", async () => {
     render(<SectionFormDialog />);
     openDialog("sectionList.newSection");

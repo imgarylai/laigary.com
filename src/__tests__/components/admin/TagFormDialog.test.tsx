@@ -61,6 +61,23 @@ describe("TagFormDialog in create mode", () => {
     expect(slugInput().value).toBe("golang");
   });
 
+  it("derives the slug again for the next tag the reopened dialog creates", async () => {
+    // One dialog instance serves every new tag, so the autofill's memory of the
+    // slug it last wrote has to be cleared along with the field values —
+    // otherwise the second tag's name would find a stale slug in the field and
+    // hand the whole thing over as if it had been typed by hand.
+    render(<TagFormDialog />);
+    openDialog("tagList.newTag");
+    fireEvent.change(nameInput(), { target: { value: "Rust" } });
+    fireEvent.click(screen.getByRole("button", { name: "tagForm.create" }));
+    await waitFor(() => expect(createTagFn).toHaveBeenCalled());
+
+    openDialog("tagList.newTag");
+    fireEvent.change(nameInput(), { target: { value: "Elixir" } });
+
+    await waitFor(() => expect(slugInput().value).toBe("elixir"));
+  });
+
   it("sends both name and slug", async () => {
     render(<TagFormDialog />);
     openDialog("tagList.newTag");
