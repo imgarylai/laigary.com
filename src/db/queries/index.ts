@@ -4,6 +4,11 @@
 
 export type { PostTag } from "./_tags";
 
+// Scheduling. `livePosts`/`liveNotes` stay internal (they are SQL fragments for
+// the query layer's own use); what callers outside it need is when the next
+// scheduled item comes due, which is what bounds the edge cache.
+export { getNextScheduledPublishAt } from "./_visibility";
+
 export type {
   PublicPost,
   PublicPostDetail,

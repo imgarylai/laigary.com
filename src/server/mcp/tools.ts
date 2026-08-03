@@ -47,6 +47,30 @@ async function resolveTagNames(names: string[]): Promise<string[]> {
 
 const statusSchema = z.enum(["draft", "published"]);
 
+/**
+ * The publish date, as an ISO 8601 instant.
+ *
+ * The query layer speaks unix seconds, but this surface is written to by
+ * language models composing JSON — an ISO string is the format they get right
+ * without being told, and it carries its own offset so "2026-08-01T09:00+08:00"
+ * cannot silently be read as UTC.
+ */
+const publishedAtSchema = z
+  .string()
+  .refine((v) => !Number.isNaN(Date.parse(v)), "Not an ISO 8601 date-time")
+  .optional();
+
+const PUBLISHED_AT_PROPERTY = {
+  type: "string",
+  description:
+    "Publish date as an ISO 8601 date-time (e.g. 2026-08-01T09:00:00Z). Omit to stamp the moment it is published. A FUTURE value schedules it — the item stays hidden from the site until then.",
+} as const;
+
+/** ISO 8601 to the unix seconds the query layer stores; undefined stays undefined. */
+function toUnixSeconds(iso: string | undefined): number | undefined {
+  return iso === undefined ? undefined : Math.floor(Date.parse(iso) / 1000);
+}
+
 const TOOLS: Tool[] = [
   // ── Read (public) ────────────────────────────────────────────────────
   {
@@ -315,6 +339,7 @@ const TOOLS: Tool[] = [
         contentMd: { type: "string", description: "Markdown body" },
         excerpt: { type: "string" },
         status: { type: "string", enum: ["draft", "published"] },
+        publishedAt: PUBLISHED_AT_PROPERTY,
         tagNames: { type: "array", items: { type: "string" } },
       },
       required: ["title", "slug", "contentMd"],
@@ -331,6 +356,7 @@ const TOOLS: Tool[] = [
           contentMd: z.string().min(1),
           excerpt: z.string().optional(),
           status: statusSchema.optional(),
+          publishedAt: publishedAtSchema,
           tagNames: z.array(z.string().min(1)).optional(),
         })
         .parse(args),
@@ -340,6 +366,7 @@ const TOOLS: Tool[] = [
       contentMd: string;
       excerpt?: string;
       status?: "draft" | "published";
+      publishedAt?: string;
       tagNames?: string[];
     }) => {
       const { createPost } = await import("@/db/queries");
@@ -350,6 +377,7 @@ const TOOLS: Tool[] = [
         contentMd: args.contentMd,
         excerpt: args.excerpt,
         status: args.status,
+        publishedAt: toUnixSeconds(args.publishedAt),
         tagIds,
       });
       return { id, slug, url: `/posts/${slug}` };
@@ -366,6 +394,7 @@ const TOOLS: Tool[] = [
         contentMd: { type: "string" },
         excerpt: { type: "string" },
         status: { type: "string", enum: ["draft", "published"] },
+        publishedAt: PUBLISHED_AT_PROPERTY,
         tagNames: { type: "array", items: { type: "string" } },
       },
       required: ["slug"],
@@ -379,6 +408,7 @@ const TOOLS: Tool[] = [
           contentMd: z.string().min(1).optional(),
           excerpt: z.string().optional(),
           status: statusSchema.optional(),
+          publishedAt: publishedAtSchema,
           tagNames: z.array(z.string().min(1)).optional(),
         })
         .parse(args),
@@ -388,6 +418,7 @@ const TOOLS: Tool[] = [
       contentMd?: string;
       excerpt?: string;
       status?: "draft" | "published";
+      publishedAt?: string;
       tagNames?: string[];
     }) => {
       const { getAllAdminPosts, updatePost } = await import("@/db/queries");
@@ -399,6 +430,7 @@ const TOOLS: Tool[] = [
         contentMd: args.contentMd,
         excerpt: args.excerpt,
         status: args.status,
+        publishedAt: toUnixSeconds(args.publishedAt),
         tagIds,
       });
       return { slug: args.slug, url: `/posts/${args.slug}` };
@@ -417,6 +449,7 @@ const TOOLS: Tool[] = [
         slug: { type: "string" },
         contentMd: { type: "string" },
         status: { type: "string", enum: ["draft", "published"] },
+        publishedAt: PUBLISHED_AT_PROPERTY,
         tagNames: { type: "array", items: { type: "string" } },
       },
       required: ["section", "title", "slug", "contentMd"],
@@ -433,6 +466,7 @@ const TOOLS: Tool[] = [
             .regex(/^[a-z0-9-]+$/),
           contentMd: z.string().min(1),
           status: statusSchema.optional(),
+          publishedAt: publishedAtSchema,
           tagNames: z.array(z.string().min(1)).optional(),
         })
         .parse(args),
@@ -442,6 +476,7 @@ const TOOLS: Tool[] = [
       slug: string;
       contentMd: string;
       status?: "draft" | "published";
+      publishedAt?: string;
       tagNames?: string[];
     }) => {
       const { getInterviewSectionBySlug, createNote } = await import("@/db/queries");
@@ -454,6 +489,7 @@ const TOOLS: Tool[] = [
         title: args.title,
         contentMd: args.contentMd,
         status: args.status,
+        publishedAt: toUnixSeconds(args.publishedAt),
         tagIds,
       });
       return { id, slug, url: `/interview/${args.section}/${slug}` };
@@ -471,11 +507,12 @@ const TOOLS: Tool[] = [
         title: { type: "string" },
         contentMd: { type: "string" },
         status: { type: "string", enum: ["draft", "published"] },
+        publishedAt: PUBLISHED_AT_PROPERTY,
         tagNames: { type: "array", items: { type: "string" } },
         touchUpdatedAt: {
           type: "boolean",
           description:
-            "Whether this counts as new content (default true). Pass false for a typo or link fix so the note is not resurfaced as freshly written — listings order by updatedAt.",
+            "Whether this counts as new content (default true). Pass false for a typo or link fix, so the note keeps its original modified date. It does not affect listing order — that follows publishedAt.",
         },
       },
       required: ["section", "slug"],
@@ -489,6 +526,7 @@ const TOOLS: Tool[] = [
           title: z.string().min(1).optional(),
           contentMd: z.string().min(1).optional(),
           status: statusSchema.optional(),
+          publishedAt: publishedAtSchema,
           tagNames: z.array(z.string().min(1)).optional(),
           touchUpdatedAt: z.boolean().optional(),
         })
@@ -499,6 +537,7 @@ const TOOLS: Tool[] = [
       title?: string;
       contentMd?: string;
       status?: "draft" | "published";
+      publishedAt?: string;
       tagNames?: string[];
       touchUpdatedAt?: boolean;
     }) => {
@@ -512,6 +551,7 @@ const TOOLS: Tool[] = [
           title: args.title,
           contentMd: args.contentMd,
           status: args.status,
+          publishedAt: toUnixSeconds(args.publishedAt),
           tagIds,
         },
         { touchUpdatedAt: args.touchUpdatedAt },

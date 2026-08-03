@@ -65,6 +65,21 @@ backfills go inside the generated file or via `drizzle-kit generate --custom`.
   `src/server/admin/interview.ts`; a note also carries its `sectionId`). When
   you add or change a feature on one (an admin action, a form field, a list
   column), mirror it on the other unless there's a reason not to.
+- Publishing is a DATE, not a flag. `published_at` (posts and interview notes)
+  is author-set and may be in the future; a row is live only when
+  `status = 'published' AND published_at <= now`. That predicate is
+  `livePosts()` / `liveNotes()` in `db/queries/_visibility.ts` — every public
+  read must use it, including the ones that look incidental (tag counts, the
+  sitemap, the ⌘K search, `getAdjacentPosts`' forward link). Miss one and a
+  scheduled post leaks through it. `published_at` is non-null for anything
+  published (the `publish_date_ordering` migration backfilled it from
+  `created_at`, and `resolvePublishedAt` stamps every publish), which is what
+  makes a bare `<=` safe. Every listing — public and admin — orders by it, never
+  by `updated_at`: a typo fix is not a republish.
+- The one publish with no write behind it is a schedule coming due, so nothing
+  bumps the content version to retire the edge cache. `getNextScheduledPublishAt`
+  caps `s-maxage` at that moment (`edgeCacheControl`, wired in `src/start.ts`).
+  A new cache layer over public content has to respect the same bound.
 - Caching, two layers, both keyed off ONE call: every content mutation ends
   with `await revalidateContent()` (`src/db/queries/_revalidate.ts`). Miss it
   in a new mutation and the write is invisible for up to a day.

@@ -57,6 +57,7 @@ const existingNote = {
   contentMd: "hello",
   status: "published" as const,
   pinned: false,
+  publishedAt: null,
   tagIds: ["tag-1"],
 };
 

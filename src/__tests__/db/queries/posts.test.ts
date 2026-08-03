@@ -449,3 +449,215 @@ describe("post branch gaps", () => {
     await expect(updatePost(id, { slug: "taken" })).rejects.toBeInstanceOf(PostConflictError);
   });
 });
+
+// The publish date is the author's to set, and a future one is a schedule: the
+// row exists, is flagged published, and still must not reach a reader until its
+// second arrives. Every public read has to agree on that or the post leaks
+// through whichever one forgot.
+describe("scheduled posts", () => {
+  const HOUR = 3600;
+
+  /** A published post dated `offset` seconds from now. */
+  async function seedAt(slug: string, offset: number) {
+    const { createPost } = await import("@/db/queries");
+    return createPost({
+      title: slug,
+      slug,
+      contentMd: "body",
+      status: "published",
+      publishedAt: Math.floor(Date.now() / 1000) + offset,
+    });
+  }
+
+  it("should keep a future-dated post out of the archive while showing a past-dated one", async () => {
+    const { getPublishedPosts } = await import("@/db/queries");
+    await seedAt("live", -HOUR);
+    await seedAt("tomorrow", HOUR);
+
+    const { posts, total } = await getPublishedPosts();
+    expect(posts.map((p) => p.slug)).toEqual(["live"]);
+    // The count drives the pager, so a scheduled post inflating it would leave
+    // a page-2 link to an empty page.
+    expect(total).toBe(1);
+  });
+
+  it("should 404 a scheduled post's own URL rather than only hiding it from lists", async () => {
+    const { getPostBySlug } = await import("@/db/queries");
+    await seedAt("tomorrow", HOUR);
+    expect(await getPostBySlug("tomorrow")).toBeNull();
+  });
+
+  it("should serve a scheduled post once its date has passed", async () => {
+    const { getPostBySlug } = await import("@/db/queries");
+    // Dated a second out, then the clock is moved past it — nothing is written
+    // in between, which is the whole point: the row was already correct.
+    const at = Math.floor(Date.now() / 1000) + 1;
+    const { createPost } = await import("@/db/queries");
+    await createPost({
+      title: "Soon",
+      slug: "soon",
+      contentMd: "body",
+      status: "published",
+      publishedAt: at,
+    });
+    expect(await getPostBySlug("soon")).toBeNull();
+
+    const now = vi.spyOn(Date, "now").mockReturnValue((at + 1) * 1000);
+    expect(await getPostBySlug("soon")).not.toBeNull();
+    now.mockRestore();
+  });
+
+  it("should leave a scheduled post out of the RSS feed", async () => {
+    const { getFeedPosts } = await import("@/db/queries");
+    await seedAt("live", -HOUR);
+    await seedAt("tomorrow", HOUR);
+    expect((await getFeedPosts(10)).map((p) => p.slug)).toEqual(["live"]);
+  });
+
+  it("should not link a scheduled post as the next one in the timeline", async () => {
+    const { getAdjacentPosts } = await import("@/db/queries");
+    await seedAt("older", -2 * HOUR);
+    await seedAt("current", -HOUR);
+    await seedAt("tomorrow", HOUR);
+
+    const { prev, next } = await getAdjacentPosts("current");
+    expect(prev?.slug).toBe("older");
+    // `next` walks forward in time, so it is the one direction a schedule can
+    // leak through — the pager would offer a link to a 404.
+    expect(next).toBeNull();
+  });
+
+  it("should not count a scheduled post against its tags", async () => {
+    const { createPost, getTagsWithCounts } = await import("@/db/queries");
+    const { clearQueryCache } = await import("@/db/queries/_cache");
+    const tag = await seedTag("Go", "go");
+    const now = Math.floor(Date.now() / 1000);
+    await createPost({
+      title: "Live",
+      slug: "live",
+      contentMd: "x",
+      status: "published",
+      publishedAt: now - HOUR,
+      tagIds: [tag.id],
+    });
+    await createPost({
+      title: "Tomorrow",
+      slug: "tomorrow",
+      contentMd: "x",
+      status: "published",
+      publishedAt: now + HOUR,
+      tagIds: [tag.id],
+    });
+
+    clearQueryCache();
+    expect((await getTagsWithCounts()).find((t) => t.slug === "go")?.count).toBe(1);
+  });
+});
+
+describe("publish date on write", () => {
+  it("should store the date the author picked instead of the moment they saved", async () => {
+    const { createPost, getAdminPostById } = await import("@/db/queries");
+    const backdated = 1_600_000_000;
+    const { id } = await createPost({
+      title: "Backdated",
+      slug: "backdated",
+      contentMd: "x",
+      status: "published",
+      publishedAt: backdated,
+    });
+    expect((await getAdminPostById(id))?.publishedAt).toBe(backdated);
+  });
+
+  it("should keep a date picked on a draft so publishing later does not overwrite it", async () => {
+    // Setting up a schedule takes one save, not two: the date has to survive
+    // being stored on a row that is still a draft.
+    const { createPost, updatePost, getAdminPostById } = await import("@/db/queries");
+    const chosen = 2_000_000_000;
+    const { id } = await createPost({
+      title: "Planned",
+      slug: "planned",
+      contentMd: "x",
+      status: "draft",
+      publishedAt: chosen,
+    });
+    expect((await getAdminPostById(id))?.publishedAt).toBe(chosen);
+
+    await updatePost(id, { status: "published" });
+    expect((await getAdminPostById(id))?.publishedAt).toBe(chosen);
+  });
+
+  it("should leave the stored date alone when an edit does not mention it", async () => {
+    const { createPost, updatePost, getAdminPostById } = await import("@/db/queries");
+    const chosen = 1_500_000_000;
+    const { id } = await createPost({
+      title: "T",
+      slug: "t",
+      contentMd: "x",
+      status: "published",
+      publishedAt: chosen,
+    });
+    await updatePost(id, { title: "Retitled" });
+    expect((await getAdminPostById(id))?.publishedAt).toBe(chosen);
+  });
+
+  it("should re-stamp with now when the author clears the date on a published post", async () => {
+    const { createPost, updatePost, getAdminPostById } = await import("@/db/queries");
+    const { id } = await createPost({
+      title: "T",
+      slug: "t",
+      contentMd: "x",
+      status: "published",
+      publishedAt: 1_500_000_000,
+    });
+    // null means "back to automatic", which for a published post is now — not
+    // NULL, which would drop it off the site entirely.
+    await updatePost(id, { publishedAt: null });
+    const stored = (await getAdminPostById(id))?.publishedAt;
+    expect(stored).not.toBe(1_500_000_000);
+    expect(stored).toBeGreaterThan(1_500_000_000);
+  });
+});
+
+describe("admin list ordering", () => {
+  it("should order by publish date, not by the last edit", async () => {
+    // The fixture violates the property: the OLDER post is the one edited most
+    // recently, so an `updatedAt` ordering puts it first and a publish ordering
+    // does not. Seeded in the same order for both, so neither can pass by
+    // accident of insertion.
+    const { createPost, updatePost, getAllAdminPosts } = await import("@/db/queries");
+    const now = Math.floor(Date.now() / 1000);
+    const old = await createPost({
+      title: "Old",
+      slug: "old",
+      contentMd: "x",
+      status: "published",
+      publishedAt: now - 90_000,
+    });
+    await createPost({
+      title: "Recent",
+      slug: "recent",
+      contentMd: "x",
+      status: "published",
+      publishedAt: now - 100,
+    });
+    await updatePost(old.id, { title: "Old, retouched" });
+
+    expect((await getAllAdminPosts()).map((p) => p.slug)).toEqual(["recent", "old"]);
+  });
+
+  it("should sink undated drafts below the dated posts rather than floating them to the top", async () => {
+    // SQLite sorts NULL first on a DESC ordering, so the naive version puts
+    // every draft above the whole archive.
+    const { createPost, getAllAdminPosts } = await import("@/db/queries");
+    await createPost({ title: "Draft", slug: "draft", contentMd: "x" });
+    await createPost({
+      title: "Live",
+      slug: "live",
+      contentMd: "x",
+      status: "published",
+      publishedAt: 1_000_000,
+    });
+
+    expect((await getAllAdminPosts()).map((p) => p.slug)).toEqual(["live", "draft"]);
+  });
+});

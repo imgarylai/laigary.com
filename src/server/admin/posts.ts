@@ -11,6 +11,10 @@ const slug = z
   .min(1)
   .regex(/^[a-z0-9-]+$/, "Slug must be lowercase letters, numbers, and hyphens");
 const title = z.string().min(1).max(255);
+// Unix seconds. Nullable clears the stored date back to automatic; omitted
+// leaves it alone (see `resolvePublishedAt` in the query layer). A future value
+// is a schedule, so nothing here bounds it to the past.
+const publishedAt = z.number().int().nullable().optional();
 
 export const postCreateSchema = z.object({
   title,
@@ -20,6 +24,7 @@ export const postCreateSchema = z.object({
   coverImageUrl: z.string().optional(),
   status: z.enum(["draft", "published"]).optional(),
   pinned: z.boolean().optional(),
+  publishedAt,
   tagIds: z.array(z.string()).optional(),
 });
 export type PostCreateInput = z.infer<typeof postCreateSchema>;
@@ -35,6 +40,7 @@ export const postUpdateSchema = z.object({
   coverImageUrl: z.string().optional(),
   status: z.enum(["draft", "published"]).optional(),
   pinned: z.boolean().optional(),
+  publishedAt,
   tagIds: z.array(z.string()).optional(),
 });
 export type PostUpdateInput = z.infer<typeof postUpdateSchema>;

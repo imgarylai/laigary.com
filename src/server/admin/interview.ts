@@ -33,6 +33,11 @@ export type SectionUpdateInput = z.infer<typeof sectionUpdateSchema>;
 
 // --- Notes ---
 
+// Unix seconds. Nullable clears the stored date back to automatic; omitted
+// leaves it alone (see `resolvePublishedAt` in the query layer). A future value
+// is a schedule, so nothing here bounds it to the past.
+const publishedAt = z.number().int().nullable().optional();
+
 export const noteCreateSchema = z.object({
   slug,
   sectionId: z.string().min(1),
@@ -40,6 +45,7 @@ export const noteCreateSchema = z.object({
   contentMd: z.string().optional(),
   status: z.enum(["draft", "published"]).optional(),
   pinned: z.boolean().optional(),
+  publishedAt,
   tagIds: z.array(z.string()).optional(),
 });
 export type NoteCreateInput = z.infer<typeof noteCreateSchema>;
@@ -52,6 +58,7 @@ export const noteUpdateSchema = z.object({
   contentMd: z.string().optional(),
   status: z.enum(["draft", "published"]).optional(),
   pinned: z.boolean().optional(),
+  publishedAt,
   tagIds: z.array(z.string()).optional(),
 });
 export type NoteUpdateInput = z.infer<typeof noteUpdateSchema>;

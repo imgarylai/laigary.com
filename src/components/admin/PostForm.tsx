@@ -15,6 +15,7 @@ import {
   SlugField,
   ExcerptField,
   StatusField,
+  PublishedAtField,
   PinnedField,
   TagsField,
   ContentField,
@@ -54,6 +55,7 @@ export function PostForm({
       tagIds: [],
       status: "draft",
       pinned: false,
+      publishedAt: null,
     },
   });
 
@@ -113,6 +115,7 @@ export function PostForm({
             <SlugField control={form.control} />
             <ExcerptField control={form.control} />
             <StatusField control={form.control} />
+            <PublishedAtField control={form.control} />
             <PinnedField control={form.control} />
             <TagsField control={form.control} availableTags={availableTags} />
             <CoverImageField control={form.control} title={form.watch("title")} ogBrand={ogBrand} />

@@ -11,6 +11,7 @@ import {
   workTags,
 } from "@/db/schema";
 import { getDb } from "./_db";
+import { liveNotes, livePosts } from "./_visibility";
 
 export type SitemapData = {
   posts: { slug: string; updatedAt: number }[];
@@ -21,7 +22,8 @@ export type SitemapData = {
   pages: { slug: string; updatedAt: number }[];
 };
 
-// Everything the public sitemap needs, in one pass: published posts/notes, the
+// Everything the public sitemap needs, in one pass: LIVE posts/notes (a
+// scheduled one is not crawlable yet, so listing it would advertise a 404), the
 // pages, and tags/sections carrying the latest updatedAt of their published
 // content (tags/sections with no published content are dropped).
 export async function getSitemapData(): Promise<SitemapData> {
@@ -32,7 +34,7 @@ export async function getSitemapData(): Promise<SitemapData> {
       db
         .select({ slug: posts.slug, updatedAt: posts.updatedAt })
         .from(posts)
-        .where(eq(posts.status, "published"))
+        .where(livePosts())
         .orderBy(desc(posts.publishedAt)),
       db
         .select({
@@ -42,7 +44,7 @@ export async function getSitemapData(): Promise<SitemapData> {
         })
         .from(interviewNotes)
         .innerJoin(interviewSections, eq(interviewSections.id, interviewNotes.sectionId))
-        .where(eq(interviewNotes.status, "published"))
+        .where(liveNotes())
         .orderBy(desc(interviewNotes.publishedAt)),
       db
         .select({ slug: interviewSections.slug })
@@ -53,14 +55,14 @@ export async function getSitemapData(): Promise<SitemapData> {
         .from(postTags)
         .innerJoin(posts, eq(posts.id, postTags.postId))
         .innerJoin(tags, eq(tags.id, postTags.tagId))
-        .where(eq(posts.status, "published"))
+        .where(livePosts())
         .groupBy(tags.slug),
       db
         .select({ tagSlug: tags.slug, updatedAt: max(interviewNotes.updatedAt) })
         .from(interviewNoteTags)
         .innerJoin(interviewNotes, eq(interviewNotes.id, interviewNoteTags.noteId))
         .innerJoin(tags, eq(tags.id, interviewNoteTags.tagId))
-        .where(eq(interviewNotes.status, "published"))
+        .where(liveNotes())
         .groupBy(tags.slug),
       db
         .select({ slug: works.slug, updatedAt: works.updatedAt })

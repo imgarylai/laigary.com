@@ -23,7 +23,7 @@ import { TiptapEditor } from "./TiptapEditor";
 import { EditorShell } from "./EditorShell";
 import { SaveState } from "./SaveState";
 import { UnsavedChangesGuard } from "./UnsavedChangesGuard";
-import { EDITOR_TITLE_CLASS } from "./form-fields";
+import { EDITOR_TITLE_CLASS, PublishedAtInput } from "./form-fields";
 import { createNoteFn, updateNoteFn } from "@/server/admin/interview";
 
 const noteFormSchema = z.object({
@@ -36,6 +36,9 @@ const noteFormSchema = z.object({
   contentMd: z.string(),
   status: z.enum(["draft", "published"]),
   pinned: z.boolean(),
+  // Unix seconds — see the same field on `postFormSchema` for why it is not the
+  // input's local-time string.
+  publishedAt: z.number().int().nullable(),
   tagIds: z.array(z.string()),
 });
 type NoteFormValues = z.infer<typeof noteFormSchema>;
@@ -48,6 +51,7 @@ type NoteInit = {
   contentMd: string;
   status: "draft" | "published";
   pinned: boolean;
+  publishedAt: number | null;
   tagIds: string[];
 };
 
@@ -76,6 +80,7 @@ export function NoteForm({
       contentMd: "",
       status: "draft",
       pinned: false,
+      publishedAt: null,
       tagIds: [],
     },
   });
@@ -100,6 +105,7 @@ export function NoteForm({
           contentMd: values.contentMd,
           status: values.status,
           pinned: values.pinned,
+          publishedAt: values.publishedAt,
           tagIds: values.tagIds,
         },
       });
@@ -229,6 +235,14 @@ export function NoteForm({
           )}
         />
       </>
+
+      <Controller
+        control={form.control}
+        name="publishedAt"
+        render={({ field }) => (
+          <PublishedAtInput id="note-published-at" value={field.value} onChange={field.onChange} />
+        )}
+      />
 
       <Controller
         control={form.control}

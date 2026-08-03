@@ -16,6 +16,7 @@ import type { PostStatus } from "@/routes/admin/posts/-list-search";
 import { PostRowActions } from "./PostRowActions";
 import { useI18n } from "@/i18n/I18nProvider";
 import { fmtRelativeFromUnix } from "@/lib/date";
+import { PublishDateCell } from "./PublishDateCell";
 
 type Post = {
   id: string;
@@ -23,6 +24,7 @@ type Post = {
   title: string;
   status: string;
   pinned: boolean;
+  publishedAt: number | null;
   updatedAt: number;
 };
 
@@ -71,6 +73,14 @@ export function PostsListClient({ posts }: { posts: Post[] }) {
         accessorKey: "status",
         header: t("postList.status"),
         cell: ({ row }) => <StatusBadge status={row.original.status} />,
+      },
+      {
+        // The list mirrors the archive's order, so the date it shows is the one
+        // it is sorted by. "Updated" used to sit here and answer a question
+        // nobody was asking of a post list.
+        accessorKey: "publishedAt",
+        header: t("postList.published"),
+        cell: ({ row }) => <PublishDateCell publishedAt={row.original.publishedAt} />,
       },
       {
         accessorKey: "updatedAt",

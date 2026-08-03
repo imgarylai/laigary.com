@@ -6,7 +6,8 @@
 
 import { describe, it, expect } from "vitest";
 import {
-  EDGE_CACHE_CONTROL,
+  EDGE_CACHE_MAX_AGE,
+  edgeCacheControl,
   cacheKeyUrl,
   isCacheableMethod,
   isCacheablePath,
@@ -162,12 +163,30 @@ describe("readCookie", () => {
   });
 });
 
-describe("EDGE_CACHE_CONTROL", () => {
-  it("should let shared caches hold the page while browsers revalidate", () => {
+describe("edgeCacheControl", () => {
+  it("should let shared caches hold the page for a day while browsers revalidate", () => {
     // max-age=0 is what stops a reader holding a stale page across a publish;
     // s-maxage is the part the edge honours.
-    expect(EDGE_CACHE_CONTROL).toContain("max-age=0");
-    expect(EDGE_CACHE_CONTROL).toContain("s-maxage=86400");
-    expect(EDGE_CACHE_CONTROL).toContain("public");
+    const header = edgeCacheControl(null);
+    expect(header).toContain("max-age=0");
+    expect(header).toContain(`s-maxage=${EDGE_CACHE_MAX_AGE}`);
+    expect(header).toContain("public");
+  });
+
+  it("should expire the page when a scheduled post comes due instead of a day later", () => {
+    // The one publish with no write behind it to bump the content version: the
+    // cap is the only thing that retires the pages rendered without the post.
+    expect(edgeCacheControl(600)).toContain("s-maxage=600");
+  });
+
+  it("should never hold a page past the day ceiling when the schedule is further out", () => {
+    expect(edgeCacheControl(EDGE_CACHE_MAX_AGE * 7)).toContain(`s-maxage=${EDGE_CACHE_MAX_AGE}`);
+  });
+
+  it("should still store the page when the schedule is due this instant", () => {
+    // s-maxage=0 would tell the shared cache not to store at all, knocking
+    // every public page out of the edge rather than expiring one generation.
+    expect(edgeCacheControl(0)).toContain("s-maxage=1");
+    expect(edgeCacheControl(-30)).toContain("s-maxage=1");
   });
 });
