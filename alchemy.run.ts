@@ -2,6 +2,7 @@
 import alchemy from "alchemy";
 import {
   AccessApplication,
+  AccessIdentityProvider,
   AccessPolicy,
   D1Database,
   R2Bucket,
@@ -113,10 +114,41 @@ export const worker = await TanStackStart("laigary-web", {
   },
 });
 
+// Google OAuth IdP. Brings the Access "Sign in with Google" IdP under Alchemy
+// management. `adopt: true` takes over the account's existing Google IdP by name
+// instead of failing on a duplicate.
+//
+// Guarded like the R2/MCP secrets below: without the OAuth credentials in env
+// the deploy still succeeds and `allowedIdps` stays unset (Access accepts every
+// account IdP). Set both and the IdP is created/adopted and pinned as the only
+// allowed login on the /admin app.
+//
+// TODO(setup): create the Google OAuth 2.0 client, then forward its credentials
+// as GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET in the deploy workflow env:
+//   1. Google Cloud Console → APIs & Services → Credentials → Create OAuth
+//      client ID → type "Web application".
+//   2. Authorized redirect URI:
+//        https://<your-team-name>.cloudflareaccess.com/cdn-cgi/access/callback
+//      (your team name is under Zero Trust → Settings → Custom Pages, or the
+//      *.cloudflareaccess.com domain shown on the Access login page).
+//   3. Copy the client ID + secret into GitHub Actions secrets and add them to
+//      the deploy job's env, same as R2_ACCESS_KEY_ID etc.
+const googleIdp =
+  process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+    ? await AccessIdentityProvider("laigary-google", {
+        name: "Google",
+        type: "google",
+        clientId: process.env.GOOGLE_CLIENT_ID,
+        clientSecret: alchemy.secret(process.env.GOOGLE_CLIENT_SECRET),
+        adopt: true,
+      })
+    : undefined;
+
 // Protect ONLY the /admin path with Cloudflare Access (self-hosted app). The
 // path in `domain` scopes it to /admin — the public site stays open. Login uses
-// the account's existing IdP (Google OAuth); `allowedIdps` is left unset so all
-// account IdPs are accepted. Only the owner's email is allowed in.
+// the Google IdP above when configured (`allowedIdps` pins it as the only login);
+// until then `allowedIdps` is unset so all account IdPs are accepted. Only the
+// owner's email is allowed in.
 //
 // `adopt: true` takes over the existing Access app/policy (matched by `name`)
 // instead of failing on a duplicate — so this re-adopts the live "laigary admin"
@@ -136,6 +168,7 @@ export const adminAccess = await AccessApplication("laigary-admin", {
   domain: "laigary.com/admin",
   adopt: true,
   delete: false,
+  ...(googleIdp ? { allowedIdps: [googleIdp] } : {}),
   policies: [
     await AccessPolicy("laigary-admin-allow", {
       name: "Allow owner",
