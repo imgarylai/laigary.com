@@ -94,7 +94,10 @@ async function loadNextScheduledPublishAt(): Promise<number | null> {
       .where(and(eq(interviewNotes.status, "published"), gt(interviewNotes.publishedAt, now))),
   ]);
 
-  const candidates = [postNext[0]?.at, noteNext[0]?.at].filter(
+  // Indexed, not optional-chained: an aggregate with no GROUP BY always returns
+  // exactly one row — `at` is NULL when nothing matched, which the filter
+  // handles. `?.` here would be a branch nothing can take.
+  const candidates = [postNext[0].at, noteNext[0].at].filter(
     (at): at is number => typeof at === "number",
   );
   return candidates.length > 0 ? Math.min(...candidates) : null;

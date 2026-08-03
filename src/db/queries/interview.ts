@@ -7,16 +7,6 @@ import { cached, cacheKeys } from "./_cache";
 import { revalidateContent } from "./_revalidate";
 import { liveNotes, resolvePublishedAt, unixNow } from "./_visibility";
 
-/**
- * The date a note carries publicly.
- *
- * `published_at` for everything (the `publish_date_ordering` migration
- * backfilled it), with `created_at` behind it only so a note that somehow
- * reaches a reader undated still prints a date rather than 1970.
- */
-function noteDate(note: { publishedAt: number | null; createdAt: number }): string {
-  return unixToIso(note.publishedAt ?? note.createdAt);
-}
 
 export type InterviewNoteWithTags = {
   id: string;
@@ -32,6 +22,20 @@ export type InterviewNoteWithTags = {
   updatedAt: number;
 };
 
+/**
+ * A note that has come back through `liveNotes()`.
+ *
+ * The only difference is that `publishedAt` is not nullable, and that is worth
+ * a type rather than a `?? createdAt` at each of the four places a note's date
+ * is rendered: those fallbacks read as handling a real case, when the filter
+ * the row just passed (`published_at <= now`) means NULL cannot reach them. The
+ * narrowing is asserted where the filter is applied, so the callers need no
+ * assertion at all.
+ */
+export type LiveInterviewNote = Omit<InterviewNoteWithTags, "publishedAt"> & {
+  publishedAt: number;
+};
+
 type RawNote = {
   id: string;
   slug: string;
@@ -44,6 +48,15 @@ type RawNote = {
   createdAt: number;
   updatedAt: number;
 };
+
+/**
+ * Attach tags to rows that came back through `liveNotes()`, narrowing the
+ * publish date to non-null. The cast is safe exactly because the caller's WHERE
+ * compared `published_at` to a number — a NULL cannot have matched.
+ */
+async function attachTagsToLive(db: Db, notes: RawNote[]): Promise<LiveInterviewNote[]> {
+  return (await attachTags(db, notes)) as LiveInterviewNote[];
+}
 
 async function attachTags(db: Db, notes: RawNote[]): Promise<InterviewNoteWithTags[]> {
   const tagMap = await fetchTagsByParentIds(
@@ -100,7 +113,6 @@ export async function getPublishedNotesByTag(tagSlug: string): Promise<NoteByTag
       sectionLabel: interviewSections.label,
       title: interviewNotes.title,
       publishedAt: interviewNotes.publishedAt,
-      createdAt: interviewNotes.createdAt,
     })
     .from(interviewNoteTags)
     .innerJoin(tags, eq(tags.id, interviewNoteTags.tagId))
@@ -114,7 +126,8 @@ export async function getPublishedNotesByTag(tagSlug: string): Promise<NoteByTag
     sectionSlug: r.sectionSlug,
     sectionLabel: r.sectionLabel,
     title: r.title,
-    date: noteDate(r),
+    // Non-null by `liveNotes()` above — see `LiveInterviewNote`.
+    date: unixToIso(r.publishedAt!),
   }));
 }
 
@@ -170,7 +183,7 @@ export async function getInterviewNoteCountsBySection(): Promise<Map<string, num
   });
 }
 
-export async function getRecentInterviewNotes(limit: number): Promise<InterviewNoteWithTags[]> {
+export async function getRecentInterviewNotes(limit: number): Promise<LiveInterviewNote[]> {
   const db = await getDb();
   const notes = await db
     .select()
@@ -178,7 +191,7 @@ export async function getRecentInterviewNotes(limit: number): Promise<InterviewN
     .where(liveNotes())
     .orderBy(desc(interviewNotes.publishedAt))
     .limit(limit);
-  return attachTags(db, notes);
+  return attachTagsToLive(db, notes);
 }
 
 export type SectionNotesOptions = {
@@ -213,7 +226,7 @@ export type SectionNotesOptions = {
 export async function getInterviewNotesBySection(
   sectionSlug: string,
   opts?: SectionNotesOptions,
-): Promise<{ notes: InterviewNoteWithTags[]; total: number }> {
+): Promise<{ notes: LiveInterviewNote[]; total: number }> {
   const db = await getDb();
   const section = await getInterviewSectionBySlug(sectionSlug);
   if (!section) return { notes: [], total: 0 };
@@ -248,16 +261,14 @@ export async function getInterviewNotesBySection(
     .limit(limit)
     .offset(offset);
 
-  const notes = await attachTags(db, rows);
+  const notes = await attachTagsToLive(db, rows);
   return { notes, total };
 }
 
 // The section page's pinned block: every pinned published note in the section,
 // newest first. Its own query because the block sits outside pagination — it
 // renders in full on page 1 and not at all on the rest.
-export async function getPinnedInterviewNotes(
-  sectionSlug: string,
-): Promise<InterviewNoteWithTags[]> {
+export async function getPinnedInterviewNotes(sectionSlug: string): Promise<LiveInterviewNote[]> {
   const db = await getDb();
   const section = await getInterviewSectionBySlug(sectionSlug);
   if (!section) return [];
@@ -268,7 +279,7 @@ export async function getPinnedInterviewNotes(
     .where(and(eq(interviewNotes.sectionId, section.id), liveNotes(), eq(interviewNotes.pinned, 1)))
     .orderBy(desc(interviewNotes.publishedAt));
 
-  return attachTags(db, rows);
+  return attachTagsToLive(db, rows);
 }
 
 // Cross-section title search for published notes — backs the ⌘K palette's
@@ -707,7 +718,7 @@ export async function deleteNote(id: string): Promise<void> {
 export async function getInterviewNote(
   sectionSlug: string,
   noteSlug: string,
-): Promise<InterviewNoteWithTags | null> {
+): Promise<LiveInterviewNote | null> {
   const db = await getDb();
   const section = await getInterviewSectionBySlug(sectionSlug);
   if (!section) return null;
@@ -721,7 +732,7 @@ export async function getInterviewNote(
       and(eq(interviewNotes.sectionId, section.id), eq(interviewNotes.slug, noteSlug), liveNotes()),
     );
   if (!note) return null;
-  const [withTags] = await attachTags(db, [note]);
+  const [withTags] = await attachTagsToLive(db, [note]);
   return withTags;
 }
 

@@ -96,12 +96,20 @@ describe("getNextScheduledPublishAt", () => {
     expect(await getNextScheduledPublishAt()).toBeNull();
   });
 
-  it("should stop reporting a schedule once its moment has passed, despite the cache", async () => {
+  it("should stop reporting a schedule once its moment has passed, despite a still-fresh cache entry", async () => {
     // The cached answer is the dangerous one: it is read to decide how long the
-    // edge may hold a page, so serving a lapsed timestamp for a full TTL is
-    // exactly the case that would keep a just-published post invisible.
+    // edge may hold a page, so serving a lapsed timestamp for the rest of its
+    // TTL is exactly what would keep a just-published post invisible.
+    //
+    // The clock moves LESS than CACHE_TTL_MS, which is the whole point: jump
+    // further and the entry expires on its own, the reload happens for the
+    // ordinary reason, and the eviction this covers is never exercised.
+    const { CACHE_TTL_MS } = await import("@/db/queries/_cache");
     const { createPost, getNextScheduledPublishAt } = await import("@/db/queries");
-    const at = now() + 60;
+    const advanceMs = 10_000;
+    expect(advanceMs).toBeLessThan(CACHE_TTL_MS);
+
+    const at = now() + 5;
     await createPost({
       title: "Soon",
       slug: "soon",
@@ -111,7 +119,8 @@ describe("getNextScheduledPublishAt", () => {
     });
     expect(await getNextScheduledPublishAt()).toBe(at);
 
-    const clock = vi.spyOn(Date, "now").mockReturnValue((at + 1) * 1000);
+    const realNow = Date.now();
+    const clock = vi.spyOn(Date, "now").mockReturnValue(realNow + advanceMs);
     expect(await getNextScheduledPublishAt()).toBeNull();
     clock.mockRestore();
   });
