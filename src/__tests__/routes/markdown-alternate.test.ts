@@ -91,11 +91,23 @@ describe("markdown alternate links", () => {
     expect(alternate(out)?.href).toBe("https://laigary.com/interview/coding/two-sum.md");
   });
 
-  it("should declare no links at all before the loader has resolved", async () => {
-    // `head` runs against undefined loaderData on the way in — an alternate
-    // built from a bare property access would take the route down.
-    const out = await head(import("@/routes/_site/posts/$slug"), undefined);
+  // Literal specifiers, not a variable one: only a static `import("@/…")` goes
+  // through vitest's alias, and a computed id hangs the resolver instead.
+  it.each([
+    ["post", () => import("@/routes/_site/posts/$slug")],
+    ["work", () => import("@/routes/_site/works/$slug")],
+    ["page", () => import("@/routes/_site/$slug")],
+    ["note", () => import("@/routes/interview/$section/$slug")],
+  ] as const)(
+    "should declare no links on the %s route before the loader has resolved",
+    async (_, load) => {
+      // `head` runs against undefined loaderData on the way in, and each route
+      // guards that itself — an alternate built from a bare property access
+      // would take the route down. All four, because the guard is written four
+      // times and a missed one only fails on the way into that one page.
+      const out = await head(load(), undefined);
 
-    expect(out.links).toEqual([]);
-  });
+      expect(out.links).toEqual([]);
+    },
+  );
 });
