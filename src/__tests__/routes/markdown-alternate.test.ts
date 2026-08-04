@@ -4,7 +4,7 @@
 // serves those URLs is tested in server/md; this is the other half — a page
 // that does not advertise the alternate is a document no agent finds without
 // being told the convention, and the four routes wire it up independently.
-import { describe, expect, it, vi } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 
 // The route modules pull the server-fn barrel and the devtools in through their
 // component graph; none of that is exercised by reading `head` off the options.
@@ -26,6 +26,26 @@ function alternate(out: HeadOut) {
 }
 
 const chrome = { html: "", toc: [], description: "d", pageTitle: "T", siteName: "Unconstrained" };
+
+/**
+ * Pull all four route modules in before any test runs.
+ *
+ * Importing one compiles its whole component graph, which under coverage on a
+ * cold runner takes longer than a test's 5s timeout — and because the order is
+ * shuffled, WHICH test pays for it moves between runs. That is how this file
+ * passed locally and timed out in CI on a different test than the one it would
+ * have blamed. Same reason `helpers/router` warms the generated tree: charge
+ * the cost to a hook with a generous timeout and let the tests stay honest
+ * about their own speed.
+ */
+beforeAll(async () => {
+  await Promise.all([
+    import("@/routes/_site/posts/$slug"),
+    import("@/routes/_site/works/$slug"),
+    import("@/routes/_site/$slug"),
+    import("@/routes/interview/$section/$slug"),
+  ]);
+}, 60_000);
 
 describe("markdown alternate links", () => {
   it("should point a post at its own url plus .md when the loader has resolved", async () => {
