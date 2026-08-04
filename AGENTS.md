@@ -131,6 +131,20 @@ backfills go inside the generated file or via `drizzle-kit generate --custom`.
   need `Authorization: Bearer <MCP_ADMIN_TOKEN>` (wrangler secret; unset =
   read-only). New tools go in `src/server/mcp/tools.ts` with a zod validator +
   JSON Schema pair.
+- Markdown twin (`<any content page>.md`): appending `.md` to a post, work,
+  page or interview-note URL returns that document's stored `content_md` under
+  a YAML front matter header. Which paths map to which document is
+  `lib/md-path.ts` (pure); the DB reads and the body live in `server/md.ts`.
+  It is a REQUEST MIDDLEWARE in `src/start.ts`, not a file route — `/posts/$slug`
+  matches `/posts/hello.md` (a param takes the whole segment), so a route would
+  never see it, and the router refuses a request whose `Accept` excludes
+  `text/html` anyway. Ordered after `edgeCache` so it runs inside it and a
+  markdown response is cached exactly like its HTML twin. Every lookup goes
+  through the same getters the HTML routes use, so `livePosts()`/`liveNotes()`
+  keep drafts and scheduled items out of it — never add a direct select here.
+  LIST pages have no markdown source on purpose (`/llms.txt` is the index, and
+  it advertises the convention); the HTML pages point at their twin with
+  `markdownAlternateLink` in `lib/og-meta.ts`.
 - Markdown rendering (`src/lib/markdown.ts`): unified with remark-math → temml
   (MathML, no KaTeX client JS) and rehype-highlight (auto-detect within a
   language subset; ```text marks blocks that must stay uncolored — the corpus

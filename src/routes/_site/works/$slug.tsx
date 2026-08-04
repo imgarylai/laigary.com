@@ -1,7 +1,7 @@
 import { createFileRoute, notFound, Link } from "@tanstack/react-router";
 import { workDataFn } from "@/server/public";
 import { SITE_ORIGIN, breadcrumbLd, creativeWorkLd, serializeJsonLd } from "@/lib/json-ld";
-import { canonicalLink, ogMeta } from "@/lib/og-meta";
+import { canonicalLink, markdownAlternateLink, ogMeta } from "@/lib/og-meta";
 import { AsciiRule, Prose, PromptLine, TmPage } from "@/features/terminal";
 import { useI18n } from "@/i18n/I18nProvider";
 import { FS_BLOG } from "@/lib/fsmap";
@@ -31,7 +31,12 @@ export const Route = createFileRoute("/_site/works/$slug")({
           }),
         ]
       : [],
-    links: loaderData ? canonicalLink(`${SITE_ORIGIN}/works/${loaderData.work.slug}`) : [],
+    links: loaderData
+      ? [
+          ...canonicalLink(`${SITE_ORIGIN}/works/${loaderData.work.slug}`),
+          ...markdownAlternateLink(`${SITE_ORIGIN}/works/${loaderData.work.slug}`),
+        ]
+      : [],
     scripts: loaderData
       ? [
           {

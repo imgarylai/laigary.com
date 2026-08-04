@@ -34,6 +34,12 @@ export async function buildLlmsTxt(): Promise<string> {
     "",
     `Personal blog and interview-prep notes. Machine-readable indexes: ${base}/sitemap.xml, ${base}/feed.xml (full-content RSS). ` +
       `A Model Context Protocol endpoint lives at ${base}/mcp (streamable HTTP; read tools are public).`,
+    "",
+    // The index below is a list of HTML URLs; this is the one line that tells a
+    // crawler it can fetch any of them as source instead of parsing the page.
+    "Append `.md` to any link below to get that document's markdown source with " +
+      "a YAML front matter header (title, url, dates, tags) — " +
+      `e.g. ${base}/posts/<slug>.md. Listing pages have no markdown source.`,
   );
 
   if (posts.length > 0) {

@@ -1,7 +1,7 @@
 import { createFileRoute, notFound, Link } from "@tanstack/react-router";
 import { postDataFn } from "@/server/public";
 import { SITE_ORIGIN, blogPostingLd, breadcrumbLd, serializeJsonLd } from "@/lib/json-ld";
-import { canonicalLink, ogMeta } from "@/lib/og-meta";
+import { canonicalLink, markdownAlternateLink, ogMeta } from "@/lib/og-meta";
 import { AsciiRule, Prose, PromptLine, ReadingProgress, TmPage, Toc } from "@/features/terminal";
 import { Comments } from "@/components/Comments";
 import { useI18n } from "@/i18n/I18nProvider";
@@ -31,7 +31,12 @@ export const Route = createFileRoute("/_site/posts/$slug")({
           }),
         ]
       : [],
-    links: loaderData ? canonicalLink(`${SITE_ORIGIN}/posts/${loaderData.post.slug}`) : [],
+    links: loaderData
+      ? [
+          ...canonicalLink(`${SITE_ORIGIN}/posts/${loaderData.post.slug}`),
+          ...markdownAlternateLink(`${SITE_ORIGIN}/posts/${loaderData.post.slug}`),
+        ]
+      : [],
     scripts: loaderData
       ? [
           {

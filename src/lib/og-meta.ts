@@ -26,6 +26,16 @@ export function canonicalLink(url: string): Array<Record<string, string>> {
   return [{ rel: "canonical", href: url }];
 }
 
+// The markdown twin of a content page, which lives at the page's own URL plus
+// `.md` (served by `server/md.ts`, wired in `src/start.ts`). Declaring it as a
+// typed alternate is how an agent that wants the source instead of the rendered
+// HTML finds it without guessing the convention — and it is what tells a
+// crawler the two URLs are one document, the other half of the `rel=canonical`
+// header the markdown response carries back.
+export function markdownAlternateLink(url: string): Array<Record<string, string>> {
+  return [{ rel: "alternate", type: "text/markdown", href: `${url}.md` }];
+}
+
 export function ogMeta(input: OgMetaInput): Array<Record<string, string>> {
   // Our /api/og* endpoints always render 1200×630. Explicit dimensions let
   // crawlers show the card on the very first share, before the image has been

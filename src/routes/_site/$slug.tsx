@@ -1,7 +1,7 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { pageDataFn } from "@/server/public";
 import { SITE_ORIGIN, breadcrumbLd, serializeJsonLd, webPageLd } from "@/lib/json-ld";
-import { canonicalLink, ogMeta } from "@/lib/og-meta";
+import { canonicalLink, markdownAlternateLink, ogMeta } from "@/lib/og-meta";
 import { Prose, PromptLine, TmPage } from "@/features/terminal";
 import { FS_BLOG } from "@/lib/fsmap";
 
@@ -27,7 +27,12 @@ export const Route = createFileRoute("/_site/$slug")({
           }),
         ]
       : [],
-    links: loaderData ? canonicalLink(`${SITE_ORIGIN}/${loaderData.page.slug}`) : [],
+    links: loaderData
+      ? [
+          ...canonicalLink(`${SITE_ORIGIN}/${loaderData.page.slug}`),
+          ...markdownAlternateLink(`${SITE_ORIGIN}/${loaderData.page.slug}`),
+        ]
+      : [],
     scripts: loaderData
       ? [
           {

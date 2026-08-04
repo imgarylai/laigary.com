@@ -7,6 +7,7 @@ import {
   isCacheableResponse,
   readCookie,
 } from "@/lib/http-cache";
+import { isMarkdownRequest } from "@/lib/md-path";
 
 // Edge cache for public pages.
 //
@@ -108,6 +109,29 @@ function getEdgeCache(): Cache | null {
   return store.default ?? null;
 }
 
+/**
+ * The markdown twin of every content page: `<page path>.md` returns the
+ * markdown the page was rendered from (`src/server/md.ts`).
+ *
+ * Middleware rather than file routes because the rule is ONE rule over the
+ * whole public URL space, and because a route could not own it anyway:
+ * `/posts/$slug` matches `/posts/hello.md` — the param takes the whole segment,
+ * `.md` and all — so the router would answer it with the React 404 page. This
+ * runs before the router is ever consulted, which also sidesteps its `Accept`
+ * check (a client asking for `text/markdown` alone gets refused there).
+ *
+ * Ordered AFTER `edgeCache` so it runs INSIDE it: a markdown response is stored
+ * and served exactly like the HTML twin, including the `s-maxage` cap that
+ * makes a scheduled publish land on time.
+ */
+const markdownSource = createMiddleware({ type: "request" }).server(async (ctx) => {
+  if (ctx.handlerType !== "router" || !isMarkdownRequest(ctx.request.method, ctx.pathname)) {
+    return ctx.next();
+  }
+  const { serveMarkdown } = await import("@/server/md");
+  return serveMarkdown(ctx.pathname);
+});
+
 export const startInstance = createStart(() => ({
-  requestMiddleware: [edgeCache],
+  requestMiddleware: [edgeCache, markdownSource],
 }));
