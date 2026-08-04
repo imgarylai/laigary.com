@@ -1,7 +1,7 @@
 import { createFileRoute, notFound, Link } from "@tanstack/react-router";
 import { noteDataFn } from "@/server/public";
 import { SITE_ORIGIN, breadcrumbLd, serializeJsonLd, techArticleLd } from "@/lib/json-ld";
-import { canonicalLink, ogMeta } from "@/lib/og-meta";
+import { canonicalLink, markdownAlternateLink, ogMeta } from "@/lib/og-meta";
 import { AsciiRule, Prose, PromptLine, ReadingProgress, TmPage, Toc } from "@/features/terminal";
 import { useI18n } from "@/i18n/I18nProvider";
 import { FS_INTERVIEW } from "@/lib/fsmap";
@@ -28,7 +28,14 @@ export const Route = createFileRoute("/interview/$section/$slug")({
         ]
       : [],
     links: loaderData
-      ? canonicalLink(`${SITE_ORIGIN}/interview/${loaderData.note.section}/${loaderData.note.slug}`)
+      ? [
+          ...canonicalLink(
+            `${SITE_ORIGIN}/interview/${loaderData.note.section}/${loaderData.note.slug}`,
+          ),
+          ...markdownAlternateLink(
+            `${SITE_ORIGIN}/interview/${loaderData.note.section}/${loaderData.note.slug}`,
+          ),
+        ]
       : [],
     scripts: loaderData
       ? [

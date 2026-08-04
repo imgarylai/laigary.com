@@ -48,6 +48,14 @@ describe("buildLlmsTxt", () => {
     expect(txt).toContain("https://ex.com/mcp");
   });
 
+  it("should tell a crawler how to fetch any listed link as markdown", async () => {
+    // The index below this line is HTML URLs; without the convention spelled
+    // out, nothing in the file says they can be fetched as source instead.
+    const txt = await buildLlmsTxt();
+    expect(txt).toContain("Append `.md`");
+    expect(txt).toContain("https://ex.com/posts/<slug>.md");
+  });
+
   it("should list posts with optional excerpts when posts exist", async () => {
     const txt = await buildLlmsTxt();
     expect(txt).toContain("- [Hello](https://ex.com/posts/hello): The first post");

@@ -104,9 +104,12 @@ export default defineConfig({
         "src/i18n/I18nProvider.tsx",
         "src/router.tsx",
         // start.ts: same shape as router.tsx — a Start entry the framework
-        // resolves and runs, never importable on its own here. Its one piece of
-        // judgement (what may be cached, and under what key) lives in
-        // lib/http-cache.ts precisely so it can be tested without a Worker.
+        // resolves and runs, never importable on its own here. Every piece of
+        // judgement it makes lives in a pure lib module precisely so it can be
+        // tested without a Worker: what may be cached and under what key in
+        // lib/http-cache.ts, which URLs have a markdown twin in lib/md-path.ts.
+        // Keep it that way — code added to the middlewares themselves is code
+        // this exclusion hides.
         "src/start.ts",
         "src/lib/og/render.ts",
         "src/routes/design-system.tsx",

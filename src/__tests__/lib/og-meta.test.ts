@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canonicalLink, ogMeta } from "@/lib/og-meta";
+import { canonicalLink, markdownAlternateLink, ogMeta } from "@/lib/og-meta";
 
 const base = {
   title: "Two Sum",
@@ -55,6 +55,16 @@ describe("canonicalLink", () => {
   it("should produce a single rel=canonical entry when given a URL", () => {
     expect(canonicalLink("https://laigary.com/posts")).toEqual([
       { rel: "canonical", href: "https://laigary.com/posts" },
+    ]);
+  });
+});
+
+describe("markdownAlternateLink", () => {
+  it("should point at the page's own url plus .md when given a canonical URL", () => {
+    // The href IS the convention — a client reads it instead of being told the
+    // rule, so the suffix has to land on the canonical path, not on a variant.
+    expect(markdownAlternateLink("https://laigary.com/posts/hello")).toEqual([
+      { rel: "alternate", type: "text/markdown", href: "https://laigary.com/posts/hello.md" },
     ]);
   });
 });
