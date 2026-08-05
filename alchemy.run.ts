@@ -68,9 +68,32 @@ const db = await D1Database("laigary-db", {
 });
 
 // R2 bucket for uploads.
+//
+// CORS is what makes the admin upload work at all. The browser PUTs the bytes
+// straight to the S3 endpoint using a presigned URL, so that request is
+// cross-origin from laigary.com — and because it carries a Content-Type, it is
+// never a simple request: the browser sends a preflight first. With no rule on
+// the bucket R2 answers that preflight `403 CORS not configured for this
+// bucket`, and fetch rejects with a bare network error that says nothing about
+// CORS, which is the whole difficulty of the symptom.
+//
+// Scoped to what the upload actually does: PUT only, from the two origins that
+// serve the admin, allowing the one header it sends. Reads are not listed
+// because they go to assets.laigary.com as ordinary same-document requests.
 const assets = await R2Bucket("laigary-assets", {
   name: "laigary-assets",
   domains: "assets.laigary.com",
+  cors: [
+    {
+      id: "admin-presigned-upload",
+      allowed: {
+        methods: ["PUT"],
+        origins: ["https://laigary.com", "http://localhost:3000"],
+        headers: ["content-type"],
+      },
+      maxAgeSeconds: 3600,
+    },
+  ],
 });
 
 // The TanStack Start worker.
