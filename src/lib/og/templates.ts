@@ -159,9 +159,54 @@ export interface ArticleOgInput {
   dateLabel: string | null;
   /** Breadcrumb-style prefix line, e.g. `./interview/system-design/`. */
   kicker: string | null;
+  /**
+   * Front-matter rows shown between the kicker and the title, as `key: value`
+   * pairs already aligned by the caller. The article page prints exactly this
+   * block above its own `<h1>` — the card carries it so the two agree about
+   * what a post looks like rather than each deciding separately.
+   */
+  meta?: readonly string[];
 }
 
-export function articleTemplate({ title, branding, dateLabel, kicker }: ArticleOgInput): OgNode {
+/**
+ * The `---` fences plus the caller's rows, one div per line: satori lays out
+ * flex children, so a `\n` inside a single node would not break.
+ */
+function frontMatter(rows: readonly string[]): OgNode {
+  const line = (text: string): OgNode =>
+    h(
+      "div",
+      {
+        style: {
+          display: "flex",
+          color: TM.muted,
+          fontSize: 24,
+          lineHeight: 1.5,
+          // The rows are padded to a common key width, and satori collapses
+          // runs of spaces like a browser does — without this the values do not
+          // line up, which is the whole reason the page renders this block in a
+          // <pre>.
+          whiteSpace: "pre",
+        },
+      },
+      text,
+    );
+  return h(
+    "div",
+    { style: { display: "flex", flexDirection: "column", marginBottom: 22 } },
+    line("---"),
+    ...rows.map(line),
+    line("---"),
+  );
+}
+
+export function articleTemplate({
+  title,
+  branding,
+  dateLabel,
+  kicker,
+  meta,
+}: ArticleOgInput): OgNode {
   const body: OgNode[] = [];
   if (kicker) {
     body.push(
@@ -172,6 +217,7 @@ export function articleTemplate({ title, branding, dateLabel, kicker }: ArticleO
       ),
     );
   }
+  if (meta && meta.length > 0) body.push(frontMatter(meta));
   body.push(
     h(
       "div",

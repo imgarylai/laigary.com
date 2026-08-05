@@ -74,6 +74,25 @@ describe("articleTemplate", () => {
     expect(flattenText(node)).not.toContain("./interview/");
   });
 
+  it("should fence the front-matter rows when meta is provided", () => {
+    const node = articleTemplate({
+      ...base,
+      title: "t",
+      meta: ["reading: 4 min", "tags:    [markdown]"],
+    });
+    const text = flattenText(node);
+    // The fences are what make it read as front matter rather than two loose
+    // lines, and they are the template's job — the caller supplies only rows.
+    expect(text).toContain("---");
+    expect(text).toContain("reading: 4 min");
+    expect(text).toContain("tags:    [markdown]");
+  });
+
+  it("should omit the block entirely when meta is absent or empty", () => {
+    expect(flattenText(articleTemplate({ ...base, title: "t" }))).not.toContain("---");
+    expect(flattenText(articleTemplate({ ...base, title: "t", meta: [] }))).not.toContain("---");
+  });
+
   it("should shrink the title font when the title exceeds 40 characters", () => {
     const short = articleTemplate({ ...base, title: "short" });
     const long = articleTemplate({ ...base, title: "x".repeat(41) });
