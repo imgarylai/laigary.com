@@ -80,7 +80,12 @@ describe("/api/og", () => {
 
 describe("/api/og/posts/$slug", () => {
   it("titles the card with the post and formats its publish day", async () => {
-    getPostBySlug.mockResolvedValue({ title: "Hello", date: "2025-07-19" });
+    getPostBySlug.mockResolvedValue({
+      title: "Hello",
+      date: "2025-07-19",
+      readingTime: 4,
+      tags: [{ name: "markdown" }, { name: "editor" }],
+    });
 
     await get(OgPostRoute)({ request, params: { slug: "hello" } });
 
@@ -89,8 +94,42 @@ describe("/api/og/posts/$slug", () => {
       title: "Hello",
       branding: branding.branding,
       dateLabel: "2025年7月19日",
-      kicker: null,
+      // The prompt the article page prints for itself, and a working URL.
+      kicker: "./posts/hello.md",
+      meta: ["reading: 4 min", "tags:    [markdown, editor]"],
     });
+  });
+
+  it("leaves out the tags row when the post carries none", async () => {
+    getPostBySlug.mockResolvedValue({
+      title: "Hello",
+      date: "2025-07-19",
+      readingTime: 4,
+      tags: [],
+    });
+
+    await get(OgPostRoute)({ request, params: { slug: "hello" } });
+
+    expect(articleTemplate).toHaveBeenCalledWith(
+      expect.objectContaining({ meta: ["reading: 4 min"] }),
+    );
+  });
+
+  it("summarises the tail when a post carries more tags than fit on the row", async () => {
+    // The row is one line: without a cap a heavily tagged post would push the
+    // block past the edge of the card rather than wrap.
+    getPostBySlug.mockResolvedValue({
+      title: "Hello",
+      date: "2025-07-19",
+      readingTime: 4,
+      tags: [{ name: "a" }, { name: "b" }, { name: "c" }, { name: "d" }, { name: "e" }],
+    });
+
+    await get(OgPostRoute)({ request, params: { slug: "hello" } });
+
+    expect(articleTemplate).toHaveBeenCalledWith(
+      expect.objectContaining({ meta: ["reading: 4 min", "tags:    [a, b, c, d, +1]"] }),
+    );
   });
 
   it("still renders a card when the slug resolves to nothing", async () => {
