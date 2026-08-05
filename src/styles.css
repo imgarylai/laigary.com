@@ -162,7 +162,30 @@
   content: none;
 }
 
+/* Same class of thing, one layer over: Typography also wraps the first and last
+   paragraph of a blockquote in open-quote/close-quote pseudo-elements. In the
+   editor they read as `"` characters the author never typed and cannot delete,
+   and the published page (.tm-prose) draws a quote as a left rule with no
+   quotation marks at all — so the editor was showing punctuation the article
+   would never have. */
+.prose blockquote p:first-of-type::before,
+.prose blockquote p:last-of-type::after {
+  content: none;
+}
+
 /* Tiptap editor styles */
+
+/* Typography gives `hr` 3em of margin on each side. The published page draws it
+   at 24px (see .tm-prose hr in terminal.css), so a divider in the editor opened
+   a gap roughly four times the real one — which reads as the rule having
+   inserted a blank line above the caret. It had not: the document is
+   hr + one empty paragraph. Match the published spacing so the editor stops
+   describing a layout the article will not have. */
+.ProseMirror hr {
+  border: 0;
+  border-top: 1px dashed var(--tm-border);
+  margin: 24px 0;
+}
 
 /* Placeholder */
 .ProseMirror p.is-editor-empty:first-child::before {
