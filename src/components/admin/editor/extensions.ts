@@ -17,6 +17,7 @@ import CharacterCount from "@tiptap/extension-character-count";
 import { TextStyle } from "@tiptap/extension-text-style";
 import Color from "@tiptap/extension-color";
 import Focus from "@tiptap/extension-focus";
+import { EmDash } from "./em-dash";
 import { InlineMath } from "./inline-math";
 import { LinkSuggestion } from "./link-suggestion";
 import { CodeBlockCardExtension } from "./code-block";
@@ -72,17 +73,40 @@ export function createExtensions({
     // needs its own clipboard handler (see markdown-paste.ts).
     MarkdownPaste,
     Placeholder.configure({ placeholder }),
-    // Keep the harmless typographic replacements (em-dash, ellipsis, arrows, …)
-    // but turn OFF smart quotes. Straight ' and " were being auto-rewritten to
-    // paired curly quotes ('…' / "…"), which changes the character you typed and
-    // leaks U+2018/2019/201C/201D into the Markdown output — undesirable in a
-    // Markdown/dev editor where quotes often sit inside code or technical text.
+    // Typography rewrites what you typed into something else. Audited rule by
+    // rule; code is not the concern — Tiptap's input-rule runner already bails
+    // inside a code block and next to a `code` mark — so every judgement below
+    // is about prose.
+    //
+    // Off, because the trigger means something else in ordinary technical
+    // writing and the replacement is never what was wanted:
+    //
+    //   quotes  ' "     → ' ' " "  changes the character typed, and leaks
+    //                             U+2018/2019/201C/201D into the markdown (#6)
+    //   emDash  --      → —       eats the first two hyphens of a `---`
+    //                             divider; re-added scoped, see em-dash.ts
+    //   laquo   <<      → «       « » is not how Chinese quotes anything; `<<`
+    //   raquo   >>      → »       and `>>` in prose are shifts and redirects
+    //   (c) (r)         → © ®     `(a) (b) (c)` enumeration is the far more
+    //   (tm) (sm)       → ™ ℠     common reason to type these
+    //
+    // Left on: ellipsis, arrows (→ is used deliberately in these posts), ≠, ±,
+    // ×, ², ³, ½ ¼ ¾ — each replaces a sequence that is genuinely trying to be
+    // that symbol.
     Typography.configure({
       openSingleQuote: false,
       closeSingleQuote: false,
       openDoubleQuote: false,
       closeDoubleQuote: false,
+      emDash: false,
+      laquo: false,
+      raquo: false,
+      copyright: false,
+      registeredTrademark: false,
+      trademark: false,
+      servicemark: false,
     }),
+    EmDash,
     Highlight,
     Subscript,
     Superscript,
