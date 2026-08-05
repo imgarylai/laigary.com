@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
+import { CodeIcon } from "@phosphor-icons/react";
+import { Button } from "@/components/ui/button";
 // KaTeX styles power the editor's live inline-math rendering (MathExtension).
 // Imported here so it code-splits into the client-only editor chunk rather than
 // the SSR worker bundle. The read-only frontend renders math via temml → MathML
@@ -15,6 +17,7 @@ import { LinkDialog } from "./editor/LinkDialog";
 import { ImageUploadDialog } from "./editor/ImageUploadDialog";
 import { YouTubeDialog } from "./editor/YouTubeDialog";
 import { TableBubbleMenu } from "./editor/TableBubbleMenu";
+import { SourceSheet } from "./editor/SourceSheet";
 
 /** Height of the sticky action bar + toolbar above the panes, in px — the point
  *  the editor pane has scrolled "past". Matches top-24 on the preview. */
@@ -57,6 +60,7 @@ export default function TiptapEditorImpl({
   // the extensions can close over them despite being built only once.
   const [imageOpen, setImageOpen] = useState(false);
   const [youtubeOpen, setYoutubeOpen] = useState(false);
+  const [sourceOpen, setSourceOpen] = useState(false);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -186,8 +190,22 @@ export default function TiptapEditorImpl({
     <div onKeyDown={handleKeyDown}>
       {/* Sticky under the action bar (top-0, ~h-11), so formatting stays in
           reach in a long document without giving the editor its own scrollbar. */}
-      <div className="sticky top-11 z-10 bg-background py-2">
-        <Toolbar editor={editor} onOpenLink={openLink} />
+      <div className="sticky top-11 z-10 flex items-start gap-2 bg-background py-2">
+        <div className="min-w-0 flex-1">
+          <Toolbar editor={editor} onOpenLink={openLink} />
+        </div>
+        {/* Outside the toolbar: it acts on the document as a whole, not on the
+            selection, and it is read-only. */}
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setSourceOpen(true)}
+          title={t("editor.viewSource")}
+          aria-label={t("editor.viewSource")}
+        >
+          <CodeIcon className="size-4" />
+        </Button>
       </div>
 
       {/* Row/column controls next to the table being edited (#197). */}
@@ -196,6 +214,9 @@ export default function TiptapEditorImpl({
       <LinkDialog editor={editor} open={linkOpen} onOpenChange={setLinkOpen} />
       <ImageUploadDialog editor={editor} open={imageOpen} onOpenChange={setImageOpen} />
       <YouTubeDialog editor={editor} open={youtubeOpen} onOpenChange={setYoutubeOpen} />
+      {/* `value` is the markdown the form holds, i.e. exactly what Save writes —
+          not a re-serialization that could disagree with it. */}
+      <SourceSheet markdown={value} open={sourceOpen} onOpenChange={setSourceOpen} />
 
       {/* One scrollbar: the editor grows with its content and the page scrolls.
           The preview is the exception — it is a different length from the
