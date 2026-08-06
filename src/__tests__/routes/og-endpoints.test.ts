@@ -222,7 +222,8 @@ describe("/api/og/interview/$sect/$slug", () => {
     expect(articleTemplate).toHaveBeenCalledWith({
       title: "134. Gas Station",
       branding: branding.branding,
-      dateLabel: expect.stringMatching(/^2025年7月(19|20)日$/),
+      // ISO day now, the same form the post card uses.
+      dateLabel: "2025-07-19",
       kicker: "./interview/coding/",
     });
   });

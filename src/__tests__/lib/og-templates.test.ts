@@ -2,7 +2,6 @@ import { describe, it, expect } from "vitest";
 import {
   articleTemplate,
   formatOgDate,
-  formatOgDateFromIsoDay,
   postTemplate,
   siteTemplate,
   type OgNode,
@@ -18,10 +17,10 @@ function flattenText(node: unknown): string {
 }
 
 describe("formatOgDate", () => {
-  it("should format unix seconds as a zh-TW long date when given a timestamp", () => {
+  it("should format unix seconds as an ISO day when given a timestamp", () => {
     // Exact day, not `(19|20)`: vitest.config.ts pins TZ=UTC, so there is one
     // right answer. 1752960000 is 2025-07-19T20:00:00Z.
-    expect(formatOgDate(1752960000)).toBe("2025年7月19日");
+    expect(formatOgDate(1752960000)).toBe("2025-07-19");
   });
 
   it("should return null when the timestamp is null or undefined", () => {
@@ -31,20 +30,6 @@ describe("formatOgDate", () => {
 
   it("should return null when the timestamp is not finite", () => {
     expect(formatOgDate(Number.NaN)).toBeNull();
-  });
-});
-
-describe("formatOgDateFromIsoDay", () => {
-  it("should format a yyyy-MM-dd string without timezone shifting when parsing", () => {
-    expect(formatOgDateFromIsoDay("2025-07-19")).toBe("2025年7月19日");
-  });
-
-  it("should strip leading zeros when the month or day is single-digit", () => {
-    expect(formatOgDateFromIsoDay("2025-01-05")).toBe("2025年1月5日");
-  });
-
-  it("should return null when the input is not a yyyy-MM-dd string", () => {
-    expect(formatOgDateFromIsoDay("not a date")).toBeNull();
   });
 });
 
@@ -97,12 +82,63 @@ describe("articleTemplate", () => {
   });
 
   it("should render the date label when one is provided", () => {
-    const node = articleTemplate({ ...base, title: "t", dateLabel: "2025年7月19日" });
-    expect(flattenText(node)).toContain("2025年7月19日");
+    const node = articleTemplate({ ...base, title: "t", dateLabel: "2025-07-19" });
+    expect(flattenText(node)).toContain("2025-07-19");
   });
 });
 
 describe("postTemplate", () => {
+  const post = {
+    branding: "b",
+    dateLabel: "2026-08-05",
+    kicker: "./posts/x.md",
+    excerpt: "先講結論好了。",
+  };
+
+  /** Font size of the node rendering `text`, wherever it sits in the tree. */
+  function sizeOf(node: unknown, text: string): number | null {
+    if (node === null || typeof node !== "object" || !("props" in node)) return null;
+    const n = node as OgNode;
+    const size = (n.props.style as { fontSize?: number } | undefined)?.fontSize;
+    if (n.props.children === text && typeof size === "number") return size;
+    const kids = n.props.children;
+    for (const c of Array.isArray(kids) ? kids : [kids]) {
+      const found = sizeOf(c, text);
+      if (found !== null) return found;
+    }
+    return null;
+  }
+
+  it("should keep a short title at the largest size", () => {
+    const title = "開發網頁編輯器的十年筆記";
+    expect(sizeOf(postTemplate({ ...post, title }), title)).toBe(36);
+  });
+
+  it("should step the size down rather than run a long title off the card", () => {
+    // 55 columns: comfortably past what 36px fits, and the row cannot wrap
+    // without breaking the block's alignment.
+    const title = "Notes on building a WYSIWYG editor that stores Markdown";
+    expect(sizeOf(postTemplate({ ...post, title }), title)).toBe(24);
+  });
+
+  it("should truncate a title too long even for the smallest size", () => {
+    const title = "x".repeat(200);
+    const node = postTemplate({ ...post, title });
+    const text = flattenText(node);
+    expect(text).not.toContain(title);
+    expect(text).toContain("…");
+  });
+
+  it("should size a CJK title by display width, not character count", () => {
+    // 30 CJK characters is 60 columns — the same budget as 60 latin ones, and
+    // both have to land on the same step.
+    const cjk = "開".repeat(30);
+    const latin = "x".repeat(60);
+    expect(sizeOf(postTemplate({ ...post, title: cjk }), cjk)).toBe(
+      sizeOf(postTemplate({ ...post, title: latin }), latin),
+    );
+  });
+
   it("should render the post card as a front-matter block plus an excerpt", () => {
     const node = postTemplate({
       title: "開發網頁編輯器的十年筆記",

@@ -4,6 +4,8 @@
 // (Noto Sans TC fallback for CJK), macOS traffic-light dots, a `$` prompt line
 // and an ASCII rule.
 
+import { displayWidth, truncateToWidth } from "./excerpt";
+
 export interface OgNode {
   type: string;
   props: Record<string, unknown> & { children?: unknown };
@@ -72,26 +74,19 @@ function asciiRule(): OgNode {
 }
 
 /**
- * zh-TW long date (e.g. 2025年7月19日) from a `yyyy-MM-dd` string (the shape
- * `unixToIso` produces). Parsed textually — no Date round-trip, so the result
- * cannot shift a day across timezones.
+ * ISO day (e.g. 2025-07-19) from unix seconds.
+ *
+ * Every card labels its date this way. It used to be a zh-TW long date, but the
+ * cards read as terminal output and `2025年7月19日` does not — and a post's card
+ * shows the same day inside a front-matter block, where the ISO form is what a
+ * reader would expect to see. UTC, which is what the worker runs in and what
+ * `unixToIso` produces for the pages themselves.
  */
-export function formatOgDateFromIsoDay(isoDay: string): string | null {
-  const m = isoDay.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (!m) return null;
-  return `${Number(m[1])}年${Number(m[2])}月${Number(m[3])}日`;
-}
-
-/** zh-TW long date (e.g. 2025年7月19日) from unix seconds. */
 export function formatOgDate(unixSeconds: number | null | undefined): string | null {
   if (unixSeconds === null || unixSeconds === undefined || !Number.isFinite(unixSeconds)) {
     return null;
   }
-  return new Date(unixSeconds * 1000).toLocaleDateString("zh-TW", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  return new Date(unixSeconds * 1000).toISOString().slice(0, 10);
 }
 
 export interface SiteOgInput {
@@ -258,10 +253,40 @@ export interface PostOgInput {
  * The article page prints a front-matter block and then its text; the card
  * shows the same thing, so the two agree about what a post looks like instead
  * of each deciding separately. The title lives inside the block as a `title:`
- * row — brighter than the rest so it still reads at thumbnail size, but the
- * same size, because the block is meant to look like file contents.
+ * row, set larger and brighter than its key — it is the one thing that has to
+ * survive a thumbnail, and the block still reads as file contents.
  */
+/**
+ * Columns the title row has left after its key, per font size.
+ *
+ * The card is 1200px wide with 72px of padding, and a monospace glyph advances
+ * about 0.6em — so the value has roughly (1056 - 101) / (size * 0.6) columns
+ * next to a 24px `title: `. The row cannot wrap (it would break the alignment
+ * the block depends on), so the size steps down until the title fits, and the
+ * smallest step truncates. Measured in display width, because a CJK title of
+ * the same character count is twice as wide.
+ */
+const TITLE_SIZES = [
+  { fontSize: 36, columns: 44 },
+  { fontSize: 30, columns: 53 },
+  { fontSize: 24, columns: 66 },
+] as const;
+
+function fitTitle(title: string): { shownTitle: string; titleSize: number } {
+  const width = displayWidth(title);
+  for (const step of TITLE_SIZES) {
+    if (width <= step.columns) return { shownTitle: title, titleSize: step.fontSize };
+  }
+  const smallest = TITLE_SIZES[TITLE_SIZES.length - 1];
+  return {
+    shownTitle: truncateToWidth(title, smallest.columns),
+    titleSize: smallest.fontSize,
+  };
+}
+
 export function postTemplate({ title, branding, dateLabel, kicker, excerpt }: PostOgInput): OgNode {
+  const { shownTitle, titleSize } = fitTitle(title);
+
   // `whiteSpace: pre` keeps the key padding that lines the values up; satori
   // collapses runs of spaces the way a browser does. It is why the article page
   // renders this block in a <pre>.
@@ -280,7 +305,15 @@ export function postTemplate({ title, branding, dateLabel, kicker, excerpt }: Po
       "div",
       { style: { display: "flex", alignItems: "baseline" } },
       row("title: ", TM.muted),
-      row(title, TM.fg),
+      // Larger than the rest of the block: at thumbnail size the title is the
+      // one thing a reader has to be able to make out, and 24px grey monospace
+      // does not survive a Slack preview. The key stays small so the row still
+      // reads as `key: value`.
+      h(
+        "div",
+        { style: { display: "flex", color: TM.fg, fontSize: titleSize, whiteSpace: "pre" } },
+        shownTitle,
+      ),
     ),
     row("---", TM.muted),
   );
