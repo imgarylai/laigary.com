@@ -1,23 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getPostBySlug } from "@/db/queries";
-import { articleTemplate, formatOgDateFromIsoDay } from "@/lib/og/templates";
+import { postTemplate, articleTemplate } from "@/lib/og/templates";
+import { plainExcerpt } from "@/lib/og/excerpt";
 import { serveOgImage } from "@/server/og";
 
-/** Tags are capped because the row is one line: a post carrying eight of them
- *  would push the block wider than the card rather than wrap. */
-const MAX_TAGS = 4;
-
-function postMeta(post: { readingTime: number; tags: readonly { name: string }[] }): string[] {
-  // Padded to the width of the longest key, matching the alignment the article
-  // page uses in its own front-matter block.
-  const rows = [`reading: ${post.readingTime} min`];
-  if (post.tags.length > 0) {
-    const shown = post.tags.slice(0, MAX_TAGS).map((t) => t.name);
-    const rest = post.tags.length - shown.length;
-    rows.push(`tags:    [${shown.join(", ")}${rest > 0 ? `, +${rest}` : ""}]`);
-  }
-  return rows;
-}
+/**
+ * Excerpt budget, in half-width columns.
+ *
+ * The card is 1200px wide with 72px of padding and the excerpt is set at 24px
+ * in a monospace face, so a line holds roughly 73 columns. Measured against a
+ * real render, this lands CJK on three full lines and English on three or four
+ * — English wraps at word boundaries, so it never packs a line to the column
+ * count. Both clear the rule with room to spare, which is what the budget is
+ * for.
+ */
+const EXCERPT_WIDTH = 73 * 3;
 
 export const Route = createFileRoute("/api/og/posts/$slug")({
   server: {
@@ -25,19 +22,29 @@ export const Route = createFileRoute("/api/og/posts/$slug")({
       GET: ({ request, params }) =>
         serveOgImage(request, async ({ branding }) => {
           const post = await getPostBySlug(params.slug);
-          return articleTemplate({
-            title: post?.title ?? "Post not found",
+          // Nothing to `cat`: fall back to the plain headline card the other
+          // routes use, rather than a front-matter block for a file that does
+          // not exist.
+          if (!post) {
+            return articleTemplate({
+              title: "Post not found",
+              branding,
+              dateLabel: null,
+              kicker: null,
+            });
+          }
+          return postTemplate({
+            title: post.title,
             branding,
-            dateLabel: post ? formatOgDateFromIsoDay(post.date) : null,
+            // The ISO day, matching the `date:` row the article page prints.
+            dateLabel: post.date.slice(0, 10),
             // `$ cat ./posts/<slug>.md` is the page's own prompt line
             // (FS_BLOG.post.prompt), and the command is real: that URL returns
             // the markdown.
-            kicker: post ? `./posts/${params.slug}.md` : null,
-            // The page prints title/date/reading/tags above its <h1>; the card
-            // carries the two rows the rest of it does not already say — the
-            // title is the hero and the date is in the footer, so repeating
-            // them here would only crowd the block.
-            meta: post ? postMeta(post) : undefined,
+            kicker: `./posts/${params.slug}.md`,
+            // Prefer the hand-written excerpt; fall back to the opening of the
+            // article so a post that never got one still shows its own words.
+            excerpt: plainExcerpt(post.excerpt || post.contentMd, EXCERPT_WIDTH),
           });
         }),
     },

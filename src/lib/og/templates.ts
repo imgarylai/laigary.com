@@ -159,82 +159,13 @@ export interface ArticleOgInput {
   dateLabel: string | null;
   /** Breadcrumb-style prefix line, e.g. `./interview/system-design/`. */
   kicker: string | null;
-  /**
-   * Front-matter rows shown between the kicker and the title, as `key: value`
-   * pairs already aligned by the caller. The article page prints exactly this
-   * block above its own `<h1>` — the card carries it so the two agree about
-   * what a post looks like rather than each deciding separately.
-   */
-  meta?: readonly string[];
 }
 
 /**
- * The `---` fences plus the caller's rows, one div per line: satori lays out
- * flex children, so a `\n` inside a single node would not break.
+ * The shell every card shares: terminal chrome on top, an ASCII rule and the
+ * branding/date footer at the bottom, and whatever the caller puts between.
  */
-function frontMatter(rows: readonly string[]): OgNode {
-  const line = (text: string): OgNode =>
-    h(
-      "div",
-      {
-        style: {
-          display: "flex",
-          color: TM.muted,
-          fontSize: 24,
-          lineHeight: 1.5,
-          // The rows are padded to a common key width, and satori collapses
-          // runs of spaces like a browser does — without this the values do not
-          // line up, which is the whole reason the page renders this block in a
-          // <pre>.
-          whiteSpace: "pre",
-        },
-      },
-      text,
-    );
-  return h(
-    "div",
-    { style: { display: "flex", flexDirection: "column", marginBottom: 22 } },
-    line("---"),
-    ...rows.map(line),
-    line("---"),
-  );
-}
-
-export function articleTemplate({
-  title,
-  branding,
-  dateLabel,
-  kicker,
-  meta,
-}: ArticleOgInput): OgNode {
-  const body: OgNode[] = [];
-  if (kicker) {
-    body.push(
-      h(
-        "div",
-        { style: { display: "flex", color: TM.muted, fontSize: 24, marginBottom: 18 } },
-        `$ cat ${kicker}`,
-      ),
-    );
-  }
-  if (meta && meta.length > 0) body.push(frontMatter(meta));
-  body.push(
-    h(
-      "div",
-      {
-        style: {
-          display: "flex",
-          fontSize: title.length > 40 ? 48 : 60,
-          fontWeight: 700,
-          lineHeight: 1.25,
-          letterSpacing: "-0.02em",
-          maxWidth: "94%",
-        },
-      },
-      title,
-    ),
-  );
-
+function card(body: OgNode, branding: string, dateLabel: string | null): OgNode {
   return h(
     "div",
     {
@@ -251,7 +182,7 @@ export function articleTemplate({
       },
     },
     topBar("~"),
-    h("div", { style: { display: "flex", flexDirection: "column" } }, ...body),
+    body,
     h(
       "div",
       { style: { display: "flex", flexDirection: "column" } },
@@ -272,5 +203,109 @@ export function articleTemplate({
           : "",
       ),
     ),
+  );
+}
+
+/** `$ cat <path>` — the prompt line the article pages print for themselves. */
+function promptLine(kicker: string): OgNode {
+  return h(
+    "div",
+    { style: { display: "flex", color: TM.muted, fontSize: 24, marginBottom: 18 } },
+    `$ cat ${kicker}`,
+  );
+}
+
+export function articleTemplate({ title, branding, dateLabel, kicker }: ArticleOgInput): OgNode {
+  const body: OgNode[] = [];
+  if (kicker) body.push(promptLine(kicker));
+  body.push(
+    h(
+      "div",
+      {
+        style: {
+          display: "flex",
+          fontSize: title.length > 40 ? 48 : 60,
+          fontWeight: 700,
+          lineHeight: 1.25,
+          letterSpacing: "-0.02em",
+          maxWidth: "94%",
+        },
+      },
+      title,
+    ),
+  );
+
+  return card(
+    h("div", { style: { display: "flex", flexDirection: "column" } }, ...body),
+    branding,
+    dateLabel,
+  );
+}
+
+export interface PostOgInput {
+  title: string;
+  branding: string;
+  /** ISO day, e.g. `2026-08-05` — the form the article page prints. */
+  dateLabel: string | null;
+  kicker: string;
+  /** Plain-text opening of the article, already trimmed to fit. */
+  excerpt: string;
+}
+
+/**
+ * The post card, which is the whole `cat` rather than a headline.
+ *
+ * The article page prints a front-matter block and then its text; the card
+ * shows the same thing, so the two agree about what a post looks like instead
+ * of each deciding separately. The title lives inside the block as a `title:`
+ * row — brighter than the rest so it still reads at thumbnail size, but the
+ * same size, because the block is meant to look like file contents.
+ */
+export function postTemplate({ title, branding, dateLabel, kicker, excerpt }: PostOgInput): OgNode {
+  // `whiteSpace: pre` keeps the key padding that lines the values up; satori
+  // collapses runs of spaces the way a browser does. It is why the article page
+  // renders this block in a <pre>.
+  const row = (text: string, color: string): OgNode =>
+    h(
+      "div",
+      { style: { display: "flex", color, fontSize: 24, lineHeight: 1.6, whiteSpace: "pre" } },
+      text,
+    );
+
+  const block = h(
+    "div",
+    { style: { display: "flex", flexDirection: "column", marginBottom: 20 } },
+    row("---", TM.muted),
+    h(
+      "div",
+      { style: { display: "flex", alignItems: "baseline" } },
+      row("title: ", TM.muted),
+      row(title, TM.fg),
+    ),
+    row("---", TM.muted),
+  );
+
+  return card(
+    h(
+      "div",
+      { style: { display: "flex", flexDirection: "column" } },
+      promptLine(kicker),
+      block,
+      h(
+        "div",
+        {
+          style: {
+            display: "flex",
+            color: TM.dim,
+            fontSize: 24,
+            lineHeight: 1.6,
+            maxWidth: "94%",
+          },
+        },
+        excerpt,
+      ),
+    ),
+    branding,
+    dateLabel,
   );
 }

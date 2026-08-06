@@ -3,6 +3,7 @@ import {
   articleTemplate,
   formatOgDate,
   formatOgDateFromIsoDay,
+  postTemplate,
   siteTemplate,
   type OgNode,
 } from "@/lib/og/templates";
@@ -74,25 +75,6 @@ describe("articleTemplate", () => {
     expect(flattenText(node)).not.toContain("./interview/");
   });
 
-  it("should fence the front-matter rows when meta is provided", () => {
-    const node = articleTemplate({
-      ...base,
-      title: "t",
-      meta: ["reading: 4 min", "tags:    [markdown]"],
-    });
-    const text = flattenText(node);
-    // The fences are what make it read as front matter rather than two loose
-    // lines, and they are the template's job — the caller supplies only rows.
-    expect(text).toContain("---");
-    expect(text).toContain("reading: 4 min");
-    expect(text).toContain("tags:    [markdown]");
-  });
-
-  it("should omit the block entirely when meta is absent or empty", () => {
-    expect(flattenText(articleTemplate({ ...base, title: "t" }))).not.toContain("---");
-    expect(flattenText(articleTemplate({ ...base, title: "t", meta: [] }))).not.toContain("---");
-  });
-
   it("should shrink the title font when the title exceeds 40 characters", () => {
     const short = articleTemplate({ ...base, title: "short" });
     const long = articleTemplate({ ...base, title: "x".repeat(41) });
@@ -117,5 +99,26 @@ describe("articleTemplate", () => {
   it("should render the date label when one is provided", () => {
     const node = articleTemplate({ ...base, title: "t", dateLabel: "2025年7月19日" });
     expect(flattenText(node)).toContain("2025年7月19日");
+  });
+});
+
+describe("postTemplate", () => {
+  it("should render the post card as a front-matter block plus an excerpt", () => {
+    const node = postTemplate({
+      title: "開發網頁編輯器的十年筆記",
+      branding: "b",
+      dateLabel: "2026-08-05",
+      kicker: "./posts/x.md",
+      excerpt: "先講結論好了。",
+    });
+    const text = flattenText(node);
+    // The fences are what make it read as file contents rather than a headline
+    // with loose lines under it.
+    expect(text).toContain("---");
+    expect(text).toContain("title: ");
+    expect(text).toContain("開發網頁編輯器的十年筆記");
+    expect(text).toContain("先講結論好了。");
+    expect(text).toContain("$ cat ./posts/x.md");
+    expect(text).toContain("2026-08-05");
   });
 });
