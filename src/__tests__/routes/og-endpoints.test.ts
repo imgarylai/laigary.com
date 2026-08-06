@@ -7,6 +7,7 @@
 // throw), and the kicker/date it derives from the params.
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { SiteBranding } from "@/server/og";
+import { displayWidth } from "@/lib/og/excerpt";
 
 const getPostBySlug = vi.fn();
 const getPageBySlug = vi.fn();
@@ -20,12 +21,14 @@ vi.mock("@/db/queries", () => ({
 }));
 
 const articleTemplate = vi.fn();
+const postTemplate = vi.fn();
 const siteTemplate = vi.fn();
 vi.mock("@/lib/og/templates", async (importOriginal) => ({
   // Keep the real date formatters — dateLabel assertions below are about the
   // route picking the right source field, and a mocked formatter would hide that.
   ...(await importOriginal<typeof import("@/lib/og/templates")>()),
   articleTemplate: (args: unknown) => articleTemplate(args),
+  postTemplate: (args: { excerpt: string }) => postTemplate(args),
   siteTemplate: (args: unknown) => siteTemplate(args),
 }));
 
@@ -62,6 +65,7 @@ const request = new Request("http://test.local/api/og");
 beforeEach(() => {
   vi.clearAllMocks();
   articleTemplate.mockReturnValue({ type: "div" });
+  postTemplate.mockReturnValue({ type: "div" });
   siteTemplate.mockReturnValue({ type: "div" });
 });
 
@@ -79,57 +83,58 @@ describe("/api/og", () => {
 });
 
 describe("/api/og/posts/$slug", () => {
-  it("titles the card with the post and formats its publish day", async () => {
+  it("builds the card as a front-matter block over the article's own opening", async () => {
     getPostBySlug.mockResolvedValue({
       title: "Hello",
       date: "2025-07-19",
-      readingTime: 4,
-      tags: [{ name: "markdown" }, { name: "editor" }],
+      excerpt: "",
+      contentMd: "## 標題\n\n先講結論好了：**這是內文**。",
     });
 
     await get(OgPostRoute)({ request, params: { slug: "hello" } });
 
     expect(getPostBySlug).toHaveBeenCalledWith("hello");
-    expect(articleTemplate).toHaveBeenCalledWith({
+    expect(postTemplate).toHaveBeenCalledWith({
       title: "Hello",
       branding: branding.branding,
-      dateLabel: "2025年7月19日",
+      // The ISO day, matching the `date:` row the article page prints.
+      dateLabel: "2025-07-19",
       // The prompt the article page prints for itself, and a working URL.
       kicker: "./posts/hello.md",
-      meta: ["reading: 4 min", "tags:    [markdown, editor]"],
+      excerpt: "標題 先講結論好了：這是內文。",
     });
   });
 
-  it("leaves out the tags row when the post carries none", async () => {
+  it("prefers the hand-written excerpt over the article body", async () => {
     getPostBySlug.mockResolvedValue({
       title: "Hello",
       date: "2025-07-19",
-      readingTime: 4,
-      tags: [],
+      excerpt: "作者自己寫的摘要。",
+      contentMd: "完全不同的內文。",
     });
 
     await get(OgPostRoute)({ request, params: { slug: "hello" } });
 
-    expect(articleTemplate).toHaveBeenCalledWith(
-      expect.objectContaining({ meta: ["reading: 4 min"] }),
+    expect(postTemplate).toHaveBeenCalledWith(
+      expect.objectContaining({ excerpt: "作者自己寫的摘要。" }),
     );
   });
 
-  it("summarises the tail when a post carries more tags than fit on the row", async () => {
-    // The row is one line: without a cap a heavily tagged post would push the
-    // block past the edge of the card rather than wrap.
+  it("keeps a long CJK opening inside the card's width", async () => {
+    // Budgeting by character count would let this run off the edge, since each
+    // of these glyphs is two columns wide.
     getPostBySlug.mockResolvedValue({
       title: "Hello",
       date: "2025-07-19",
-      readingTime: 4,
-      tags: [{ name: "a" }, { name: "b" }, { name: "c" }, { name: "d" }, { name: "e" }],
+      excerpt: "",
+      contentMd: "開發網頁編輯器的十年筆記".repeat(50),
     });
 
     await get(OgPostRoute)({ request, params: { slug: "hello" } });
 
-    expect(articleTemplate).toHaveBeenCalledWith(
-      expect.objectContaining({ meta: ["reading: 4 min", "tags:    [a, b, c, d, +1]"] }),
-    );
+    const { excerpt } = postTemplate.mock.calls.at(-1)![0];
+    expect(displayWidth(excerpt)).toBeLessThanOrEqual(73 * 3);
+    expect(excerpt.endsWith("…")).toBe(true);
   });
 
   it("still renders a card when the slug resolves to nothing", async () => {
