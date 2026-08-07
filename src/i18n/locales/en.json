@@ -227,6 +227,7 @@
     "youtubeUrlPlaceholder": "YouTube URL",
     "horizontalRule": "Horizontal rule",
     "viewSource": "View source",
+    "sourceReadOnly": "Markdown source · read-only",
     "characters": "characters",
     "words": "words",
     "placeholder": "Start writing...",

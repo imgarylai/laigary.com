@@ -28,10 +28,14 @@ function Harness({
   onReady,
   renders,
   onOpenLink = () => {},
+  sourceMode = false,
+  onToggleSource = () => {},
 }: {
   onReady: (editor: Editor) => void;
   renders: number[];
   onOpenLink?: () => void;
+  sourceMode?: boolean;
+  onToggleSource?: () => void;
 }) {
   const editor = useEditor({
     immediatelyRender: true,
@@ -46,7 +50,12 @@ function Harness({
   if (!editor) return null;
   return (
     <>
-      <Toolbar editor={editor} onOpenLink={onOpenLink} />
+      <Toolbar
+        editor={editor}
+        onOpenLink={onOpenLink}
+        sourceMode={sourceMode}
+        onToggleSource={onToggleSource}
+      />
       <EditorContent editor={editor} />
     </>
   );
@@ -215,6 +224,35 @@ describe("Toolbar commands", () => {
 
     expect(onOpenLink).toHaveBeenCalled();
     expect(editor.isActive("link")).toBe(false);
+  });
+
+  it("should ask for the source pane rather than touching the document", async () => {
+    // The one button here that is not an editor command: it flips a mode the
+    // editor shell owns, and it must not write to the document on the way.
+    const onToggleSource = vi.fn();
+    let editor!: Editor;
+    render(<Harness renders={[]} onReady={(e) => (editor = e)} onToggleSource={onToggleSource} />);
+    await waitFor(() => expect(editor).toBeTruthy());
+    const before = editor.getText();
+
+    fireEvent.click(button("editor.viewSource"));
+
+    expect(onToggleSource).toHaveBeenCalled();
+    expect(editor.getText()).toBe(before);
+  });
+
+  it("should stay reachable while the rest of the toolbar is inert", async () => {
+    // Source mode is read-only, so the writing controls go inert — but the
+    // button that gets back out cannot be inside that group, or the mode would
+    // be a one-way door.
+    const renders: number[] = [];
+    let editor!: Editor;
+    render(<Harness renders={renders} onReady={(e) => (editor = e)} sourceMode />);
+    await waitFor(() => expect(editor).toBeTruthy());
+
+    expect(button("editor.bold").closest("[inert]")).toBeTruthy();
+    expect(button("editor.viewSource").closest("[inert]")).toBeNull();
+    expect(button("editor.viewSource").getAttribute("aria-pressed")).toBe("true");
   });
 
   it("should type a slash for the block menu", async () => {

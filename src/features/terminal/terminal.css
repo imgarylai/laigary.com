@@ -318,7 +318,12 @@
 :is(.tm-prose, .tm-code) .hljs-selector-tag,
 :is(.tm-prose, .tm-code) .hljs-built_in,
 :is(.tm-prose, .tm-code) .hljs-name,
-:is(.tm-prose, .tm-code) .hljs-tag {
+:is(.tm-prose, .tm-code) .hljs-tag,
+/* `code` is the markdown grammar's class for a fence or a `…` span, so it is
+   reached only by the admin's source pane (no published code block is tagged
+   ```markdown). --tm-accent is what an inline code chip is painted elsewhere,
+   which is the association worth keeping. */
+:is(.tm-prose, .tm-code) .hljs-code {
   color: var(--tm-accent);
 }
 :is(.tm-prose, .tm-code) .hljs-string,
