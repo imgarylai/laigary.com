@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 import { CheckIcon, CopyIcon } from "@phosphor-icons/react";
 import { createLowlight } from "lowlight";
 import markdownGrammar from "highlight.js/lib/languages/markdown";
-import type { RootContent } from "hast";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/i18n/I18nProvider";
 
@@ -31,10 +30,7 @@ export function SourceView({ markdown }: { markdown: string }) {
   // or a fence out of it. Memoised because the pane re-renders on every
   // keystroke the form echoes back, while the source it is showing rarely
   // changes by more than a character.
-  const highlighted = useMemo(
-    () => tokens(lowlight.highlight("markdown", markdown).children),
-    [markdown],
-  );
+  const highlighted = useMemo(() => tokens(highlight(markdown)), [markdown]);
 
   async function handleCopy() {
     await navigator.clipboard.writeText(markdown);
@@ -80,23 +76,38 @@ export function SourceView({ markdown }: { markdown: string }) {
 const lowlight = createLowlight({ markdown: markdownGrammar });
 
 /**
- * hast → React. lowlight emits a flat-ish tree of `<span class="hljs-…">` and
- * text nodes; rendering it as elements keeps every character in the DOM as
- * text, where `dangerouslySetInnerHTML` would put the document's own markdown
- * through an HTML parser to get back what we already have.
+ * What a highlighter emits: text, and `<span>`s carrying hljs class names.
+ *
+ * hast's own `RootContent` is the whole document vocabulary — comments,
+ * doctypes, an `Element` whose `className` may be a string, a number or absent.
+ * lowlight can produce none of that: it wraps slices of the input in spans it
+ * builds itself. Saying so once here is what the assertion below is for;
+ * re-checking it per node instead only ever produced branches nothing could
+ * take, and a fallback for a shape that would already have been a bug.
  */
-function tokens(nodes: RootContent[]): React.ReactNode {
-  return nodes.map((node, index) => {
-    if (node.type === "text") return node.value;
-    if (node.type !== "element") return null;
+type Token =
+  | { type: "text"; value: string }
+  | { type: "element"; properties: { className: string[] }; children: Token[] };
 
-    const className = node.properties.className;
-    return (
+function highlight(markdown: string): Token[] {
+  return lowlight.highlight("markdown", markdown).children as unknown as Token[];
+}
+
+/**
+ * hast → React. Rendering the tree as elements keeps every character in the DOM
+ * as text, where `dangerouslySetInnerHTML` would put the document's own
+ * markdown through an HTML parser to get back what we already have.
+ */
+function tokens(nodes: Token[]): React.ReactNode {
+  return nodes.map((node, index) =>
+    node.type === "text" ? (
+      node.value
+    ) : (
       // Index keys: this list is derived from the markdown and re-created
       // whole whenever it changes, so there is no identity to preserve.
-      <span key={index} className={Array.isArray(className) ? className.join(" ") : undefined}>
+      <span key={index} className={node.properties.className.join(" ")}>
         {tokens(node.children)}
       </span>
-    );
-  });
+    ),
+  );
 }
