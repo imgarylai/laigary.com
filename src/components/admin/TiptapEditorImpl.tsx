@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
-import { CodeIcon } from "@phosphor-icons/react";
-import { Button } from "@/components/ui/button";
 // KaTeX styles power the editor's live inline-math rendering (MathExtension).
 // Imported here so it code-splits into the client-only editor chunk rather than
 // the SSR worker bundle. The read-only frontend renders math via temml → MathML
@@ -17,7 +15,7 @@ import { LinkDialog } from "./editor/LinkDialog";
 import { ImageUploadDialog } from "./editor/ImageUploadDialog";
 import { YouTubeDialog } from "./editor/YouTubeDialog";
 import { TableBubbleMenu } from "./editor/TableBubbleMenu";
-import { SourceSheet } from "./editor/SourceSheet";
+import { SourceView } from "./editor/SourceView";
 
 /** Height of the sticky action bar + toolbar above the panes, in px — the point
  *  the editor pane has scrolled "past". Matches top-24 on the preview. */
@@ -60,7 +58,11 @@ export default function TiptapEditorImpl({
   // the extensions can close over them despite being built only once.
   const [imageOpen, setImageOpen] = useState(false);
   const [youtubeOpen, setYoutubeOpen] = useState(false);
-  const [sourceOpen, setSourceOpen] = useState(false);
+  // Source is a mode of this one pane, not a second window onto the document:
+  // the markdown takes the writing surface's place and the toolbar toggle
+  // switches back. Two visible copies of the same document — one of them
+  // editable — is the arrangement the source view exists to avoid.
+  const [sourceMode, setSourceMode] = useState(false);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -164,6 +166,7 @@ export default function TiptapEditorImpl({
   // Stable, or the memo on Toolbar buys nothing: a fresh arrow function each
   // render would fail the prop comparison every time.
   const openLink = useCallback(() => setLinkOpen(true), []);
+  const toggleSource = useCallback(() => setSourceMode((on) => !on), []);
 
   if (!editor) return null;
 
@@ -190,22 +193,13 @@ export default function TiptapEditorImpl({
     <div onKeyDown={handleKeyDown}>
       {/* Sticky under the action bar (top-0, ~h-11), so formatting stays in
           reach in a long document without giving the editor its own scrollbar. */}
-      <div className="sticky top-11 z-10 flex items-start gap-2 bg-background py-2">
-        <div className="min-w-0 flex-1">
-          <Toolbar editor={editor} onOpenLink={openLink} />
-        </div>
-        {/* Outside the toolbar: it acts on the document as a whole, not on the
-            selection, and it is read-only. */}
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => setSourceOpen(true)}
-          title={t("editor.viewSource")}
-          aria-label={t("editor.viewSource")}
-        >
-          <CodeIcon className="size-4" />
-        </Button>
+      <div className="sticky top-11 z-10 bg-background py-2">
+        <Toolbar
+          editor={editor}
+          onOpenLink={openLink}
+          sourceMode={sourceMode}
+          onToggleSource={toggleSource}
+        />
       </div>
 
       {/* Row/column controls next to the table being edited (#197). */}
@@ -214,9 +208,6 @@ export default function TiptapEditorImpl({
       <LinkDialog editor={editor} open={linkOpen} onOpenChange={setLinkOpen} />
       <ImageUploadDialog editor={editor} open={imageOpen} onOpenChange={setImageOpen} />
       <YouTubeDialog editor={editor} open={youtubeOpen} onOpenChange={setYoutubeOpen} />
-      {/* `value` is the markdown the form holds, i.e. exactly what Save writes —
-          not a re-serialization that could disagree with it. */}
-      <SourceSheet markdown={value} open={sourceOpen} onOpenChange={setSourceOpen} />
 
       {/* One scrollbar: the editor grows with its content and the page scrolls.
           The preview is the exception — it is a different length from the
@@ -226,10 +217,23 @@ export default function TiptapEditorImpl({
             (terminal.css) so a fence looks here exactly like it will once
             published; `prose` still handles headings, lists and the rest. */}
         <div ref={editorPaneRef} className={showPreview ? "min-w-0 flex-1" : ""}>
-          <EditorContent
-            editor={editor}
-            className="tm-code prose dark:prose-invert max-w-none text-sm [&_.ProseMirror]:min-h-[60vh] [&_.ProseMirror]:outline-none"
-          />
+          {/* Hidden while the source shows, not unmounted: EditorContent owns
+              the element ProseMirror's view is mounted on, so tearing it down
+              on every toggle would cost a full re-parse of the document and
+              throw away the caret and undo history with it. */}
+          <div className={sourceMode ? "hidden" : undefined}>
+            <EditorContent
+              editor={editor}
+              className="tm-code prose dark:prose-invert max-w-none text-sm [&_.ProseMirror]:min-h-[60vh] [&_.ProseMirror]:outline-none"
+            />
+          </div>
+
+          {/* `value` is the markdown the form holds, i.e. exactly what Save
+              writes — not a re-serialization that could disagree with it. */}
+          {sourceMode && <SourceView markdown={value} />}
+
+          {/* Counts the document either way: it describes what is stored, not
+              which surface is currently showing it. */}
           <CharacterCount editor={editor} />
         </div>
 

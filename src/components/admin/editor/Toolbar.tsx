@@ -16,7 +16,9 @@ import {
   TextAlignCenterIcon,
   TextAlignRightIcon,
   PlusIcon,
+  FileCodeIcon,
 } from "@phosphor-icons/react";
+import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import {
   DropdownMenu,
@@ -45,9 +47,15 @@ import { ColorPickerPopover } from "./ColorPickerPopover";
 export const Toolbar = memo(function Toolbar({
   editor,
   onOpenLink,
+  sourceMode,
+  onToggleSource,
 }: {
   editor: Editor;
   onOpenLink: () => void;
+  /** The source pane has taken the writing surface's place, so nothing here may
+   *  write to the document. */
+  sourceMode: boolean;
+  onToggleSource: () => void;
 }) {
   const { t } = useI18n();
   // One selector for every flag the toolbar paints. useEditorState compares
@@ -72,150 +80,177 @@ export const Toolbar = memo(function Toolbar({
 
   return (
     <div className="flex flex-wrap items-center gap-0.5 rounded-md border p-1">
-      {/* Headings */}
-      <ToolbarButton
-        onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-        isActive={active.h1}
-        title={t("editor.heading1")}
+      {/* Everything that writes to the document. While the source pane is open
+          it goes `inert` — dimmed, unclickable, out of the tab order and out of
+          the accessibility tree — rather than disappearing: the controls hold
+          their place, so the toolbar does not resize under the pointer, and the
+          dimming is what says the document is read-only right now. */}
+      <div
+        inert={sourceMode}
+        className={cn(
+          "flex min-w-0 flex-1 flex-wrap items-center gap-0.5",
+          sourceMode && "opacity-40",
+        )}
       >
-        <TextHIcon className="size-4" weight="bold" />
-      </ToolbarButton>
-      <ToolbarButton
-        onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-        isActive={active.h2}
-        title={t("editor.heading2")}
-      >
-        <TextHIcon className="size-3.5" />
-      </ToolbarButton>
-
-      <Separator orientation="vertical" className="mx-0.5 h-5" />
-
-      {/* Inline formatting */}
-      <ToolbarButton
-        onClick={() => editor.chain().focus().toggleBold().run()}
-        isActive={active.bold}
-        title={t("editor.bold")}
-      >
-        <TextBIcon className="size-4" />
-      </ToolbarButton>
-      <ToolbarButton
-        onClick={() => editor.chain().focus().toggleItalic().run()}
-        isActive={active.italic}
-        title={t("editor.italic")}
-      >
-        <TextItalicIcon className="size-4" />
-      </ToolbarButton>
-      <ToolbarButton
-        onClick={() => editor.chain().focus().toggleUnderline().run()}
-        isActive={active.underline}
-        title={t("editor.underline")}
-      >
-        <TextUnderlineIcon className="size-4" />
-      </ToolbarButton>
-      <ToolbarButton
-        onClick={() => editor.chain().focus().toggleHighlight().run()}
-        isActive={active.highlight}
-        title={t("editor.highlight")}
-      >
-        <HighlighterCircleIcon className="size-4" />
-      </ToolbarButton>
-      <ToolbarButton
-        onClick={() => editor.chain().focus().toggleSubscript().run()}
-        isActive={active.subscript}
-        title={t("editor.subscript")}
-      >
-        <TextSubscriptIcon className="size-4" />
-      </ToolbarButton>
-      <ToolbarButton
-        onClick={() => editor.chain().focus().toggleSuperscript().run()}
-        isActive={active.superscript}
-        title={t("editor.superscript")}
-      >
-        <TextSuperscriptIcon className="size-4" />
-      </ToolbarButton>
-
-      <Separator orientation="vertical" className="mx-0.5 h-5" />
-
-      {/* Color */}
-      <ColorPickerPopover editor={editor} />
-
-      {/* Text alignment */}
-      <DropdownMenu>
-        <DropdownMenuTrigger
-          render={
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="size-7"
-              title={t("editor.alignLeft")}
-            />
-          }
+        {/* Headings */}
+        <ToolbarButton
+          onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+          isActive={active.h1}
+          title={t("editor.heading1")}
         >
-          <TextAlignLeftIcon className="size-4" />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start">
-          <DropdownMenuItem onClick={() => editor.chain().focus().setTextAlign("left").run()}>
+          <TextHIcon className="size-4" weight="bold" />
+        </ToolbarButton>
+        <ToolbarButton
+          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+          isActive={active.h2}
+          title={t("editor.heading2")}
+        >
+          <TextHIcon className="size-3.5" />
+        </ToolbarButton>
+
+        <Separator orientation="vertical" className="mx-0.5 h-5" />
+
+        {/* Inline formatting */}
+        <ToolbarButton
+          onClick={() => editor.chain().focus().toggleBold().run()}
+          isActive={active.bold}
+          title={t("editor.bold")}
+        >
+          <TextBIcon className="size-4" />
+        </ToolbarButton>
+        <ToolbarButton
+          onClick={() => editor.chain().focus().toggleItalic().run()}
+          isActive={active.italic}
+          title={t("editor.italic")}
+        >
+          <TextItalicIcon className="size-4" />
+        </ToolbarButton>
+        <ToolbarButton
+          onClick={() => editor.chain().focus().toggleUnderline().run()}
+          isActive={active.underline}
+          title={t("editor.underline")}
+        >
+          <TextUnderlineIcon className="size-4" />
+        </ToolbarButton>
+        <ToolbarButton
+          onClick={() => editor.chain().focus().toggleHighlight().run()}
+          isActive={active.highlight}
+          title={t("editor.highlight")}
+        >
+          <HighlighterCircleIcon className="size-4" />
+        </ToolbarButton>
+        <ToolbarButton
+          onClick={() => editor.chain().focus().toggleSubscript().run()}
+          isActive={active.subscript}
+          title={t("editor.subscript")}
+        >
+          <TextSubscriptIcon className="size-4" />
+        </ToolbarButton>
+        <ToolbarButton
+          onClick={() => editor.chain().focus().toggleSuperscript().run()}
+          isActive={active.superscript}
+          title={t("editor.superscript")}
+        >
+          <TextSuperscriptIcon className="size-4" />
+        </ToolbarButton>
+
+        <Separator orientation="vertical" className="mx-0.5 h-5" />
+
+        {/* Color */}
+        <ColorPickerPopover editor={editor} />
+
+        {/* Text alignment */}
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="size-7"
+                title={t("editor.alignLeft")}
+              />
+            }
+          >
             <TextAlignLeftIcon className="size-4" />
-            {t("editor.alignLeft")}
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => editor.chain().focus().setTextAlign("center").run()}>
-            <TextAlignCenterIcon className="size-4" />
-            {t("editor.alignCenter")}
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => editor.chain().focus().setTextAlign("right").run()}>
-            <TextAlignRightIcon className="size-4" />
-            {t("editor.alignRight")}
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            <DropdownMenuItem onClick={() => editor.chain().focus().setTextAlign("left").run()}>
+              <TextAlignLeftIcon className="size-4" />
+              {t("editor.alignLeft")}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => editor.chain().focus().setTextAlign("center").run()}>
+              <TextAlignCenterIcon className="size-4" />
+              {t("editor.alignCenter")}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => editor.chain().focus().setTextAlign("right").run()}>
+              <TextAlignRightIcon className="size-4" />
+              {t("editor.alignRight")}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
-      <Separator orientation="vertical" className="mx-0.5 h-5" />
+        <Separator orientation="vertical" className="mx-0.5 h-5" />
 
-      {/* Code */}
-      <ToolbarButton onClick={onOpenLink} isActive={active.link} title={`${t("editor.link")} (⌘K)`}>
-        <LinkIcon className="size-4" />
-      </ToolbarButton>
-      <ToolbarButton
-        onClick={() => editor.chain().focus().toggleCode().run()}
-        isActive={active.code}
-        title={t("editor.inlineCode")}
-      >
-        <CodeIcon className="size-4" />
-      </ToolbarButton>
+        {/* Code */}
+        <ToolbarButton
+          onClick={onOpenLink}
+          isActive={active.link}
+          title={`${t("editor.link")} (⌘K)`}
+        >
+          <LinkIcon className="size-4" />
+        </ToolbarButton>
+        <ToolbarButton
+          onClick={() => editor.chain().focus().toggleCode().run()}
+          isActive={active.code}
+          title={t("editor.inlineCode")}
+        >
+          <CodeIcon className="size-4" />
+        </ToolbarButton>
 
-      <Separator orientation="vertical" className="mx-0.5 h-5" />
+        <Separator orientation="vertical" className="mx-0.5 h-5" />
 
-      {/* Lists stay: they are toggled on existing text as often as inserted. */}
-      <ToolbarButton
-        onClick={() => editor.chain().focus().toggleBulletList().run()}
-        isActive={active.bulletList}
-        title={t("editor.bulletList")}
-      >
-        <ListBulletsIcon className="size-4" />
-      </ToolbarButton>
-      <ToolbarButton
-        onClick={() => editor.chain().focus().toggleOrderedList().run()}
-        isActive={active.orderedList}
-        title={t("editor.orderedList")}
-      >
-        <ListNumbersIcon className="size-4" />
-      </ToolbarButton>
+        {/* Lists stay: they are toggled on existing text as often as inserted. */}
+        <ToolbarButton
+          onClick={() => editor.chain().focus().toggleBulletList().run()}
+          isActive={active.bulletList}
+          title={t("editor.bulletList")}
+        >
+          <ListBulletsIcon className="size-4" />
+        </ToolbarButton>
+        <ToolbarButton
+          onClick={() => editor.chain().focus().toggleOrderedList().run()}
+          isActive={active.orderedList}
+          title={t("editor.orderedList")}
+        >
+          <ListNumbersIcon className="size-4" />
+        </ToolbarButton>
 
-      <Separator orientation="vertical" className="mx-0.5 h-5" />
+        <Separator orientation="vertical" className="mx-0.5 h-5" />
 
-      {/* Table edits (add/remove row & column) have no slash equivalent. */}
-      <ToolbarTableMenu editor={editor} />
+        {/* Table edits (add/remove row & column) have no slash equivalent. */}
+        <ToolbarTableMenu editor={editor} />
 
-      <Separator orientation="vertical" className="mx-0.5 h-5" />
+        <Separator orientation="vertical" className="mx-0.5 h-5" />
 
-      {/* Discoverability for the slash menu: typing `/` is faster, but nothing
+        {/* Discoverability for the slash menu: typing `/` is faster, but nothing
           on screen would otherwise say it exists. */}
-      <ToolbarButton
-        onClick={() => editor.chain().focus().insertContent("/").run()}
-        title={t("editor.slashHint")}
-      >
-        <PlusIcon className="size-4" />
+        <ToolbarButton
+          onClick={() => editor.chain().focus().insertContent("/").run()}
+          title={t("editor.slashHint")}
+        >
+          <PlusIcon className="size-4" />
+        </ToolbarButton>
+      </div>
+
+      <Separator orientation="vertical" className="mx-0.5 h-5" />
+
+      {/* The one control that acts on the document as a whole instead of on the
+          selection, and the one that never writes to it — so it lives at the
+          far end of the toolbar and stays live while the group above is inert.
+          It is the way back out of the source pane. */}
+      <ToolbarButton onClick={onToggleSource} isActive={sourceMode} title={t("editor.viewSource")}>
+        <FileCodeIcon className="size-4" />
       </ToolbarButton>
     </div>
   );

@@ -90,6 +90,10 @@ afterEach(() => {
 });
 
 const surface = () => document.querySelector(".ProseMirror")!;
+/** The read-only markdown pane, which takes the writing surface's place. */
+const sourcePane = () => document.querySelector("pre");
+/** Is the writing surface the one on screen, or hidden behind the source? */
+const surfaceShowing = () => !surface().closest(".hidden");
 /** The rendered preview, as distinct from the writing surface. */
 const previewBody = () => document.querySelector("[data-rendered]");
 
@@ -329,5 +333,77 @@ describe("TiptapEditorImpl dialogs", () => {
     fireEvent.click(screen.getByRole("button", { name: /editor.link/ }));
 
     expect(await screen.findByRole("dialog")).toBeTruthy();
+  });
+});
+
+// Source is a MODE of the one pane, not a second window onto the document: the
+// markdown replaces the writing surface, and the same toolbar button switches
+// back. Everything below is what makes that a round trip rather than a one-way
+// door — and what keeps the document read-only while it is open.
+describe("TiptapEditorImpl source mode", () => {
+  const toggle = () => screen.getByRole("button", { name: "editor.viewSource" });
+
+  it("should show the markdown in place of the writing surface when the toggle is pressed", async () => {
+    const { editor: e } = await mount();
+    act(() => type(e, "hello"));
+
+    fireEvent.click(toggle());
+
+    expect(sourcePane()?.textContent).toContain("hello");
+    expect(surfaceShowing()).toBe(false);
+  });
+
+  it("should hand the writing surface back on a second press", async () => {
+    await mount({ initial: "hello" });
+
+    fireEvent.click(toggle());
+    fireEvent.click(toggle());
+
+    expect(surfaceShowing()).toBe(true);
+    expect(sourcePane()).toBeNull();
+  });
+
+  it("should keep the document itself untouched across the round trip", async () => {
+    // The surface is hidden, not unmounted: remounting EditorContent would
+    // re-parse the document and take the caret and undo history with it. Same
+    // node object on the way back is what says it was never torn down.
+    const { editor: e } = await mount({ initial: "hello" });
+    act(() => type(e, "edited "));
+    const paragraph = surface().firstElementChild;
+    const caret = e.state.selection.from;
+    const text = e.getText();
+
+    fireEvent.click(toggle());
+    fireEvent.click(toggle());
+
+    expect(surface().firstElementChild).toBe(paragraph);
+    expect(e.state.selection.from).toBe(caret);
+    expect(e.getText()).toBe(text);
+  });
+
+  it("should put the format controls out of reach while the source is showing", async () => {
+    // Read-only means the toolbar cannot write either. `inert` takes the whole
+    // group out of the tab order and the accessibility tree at once; leaving
+    // the buttons live would let a click edit a document nobody can see.
+    await mount();
+    expect(screen.getByRole("button", { name: "editor.bold" }).closest("[inert]")).toBeNull();
+
+    fireEvent.click(toggle());
+
+    expect(screen.getByRole("button", { name: "editor.bold" }).closest("[inert]")).toBeTruthy();
+    // …except the toggle itself, which is the way back.
+    expect(toggle().closest("[inert]")).toBeNull();
+    expect(toggle().getAttribute("aria-pressed")).toBe("true");
+  });
+
+  it("should show what the form holds, not a re-serialization of the editor", async () => {
+    // What Save writes is the form's `value`. A pane rendering the editor's own
+    // getMarkdown() could disagree with it and nothing on screen would say so.
+    await mount({ initial: "# from the form" });
+
+    act(() => setExternal("# straight from outside"));
+    fireEvent.click(toggle());
+
+    expect(sourcePane()?.textContent).toContain("# straight from outside");
   });
 });
