@@ -2,7 +2,6 @@
 
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, fireEvent, cleanup, within } from "@testing-library/react";
-import type { ColumnDef } from "@tanstack/react-table";
 
 // Deterministic labels: t(key) returns the key (+ params) so queries are stable.
 vi.mock("@/i18n/I18nProvider", () => ({
@@ -12,11 +11,11 @@ vi.mock("@/i18n/I18nProvider", () => ({
   }),
 }));
 
-import { DataTable } from "@/components/admin/DataTable";
+import { DataTable, type DataTableColumnDef } from "@/components/admin/DataTable";
 
 type Row = { name: string; n: number };
 
-const columns: ColumnDef<Row, unknown>[] = [
+const columns: DataTableColumnDef<Row>[] = [
   { accessorKey: "name", header: "Name" },
   { accessorKey: "n", header: "N", enableSorting: false },
 ];

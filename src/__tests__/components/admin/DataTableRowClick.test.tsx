@@ -5,8 +5,7 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
-import type { ColumnDef } from "@tanstack/react-table";
-import { DataTable } from "@/components/admin/DataTable";
+import { DataTable, type DataTableColumnDef } from "@/components/admin/DataTable";
 
 vi.mock("@/i18n/I18nProvider", () => ({
   useI18n: () => ({ t: (k: string) => k, locale: "en" }),
@@ -19,7 +18,7 @@ const data: Row[] = [
   { id: "p2", title: "Second post" },
 ];
 
-const columns: ColumnDef<Row, unknown>[] = [
+const columns: DataTableColumnDef<Row>[] = [
   {
     accessorKey: "title",
     header: "Title",

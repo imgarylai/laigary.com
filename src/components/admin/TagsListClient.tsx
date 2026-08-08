@@ -1,9 +1,8 @@
 import { useMemo } from "react";
 import { Link, getRouteApi } from "@tanstack/react-router";
 import { ArrowSquareOutIcon } from "@phosphor-icons/react";
-import type { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
-import { DataTable } from "./DataTable";
+import { DataTable, type DataTableColumnDef } from "./DataTable";
 import { TagFormDialog } from "./TagFormDialog";
 import { DeleteTagButton } from "./DeleteTagButton";
 import { useI18n } from "@/i18n/I18nProvider";
@@ -25,7 +24,7 @@ export function TagsListClient({ tags }: { tags: Tag[] }) {
   const { q, page } = route.useSearch();
   const navigate = route.useNavigate();
 
-  const columns = useMemo<ColumnDef<Tag, unknown>[]>(
+  const columns = useMemo<DataTableColumnDef<Tag>[]>(
     () => [
       { accessorKey: "name", header: t("tagList.name") },
       {

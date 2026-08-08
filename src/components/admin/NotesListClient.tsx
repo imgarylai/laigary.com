@@ -1,9 +1,9 @@
 import { useMemo } from "react";
 import { Link, getRouteApi } from "@tanstack/react-router";
 import { PushPinIcon } from "@phosphor-icons/react";
-import type { ColumnDef, SortingState } from "@tanstack/react-table";
+import type { SortingState } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
-import { DataTable } from "./DataTable";
+import { DataTable, type DataTableColumnDef } from "./DataTable";
 import { StatusBadge } from "./StatusBadge";
 import { NoteRowActions } from "./NoteRowActions";
 import { useI18n } from "@/i18n/I18nProvider";
@@ -49,7 +49,7 @@ export function NotesListClient({
     [sort, dir],
   );
 
-  const columns = useMemo<ColumnDef<Note, unknown>[]>(
+  const columns = useMemo<DataTableColumnDef<Note>[]>(
     () => [
       {
         accessorKey: "title",

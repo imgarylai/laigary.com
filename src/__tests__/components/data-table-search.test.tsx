@@ -6,8 +6,7 @@
 // item and back.
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import type { ColumnDef } from "@tanstack/react-table";
-import { DataTable } from "@/components/admin/DataTable";
+import { DataTable, type DataTableColumnDef } from "@/components/admin/DataTable";
 
 vi.mock("@/i18n/I18nProvider", () => ({
   useI18n: () => ({ t: (key: string) => key, locale: "en" }),
@@ -16,7 +15,7 @@ vi.mock("@/i18n/I18nProvider", () => ({
 afterEach(cleanup);
 
 type Row = { name: string };
-const columns: ColumnDef<Row, unknown>[] = [{ accessorKey: "name", header: "Name" }];
+const columns: DataTableColumnDef<Row>[] = [{ accessorKey: "name", header: "Name" }];
 const data: Row[] = [{ name: "apple" }, { name: "banana" }];
 
 describe("DataTable search", () => {
