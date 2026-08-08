@@ -1,8 +1,7 @@
 import { useMemo } from "react";
 import { Link, getRouteApi } from "@tanstack/react-router";
-import type { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
-import { DataTable } from "./DataTable";
+import { DataTable, type DataTableColumnDef } from "./DataTable";
 import { PageRowActions } from "./PageRowActions";
 import { useI18n } from "@/i18n/I18nProvider";
 
@@ -20,7 +19,7 @@ export function PagesListClient({ pages }: { pages: Page[] }) {
   const { q, page } = route.useSearch();
   const navigate = route.useNavigate();
 
-  const columns = useMemo<ColumnDef<Page, unknown>[]>(() => {
+  const columns = useMemo<DataTableColumnDef<Page>[]>(() => {
     function formatDate(ts: number): string {
       return new Date(ts * 1000).toLocaleDateString(locale, {
         year: "numeric",

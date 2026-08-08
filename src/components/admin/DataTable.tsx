@@ -3,23 +3,24 @@ import {
   type ColumnDef,
   type RowData,
   type SortingState,
+  columnFilteringFeature,
+  createFilteredRowModel,
+  createPaginatedRowModel,
+  createSortedRowModel,
+  filterFn_includesString,
   flexRender,
   functionalUpdate,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
+  globalFilteringFeature,
+  metaHelper,
+  rowPaginationFeature,
+  rowSortingFeature,
+  sortFn_alphanumeric,
+  sortFn_datetime,
+  sortFn_text,
+  tableFeatures,
+  useTable,
 } from "@tanstack/react-table";
 
-// Per-column tailwind hooks used by the header/cell renderers below.
-declare module "@tanstack/react-table" {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  interface ColumnMeta<TData extends RowData, TValue> {
-    headClassName?: string;
-    cellClassName?: string;
-  }
-}
 import {
   CaretUpIcon,
   CaretDownIcon,
@@ -39,6 +40,33 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useI18n } from "@/i18n/I18nProvider";
+
+// v9 wants every feature the table uses declared up front, so this is also the
+// list of what an admin list table can do: search, sort, paginate. `columnMeta`
+// carries the per-column tailwind hooks the header/cell renderers below read.
+//
+// The registries are what the string options resolve against — `includesString`
+// backs `globalFilterFn`, and the three sort functions are the ones a column's
+// default `sortFn: "auto"` can pick (`basic` is the built-in fallback).
+const dataTableFeatures = tableFeatures({
+  columnFilteringFeature,
+  globalFilteringFeature,
+  rowSortingFeature,
+  rowPaginationFeature,
+  filteredRowModel: createFilteredRowModel(),
+  sortedRowModel: createSortedRowModel(),
+  paginatedRowModel: createPaginatedRowModel(),
+  filterFns: { includesString: filterFn_includesString },
+  sortFns: {
+    alphanumeric: sortFn_alphanumeric,
+    datetime: sortFn_datetime,
+    text: sortFn_text,
+  },
+  columnMeta: metaHelper<{ headClassName?: string; cellClassName?: string }>(),
+});
+
+/** Column definition for a `DataTable`, bound to the features above. */
+export type DataTableColumnDef<T extends RowData> = ColumnDef<typeof dataTableFeatures, T>;
 
 /**
  * Whether a click landed on something that handles its own activation — a link,
@@ -64,7 +92,7 @@ export function isSelfHandledTarget(target: EventTarget | null): boolean {
 // page changes are reported to the caller to turn into a new query. That mode
 // exists for lists where "load everything" got expensive — see
 // `getAdminInterviewNotes`.
-export function DataTable<T>({
+export function DataTable<T extends RowData>({
   columns,
   data,
   searchPlaceholder,
@@ -81,7 +109,7 @@ export function DataTable<T>({
   rowCount,
   onRowActivate,
 }: {
-  columns: ColumnDef<T, unknown>[];
+  columns: DataTableColumnDef<T>[];
   data: T[];
   /** Clicking anywhere inert in a row runs this — the row's primary action.
    *  Pointer affordance only; the title stays a real link so the keyboard and
@@ -128,7 +156,8 @@ export function DataTable<T>({
   const pageIndex = controlledPageIndex ?? internalPageIndex;
   const setPageIndex = onPageChange ?? setInternalPageIndex;
 
-  const table = useReactTable({
+  const table = useTable({
+    features: dataTableFeatures,
     data,
     columns,
     state: { sorting, globalFilter, pagination: { pageIndex, pageSize } },
@@ -147,10 +176,6 @@ export function DataTable<T>({
     manualSorting: serverDriven,
     manualFiltering: serverDriven,
     rowCount,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
   });
 
   const pageCount = table.getPageCount();
@@ -266,7 +291,10 @@ export function DataTable<T>({
                     : undefined
                 }
               >
-                {row.getVisibleCells().map((cell) => (
+                {/* Not `getVisibleCells` — that belongs to column visibility,
+                    a feature this table does not register because no column
+                    here is ever hidden. */}
+                {row.getAllCells().map((cell) => (
                   <TableCell key={cell.id} className={cell.column.columnDef.meta?.cellClassName}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
@@ -290,7 +318,7 @@ export function DataTable<T>({
           </Button>
           <span className="text-sm text-muted-foreground">
             {t("pagination.page", {
-              current: String(table.getState().pagination.pageIndex + 1),
+              current: String(table.state.pagination.pageIndex + 1),
               total: String(pageCount),
             })}
           </span>

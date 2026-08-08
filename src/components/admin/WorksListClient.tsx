@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 import { Link, getRouteApi } from "@tanstack/react-router";
 import { PushPinIcon } from "@phosphor-icons/react";
-import type { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -10,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DataTable } from "./DataTable";
+import { DataTable, type DataTableColumnDef } from "./DataTable";
 import { StatusBadge } from "./StatusBadge";
 import type { WorkStatus } from "@/routes/admin/works/-list-search";
 import { WorkRowActions } from "./WorkRowActions";
@@ -43,7 +42,7 @@ export function WorksListClient({ works }: { works: Work[] }) {
     [works, status],
   );
 
-  const columns = useMemo<ColumnDef<Work, unknown>[]>(() => {
+  const columns = useMemo<DataTableColumnDef<Work>[]>(() => {
     function absoluteDate(ts: number): string {
       return new Date(ts * 1000).toLocaleString(locale, { dateStyle: "long", timeStyle: "short" });
     }

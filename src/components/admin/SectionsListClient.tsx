@@ -1,9 +1,8 @@
 import { useMemo } from "react";
 import { Link, getRouteApi } from "@tanstack/react-router";
 import { ArrowSquareOutIcon } from "@phosphor-icons/react";
-import type { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
-import { DataTable } from "./DataTable";
+import { DataTable, type DataTableColumnDef } from "./DataTable";
 import { SectionFormDialog } from "./SectionFormDialog";
 import { DeleteSectionButton } from "./DeleteSectionButton";
 import { useI18n } from "@/i18n/I18nProvider";
@@ -25,7 +24,7 @@ export function SectionsListClient({ sections }: { sections: Section[] }) {
   const { q, page } = route.useSearch();
   const navigate = route.useNavigate();
 
-  const columns = useMemo<ColumnDef<Section, unknown>[]>(
+  const columns = useMemo<DataTableColumnDef<Section>[]>(
     () => [
       { accessorKey: "label", header: t("sectionList.label") },
       {
