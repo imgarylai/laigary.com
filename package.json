@@ -26,13 +26,13 @@
   },
   "dependencies": {
     "@aarkue/tiptap-math-extension": "1.4.0",
-    "@base-ui/react": "1.6.0",
+    "@base-ui/react": "1.7.0",
     "@cloudflare/vite-plugin": "1.51.0",
     "@fontsource-variable/jetbrains-mono": "5.3.0",
-    "@hookform/resolvers": "5.5.7",
+    "@hookform/resolvers": "5.7.1",
     "@phosphor-icons/react": "2.1.10",
     "@resvg/resvg-wasm": "2.6.2",
-    "@shadcn/react": "0.2.1",
+    "@shadcn/react": "0.3.0",
     "@tailwindcss/vite": "4.3.3",
     "@tanstack/react-devtools": "0.10.9",
     "@tanstack/react-router": "1.170.19",
@@ -83,7 +83,7 @@
     "react": "19.2.8",
     "react-day-picker": "10.0.1",
     "react-dom": "19.2.8",
-    "react-hook-form": "7.83.0",
+    "react-hook-form": "7.84.0",
     "react-hotkeys-hook": "5.3.3",
     "react-image-crop": "11.1.2",
     "react-resizable-panels": "4.12.2",
@@ -100,7 +100,7 @@
     "sonner": "2.0.7",
     "tailwind-merge": "3.6.0",
     "tailwindcss": "4.3.3",
-    "temml": "0.13.3",
+    "temml": "0.13.4",
     "unified": "11.0.5",
     "use-wg": "2.0.5",
     "zod": "4.4.3"
@@ -126,10 +126,10 @@
     "drizzle-kit": "0.31.10",
     "husky": "9.1.7",
     "jsdom": "30.0.1",
-    "lint-staged": "17.2.0",
+    "lint-staged": "17.3.0",
     "oxfmt": "0.62.0",
     "oxlint": "1.77.0",
-    "shadcn": "4.16.0",
+    "shadcn": "4.16.1",
     "tw-animate-css": "1.4.0",
     "typescript": "7.0.2",
     "vite": "8.2.0",
@@ -145,5 +145,5 @@
       "oxfmt --write --no-error-on-unmatched-pattern"
     ]
   },
-  "packageManager": "pnpm@11.18.0"
+  "packageManager": "pnpm@11.20.0"
 }
