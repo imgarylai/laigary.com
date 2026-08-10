@@ -198,6 +198,53 @@ Rules:
 - Always wrap notation in `$...$` — never a bare `O(n)`.
 - Write `$O(n \log n)$`, not `$O(nlogn)$`.
 
+## System design notes
+
+The `system-design` section holds two different kinds of note, and only one of
+them takes a fixed shape:
+
+- **Question notes** (TinyURL, Job Scheduler) are design problems he will have to
+  walk an interviewer through. These follow the framework below.
+- **Reference notes** (Jeff Dean Numbers, Encoding/Hashing/Encryption) are
+  lookup material with no requirements to gather. Forcing the framework onto them
+  reads as filler; leave them free-form.
+
+A question note's h2s, in this order and with no numbering (the ToC already shows
+the hierarchy):
+
+```text
+Functional and Non-Functional Requirements
+Data Model
+API / Access Pattern
+Deep Dive：<topic>          ← one h2 per deep dive, as many as the question needs
+```
+
+The framework is not just organisation — **it is the motion he performs in the
+interview**, so every question note walking the same path is the point. Rules
+that follow from that:
+
+- **The first three sections may be very short**, and short is the message. Two
+  lines under Data Model says "I thought about this, it is not where the
+  difficulty is", which is what he wants to see when revising. Do not pad them,
+  and do not drop the heading either — an absent section reads as an oversight.
+- **Every non-functional requirement declared up front should be answered by a
+  deep dive**, and vice versa. That correspondence is what makes the NFR list
+  worth writing.
+- **One h2 per deep dive, prefixed `Deep Dive：`.** This keeps h3 free for
+  sub-topics; h4 is invisible in the ToC (`src/lib/toc.ts`).
+- **Alternatives get their own h3** (`選項一：…`, `方法一：…`, `做法一：…`), never
+  a bolded lead-in on a paragraph. Bolded labels on parallel paragraphs are one
+  of the generated-prose tells listed above.
+- **Keep the approaches that lost.** He asked for this explicitly on 2026-08-10:
+  「有些是不太好的解法，記得幫我補」. A rejected option plus the reason it was
+  rejected is interview material; only knowing the winner is not.
+- **State the assumption behind any figure**, so he can re-derive it while
+  revising. "50k lease renewals per second" is unusable on its own; "each job
+  runs ~25s, so 250k are in flight, each renewing every 5s" survives.
+
+Slugs are short and are the name of the question, not a description of the
+angle: `tinyurl`, `job-scheduler`. The title carries the detail if it needs to.
+
 ## Links
 
 **Inside note content, internal links are relative:**
