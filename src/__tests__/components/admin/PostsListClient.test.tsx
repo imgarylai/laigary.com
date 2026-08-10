@@ -105,6 +105,17 @@ describe("PostsListClient", () => {
     });
   });
 
+  it("should label the closed status filter rather than showing its raw value", () => {
+    // Base UI reads the trigger's label off the popup, which only mounts once
+    // opened — without the `items` map the filter sits there reading "draft" in
+    // English whatever the locale is.
+    useSearch.mockReturnValue({ status: "draft" });
+
+    render(<PostsListClient posts={posts} />);
+
+    expect(screen.getByRole("combobox").textContent).toContain("postForm.draft");
+  });
+
   it("should filter by the status in the URL", () => {
     // Filters live in the search params so the view survives a reload.
     useSearch.mockReturnValue({ status: "draft" });

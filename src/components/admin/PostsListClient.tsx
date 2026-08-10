@@ -110,10 +110,23 @@ export function PostsListClient({ posts }: { posts: Post[] }) {
     ];
   }, [t, locale]);
 
+  const statusOptions = useMemo(
+    () => [
+      { value: "all", label: t("postList.all") },
+      { value: "draft", label: t("postForm.draft") },
+      { value: "published", label: t("postForm.published") },
+    ],
+    [t],
+  );
+
   const toolbar = (
     <>
+      {/* `items` as well as the rendered options: Base UI resolves the
+          trigger's label from the popup, which is not mounted until it opens,
+          so without it a closed filter reads the raw English "draft". */}
       <Select
         value={status ?? "all"}
+        items={statusOptions}
         onValueChange={(v) =>
           navigate({
             search: (prev) => ({ ...prev, status: v === "all" ? undefined : (v as PostStatus) }),
@@ -125,9 +138,11 @@ export function PostsListClient({ posts }: { posts: Post[] }) {
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">{t("postList.all")}</SelectItem>
-          <SelectItem value="draft">{t("postForm.draft")}</SelectItem>
-          <SelectItem value="published">{t("postForm.published")}</SelectItem>
+          {statusOptions.map((o) => (
+            <SelectItem key={o.value} value={o.value}>
+              {o.label}
+            </SelectItem>
+          ))}
         </SelectContent>
       </Select>
       <Button nativeButton={false} render={<Link to="/admin/posts/new" />}>
