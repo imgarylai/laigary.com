@@ -9,9 +9,16 @@ import { NotesListClient } from "@/components/admin/NotesListClient";
 
 const { navigate, useSearch } = vi.hoisted(() => ({
   navigate: vi.fn(),
-  useSearch: vi.fn<() => { q?: string; page?: number; sort?: string; dir?: "asc" | "desc" }>(
-    () => ({}),
-  ),
+  useSearch: vi.fn<
+    () => {
+      q?: string;
+      page?: number;
+      sort?: string;
+      dir?: "asc" | "desc";
+      section?: string;
+      status?: "draft" | "published";
+    }
+  >(() => ({})),
 }));
 
 vi.mock("@tanstack/react-router", () => ({
@@ -54,12 +61,24 @@ const notes = [
   },
 ];
 
+const sections = [
+  { id: "s1", label: "Arrays", slug: "arrays" },
+  { id: "s2", label: "System design", slug: "system-design" },
+];
+
 // The list is server-paginated: `notes` is one page and `total` is what the
 // pager divides, so a test that wants two pages says so with `total` rather
 // than by handing over more rows than a page holds.
 function renderList(props: { notes?: typeof notes; total?: number } = {}) {
   const rows = props.notes ?? notes;
-  return render(<NotesListClient notes={rows} total={props.total ?? rows.length} pageSize={20} />);
+  return render(
+    <NotesListClient
+      notes={rows}
+      total={props.total ?? rows.length}
+      pageSize={20}
+      sections={sections}
+    />,
+  );
 }
 
 /** One page of rows out of 21 — enough total for a second page to exist. */
@@ -175,6 +194,117 @@ describe("NotesListClient url state", () => {
     await waitFor(() => expect(navigate).toHaveBeenCalled());
     const search = navigate.mock.lastCall?.[0].search as (p: object) => object;
     expect(search({ page: 2 })).toEqual(expect.objectContaining({ page: undefined }));
+  });
+});
+
+// The two dropdowns. Both filters are applied in SQL, so what they write into
+// the URL is the whole of what they do — a value that never reaches the search
+// params is a filter that never happens.
+describe("NotesListClient filters", () => {
+  // Base UI's Select portals its listbox only once open, and commits on the
+  // pointer sequence rather than on a bare click (see NoteForm's helper).
+  function pick(comboboxIndex: number, optionText: string) {
+    fireEvent.click(screen.getAllByRole("combobox")[comboboxIndex]);
+    const option = screen.getByRole("option", { name: optionText });
+    fireEvent.pointerDown(option);
+    fireEvent.pointerUp(option);
+    fireEvent.click(option);
+  }
+
+  const SECTION = 0;
+  const STATUS = 1;
+
+  it("pushes the chosen section slug into the url", async () => {
+    renderList();
+
+    pick(SECTION, "System design");
+
+    await waitFor(() => expect(navigate).toHaveBeenCalled());
+    const search = navigate.mock.lastCall?.[0].search as (p: object) => object;
+    expect(search({})).toEqual(expect.objectContaining({ section: "system-design" }));
+  });
+
+  it("drops section from the url when the filter goes back to all sections", async () => {
+    // "all" is the default view, so it is an absence in the URL rather than a
+    // literal `?section=all` the loader would then fail to resolve.
+    useSearch.mockReturnValue({ section: "arrays" });
+    renderList();
+
+    pick(SECTION, "noteList.allSections");
+
+    await waitFor(() => expect(navigate).toHaveBeenCalled());
+    const search = navigate.mock.lastCall?.[0].search as (p: object) => object;
+    expect(search({ section: "arrays" })).toEqual(expect.objectContaining({ section: undefined }));
+  });
+
+  it("pushes the chosen status into the url", async () => {
+    renderList();
+
+    pick(STATUS, "postForm.draft");
+
+    await waitFor(() => expect(navigate).toHaveBeenCalled());
+    const search = navigate.mock.lastCall?.[0].search as (p: object) => object;
+    expect(search({})).toEqual(expect.objectContaining({ status: "draft" }));
+  });
+
+  it("drops status from the url when the filter goes back to all statuses", async () => {
+    useSearch.mockReturnValue({ status: "draft" });
+    renderList();
+
+    pick(STATUS, "noteList.allStatuses");
+
+    await waitFor(() => expect(navigate).toHaveBeenCalled());
+    const search = navigate.mock.lastCall?.[0].search as (p: object) => object;
+    expect(search({ status: "draft" })).toEqual(expect.objectContaining({ status: undefined }));
+  });
+
+  it("keeps the other filter when one of them changes", async () => {
+    // Both live in the same search params; a dropdown that replaced the object
+    // instead of spreading it would silently clear the other one.
+    useSearch.mockReturnValue({ section: "arrays" });
+    renderList();
+
+    pick(STATUS, "postForm.draft");
+
+    await waitFor(() => expect(navigate).toHaveBeenCalled());
+    const search = navigate.mock.lastCall?.[0].search as (p: object) => object;
+    expect(search({ section: "arrays" })).toEqual(
+      expect.objectContaining({ section: "arrays", status: "draft" }),
+    );
+  });
+
+  it("returns to page 1 when a filter changes the result set", async () => {
+    useSearch.mockReturnValue({ page: 4 });
+    renderList(manyPages);
+
+    pick(SECTION, "Arrays");
+
+    await waitFor(() => expect(navigate).toHaveBeenCalled());
+    const search = navigate.mock.lastCall?.[0].search as (p: object) => object;
+    expect(search({ page: 4 })).toEqual(
+      expect.objectContaining({ section: "arrays", page: undefined }),
+    );
+  });
+
+  it("labels the closed dropdowns rather than showing their raw values", () => {
+    // Base UI reads the trigger's label off the popup, which only mounts once
+    // opened — without the `items` map the filters sit there reading
+    // "system-design" and "draft".
+    useSearch.mockReturnValue({ section: "system-design", status: "draft" });
+    renderList();
+
+    const [section, status] = screen.getAllByRole("combobox");
+    expect(section.textContent).toContain("System design");
+    expect(status.textContent).toContain("postForm.draft");
+  });
+
+  it("shows a section slug it does not recognise as all sections", async () => {
+    // The loader falls back to the unfiltered list for a stale `?section=`, so
+    // the dropdown has to say the same thing rather than blanking out.
+    useSearch.mockReturnValue({ section: "renamed-away" });
+    renderList();
+
+    expect(screen.getAllByRole("combobox")[SECTION].textContent).toContain("noteList.allSections");
   });
 });
 

@@ -833,6 +833,48 @@ describe("getAdminInterviewNotes", () => {
     expect(result.items.map((n) => n.sectionLabel)).toEqual(["Alpha", "Zulu"]);
   });
 
+  it("filters by section and totals the matches, not the table", async () => {
+    const { getAdminInterviewNotes } = await import("@/db/queries");
+    const arrays = await seedSection("arrays", "Arrays");
+    const design = await seedSection("design", "System design");
+    await seedNote(arrays.id, { slug: "a" });
+    await seedNote(arrays.id, { slug: "b" });
+    await seedNote(design.id, { slug: "c" });
+
+    const result = await getAdminInterviewNotes({ sectionId: arrays.id });
+    expect(result.items.map((n) => n.slug).sort()).toEqual(["a", "b"]);
+    expect(result.total).toBe(2);
+  });
+
+  it("filters by status and totals the matches, not the table", async () => {
+    const { getAdminInterviewNotes } = await import("@/db/queries");
+    const section = await seedSection();
+    await seedNote(section.id, { slug: "a" });
+    await seedNote(section.id, { slug: "b", status: "draft" });
+
+    const result = await getAdminInterviewNotes({ status: "draft" });
+    expect(result.items.map((n) => n.slug)).toEqual(["b"]);
+    expect(result.total).toBe(1);
+  });
+
+  it("narrows on every filter at once rather than the last one given", async () => {
+    const { getAdminInterviewNotes } = await import("@/db/queries");
+    const arrays = await seedSection("arrays", "Arrays");
+    const design = await seedSection("design", "System design");
+    await seedNote(arrays.id, { slug: "a", title: "Two Sum", status: "draft" });
+    await seedNote(arrays.id, { slug: "b", title: "Two Sum II" });
+    await seedNote(arrays.id, { slug: "c", title: "Binary Search", status: "draft" });
+    await seedNote(design.id, { slug: "d", title: "Two Sum notes", status: "draft" });
+
+    const result = await getAdminInterviewNotes({
+      q: "sum",
+      sectionId: arrays.id,
+      status: "draft",
+    });
+    expect(result.items.map((n) => n.slug)).toEqual(["a"]);
+    expect(result.total).toBe(1);
+  });
+
   it("recounts after a write instead of serving the cached total", async () => {
     // The unfiltered total is cached, so a create has to invalidate it — a
     // stale count sizes the pager for a note that is no longer there (or hides

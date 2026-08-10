@@ -347,6 +347,8 @@
     "delete": "刪除",
     "deleting": "刪除中…",
     "newNote": "新增筆記",
+    "allSections": "全部分類",
+    "allStatuses": "全部狀態",
     "searchPlaceholder": "搜尋筆記…",
     "deleteTitle": "刪除筆記？",
     "deleteConfirm": "確定刪除「{title}」？此動作無法復原。",

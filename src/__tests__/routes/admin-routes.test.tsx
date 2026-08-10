@@ -464,6 +464,7 @@ describe("/admin/interview", () => {
       ],
       total: 1,
       pageSize: 20,
+      sections: [{ id: "s1", label: "Arrays", slug: "arrays" }],
     });
 
     await renderRoute("/admin/interview/notes");
