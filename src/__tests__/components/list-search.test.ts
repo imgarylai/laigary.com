@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { parseListSearch, parseSortedListSearch } from "@/components/admin/list-search";
 import { parsePostsListSearch } from "@/routes/admin/posts/-list-search";
+import { parseNotesListSearch } from "@/routes/admin/interview/notes/-list-search";
 
 describe("parseListSearch", () => {
   it("should keep q when it is a non-empty string", () => {
@@ -87,5 +88,33 @@ describe("parsePostsListSearch", () => {
   it("should drop status when the value is not a known status", () => {
     expect(parsePostsListSearch({ status: "bogus" })).toEqual({ q: undefined, status: undefined });
     expect(parsePostsListSearch({ status: 1 })).toEqual({ q: undefined, status: undefined });
+  });
+});
+
+describe("parseNotesListSearch", () => {
+  it("should carry the section and status filters alongside the sort it inherits", () => {
+    expect(
+      parseNotesListSearch({ section: "leetcode", status: "draft", sort: "title", dir: "asc" }),
+    ).toEqual({
+      q: undefined,
+      page: undefined,
+      sort: "title",
+      dir: "asc",
+      section: "leetcode",
+      status: "draft",
+    });
+  });
+
+  it("should drop section when it is empty or not a string", () => {
+    // The slug is not checked against the section table here — an unknown one
+    // degrades to the unfiltered list on the server. Only the shape is checked.
+    expect(parseNotesListSearch({ section: "" }).section).toBeUndefined();
+    expect(parseNotesListSearch({ section: 7 }).section).toBeUndefined();
+    expect(parseNotesListSearch({}).section).toBeUndefined();
+  });
+
+  it("should drop status when the value is not a known status", () => {
+    expect(parseNotesListSearch({ status: "bogus" }).status).toBeUndefined();
+    expect(parseNotesListSearch({ status: 1 }).status).toBeUndefined();
   });
 });

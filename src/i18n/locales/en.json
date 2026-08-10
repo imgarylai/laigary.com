@@ -347,6 +347,8 @@
     "delete": "Delete",
     "deleting": "Deleting…",
     "newNote": "New note",
+    "allSections": "All sections",
+    "allStatuses": "All statuses",
     "searchPlaceholder": "Search notes…",
     "deleteTitle": "Delete note?",
     "deleteConfirm": "Delete \"{title}\"? This cannot be undone.",

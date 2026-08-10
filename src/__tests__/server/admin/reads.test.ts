@@ -129,6 +129,49 @@ describe("listNotesImpl", () => {
     const result = await listNotesImpl({ sort: "contentMd; drop table", dir: "asc" });
     expect(result.items).toHaveLength(1);
   });
+
+  it("resolves the section slug in the url to the id the query filters on", async () => {
+    const coding = await seedSection({ slug: "coding", label: "Coding" });
+    const design = await seedSection({ slug: "design", label: "Design" });
+    await seedNote(coding.id, { slug: "a", title: "A" });
+    await seedNote(design.id, { slug: "b", title: "B" });
+    const { listNotesImpl } = await import("@/server/admin/reads");
+
+    const result = await listNotesImpl({ section: "coding" });
+    expect(result.items.map((n) => n.title)).toEqual(["A"]);
+    expect(result.total).toBe(1);
+  });
+
+  it("passes the status filter through to the query", async () => {
+    const section = await seedSection({ slug: "coding", label: "Coding" });
+    await seedNote(section.id, { slug: "a", title: "Live" });
+    await seedNote(section.id, { slug: "b", title: "Wip", status: "draft" });
+    const { listNotesImpl } = await import("@/server/admin/reads");
+
+    const result = await listNotesImpl({ status: "draft" });
+    expect(result.items.map((n) => n.title)).toEqual(["Wip"]);
+    expect(result.total).toBe(1);
+  });
+
+  it("falls back to the unfiltered list for a section slug it cannot resolve", async () => {
+    // Same reasoning as `?sort=`: a renamed or hand-typed slug is a stale URL,
+    // and an empty table would read as a bug rather than as a filter.
+    const section = await seedSection({ slug: "coding", label: "Coding" });
+    await seedNote(section.id, { slug: "a", title: "A" });
+    const { listNotesImpl } = await import("@/server/admin/reads");
+
+    const result = await listNotesImpl({ section: "renamed-away" });
+    expect(result.items).toHaveLength(1);
+  });
+
+  it("carries the sections the filter dropdown is built from", async () => {
+    await seedSection({ slug: "coding", label: "Coding" });
+    await seedSection({ slug: "design", label: "Design" });
+    const { listNotesImpl } = await import("@/server/admin/reads");
+
+    const { sections } = await listNotesImpl();
+    expect(sections.map((s) => s.slug).sort()).toEqual(["coding", "design"]);
+  });
 });
 
 describe("newNoteDataImpl", () => {

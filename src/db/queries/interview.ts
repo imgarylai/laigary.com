@@ -1,4 +1,4 @@
-import { eq, desc, count, and, asc, like, sql } from "drizzle-orm";
+import { eq, desc, count, and, asc, like, sql, type SQL } from "drizzle-orm";
 import { interviewSections, interviewNotes, interviewNoteTags, tags } from "@/db/schema";
 import { unixToIso } from "@/lib/date";
 import { getDb, inClause, runBatch, type BatchWrites, type Db } from "./_db";
@@ -405,6 +405,9 @@ export function isAdminNoteSort(value: unknown): value is AdminNoteSort {
 export async function getAdminInterviewNotes(opts?: {
   /** Case-insensitive substring match on the title. */
   q?: string;
+  /** Restrict to one section, by id (the route resolves the slug it shows). */
+  sectionId?: string;
+  status?: string;
   sort?: AdminNoteSort;
   dir?: "asc" | "desc";
   limit?: number;
@@ -414,7 +417,15 @@ export async function getAdminInterviewNotes(opts?: {
   const limit = opts?.limit ?? ADMIN_NOTES_PAGE_SIZE;
   const offset = opts?.offset ?? 0;
   const q = opts?.q?.trim() || undefined;
-  const where = q ? like(interviewNotes.title, `%${q}%`) : undefined;
+  // Every filter narrows both the page and the total, so they are built once
+  // and handed to both queries — a pager that divides an unfiltered total pages
+  // over rows the filtered query will not return.
+  const conditions = [
+    q ? like(interviewNotes.title, `%${q}%`) : undefined,
+    opts?.sectionId ? eq(interviewNotes.sectionId, opts.sectionId) : undefined,
+    opts?.status ? eq(interviewNotes.status, opts.status) : undefined,
+  ].filter((c) => c !== undefined);
+  const where = conditions.length > 0 ? and(...conditions) : undefined;
 
   // Newest-PUBLISHED first is the default: the table mirrors the order readers
   // see, so a typo fix does not move a note. (It was newest-EDITED, which is
@@ -453,7 +464,7 @@ export async function getAdminInterviewNotes(opts?: {
       .orderBy(...orderBy)
       .limit(limit)
       .offset(offset),
-    countAdminNotes(q),
+    countAdminNotes(where),
   ]);
 
   return { items: rows.map((r) => ({ ...r, pinned: r.pinned === 1 })), total };
@@ -464,19 +475,17 @@ export async function getAdminInterviewNotes(opts?: {
  *
  * The unfiltered total is cached: it changes only when the author writes (and
  * every write calls `revalidateContent`), while the pager asks for it on every
- * page view. A search total is not cached — the key space is whatever the
- * author typed, and a search is a deliberate keystroke rather than a hover.
+ * page view. A filtered total is not cached — the key space is whatever the
+ * author typed or picked, and reaching for a filter is a deliberate act rather
+ * than a hover.
  */
-async function countAdminNotes(q?: string): Promise<number> {
+async function countAdminNotes(where?: SQL): Promise<number> {
   const load = async () => {
     const db = await getDb();
-    const [row] = await db
-      .select({ total: count() })
-      .from(interviewNotes)
-      .where(q ? like(interviewNotes.title, `%${q}%`) : undefined);
+    const [row] = await db.select({ total: count() }).from(interviewNotes).where(where);
     return row.total;
   };
-  return q ? load() : cached(cacheKeys.adminNoteCount, load);
+  return where ? load() : cached(cacheKeys.adminNoteCount, load);
 }
 
 /**

@@ -113,12 +113,27 @@ export async function listNotesImpl(data?: {
   page?: number;
   sort?: string;
   dir?: "asc" | "desc";
-}): Promise<{ items: AdminInterviewNote[]; total: number; pageSize: number }> {
-  const { getAdminInterviewNotes, isAdminNoteSort, ADMIN_NOTES_PAGE_SIZE } =
+  /** Section slug, as it appears in the URL. */
+  section?: string;
+  status?: string;
+}): Promise<{
+  items: AdminInterviewNote[];
+  total: number;
+  pageSize: number;
+  sections: SectionOption[];
+}> {
+  const { getAdminInterviewNotes, getInterviewSections, isAdminNoteSort, ADMIN_NOTES_PAGE_SIZE } =
     await import("@/db/queries");
   const page = Math.max(1, data?.page ?? 1);
+  // The section dropdown needs the full list whatever the filter is; the query
+  // is cached, so carrying it on the list loader costs nothing per keystroke.
+  const sectionRows = await getInterviewSections();
   const { items, total } = await getAdminInterviewNotes({
     q: data?.q,
+    // A slug nobody has (a renamed or hand-typed one) falls back to the
+    // unfiltered list rather than to an empty table that looks like a bug.
+    sectionId: sectionRows.find((s) => s.slug === data?.section)?.id,
+    status: data?.status,
     // An unknown `sort` in a hand-edited URL falls back to the default rather
     // than erroring — the column set is a UI detail, not a contract.
     sort: isAdminNoteSort(data?.sort) ? data.sort : undefined,
@@ -126,7 +141,12 @@ export async function listNotesImpl(data?: {
     limit: ADMIN_NOTES_PAGE_SIZE,
     offset: (page - 1) * ADMIN_NOTES_PAGE_SIZE,
   });
-  return { items, total, pageSize: ADMIN_NOTES_PAGE_SIZE };
+  return {
+    items,
+    total,
+    pageSize: ADMIN_NOTES_PAGE_SIZE,
+    sections: sectionRows.map((s) => ({ id: s.id, label: s.label, slug: s.slug })),
+  };
 }
 
 /* v8 ignore start -- RPC boundary, unreachable under vitest (see AGENTS.md). */
@@ -138,6 +158,8 @@ export const listNotesFn = createServerFn({ method: "GET" })
         page: z.number().int().positive().optional(),
         sort: z.string().optional(),
         dir: z.enum(["asc", "desc"]).optional(),
+        section: z.string().optional(),
+        status: z.enum(["draft", "published"]).optional(),
       })
       .parse(data ?? {}),
   )
