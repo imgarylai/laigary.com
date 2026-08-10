@@ -50,10 +50,12 @@ export const noteCreateSchema = z.object({
 });
 export type NoteCreateInput = z.infer<typeof noteCreateSchema>;
 
-// sectionId is intentionally not updatable (matches the query type).
+// sectionId is updatable: moving a note to another section is a re-file, and
+// the query layer rejects a slug already taken in the destination.
 export const noteUpdateSchema = z.object({
   id: z.string().min(1),
   slug: slug.optional(),
+  sectionId: z.string().min(1).optional(),
   title: z.string().min(1).max(255).optional(),
   contentMd: z.string().optional(),
   status: z.enum(["draft", "published"]).optional(),

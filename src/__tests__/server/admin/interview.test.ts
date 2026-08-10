@@ -150,6 +150,31 @@ describe("updateNoteImpl", () => {
       error: "Note slug already exists in this section",
     });
   });
+
+  it("moves the note to the section it is given", async () => {
+    const { id: sectionId } = await section();
+    const { id: targetId } = await seedSection({ slug: "system-design", label: "System Design" });
+    const { id } = await seedNote(sectionId, { slug: "n", status: "published" });
+    const { updateNoteImpl } = await import("@/server/admin/interview");
+    const { getInterviewNote } = await import("@/db/queries");
+
+    expect(await updateNoteImpl({ id, sectionId: targetId })).toEqual({ ok: true });
+    expect(await getInterviewNote("leetcode", "n")).toBeNull();
+    expect(await getInterviewNote("system-design", "n")).not.toBeNull();
+  });
+
+  it("maps a move onto a slug the target section already uses to ok:false", async () => {
+    const { id: sectionId } = await section();
+    const { id: targetId } = await seedSection({ slug: "system-design", label: "System Design" });
+    await seedNote(targetId, { slug: "n" });
+    const { id } = await seedNote(sectionId, { slug: "n" });
+    const { updateNoteImpl } = await import("@/server/admin/interview");
+
+    expect(await updateNoteImpl({ id, sectionId: targetId })).toEqual({
+      ok: false,
+      error: "Note slug already exists in this section",
+    });
+  });
 });
 
 describe("deleteNoteImpl", () => {
@@ -191,17 +216,18 @@ describe("interview schemas", () => {
     ).toThrow();
   });
 
-  it("note update drops sectionId — a note cannot be moved between sections", async () => {
-    // The invariant is documented above noteUpdateSchema and was otherwise
-    // unguarded: updateNoteImpl destructures `const { id, ...rest }` into a
-    // variable, so TypeScript's excess-property check never fires and adding
-    // sectionId to the schema left both the suite and typecheck green.
+  it("note update keeps sectionId — moving a note between sections is allowed", async () => {
     const { noteUpdateSchema } = await import("@/server/admin/interview");
 
     const parsed = noteUpdateSchema.parse({ id: "n1", sectionId: "s2", title: "T" });
 
-    expect(parsed).toEqual({ id: "n1", title: "T" });
-    expect(parsed).not.toHaveProperty("sectionId");
+    expect(parsed).toEqual({ id: "n1", sectionId: "s2", title: "T" });
+  });
+
+  it("note update rejects an empty sectionId rather than silently keeping the old one", async () => {
+    const { noteUpdateSchema } = await import("@/server/admin/interview");
+
+    expect(() => noteUpdateSchema.parse({ id: "n1", sectionId: "" })).toThrow();
   });
 
   it("section update drops slug, matching what updateSection can actually set", async () => {

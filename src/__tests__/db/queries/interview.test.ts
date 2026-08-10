@@ -223,6 +223,40 @@ describe("updateNote", () => {
     expect((await getInterviewNote("leetcode", "new"))?.title).toBe("T");
   });
 
+  it("moves the note to another section, taking its public URL with it", async () => {
+    const { createNote, updateNote, getInterviewNote } = await import("@/db/queries");
+    const from = await seedSection();
+    const to = await seedSection("system-design", "System Design");
+    const { id } = await createNote({
+      slug: "n",
+      sectionId: from.id,
+      title: "T",
+      status: "published",
+    });
+
+    await updateNote(id, { sectionId: to.id });
+    expect(await getInterviewNote("leetcode", "n")).toBeNull();
+    expect((await getInterviewNote("system-design", "n"))?.title).toBe("T");
+  });
+
+  it("throws NoteConflictError when moving onto a slug the target section already uses", async () => {
+    const { createNote, updateNote, getInterviewNote, NoteConflictError } =
+      await import("@/db/queries");
+    const from = await seedSection();
+    const to = await seedSection("system-design", "System Design");
+    await createNote({ slug: "n", sectionId: to.id, title: "Squatter", status: "published" });
+    const { id } = await createNote({
+      slug: "n",
+      sectionId: from.id,
+      title: "Mover",
+      status: "published",
+    });
+
+    await expect(updateNote(id, { sectionId: to.id })).rejects.toBeInstanceOf(NoteConflictError);
+    // The move is rejected whole — the note stays where it was.
+    expect((await getInterviewNote("leetcode", "n"))?.title).toBe("Mover");
+  });
+
   it("throws NoteConflictError when slug collides with another note in the section", async () => {
     const { createNote, updateNote, NoteConflictError } = await import("@/db/queries");
     const section = await seedSection();

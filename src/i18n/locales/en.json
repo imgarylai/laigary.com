@@ -361,6 +361,7 @@
     "settings": "Note settings",
     "section": "Section",
     "sectionPlaceholder": "Select a section",
+    "sectionMoveHint": "Saving moves this note — its current public URL stops working.",
     "status": "Status",
     "pinned": "Pinned",
     "tags": "Tags",

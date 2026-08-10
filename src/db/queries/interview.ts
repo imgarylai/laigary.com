@@ -658,7 +658,7 @@ export type UpdateNoteOptions = {
 
 export async function updateNote(
   id: string,
-  input: Partial<Omit<NoteMutationInput, "sectionId">>,
+  input: Partial<NoteMutationInput>,
   options: UpdateNoteOptions = {},
 ): Promise<void> {
   const { touchUpdatedAt = true } = options;
@@ -681,6 +681,11 @@ export async function updateNote(
       .update(interviewNotes)
       .set({
         slug: input.slug ?? existing.slug,
+        // Moving a note between sections changes its public URL, so the old one
+        // 404s from here on. UNIQUE(section_id, slug) still guards the landing
+        // spot — a slug already taken in the target section surfaces as a
+        // NoteConflictError below, same as renaming into a taken slug.
+        sectionId: input.sectionId ?? existing.sectionId,
         title: input.title ?? existing.title,
         contentMd: input.contentMd ?? existing.contentMd,
         status: newStatus,
