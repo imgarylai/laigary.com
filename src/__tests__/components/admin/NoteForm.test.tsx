@@ -163,15 +163,17 @@ describe("NoteForm", () => {
     expect(arg.status).toBe("published");
   });
 
-  it("edits an existing note: fixed section label, preview link, and update call", async () => {
+  it("edits an existing note: current section, preview link, and update call", async () => {
     updateNoteFn.mockResolvedValue({ ok: true });
     render(<NoteForm note={existingNote} sections={sections} tags={tags} />);
 
-    // Section is fixed (read-only) and shows the label, not the UUID.
+    // The select is seeded with the note's own section, by label not UUID.
     openSettings();
-    const sectionField = screen.getByLabelText("noteForm.section") as HTMLInputElement;
-    expect(sectionField.value).toBe("Behavior Question");
-    expect(sectionField.value).not.toBe(sections[1].id);
+    const sectionField = screen.getByLabelText("noteForm.section");
+    expect(sectionField.textContent).toContain("Behavior Question");
+    expect(sectionField.textContent).not.toContain(sections[1].id);
+    // Nothing moved, so no move warning yet.
+    expect(screen.queryByText("noteForm.sectionMoveHint")).toBeNull();
 
     // Published note with a slug exposes a preview link to its public page.
     expect(screen.getByText("noteForm.preview")).toBeTruthy();
@@ -179,9 +181,27 @@ describe("NoteForm", () => {
     closeSettings();
     fireEvent.click(screen.getByRole("button", { name: "noteForm.update" }));
     await waitFor(() => expect(updateNoteFn).toHaveBeenCalledTimes(1));
-    expect(updateNoteFn.mock.calls[0][0].data.id).toBe("note-1");
+    const arg = updateNoteFn.mock.calls[0][0].data;
+    expect(arg.id).toBe("note-1");
+    // An untouched section still rides along, unchanged.
+    expect(arg.sectionId).toBe(sections[1].id);
     expect(toast.success).toHaveBeenCalled();
     expect(invalidate).toHaveBeenCalled();
+  });
+
+  it("moves an existing note to another section, warning that the URL changes", async () => {
+    updateNoteFn.mockResolvedValue({ ok: true });
+    render(<NoteForm note={existingNote} sections={sections} tags={tags} />);
+
+    openSettings();
+    selectOption(screen.getByLabelText("noteForm.section"), "Coding");
+    // The warning only appears once the pick differs from the saved section.
+    expect(screen.getByText("noteForm.sectionMoveHint")).toBeTruthy();
+    closeSettings();
+    fireEvent.click(screen.getByRole("button", { name: "noteForm.update" }));
+
+    await waitFor(() => expect(updateNoteFn).toHaveBeenCalledTimes(1));
+    expect(updateNoteFn.mock.calls[0][0].data.sectionId).toBe(sections[0].id);
   });
 
   it("saves via the Cmd/Ctrl+S shortcut", async () => {

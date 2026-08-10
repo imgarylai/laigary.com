@@ -361,6 +361,7 @@
     "settings": "筆記設定",
     "section": "分類",
     "sectionPlaceholder": "選擇分類",
+    "sectionMoveHint": "儲存後這篇筆記會換分類，目前的公開網址會失效。",
     "status": "狀態",
     "pinned": "置頂",
     "tags": "標籤",

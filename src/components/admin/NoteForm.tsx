@@ -4,7 +4,7 @@ import { z } from "zod";
 import { Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { ArrowSquareOutIcon } from "@phosphor-icons/react";
 import { toast } from "sonner";
-import { Field, FieldLabel, FieldError } from "@/components/ui/field";
+import { Field, FieldLabel, FieldError, FieldDescription } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -55,8 +55,9 @@ type NoteInit = {
   tagIds: string[];
 };
 
-// Interview note editor — posts-like, but scoped to a section (the section is
-// fixed after creation, matching the update query which can't move a note).
+// Interview note editor — posts-like, but scoped to a section. The section is
+// editable after creation too: moving a note re-files it under another section,
+// which changes its public URL (the old one stops resolving).
 export function NoteForm({
   note,
   sections,
@@ -101,6 +102,7 @@ export function NoteForm({
         data: {
           id: note.id,
           slug: values.slug,
+          sectionId: values.sectionId,
           title: values.title,
           contentMd: values.contentMd,
           status: values.status,
@@ -140,8 +142,11 @@ export function NoteForm({
     if (!form.formState.isSubmitting) submit();
   });
 
+  // The SAVED section, not the one currently picked in the form: the preview
+  // link has to point at the URL that exists right now. A pending move only
+  // takes effect once saved, and the reloaded note brings the new section with
+  // it.
   const section = sections.find((s) => s.id === note?.sectionId);
-  const sectionLabel = section?.label ?? "";
   // A published note has a live public page; link straight to it so the author
   // can preview without going back to the list. Drafts have no public page.
   const canPreview = isEdit && note?.status === "published" && !!section && !!note?.slug;
@@ -184,38 +189,38 @@ export function NoteForm({
       />
 
       <>
-        <Field>
-          <FieldLabel htmlFor="note-section">{t("noteForm.section")}</FieldLabel>
-          {isEdit ? (
-            // Section is fixed after creation.
-            <Input id="note-section" value={sectionLabel} readOnly disabled />
-          ) : (
-            <Controller
-              control={form.control}
-              name="sectionId"
-              render={({ field }) => (
-                <Select
-                  value={field.value}
-                  onValueChange={(v) => field.onChange(v)}
-                  // Map ids to labels so the trigger shows the section name, not
-                  // the raw UUID value (Base UI renders the raw value otherwise).
-                  items={sections.map((s) => ({ value: s.id, label: s.label }))}
-                >
-                  <SelectTrigger id="note-section">
-                    <SelectValue placeholder={t("noteForm.sectionPlaceholder")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {sections.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>
-                        {s.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+        <Controller
+          control={form.control}
+          name="sectionId"
+          render={({ field }) => (
+            <Field>
+              <FieldLabel htmlFor="note-section">{t("noteForm.section")}</FieldLabel>
+              <Select
+                value={field.value}
+                onValueChange={(v) => field.onChange(v)}
+                // Map ids to labels so the trigger shows the section name, not
+                // the raw UUID value (Base UI renders the raw value otherwise).
+                items={sections.map((s) => ({ value: s.id, label: s.label }))}
+              >
+                <SelectTrigger id="note-section">
+                  <SelectValue placeholder={t("noteForm.sectionPlaceholder")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {sections.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {/* Saving a move changes the note's public URL — the old
+                  /interview/<section>/<slug> stops resolving. */}
+              {isEdit && field.value !== note.sectionId && (
+                <FieldDescription>{t("noteForm.sectionMoveHint")}</FieldDescription>
               )}
-            />
+            </Field>
           )}
-        </Field>
+        />
         <Controller
           control={form.control}
           name="status"
