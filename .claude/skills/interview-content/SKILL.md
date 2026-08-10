@@ -107,6 +107,40 @@ test caught.
 Measuring is still worth doing — it is how a claim gets verified before
 publishing. Report the numbers in chat; keep the note to the reason.
 
+## How the prose should read
+
+These are Gary's notes, not product documentation. He asked for this explicitly
+on 2026-08-10, reviewing a draft written the other way: 「你的寫法太 AI 了，能
+不能寫得像人類一點」.
+
+His own register is long, loose sentences that occasionally ramble, plain
+opinions, and very little typographic emphasis — 「我第一次練習時也沒有自己想到，
+解法真的是滿精妙的」. Match that. The specific tells that made a draft read as
+generated:
+
+- **Bold-bombing.** A paragraph where every third phrase is bolded reads as
+  machine-written. Bold at most the one or two claims in a note that genuinely
+  carry it, and usually none.
+- **Section-closing punch lines.** Do not end a section with a summary slogan on
+  its own line (「這句話在面試講出來就對了」). State the judgement inside a
+  sentence and move on.
+- **Listing what is really prose.** A bullet list is for genuinely parallel,
+  enumerable items. Three tools that have a recommended order among them are a
+  sentence, not three bullets.
+- **Em dashes.** `——` everywhere is a tell. Normal punctuation usually does the
+  job.
+- **Forced symmetry.** Every section the same length, every one ending in a
+  table, every comparison in threes. Let sections be as long as they need to be.
+
+Tables are fine, and staying in tables is often better than a code block for
+tabular content (he asked for that conversion on the same note). The generated
+feel lives in the prose, not in the tables.
+
+Voice comes from sentence rhythm and stated judgement (「新專案大概直接選它就
+好」), never from invented first-person experience. Do not write 「我以前以為⋯⋯」
+or any other recollection on his behalf: the same rule that bars inventing his
+solutions ("Only document what he wrote" above) bars inventing his history.
+
 ## Note structure
 
 The agreed shape for a coding problem note. Headings are **h2** so they land in
