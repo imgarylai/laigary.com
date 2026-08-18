@@ -386,6 +386,16 @@ describe("noteDataImpl", () => {
   });
 });
 
+describe("labsChromeImpl", () => {
+  it("titles a lab page through the site's title template", async () => {
+    await setSettings({ site_name: "Unconstrained", title_template: "%s ← labs" });
+    const { labsChromeImpl } = await import("@/server/public");
+    const chrome = await labsChromeImpl({ title: "use-wg" });
+    expect(chrome.pageTitle).toBe("use-wg ← labs");
+    expect(chrome.siteName).toBe("Unconstrained");
+  });
+});
+
 describe("pageChrome", () => {
   it("applies the title_template and falls back without one", async () => {
     const { pageChrome, DEFAULT_SITE_NAME } = await import("@/server/public");
