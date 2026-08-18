@@ -6,10 +6,10 @@ import { describe, it, expect } from "vitest";
 import { romanizeName, surnameLength } from "@/lib/name-romanization";
 
 function wg(name: string, splitAt?: number) {
-  return romanizeName(name, splitAt)!.wadeGiles.passport;
+  return romanizeName(name, { splitAt })!.wadeGiles.passport;
 }
 function py(name: string, splitAt?: number) {
-  return romanizeName(name, splitAt)!.hanyuPinyin.passport;
+  return romanizeName(name, { splitAt })!.hanyuPinyin.passport;
 }
 
 describe("romanizeName", () => {
@@ -73,6 +73,55 @@ describe("romanizeName", () => {
     expect(wg(" 王 小明 ")).toBe("WANG, HSIAO-MING");
     expect(romanizeName("   ")).toBeNull();
     expect(romanizeName("")).toBeNull();
+  });
+});
+
+describe("polyphone readings", () => {
+  it("offers a character's readings in Bopomofo, since that is what a Taiwanese reader knows", () => {
+    const le = romanizeName("樂大維")!.chars[0];
+    expect(le.char).toBe("樂");
+    expect(le.chosen.zhuyin).toBe("ㄌㄜˋ");
+    expect(le.options.map((o) => o.zhuyin)).toEqual(["ㄌㄜˋ", "ㄩㄝˋ", "ㄧㄠˋ", "ㄌㄠˋ"]);
+    expect(le.options.map((o) => o.wadeGiles)).toEqual(["le", "yueh", "yao", "lao"]);
+  });
+
+  it("merges readings that romanise the same, rather than offering a choice with no effect", () => {
+    // 王 is wáng or wàng and WANG either way — one option, nothing to pick.
+    const wang = romanizeName("王小明")!.chars[0];
+    expect(wang.options).toHaveLength(1);
+
+    // 解 is jiě/jiè (both CHIEH) or xiè (HSIEH): two spellings, and the merged
+    // option still shows both pronunciations so the reader can recognise theirs.
+    const xie = romanizeName("解志強")!.chars[0];
+    expect(xie.options).toHaveLength(2);
+    expect(xie.options[0].zhuyin).toBe("ㄐㄧㄝˇ / ㄐㄧㄝˋ");
+    expect(xie.chosen.zhuyin).toBe("ㄒㄧㄝˋ");
+  });
+
+  it("takes a chosen reading and rebuilds both romanizations from it", () => {
+    const r = romanizeName("樂大維", { readings: ["yue4", "da4", "wei2"] })!;
+    expect(r.wadeGiles.passport).toBe("YUEH, TA-WEI");
+    expect(r.hanyuPinyin.passport).toBe("YUE, DA-WEI");
+    expect(r.pinyinKey).toBe("yue4-da4-wei2");
+  });
+
+  it("ignores a reading list that does not match the name", () => {
+    // A shared link whose name was edited must fall back to the default
+    // reading rather than pairing syllables with the wrong characters.
+    expect(romanizeName("樂大維", { readings: ["yue4"] })!.pinyinKey).toBe("le4-da4-wei2");
+    expect(romanizeName("樂大維", { readings: [] })!.pinyinKey).toBe("le4-da4-wei2");
+  });
+
+  it("round-trips its own key", () => {
+    const first = romanizeName("解志強")!;
+    const again = romanizeName("解志強", { readings: first.pinyinKey.split("-") })!;
+    expect(again.wadeGiles.passport).toBe(first.wadeGiles.passport);
+    expect(again.pinyinKey).toBe(first.pinyinKey);
+  });
+
+  it("marks which characters belong to the surname", () => {
+    const r = romanizeName("歐陽娜娜")!;
+    expect(r.chars.map((c) => c.isSurname)).toEqual([true, true, false, false]);
   });
 });
 

@@ -2,6 +2,7 @@ import { createMiddleware, createStart } from "@tanstack/react-start";
 import {
   cacheKeyUrl,
   edgeCacheControl,
+  hasCacheBypassParam,
   isCacheableMethod,
   isCacheablePath,
   isCacheableResponse,
@@ -31,7 +32,8 @@ const edgeCache = createMiddleware({ type: "request" }).server(async (ctx) => {
     !cache ||
     ctx.handlerType !== "router" ||
     !isCacheableMethod(method) ||
-    !isCacheablePath(ctx.pathname)
+    !isCacheablePath(ctx.pathname) ||
+    hasCacheBypassParam(ctx.request.url)
   ) {
     return ctx.next();
   }

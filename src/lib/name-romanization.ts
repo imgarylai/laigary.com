@@ -1,5 +1,6 @@
 import { pinyin } from "pinyin-pro";
-import { pinyinToWadeGiles, toWadeGiles } from "use-wg";
+import { pinyinToZhuyin } from "pinyin-zhuyin";
+import { pinyinToWadeGiles } from "use-wg";
 
 // Chinese name → the romanizations a Taiwan passport application accepts.
 //
@@ -9,6 +10,13 @@ import { pinyinToWadeGiles, toWadeGiles } from "use-wg";
 // point — someone whose family passport reads HSU needs to see that Hanyu
 // Pinyin would give them XU. Tongyong, GR and Yale would each need their own
 // mapping table for a fraction of the traffic.
+//
+// The pipeline runs one direction throughout: pinyin-pro picks the reading,
+// use-wg turns that reading into Wade-Giles, pinyin-zhuyin turns it into
+// Bopomofo for the reader to check against. Going through pinyin rather than
+// handing the characters to use-wg directly is what makes an alternative
+// reading selectable at all — which readings a character has is a pinyin fact,
+// and only the person whose name it is knows which one is theirs.
 
 // Compound surnames, so 歐陽娜娜 splits OU-YANG / NA-NA rather than OU /
 // YANG-NA-NA. Traditional forms only — the input this sees is Taiwanese.
@@ -45,7 +53,6 @@ const COMPOUND_SURNAMES = new Set([
   "拓跋",
   "夾谷",
   "軒轅",
-  "令狐",
   "段干",
   "百里",
   "呼延",
@@ -76,14 +83,40 @@ const COMPOUND_SURNAMES = new Set([
 // dictionary still reads as the common word.
 //
 // ponytail: a short override list, not a complete polyphone-surname database.
-// It covers what turns up in Taiwanese household registration; anything rarer
-// comes out as the common reading, which is why the split is adjustable — a
-// user matching a relative's passport can see and correct it. Extend the list
-// when a real name proves it wrong, not speculatively.
+// It only sets the DEFAULT — every character whose readings spell differently
+// now offers them in Bopomofo for the reader to correct, so a miss here costs
+// a click rather than a wrong answer.
 const SURNAME_READINGS: Record<string, string> = {
   單: "shan4",
   區: "ou1",
 };
+
+/** One pronunciation of one character, in every form this page shows. */
+export interface Reading {
+  /** Numbered pinyin, e.g. "yue4". The stable identity, also used in the URL. */
+  pinyin: string;
+  /**
+   * Bopomofo, e.g. "ㄩㄝˋ". Readings that romanise identically are merged into
+   * one option and their Bopomofo joined — 王 is WANG whether read ㄨㄤˊ or
+   * ㄨㄤˋ, and offering that as a choice would be noise.
+   */
+  zhuyin: string;
+  /** Lowercase, apostrophes intact — `passportize` strips them at the end. */
+  wadeGiles: string;
+  /** Toneless pinyin, ü intact. */
+  hanyuPinyin: string;
+}
+
+export interface CharReading {
+  char: string;
+  chosen: Reading;
+  /**
+   * Every distinct spelling this character can take, `chosen` included. Length
+   * 1 means there is nothing to choose.
+   */
+  options: Reading[];
+  isSurname: boolean;
+}
 
 export interface Romanized {
   /** Space-free, uppercase, e.g. "HSU". */
@@ -98,6 +131,8 @@ export interface NameRomanization {
   /** The characters read as the surname, after the compound-surname split. */
   surnameChars: string;
   givenNameChars: string;
+  /** Per character, in input order. */
+  chars: CharReading[];
   wadeGiles: Romanized;
   hanyuPinyin: Romanized;
   /**
@@ -106,6 +141,13 @@ export interface NameRomanization {
    * page surfaces this rather than quietly picking one.
    */
   hasUmlaut: boolean;
+  /**
+   * The chosen readings as `yue4-da4-wei2`, for the URL. Self-describing on
+   * purpose: an index into the options list would silently mean something else
+   * the day pinyin-pro reorders its dictionary, and a shared link has to
+   * survive that.
+   */
+  pinyinKey: string;
 }
 
 /**
@@ -142,62 +184,115 @@ function romanized(surname: string[], given: string[]): Romanized {
   return { surname: s, givenName: g, passport: g ? `${s}, ${g}` : s };
 }
 
-function hanyuSyllables(chars: string, isSurname: boolean): string[] {
+function stripTone(syllable: string): string {
+  return syllable.replace(/\d+$/, "");
+}
+
+function toReading(numberedPinyin: string): Reading {
+  return {
+    pinyin: numberedPinyin,
+    zhuyin: pinyinToZhuyin(numberedPinyin),
+    wadeGiles: pinyinToWadeGiles(numberedPinyin, { toneFormat: "none" }),
+    hanyuPinyin: stripTone(numberedPinyin),
+  };
+}
+
+/**
+ * Every spelling a character can take, in dictionary order, with readings that
+ * romanise identically merged — 華 is HUA as huá, huà and huā, so it becomes
+ * one option carrying all three Bopomofo forms rather than three identical
+ * rows the reader has to choose between for no effect.
+ */
+function readingOptions(char: string): Reading[] {
+  const all = pinyin(char, { multiple: true, type: "array", toneType: "num" }) as string[];
+  const bySpelling = new Map<string, Reading>();
+  for (const p of all) {
+    const reading = toReading(p);
+    const key = `${reading.wadeGiles}|${reading.hanyuPinyin}`;
+    const seen = bySpelling.get(key);
+    if (seen) {
+      if (!seen.zhuyin.includes(reading.zhuyin)) seen.zhuyin += ` / ${reading.zhuyin}`;
+    } else {
+      bySpelling.set(key, reading);
+    }
+  }
+  return [...bySpelling.values()];
+}
+
+/** The reading pinyin-pro picks for each character in context. */
+function defaultPinyin(chars: string, isSurname: boolean): string[] {
   if (!chars) return [];
   const override = isSurname ? SURNAME_READINGS[chars] : undefined;
   if (override) return [override];
   return pinyin(chars, {
-    // Surname mode only changes the reading of the leading characters, so it is
-    // wrong to ask for it on the given name.
+    // Surname mode only changes the reading of the leading characters, so it
+    // is wrong to ask for it on the given name.
     mode: isSurname ? "surname" : "normal",
     toneType: "num",
     type: "array",
-  });
+  }) as string[];
 }
 
-function wadeGilesSyllables(chars: string, isSurname: boolean): string[] {
-  if (!chars) return [];
-  // The surname goes through pinyin first so it inherits pinyin-pro's surname
-  // readings — use-wg has no surname mode of its own and would romanise 解 as
-  // chieh (jiě) rather than hsieh (xiè). The given name goes direct, where
-  // use-wg's context-aware polyphone handling is the better source.
-  if (isSurname) {
-    return hanyuSyllables(chars, true).map((p) => pinyinToWadeGiles(p, { toneFormat: "none" }));
-  }
-  return toWadeGiles(chars, { urlSafe: true }).text.split("-");
+export interface RomanizeOptions {
+  /**
+   * How many leading characters count as the surname. Defaults to the
+   * compound-surname lookup, which cannot know every rare one — and a reader
+   * matching a relative's passport needs to be able to correct it.
+   */
+  splitAt?: number;
+  /**
+   * Numbered pinyin per character, overriding the reading picked from context.
+   * Ignored unless it has exactly one entry per character, so a stale shared
+   * link falls back to the default reading instead of mangling the name.
+   */
+  readings?: string[];
 }
 
-/**
- * Romanise a Chinese name into Wade-Giles and Hanyu Pinyin passport forms.
- *
- * `splitAt` overrides how many leading characters count as the surname; it
- * defaults to the compound-surname lookup. Callers expose it because the
- * lookup cannot know about a rare compound surname, and because a user
- * matching a relative's existing passport needs to be able to correct it.
- */
-export function romanizeName(name: string, splitAt?: number): NameRomanization | null {
+/** Romanise a Chinese name into Wade-Giles and Hanyu Pinyin passport forms. */
+export function romanizeName(name: string, options: RomanizeOptions = {}): NameRomanization | null {
   const trimmed = name.replace(/\s+/g, "");
   if (!trimmed) return null;
 
-  const at = Math.min(Math.max(splitAt ?? surnameLength(trimmed), 1), trimmed.length);
-  const surnameChars = trimmed.slice(0, at);
-  const givenNameChars = trimmed.slice(at);
+  const characters = [...trimmed];
+  const at = Math.min(Math.max(options.splitAt ?? surnameLength(trimmed), 1), characters.length);
+  const surnameChars = characters.slice(0, at).join("");
+  const givenNameChars = characters.slice(at).join("");
 
-  const hanyuSurname = hanyuSyllables(surnameChars, true);
-  const hanyuGiven = hanyuSyllables(givenNameChars, false);
+  const contextual = [
+    ...defaultPinyin(surnameChars, true),
+    ...defaultPinyin(givenNameChars, false),
+  ];
+  const override =
+    options.readings && options.readings.length === characters.length ? options.readings : null;
+
+  const chars: CharReading[] = characters.map((char, i) => {
+    const opts = readingOptions(char);
+    const wanted = override?.[i] ?? contextual[i];
+    // The wanted reading may have been merged into another option (a tone the
+    // spelling does not distinguish), so fall back to matching without it.
+    const chosen =
+      opts.find((o) => o.pinyin === wanted) ??
+      opts.find((o) => wanted && stripTone(o.pinyin) === stripTone(wanted)) ??
+      (wanted ? toReading(wanted) : opts[0]);
+    return { char, chosen, options: opts, isSurname: i < at };
+  });
+
+  const surnameReadings = chars.slice(0, at);
+  const givenReadings = chars.slice(at);
 
   return {
     surnameChars,
     givenNameChars,
-    hasUmlaut: [...hanyuSurname, ...hanyuGiven].some((s) => UMLAUT.test(s)),
+    chars,
+    hasUmlaut: chars.some((c) => UMLAUT.test(c.chosen.hanyuPinyin)),
     wadeGiles: romanized(
-      wadeGilesSyllables(surnameChars, true),
-      wadeGilesSyllables(givenNameChars, false),
+      surnameReadings.map((c) => c.chosen.wadeGiles),
+      givenReadings.map((c) => c.chosen.wadeGiles),
     ),
-    hanyuPinyin: romanized(hanyuSurname.map(stripTone), hanyuGiven.map(stripTone)),
+    hanyuPinyin: romanized(
+      surnameReadings.map((c) => c.chosen.hanyuPinyin),
+      givenReadings.map((c) => c.chosen.hanyuPinyin),
+    ),
+    pinyinKey: chars.map((c) => c.chosen.pinyin).join("-"),
   };
-}
-
-function stripTone(syllable: string): string {
-  return syllable.replace(/\d+$/, "");
 }

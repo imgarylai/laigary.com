@@ -1,11 +1,14 @@
-import { useMemo, useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { useMemo } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { z } from "zod";
 import { labsChromeFn } from "@/server/public";
 import { SITE_ORIGIN, serializeJsonLd, toolPageLd } from "@/lib/json-ld";
 import { canonicalLink, ogMeta } from "@/lib/og-meta";
 import { AsciiRule, PromptLine, TmButton, TmInput, TmPage } from "@/features/terminal";
 import { FS_BLOG } from "@/lib/fsmap";
 import { romanizeName, surnameLength } from "@/lib/name-romanization";
+
+const DEFAULT_NAME = "王小明";
 
 const SLUG = "wade-giles-name";
 const URL = `${SITE_ORIGIN}/tools/${SLUG}`;
@@ -17,7 +20,23 @@ const DESCRIPTION =
 // question someone actually searched for. Separate URL, separate title, its own
 // prose — a page titled "use-wg" was never going to be found by anyone typing
 // 護照英文名字.
+// The whole state lives in the URL so a refresh keeps it and a link carries
+// it — the point of the page is standing at a counter with a form in front of
+// you, or sending a relative the exact spelling you meant.
+//
+// `py` and `s` are only written once the reader overrides something, so the
+// ordinary URL stays `?name=王小明` and the canonical (which is the bare path)
+// has nothing competing with it.
+const searchSchema = z.object({
+  name: z.string().max(20).optional(),
+  /** Chosen readings, `yue4-da4-wei2`. Ignored unless it matches the name. */
+  py: z.string().max(120).optional(),
+  /** Surname length, when the compound-surname lookup got it wrong. */
+  s: z.coerce.number().int().min(1).max(4).optional(),
+});
+
 export const Route = createFileRoute("/_site/tools/wade-giles-name")({
+  validateSearch: searchSchema,
   loader: () => labsChromeFn({ data: { title: TITLE } }),
   head: ({ loaderData }) => ({
     meta: loaderData
@@ -61,19 +80,27 @@ function Page() {
 }
 
 function Converter() {
-  const [name, setName] = useState("王小明");
-  // null means "follow the compound-surname lookup"; a number is the user
-  // overriding it, which is the escape hatch for a surname the lookup misses.
-  const [splitOverride, setSplitOverride] = useState<number | null>(null);
+  const { name = DEFAULT_NAME, py, s } = Route.useSearch();
+  const navigate = useNavigate({ from: Route.fullPath });
 
-  const result = useMemo(
-    () => romanizeName(name, splitOverride ?? undefined),
-    [name, splitOverride],
-  );
+  // `replace` throughout: typing a name is one edit, not a trail of history
+  // entries to back out of one keystroke at a time.
+  const update = (next: { name?: string; py?: string; s?: number }) =>
+    void navigate({ search: (prev) => ({ ...prev, ...next }), replace: true });
+
+  const readings = useMemo(() => (py ? py.split("-") : undefined), [py]);
+  const result = useMemo(() => romanizeName(name, { splitAt: s, readings }), [name, s, readings]);
 
   const trimmed = name.replace(/\s+/g, "");
+  const characters = [...trimmed];
   const autoSplit = trimmed ? surnameLength(trimmed) : 1;
-  const split = splitOverride ?? autoSplit;
+  const split = s ?? autoSplit;
+
+  // Only characters whose readings actually spell differently are worth asking
+  // about — 王 is WANG either way. The index rides along because a name can
+  // repeat a character (娜娜), so the character itself is not an identity.
+  const choices =
+    result?.chars.map((c, i) => ({ ...c, index: i })).filter((c) => c.options.length > 1) ?? [];
 
   return (
     <>
@@ -81,26 +108,26 @@ function Converter() {
       <TmInput
         sigil="姓名"
         value={name}
-        onChange={(e) => {
-          setName(e.target.value);
-          // A new name invalidates a split chosen for the old one.
-          setSplitOverride(null);
-        }}
+        onChange={(e) =>
+          // A new name invalidates both overrides: a split and a reading list
+          // chosen for the old one would mangle this one.
+          update({ name: e.target.value, py: undefined, s: undefined })
+        }
         spellCheck={false}
         autoComplete="off"
-        placeholder="王小明"
+        placeholder={DEFAULT_NAME}
         aria-label="中文姓名"
       />
 
-      {trimmed.length > 1 && (
+      {characters.length > 1 && (
         <div className="mt-3 flex flex-wrap items-baseline gap-2">
           <span className="text-xs text-tm-dim select-none">{"// 姓氏字數"}</span>
           {[1, 2].map((n) => (
             <TmButton
               key={n}
               active={split === n}
-              disabled={n >= trimmed.length}
-              onClick={() => setSplitOverride(n)}
+              disabled={n >= characters.length}
+              onClick={() => update({ s: n === autoSplit ? undefined : n, py: undefined })}
             >
               {n} 字{n === autoSplit ? "（自動）" : ""}
             </TmButton>
@@ -110,6 +137,39 @@ function Converter() {
 
       {result && (
         <>
+          {choices.length > 0 && (
+            <div className="mt-5 space-y-3">
+              <div className="text-xs text-tm-dim select-none">
+                {"// 破音字 —— 選你名字實際的讀音"}
+              </div>
+              {choices.map((c) => (
+                <div key={c.index} className="flex flex-wrap items-center gap-2">
+                  <span className="w-6 shrink-0 text-base text-tm-fg">{c.char}</span>
+                  {c.options.map((option) => (
+                    <TmButton
+                      key={option.pinyin}
+                      active={option.pinyin === c.chosen.pinyin}
+                      onClick={() =>
+                        update({
+                          py: result.chars
+                            .map((other, i) =>
+                              i === c.index ? option.pinyin : other.chosen.pinyin,
+                            )
+                            .join("-"),
+                        })
+                      }
+                    >
+                      {option.zhuyin}
+                      <span className="text-tm-dim">
+                        {option.wadeGiles.replace(/'/g, "").toUpperCase()}
+                      </span>
+                    </TmButton>
+                  ))}
+                </div>
+              ))}
+            </div>
+          )}
+
           <div className="mt-6 grid grid-cols-[3.5rem_1fr_1fr] gap-x-4 gap-y-2 text-sm">
             <span />
             <span className="text-tm-accent">威妥瑪拼音</span>
@@ -139,6 +199,10 @@ function Converter() {
               LYU），威妥瑪則是單純的 U（呂 → LU）。這一項送件前請跟外交部確認。
             </p>
           )}
+
+          <p className="mt-4 text-xs text-tm-dim">
+            這一頁的網址帶著你輸入的姓名與讀音，重新整理不會不見，也可以直接分享。
+          </p>
         </>
       )}
     </>
