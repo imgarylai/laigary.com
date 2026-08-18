@@ -93,6 +93,17 @@ describe("/labs/taiwan-validator", () => {
     expect(screen.getByText("男 · 臺北市")).toBeTruthy();
   });
 
+  it("reads the gender out of the id rather than reporting one for everyone", async () => {
+    await renderRoute("/labs/taiwan-validator");
+    await screen.findByText("男 · 臺北市");
+
+    fireEvent.change(screen.getByLabelText("輸入要驗證的號碼"), {
+      target: { value: "A200000003" },
+    });
+
+    expect(await screen.findByText("女 · 臺北市")).toBeTruthy();
+  });
+
   it("switches to the matching validator in the snippet when the value changes", async () => {
     await renderRoute("/labs/taiwan-validator");
     await screen.findByText("✓ 身分證字號");
@@ -118,11 +129,16 @@ describe("/labs/taiwan-validator", () => {
       ["/ABC+123", "✓ 手機條碼"],
       ["000012345678", "✓ 健保卡號"],
       ["AA12345678901234", "✓ 自然人憑證"],
+      ["123456789", "✓ 護照號碼"],
+      // 100 is a valid postal code and a valid donation code at once — the
+      // reason the page lists matches instead of picking one.
+      ["100", "✓ 郵遞區號"],
     ];
     for (const [value, label] of cases) {
       fireEvent.change(input, { target: { value } });
       expect(await screen.findByText(label)).toBeTruthy();
     }
+    expect(screen.getByText("✓ 愛心碼")).toBeTruthy();
   });
 
   it("reports the detected plate type rather than a bare boolean", async () => {
@@ -267,6 +283,24 @@ describe("/labs/use-wg", () => {
     // 行 also reads hang and heng; the segment row shows those in place of the
     // tone, which is the whole reason the option exists.
     expect(await screen.findByText("hsing / hang / heng")).toBeTruthy();
+  });
+
+  it("shows a placeholder instead of an empty output box", async () => {
+    await renderRoute("/labs/use-wg");
+    await screen.findByText("t'ai²-wan¹");
+
+    fireEvent.change(screen.getByLabelText("要轉換的中文字"), { target: { value: "" } });
+
+    expect(await screen.findByText("—")).toBeTruthy();
+  });
+
+  it("marks a whitespace segment rather than rendering a blank row", async () => {
+    await renderRoute("/labs/use-wg");
+    await screen.findByText("t'ai²-wan¹");
+
+    fireEvent.change(screen.getByLabelText("要轉換的中文字"), { target: { value: "台 灣" } });
+
+    expect(await screen.findByText("␣")).toBeTruthy();
   });
 
   it("breaks the result down per character", async () => {
