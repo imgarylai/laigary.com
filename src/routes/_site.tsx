@@ -5,6 +5,7 @@ import { searchPostsFn } from "@/server/posts";
 import { TerminalShell, TmNotFound, type NavItem, type PaletteRow } from "@/features/terminal";
 import { useI18n } from "@/i18n/I18nProvider";
 import { FS_BLOG, FS_INTERVIEW, fsCmd } from "@/lib/fsmap";
+import { LABS } from "@/lib/labs";
 
 // Blog main-site shell (pathless layout). Terminal aesthetic; the interview
 // sub-site lives under its own /interview layout with a separate header.
@@ -26,6 +27,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "posts", to: "/posts", cmd: fsCmd(FS_BLOG.archive) },
   { label: "works", to: "/works", cmd: fsCmd(FS_BLOG.works) },
   { label: "tags", to: "/tags", cmd: fsCmd(FS_BLOG.tags) },
+  { label: "labs", to: "/labs", cmd: fsCmd(FS_BLOG.labs) },
   { label: "interview", to: "/interview", cmd: fsCmd(FS_INTERVIEW.home) },
   {
     label: "about",
@@ -69,6 +71,18 @@ function SiteLayout() {
         haystack: "tags topics",
         onSelect: () => navigate({ to: "/tags" }),
       },
+      {
+        kind: "page",
+        label: fsCmd(FS_BLOG.labs),
+        haystack: "labs demos playground npm packages 套件",
+        onSelect: () => navigate({ to: "/labs" }),
+      },
+      ...LABS.map((lab): PaletteRow => ({
+        kind: "page",
+        label: fsCmd(FS_BLOG.lab, { slug: lab.slug }),
+        haystack: `${lab.slug} ${lab.tagline} demo`,
+        onSelect: () => navigate({ to: lab.to }),
+      })),
       {
         kind: "page",
         label: fsCmd(FS_INTERVIEW.home),

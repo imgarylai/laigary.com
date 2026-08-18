@@ -390,7 +390,9 @@
       "tagsUnit": "個標籤",
       "updated": "更新於 {date}",
       "cta": "  — 直接開始讀",
-      "descWorks": "我做過的東西"
+      "descWorks": "我做過的東西",
+      "descLabs": "我的 npm 套件的即時 demo",
+      "labsUnit": "個套件"
     },
     "archive": {
       "filteredBy": "篩選",
@@ -432,6 +434,14 @@
       "noneYet": "// 還沒有作品。",
       "back": "  — 回到所有作品",
       "stackLabel": "--技術"
+    },
+    "labs": {
+      "lead": "我維護的 npm 套件的互動 demo。這些頁面跑的都是真的已發布的套件，直接在你的瀏覽器裡執行。",
+      "sourceLabel": "原始碼",
+      "docsLabel": "API 文件",
+      "npmLabel": "npm",
+      "copy": "複製",
+      "copied": "已複製"
     }
   },
   "workForm": {

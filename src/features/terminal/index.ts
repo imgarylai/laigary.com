@@ -16,6 +16,7 @@ export { AsciiRule, PromptLine, ReadingProgress } from "./ui";
 export { Prose } from "./Prose";
 export { Toc } from "./Toc";
 export { TmButton } from "./Button";
+export { TmInput, TmSelect } from "./Input";
 export { Kbd } from "./Kbd";
 export { TmThemeMenu } from "./ThemeMenu";
 export {

@@ -62,6 +62,21 @@ export const FS_BLOG = {
     crumb: (ctx = {}) => `tags/${ctx.slug ?? ""}`,
     prompt: (ctx = {}) => `$ grep -rl "#${ctx.slug ?? ""}" ./posts/`,
   },
+  labs: {
+    kind: "dir",
+    path: "~/labs",
+    crumb: () => "labs",
+    prompt: () => "$ ls -l ./labs/",
+  },
+  // A lab entry is an executable, not a document: the prompt line for each demo
+  // page is the package's own command (`$ ./use-wg`), which is also what the
+  // page's playground actually calls.
+  lab: {
+    kind: "file",
+    path: "~/labs/<slug>",
+    crumb: (ctx = {}) => `labs/${ctx.slug ?? ""}`,
+    prompt: (ctx = {}) => `$ ./${ctx.slug ?? ""}`,
+  },
   page: {
     kind: "file",
     path: "~/<slug>.md",
@@ -121,6 +136,11 @@ export function breadcrumbForPath(pathname: string): string {
     return seg.length === 1
       ? FS_BLOG.works.crumb()
       : FS_BLOG.work.crumb({ slug: truncateSlug(seg[1]) });
+  }
+  if (seg[0] === "labs") {
+    return seg.length === 1
+      ? FS_BLOG.labs.crumb()
+      : FS_BLOG.lab.crumb({ slug: truncateSlug(seg[1]) });
   }
   if (seg[0] === "tags") {
     return seg.length === 1

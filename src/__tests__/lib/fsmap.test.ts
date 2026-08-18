@@ -9,9 +9,19 @@ describe("breadcrumbForPath", () => {
     expect(breadcrumbForPath("/works")).toBe("works");
     expect(breadcrumbForPath("/laigary-com")).toBe("laigary-com.md");
     expect(breadcrumbForPath("/works/laigary-com")).toBe("works/laigary-com.md");
+    expect(breadcrumbForPath("/labs")).toBe("labs");
+    expect(breadcrumbForPath("/labs/use-wg")).toBe("labs/use-wg");
     expect(breadcrumbForPath("/tags")).toBe("tags");
     expect(breadcrumbForPath("/tags/life")).toBe("tags/life");
     expect(breadcrumbForPath("/about")).toBe("about.md");
+  });
+
+  // A lab page is an executable, not a document — the crumb has no `.md` and
+  // the prompt runs the package rather than cat-ing it. Guards the branch that,
+  // if dropped, would silently fall through to `use-wg.md`.
+  it("renders a lab page as a command rather than a file", () => {
+    expect(FS_BLOG.lab.prompt({ slug: "use-wg" })).toBe("$ ./use-wg");
+    expect(FS_BLOG.labs.prompt()).toBe("$ ls -l ./labs/");
   });
 
   it("renders the tag topic page prompt as a grep over posts", () => {
