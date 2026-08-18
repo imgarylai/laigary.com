@@ -82,6 +82,29 @@ export function isCacheableResponse(response: Response): boolean {
 }
 
 /**
+ * Query parameters that make a request skip the cache entirely, in both
+ * directions.
+ *
+ * The allowlist below works because the values a page can be asked for are
+ * few: two locales, a handful of pages, the tags in use. `name` on
+ * /tools/wade-giles-name is the opposite — it is whatever a visitor typed, so
+ * keying on it would put back exactly the unbounded-keys problem the allowlist
+ * exists to prevent, and dropping it would answer a shared link with someone
+ * else's name.
+ *
+ * Bypassing keeps the bare page — the one crawlers sweep and the canonical
+ * points at — cached as before, and pays for a render only on the requests
+ * that carry a name. Those are people, arriving one at a time.
+ */
+const CACHE_BYPASS_PARAMS = ["name"] as const;
+
+/** Whether this request's query string opts it out of the shared cache. */
+export function hasCacheBypassParam(requestUrl: string): boolean {
+  const { searchParams } = new URL(requestUrl);
+  return CACHE_BYPASS_PARAMS.some((name) => searchParams.has(name));
+}
+
+/**
  * Query parameters that change what a public page renders.
  *
  * `page` and `tag` are the only two any public route reads (`/posts` and

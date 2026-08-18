@@ -9,6 +9,7 @@ import {
   EDGE_CACHE_MAX_AGE,
   edgeCacheControl,
   cacheKeyUrl,
+  hasCacheBypassParam,
   isCacheableMethod,
   isCacheablePath,
   isCacheableResponse,
@@ -71,6 +72,26 @@ describe("isCacheableResponse", () => {
     expect(isCacheableResponse(new Response("nope", { status: 404 }))).toBe(false);
     expect(isCacheableResponse(new Response("boom", { status: 500 }))).toBe(false);
     expect(isCacheableResponse(new Response(null, { status: 302 }))).toBe(false);
+  });
+});
+
+describe("hasCacheBypassParam", () => {
+  it("bypasses the cache for a typed-in name", () => {
+    // The value is whatever a visitor typed, so it can neither be a cache key
+    // (unbounded) nor be dropped (a shared link would answer with the default).
+    expect(hasCacheBypassParam("https://laigary.com/tools/wade-giles-name?name=%E7%8E%8B")).toBe(
+      true,
+    );
+  });
+
+  it("leaves the bare page — the one crawlers sweep — cacheable", () => {
+    expect(hasCacheBypassParam("https://laigary.com/tools/wade-giles-name")).toBe(false);
+    expect(hasCacheBypassParam("https://laigary.com/posts?page=2")).toBe(false);
+    expect(hasCacheBypassParam("https://laigary.com/?utm_source=x")).toBe(false);
+  });
+
+  it("bypasses on an empty value too, since the param is still what varies", () => {
+    expect(hasCacheBypassParam("https://laigary.com/tools/wade-giles-name?name=")).toBe(true);
   });
 });
 

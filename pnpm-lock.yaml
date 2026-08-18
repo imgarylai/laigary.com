@@ -178,6 +178,9 @@ importers:
       pinyin-pro:
         specifier: ^3.29.2
         version: 3.29.2
+      pinyin-zhuyin:
+        specifier: ^1.0.4
+        version: 1.0.4
       react:
         specifier: 19.2.8
         version: 19.2.8
@@ -5489,6 +5492,9 @@ packages:
 
   pinyin-pro@3.29.2:
     resolution: {integrity: sha512-L2AemHDHVFIgr207HFdjiU+4i8Hu15kcHX0Ab5iZCWH0NDmX404tyCQ06kglotGpqOLXNst2NK/A2K8qdC301Q==}
+
+  pinyin-zhuyin@1.0.4:
+    resolution: {integrity: sha512-CGEcDMjUHLR+gq0G37D/frexxdQYqTB8dkNYC1JRvoW2JO0DsezMDfjvA8FlJ/2+0H4iJKTsYZJjQHucd+/sGA==}
 
   pkce-challenge@5.0.1:
     resolution: {integrity: sha512-wQ0b/W4Fr01qtpHlqSqspcj3EhBvimsdh0KlHhH8HRZnMsEa0ea2fTULOXOS9ccQr3om+GcGRk4e+isrZWV8qQ==}
@@ -11389,6 +11395,8 @@ snapshots:
   picomatch@4.0.5: {}
 
   pinyin-pro@3.29.2: {}
+
+  pinyin-zhuyin@1.0.4: {}
 
   pkce-challenge@5.0.1: {}
 

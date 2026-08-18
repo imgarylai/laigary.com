@@ -76,15 +76,71 @@ describe("/tools/wade-giles-name", () => {
   });
 
   it("lets the reader override a split the lookup got wrong", async () => {
-    await renderRoute(PATH);
+    const { router } = await renderRoute(PATH);
     await screen.findByText("WANG, HSIAO-MING");
 
     fireEvent.click(screen.getByRole("button", { name: "2 字" }));
 
     expect(await screen.findByText("WANG-HSIAO, MING")).toBeTruthy();
+    expect(router.state.location.search).toMatchObject({ s: 2 });
   });
 
-  it("drops an override when the name changes, rather than carrying it over", async () => {
+  it("reads the name out of the URL, so a refresh or a shared link keeps it", async () => {
+    await renderRoute(`${PATH}?name=${encodeURIComponent("許志安")}`);
+
+    expect(await screen.findByText("HSU, CHIH-AN")).toBeTruthy();
+  });
+
+  it("writes the name into the URL as it is typed, replacing rather than stacking", async () => {
+    const { router } = await renderRoute(PATH);
+    await screen.findByText("WANG, HSIAO-MING");
+    const before = router.history.length;
+
+    fireEvent.change(screen.getByLabelText("中文姓名"), { target: { value: "蔡英文" } });
+
+    await waitFor(() => expect(router.state.location.search).toMatchObject({ name: "蔡英文" }));
+    // Typing a name is one edit; each keystroke must not become a back step.
+    expect(router.history.length).toBe(before);
+  });
+
+  it("restores a chosen reading from the URL", async () => {
+    await renderRoute(`${PATH}?name=${encodeURIComponent("樂大維")}&py=yue4-da4-wei2`);
+
+    expect(await screen.findByText("YUEH, TA-WEI")).toBeTruthy();
+  });
+
+  it("offers the readings of a polyphone in Bopomofo and rebuilds on a click", async () => {
+    const { router } = await renderRoute(`${PATH}?name=${encodeURIComponent("樂大維")}`);
+    expect(await screen.findByText("LE, TA-WEI")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: /ㄩㄝˋ/ }));
+
+    expect(await screen.findByText("YUEH, TA-WEI")).toBeTruthy();
+    expect(router.state.location.search).toMatchObject({ py: "yue4-da4-wei2" });
+  });
+
+  it("asks about a character only when its readings spell differently", async () => {
+    await renderRoute(PATH);
+    await screen.findByText("WANG, HSIAO-MING");
+
+    // 王 is wáng or wàng and WANG either way — nothing to choose, so the whole
+    // section stays off the page.
+    expect(screen.queryByText(/破音字/)).toBeNull();
+  });
+
+  it("drops a chosen reading when the name changes", async () => {
+    const { router } = await renderRoute(
+      `${PATH}?name=${encodeURIComponent("樂大維")}&py=yue4-da4-wei2`,
+    );
+    await screen.findByText("YUEH, TA-WEI");
+
+    fireEvent.change(screen.getByLabelText("中文姓名"), { target: { value: "陳美玲" } });
+
+    expect(await screen.findByText("CHEN, MEI-LING")).toBeTruthy();
+    expect(router.state.location.search).not.toMatchObject({ py: "yue4-da4-wei2" });
+  });
+
+  it("drops a split override when the name changes, rather than carrying it over", async () => {
     await renderRoute(PATH);
     await screen.findByText("WANG, HSIAO-MING");
     fireEvent.click(screen.getByRole("button", { name: "2 字" }));
