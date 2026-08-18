@@ -235,12 +235,21 @@ importers:
       tailwindcss:
         specifier: 4.3.3
         version: 4.3.3
+      taiwan-validator:
+        specifier: 1.2.0
+        version: 1.2.0
       temml:
         specifier: 0.13.4
         version: 0.13.4
       unified:
         specifier: 11.0.5
         version: 11.0.5
+      use-country-list-zh:
+        specifier: 1.1.11
+        version: 1.1.11(react@19.2.8)
+      use-tw-zipcode:
+        specifier: 2.1.3
+        version: 2.1.3(react@19.2.8)
       use-wg:
         specifier: 2.0.5
         version: 2.0.5
@@ -6037,6 +6046,10 @@ packages:
   tailwindcss@4.3.3:
     resolution: {integrity: sha512-gOhV3P7ufE62QDGg1zVaTgCR+EtPv92k2nIhVcVKcLmxT1sUBsQGhnZj175j+MqRt4zLF7ic+sCYjfhxMxj7YQ==}
 
+  taiwan-validator@1.2.0:
+    resolution: {integrity: sha512-lOKBntIxRpY0DhvTn0sp2eGpBW9+3mOBDLVoxqKOXcp5RLG7tBPGKhQsoO3mAYsJAAAc83BTfZIEI4bGS3Hv/Q==}
+    engines: {node: '>=22.0.0', npm: '>=10.0.0'}
+
   tapable@2.3.3:
     resolution: {integrity: sha512-uxc/zpqFg6x7C8vOE7lh6Lbda8eEL9zmVm/PLeTPBRhh1xCgdWaQ+J1CUieGpIfm2HdtsUpRv+HshiasBMcc6A==}
     engines: {node: '>=6'}
@@ -6241,6 +6254,12 @@ packages:
       '@types/react':
         optional: true
 
+  use-country-list-zh@1.1.11:
+    resolution: {integrity: sha512-Qv2Og+OZLxuGfYn0z0NbKWtK6BYdegWw1bgz5nFWZWMREtOF5grq6n0pEE940edyrk6oppFoDQ7GBaxBrFK++g==}
+    engines: {node: '>=24.18.0', pnpm: '>=10'}
+    peerDependencies:
+      react: '>= 16.8.0'
+
   use-sidecar@1.1.3:
     resolution: {integrity: sha512-Fedw0aZvkhynoPYlA5WXrMCAMm+nSWdZt6lzJQ7Ok8S6Q+VsHmHpRWndVRJ8Be0ZbkfPc5LRYH+5XrzXcEeLRQ==}
     engines: {node: '>=10'}
@@ -6255,6 +6274,12 @@ packages:
     resolution: {integrity: sha512-Pp6GSwGP/NrPIrxVFAIkOQeyw8lFenOHijQWkUTrDvrF4ALqylP2C/KCkeS9dpUM3KvYRQhna5vt7IL95+ZQ9w==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+
+  use-tw-zipcode@2.1.3:
+    resolution: {integrity: sha512-PIa03+xBCyTMtjCdR0oR9uawd49IAWtiafkInvwdqH48Ztx0Ty4cDQ/LtXzYb7whgWd18Qdcck4VZeWe5u/enA==}
+    engines: {node: '>=20', pnpm: '>=10'}
+    peerDependencies:
+      react: '>=16.8.0'
 
   use-wg@2.0.5:
     resolution: {integrity: sha512-CKAPFqwK4rsFRo1ds0no9zIcbefUt5+z9W6qrIzAVyygSfDudP2iZE9+gE9Lfla15n4GP3jxxBQZKeNimx2Kzw==}
@@ -12091,6 +12116,8 @@ snapshots:
 
   tailwindcss@4.3.3: {}
 
+  taiwan-validator@1.2.0: {}
+
   tapable@2.3.3: {}
 
   temml@0.13.4: {}
@@ -12287,6 +12314,10 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.2.18
 
+  use-country-list-zh@1.1.11(react@19.2.8):
+    dependencies:
+      react: 19.2.8
+
   use-sidecar@1.1.3(@types/react@19.2.18)(react@19.2.8):
     dependencies:
       detect-node-es: 1.1.0
@@ -12296,6 +12327,10 @@ snapshots:
       '@types/react': 19.2.18
 
   use-sync-external-store@1.6.0(react@19.2.8):
+    dependencies:
+      react: 19.2.8
+
+  use-tw-zipcode@2.1.3(react@19.2.8):
     dependencies:
       react: 19.2.8
 

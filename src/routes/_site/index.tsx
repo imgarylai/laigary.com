@@ -13,6 +13,7 @@ import {
 } from "@/features/terminal";
 import { useI18n } from "@/i18n/I18nProvider";
 import { FS_BLOG } from "@/lib/fsmap";
+import { LABS } from "@/lib/labs";
 import { fmtDate } from "@/lib/date";
 
 export const Route = createFileRoute("/_site/")({
@@ -68,6 +69,12 @@ function Home() {
       desc: t("blog.home.descTags"),
       meta: `${tagCount} ${t("blog.home.tagsUnit")}`,
       to: "/tags",
+    },
+    {
+      label: "./labs/",
+      desc: t("blog.home.descLabs"),
+      meta: `${LABS.length} ${t("blog.home.labsUnit")}`,
+      to: "/labs",
     },
     { label: "./interview/", desc: t("blog.home.descInterview"), meta: "→", to: "/interview" },
     {

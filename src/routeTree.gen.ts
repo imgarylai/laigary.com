@@ -24,6 +24,11 @@ import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
 import { Route as AdminTagsRouteImport } from './routes/admin/tags'
 import { Route as ApiOgRouteImport } from './routes/api/og'
 import { Route as InterviewIndexRouteImport } from './routes/interview/index'
+import { Route as SiteLabsIndexRouteImport } from './routes/_site/labs/index'
+import { Route as SiteLabsTaiwanValidatorRouteImport } from './routes/_site/labs/taiwan-validator'
+import { Route as SiteLabsUseCountryListZhRouteImport } from './routes/_site/labs/use-country-list-zh'
+import { Route as SiteLabsUseTwZipcodeRouteImport } from './routes/_site/labs/use-tw-zipcode'
+import { Route as SiteLabsUseWgRouteImport } from './routes/_site/labs/use-wg'
 import { Route as SitePostsIndexRouteImport } from './routes/_site/posts/index'
 import { Route as SitePostsSlugRouteImport } from './routes/_site/posts/$slug'
 import { Route as SiteTagsIndexRouteImport } from './routes/_site/tags/index'
@@ -124,6 +129,32 @@ const InterviewIndexRoute = InterviewIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => InterviewRoute,
+} as any)
+const SiteLabsIndexRoute = SiteLabsIndexRouteImport.update({
+  id: '/labs/',
+  path: '/labs/',
+  getParentRoute: () => SiteRoute,
+} as any)
+const SiteLabsTaiwanValidatorRoute = SiteLabsTaiwanValidatorRouteImport.update({
+  id: '/labs/taiwan-validator',
+  path: '/labs/taiwan-validator',
+  getParentRoute: () => SiteRoute,
+} as any)
+const SiteLabsUseCountryListZhRoute =
+  SiteLabsUseCountryListZhRouteImport.update({
+    id: '/labs/use-country-list-zh',
+    path: '/labs/use-country-list-zh',
+    getParentRoute: () => SiteRoute,
+  } as any)
+const SiteLabsUseTwZipcodeRoute = SiteLabsUseTwZipcodeRouteImport.update({
+  id: '/labs/use-tw-zipcode',
+  path: '/labs/use-tw-zipcode',
+  getParentRoute: () => SiteRoute,
+} as any)
+const SiteLabsUseWgRoute = SiteLabsUseWgRouteImport.update({
+  id: '/labs/use-wg',
+  path: '/labs/use-wg',
+  getParentRoute: () => SiteRoute,
 } as any)
 const SitePostsIndexRoute = SitePostsIndexRouteImport.update({
   id: '/posts/',
@@ -273,6 +304,10 @@ export interface FileRoutesByFullPath {
   '/api/og': typeof ApiOgRouteWithChildren
   '/admin/': typeof AdminIndexRoute
   '/interview/': typeof InterviewIndexRoute
+  '/labs/taiwan-validator': typeof SiteLabsTaiwanValidatorRoute
+  '/labs/use-country-list-zh': typeof SiteLabsUseCountryListZhRoute
+  '/labs/use-tw-zipcode': typeof SiteLabsUseTwZipcodeRoute
+  '/labs/use-wg': typeof SiteLabsUseWgRoute
   '/posts/$slug': typeof SitePostsSlugRoute
   '/tags/$slug': typeof SiteTagsSlugRoute
   '/works/$slug': typeof SiteWorksSlugRoute
@@ -281,6 +316,7 @@ export interface FileRoutesByFullPath {
   '/admin/posts/new': typeof AdminPostsNewRoute
   '/admin/works/new': typeof AdminWorksNewRoute
   '/interview/$section/$slug': typeof InterviewSectionSlugRoute
+  '/labs/': typeof SiteLabsIndexRoute
   '/posts/': typeof SitePostsIndexRoute
   '/tags/': typeof SiteTagsIndexRoute
   '/works/': typeof SiteWorksIndexRoute
@@ -313,6 +349,10 @@ export interface FileRoutesByTo {
   '/': typeof SiteIndexRoute
   '/admin': typeof AdminIndexRoute
   '/interview': typeof InterviewIndexRoute
+  '/labs/taiwan-validator': typeof SiteLabsTaiwanValidatorRoute
+  '/labs/use-country-list-zh': typeof SiteLabsUseCountryListZhRoute
+  '/labs/use-tw-zipcode': typeof SiteLabsUseTwZipcodeRoute
+  '/labs/use-wg': typeof SiteLabsUseWgRoute
   '/posts/$slug': typeof SitePostsSlugRoute
   '/tags/$slug': typeof SiteTagsSlugRoute
   '/works/$slug': typeof SiteWorksSlugRoute
@@ -321,6 +361,7 @@ export interface FileRoutesByTo {
   '/admin/posts/new': typeof AdminPostsNewRoute
   '/admin/works/new': typeof AdminWorksNewRoute
   '/interview/$section/$slug': typeof InterviewSectionSlugRoute
+  '/labs': typeof SiteLabsIndexRoute
   '/posts': typeof SitePostsIndexRoute
   '/tags': typeof SiteTagsIndexRoute
   '/works': typeof SiteWorksIndexRoute
@@ -357,6 +398,10 @@ export interface FileRoutesById {
   '/_site/': typeof SiteIndexRoute
   '/admin/': typeof AdminIndexRoute
   '/interview/': typeof InterviewIndexRoute
+  '/_site/labs/taiwan-validator': typeof SiteLabsTaiwanValidatorRoute
+  '/_site/labs/use-country-list-zh': typeof SiteLabsUseCountryListZhRoute
+  '/_site/labs/use-tw-zipcode': typeof SiteLabsUseTwZipcodeRoute
+  '/_site/labs/use-wg': typeof SiteLabsUseWgRoute
   '/_site/posts/$slug': typeof SitePostsSlugRoute
   '/_site/tags/$slug': typeof SiteTagsSlugRoute
   '/_site/works/$slug': typeof SiteWorksSlugRoute
@@ -365,6 +410,7 @@ export interface FileRoutesById {
   '/admin/posts/new': typeof AdminPostsNewRoute
   '/admin/works/new': typeof AdminWorksNewRoute
   '/interview/$section/$slug': typeof InterviewSectionSlugRoute
+  '/_site/labs/': typeof SiteLabsIndexRoute
   '/_site/posts/': typeof SitePostsIndexRoute
   '/_site/tags/': typeof SiteTagsIndexRoute
   '/_site/works/': typeof SiteWorksIndexRoute
@@ -401,6 +447,10 @@ export interface FileRouteTypes {
     | '/api/og'
     | '/admin/'
     | '/interview/'
+    | '/labs/taiwan-validator'
+    | '/labs/use-country-list-zh'
+    | '/labs/use-tw-zipcode'
+    | '/labs/use-wg'
     | '/posts/$slug'
     | '/tags/$slug'
     | '/works/$slug'
@@ -409,6 +459,7 @@ export interface FileRouteTypes {
     | '/admin/posts/new'
     | '/admin/works/new'
     | '/interview/$section/$slug'
+    | '/labs/'
     | '/posts/'
     | '/tags/'
     | '/works/'
@@ -441,6 +492,10 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/interview'
+    | '/labs/taiwan-validator'
+    | '/labs/use-country-list-zh'
+    | '/labs/use-tw-zipcode'
+    | '/labs/use-wg'
     | '/posts/$slug'
     | '/tags/$slug'
     | '/works/$slug'
@@ -449,6 +504,7 @@ export interface FileRouteTypes {
     | '/admin/posts/new'
     | '/admin/works/new'
     | '/interview/$section/$slug'
+    | '/labs'
     | '/posts'
     | '/tags'
     | '/works'
@@ -484,6 +540,10 @@ export interface FileRouteTypes {
     | '/_site/'
     | '/admin/'
     | '/interview/'
+    | '/_site/labs/taiwan-validator'
+    | '/_site/labs/use-country-list-zh'
+    | '/_site/labs/use-tw-zipcode'
+    | '/_site/labs/use-wg'
     | '/_site/posts/$slug'
     | '/_site/tags/$slug'
     | '/_site/works/$slug'
@@ -492,6 +552,7 @@ export interface FileRouteTypes {
     | '/admin/posts/new'
     | '/admin/works/new'
     | '/interview/$section/$slug'
+    | '/_site/labs/'
     | '/_site/posts/'
     | '/_site/tags/'
     | '/_site/works/'
@@ -630,6 +691,41 @@ declare module '@tanstack/react-router' {
       fullPath: '/interview/'
       preLoaderRoute: typeof InterviewIndexRouteImport
       parentRoute: typeof InterviewRoute
+    }
+    '/_site/labs/': {
+      id: '/_site/labs/'
+      path: '/labs'
+      fullPath: '/labs/'
+      preLoaderRoute: typeof SiteLabsIndexRouteImport
+      parentRoute: typeof SiteRoute
+    }
+    '/_site/labs/taiwan-validator': {
+      id: '/_site/labs/taiwan-validator'
+      path: '/labs/taiwan-validator'
+      fullPath: '/labs/taiwan-validator'
+      preLoaderRoute: typeof SiteLabsTaiwanValidatorRouteImport
+      parentRoute: typeof SiteRoute
+    }
+    '/_site/labs/use-country-list-zh': {
+      id: '/_site/labs/use-country-list-zh'
+      path: '/labs/use-country-list-zh'
+      fullPath: '/labs/use-country-list-zh'
+      preLoaderRoute: typeof SiteLabsUseCountryListZhRouteImport
+      parentRoute: typeof SiteRoute
+    }
+    '/_site/labs/use-tw-zipcode': {
+      id: '/_site/labs/use-tw-zipcode'
+      path: '/labs/use-tw-zipcode'
+      fullPath: '/labs/use-tw-zipcode'
+      preLoaderRoute: typeof SiteLabsUseTwZipcodeRouteImport
+      parentRoute: typeof SiteRoute
+    }
+    '/_site/labs/use-wg': {
+      id: '/_site/labs/use-wg'
+      path: '/labs/use-wg'
+      fullPath: '/labs/use-wg'
+      preLoaderRoute: typeof SiteLabsUseWgRouteImport
+      parentRoute: typeof SiteRoute
     }
     '/_site/posts/': {
       id: '/_site/posts/'
@@ -863,9 +959,14 @@ const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(
 interface SiteRouteChildren {
   SiteSlugRoute: typeof SiteSlugRoute
   SiteIndexRoute: typeof SiteIndexRoute
+  SiteLabsTaiwanValidatorRoute: typeof SiteLabsTaiwanValidatorRoute
+  SiteLabsUseCountryListZhRoute: typeof SiteLabsUseCountryListZhRoute
+  SiteLabsUseTwZipcodeRoute: typeof SiteLabsUseTwZipcodeRoute
+  SiteLabsUseWgRoute: typeof SiteLabsUseWgRoute
   SitePostsSlugRoute: typeof SitePostsSlugRoute
   SiteTagsSlugRoute: typeof SiteTagsSlugRoute
   SiteWorksSlugRoute: typeof SiteWorksSlugRoute
+  SiteLabsIndexRoute: typeof SiteLabsIndexRoute
   SitePostsIndexRoute: typeof SitePostsIndexRoute
   SiteTagsIndexRoute: typeof SiteTagsIndexRoute
   SiteWorksIndexRoute: typeof SiteWorksIndexRoute
@@ -874,9 +975,14 @@ interface SiteRouteChildren {
 const SiteRouteChildren: SiteRouteChildren = {
   SiteSlugRoute: SiteSlugRoute,
   SiteIndexRoute: SiteIndexRoute,
+  SiteLabsTaiwanValidatorRoute: SiteLabsTaiwanValidatorRoute,
+  SiteLabsUseCountryListZhRoute: SiteLabsUseCountryListZhRoute,
+  SiteLabsUseTwZipcodeRoute: SiteLabsUseTwZipcodeRoute,
+  SiteLabsUseWgRoute: SiteLabsUseWgRoute,
   SitePostsSlugRoute: SitePostsSlugRoute,
   SiteTagsSlugRoute: SiteTagsSlugRoute,
   SiteWorksSlugRoute: SiteWorksSlugRoute,
+  SiteLabsIndexRoute: SiteLabsIndexRoute,
   SitePostsIndexRoute: SitePostsIndexRoute,
   SiteTagsIndexRoute: SiteTagsIndexRoute,
   SiteWorksIndexRoute: SiteWorksIndexRoute,

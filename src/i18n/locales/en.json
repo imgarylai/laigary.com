@@ -390,7 +390,9 @@
       "tagsUnit": "tags",
       "updated": "updated {date}",
       "cta": "  — jump straight to the writing",
-      "descWorks": "things I've built"
+      "descWorks": "things I've built",
+      "descLabs": "live demos of my npm packages",
+      "labsUnit": "packages"
     },
     "archive": {
       "filteredBy": "filtered by",
@@ -432,6 +434,14 @@
       "noneYet": "// no works yet.",
       "back": "  — back to all works",
       "stackLabel": "--stack"
+    },
+    "labs": {
+      "lead": "Interactive demos for the npm packages I maintain. Everything on these pages runs the real published package in your browser.",
+      "sourceLabel": "source",
+      "docsLabel": "api docs",
+      "npmLabel": "npm",
+      "copy": "copy",
+      "copied": "copied"
     }
   },
   "workForm": {

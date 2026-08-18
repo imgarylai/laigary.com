@@ -23,6 +23,8 @@ export {
 
 export { worksDataImpl, worksDataFn, workDataImpl, workDataFn } from "./works";
 
+export { labsChromeImpl, labsChromeFn } from "./labs";
+
 export {
   mapInterviewSections,
   interviewShellImpl,

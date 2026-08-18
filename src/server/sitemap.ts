@@ -1,4 +1,5 @@
 import { getSitemapData, getSiteSettings } from "@/db/queries";
+import { LABS } from "@/lib/labs";
 
 // Server-only: builds the public sitemap XML from DB content. Imported by the
 // /sitemap.xml server route (never bundled to the client), so a static query
@@ -17,8 +18,13 @@ export async function buildSitemapXml(): Promise<string> {
   const base = (settings.site_url || DEFAULT_SITE_URL).replace(/\/$/, "");
 
   const entries: Entry[] = [{ loc: `${base}/`, priority: 1 }];
-  for (const path of ["/posts", "/works", "/tags", "/interview"]) {
+  for (const path of ["/posts", "/works", "/tags", "/labs", "/interview"]) {
     entries.push({ loc: `${base}${path}`, priority: 0.6 });
+  }
+  // Demo pages are code, not content rows, so they come from the same static
+  // registry the /labs listing renders from rather than from getSitemapData().
+  for (const lab of LABS) {
+    entries.push({ loc: `${base}/labs/${lab.slug}`, priority: 0.6 });
   }
   for (const p of data.posts) {
     entries.push({ loc: `${base}/posts/${p.slug}`, lastmod: p.updatedAt, priority: 0.8 });
