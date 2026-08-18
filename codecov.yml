@@ -16,6 +16,12 @@ coverage:
         # wobble v8 produces between runs so only a real regression fails.
         target: auto
         threshold: 0.5%
+        # Reported, not enforced. `auto` compares new code against the project
+        # average, so a PR that adds enough well-tested code below that average
+        # fails on arithmetic rather than on a regression — the same code in a
+        # smaller diff passes. `patch` below is the gate, as the comment there
+        # already says.
+        informational: true
     patch:
       default:
         # Lines the PR actually touches carry their own bar, independent of the
