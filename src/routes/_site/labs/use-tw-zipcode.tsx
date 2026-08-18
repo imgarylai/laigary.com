@@ -60,7 +60,11 @@ function Playground() {
     <>
       <div className="grid gap-4 sm:grid-cols-[1fr_1fr_auto]">
         <LabField label="縣市">
-          <TmSelect value={city} onChange={(e) => void handleCityChange(e.target.value)}>
+          <TmSelect
+            aria-label="縣市"
+            value={city}
+            onChange={(e) => void handleCityChange(e.target.value)}
+          >
             {cities.map((c) => (
               <option key={c}>{c}</option>
             ))}
@@ -68,7 +72,11 @@ function Playground() {
         </LabField>
 
         <LabField label="鄉鎮市區">
-          <TmSelect value={district} onChange={(e) => void handleDistrictChange(e.target.value)}>
+          <TmSelect
+            aria-label="鄉鎮市區"
+            value={district}
+            onChange={(e) => void handleDistrictChange(e.target.value)}
+          >
             {districtOptions.map((d) => (
               <option key={d}>{d}</option>
             ))}
