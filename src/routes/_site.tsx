@@ -85,6 +85,12 @@ function SiteLayout() {
       })),
       {
         kind: "page",
+        label: fsCmd(FS_BLOG.tool, { slug: "wade-giles-name" }),
+        haystack: "wade giles 威妥瑪 護照 拼音 姓名 英文名字 passport romanization",
+        onSelect: () => navigate({ to: "/tools/wade-giles-name" }),
+      },
+      {
+        kind: "page",
         label: fsCmd(FS_INTERVIEW.home),
         haystack: "interview prep",
         onSelect: () => navigate({ to: "/interview" }),

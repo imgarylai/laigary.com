@@ -9,6 +9,7 @@ describe("breadcrumbForPath", () => {
     expect(breadcrumbForPath("/works")).toBe("works");
     expect(breadcrumbForPath("/laigary-com")).toBe("laigary-com.md");
     expect(breadcrumbForPath("/works/laigary-com")).toBe("works/laigary-com.md");
+    expect(breadcrumbForPath("/tools/wade-giles-name")).toBe("tools/wade-giles-name");
     expect(breadcrumbForPath("/labs")).toBe("labs");
     expect(breadcrumbForPath("/labs/use-wg")).toBe("labs/use-wg");
     expect(breadcrumbForPath("/tags")).toBe("tags");

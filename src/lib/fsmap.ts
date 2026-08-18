@@ -77,6 +77,15 @@ export const FS_BLOG = {
     crumb: (ctx = {}) => `labs/${ctx.slug ?? ""}`,
     prompt: (ctx = {}) => `$ ./${ctx.slug ?? ""}`,
   },
+  // Standalone utilities. Unlike a lab, a tool is not a demo of anything —
+  // it is the thing itself, and its page is written to be found by someone
+  // searching for the problem rather than for the package.
+  tool: {
+    kind: "file",
+    path: "~/tools/<slug>",
+    crumb: (ctx = {}) => `tools/${ctx.slug ?? ""}`,
+    prompt: (ctx = {}) => `$ ./${ctx.slug ?? ""}`,
+  },
   page: {
     kind: "file",
     path: "~/<slug>.md",
@@ -136,6 +145,9 @@ export function breadcrumbForPath(pathname: string): string {
     return seg.length === 1
       ? FS_BLOG.works.crumb()
       : FS_BLOG.work.crumb({ slug: truncateSlug(seg[1]) });
+  }
+  if (seg[0] === "tools" && seg.length > 1) {
+    return FS_BLOG.tool.crumb({ slug: truncateSlug(seg[1]) });
   }
   if (seg[0] === "labs") {
     return seg.length === 1

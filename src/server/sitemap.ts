@@ -26,6 +26,8 @@ export async function buildSitemapXml(): Promise<string> {
   for (const lab of LABS) {
     entries.push({ loc: `${base}/labs/${lab.slug}`, priority: 0.6 });
   }
+  // Standalone tools, same reasoning as the labs above: code, not content rows.
+  entries.push({ loc: `${base}/tools/wade-giles-name`, priority: 0.7 });
   for (const p of data.posts) {
     entries.push({ loc: `${base}/posts/${p.slug}`, lastmod: p.updatedAt, priority: 0.8 });
   }

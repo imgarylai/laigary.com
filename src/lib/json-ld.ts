@@ -20,6 +20,32 @@ export function webSiteLd(siteName: string, sameAs: string[] = []): Record<strin
   };
 }
 
+/**
+ * A standalone tool page under /tools. Unlike `webPageLd` the URL is passed
+ * whole rather than built from a slug, and there is no per-page OG route to
+ * point `image` at — these pages are code, not content rows.
+ */
+export function toolPageLd(input: {
+  url: string;
+  title: string;
+  description: string;
+}): Record<string, unknown> {
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    name: input.title,
+    description: input.description,
+    url: input.url,
+    applicationCategory: "UtilitiesApplication",
+    // The tool runs entirely in the page; there is nothing to pay for and
+    // nothing to sign up to, and schema.org has no way to say that except a
+    // zero-priced offer.
+    offers: { "@type": "Offer", price: "0", priceCurrency: "TWD" },
+    inLanguage: "zh-TW",
+    author: AUTHOR,
+  };
+}
+
 /** DB-backed content pages (/about, /now, …). */
 export function webPageLd(input: { slug: string; title: string }): Record<string, unknown> {
   const url = `${SITE_ORIGIN}/${input.slug}`;
