@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { toWadeGiles } from "use-wg";
 import { labsChromeFn } from "@/server/public";
 import { SITE_ORIGIN } from "@/lib/json-ld";
@@ -52,6 +52,13 @@ function Page() {
         <p>
           打開 <code>urlSafe</code> 會得到純 ASCII、沒有聲調的輸出，可以直接當網址。 這個站的文章
           slug 就是這樣產生的。
+        </p>
+        <p>
+          要把中文姓名轉成護照用的拼法，用{" "}
+          <Link to="/tools/wade-giles-name" className="text-tm-accent no-underline hover:underline">
+            中文姓名轉威妥瑪拼音
+          </Link>
+          ，那頁多處理了姓名斷詞與破音姓氏，並且跟漢語拼音並排比對。
         </p>
       </LabIntro>
       <Playground />

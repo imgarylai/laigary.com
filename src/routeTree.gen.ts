@@ -33,6 +33,7 @@ import { Route as SitePostsIndexRouteImport } from './routes/_site/posts/index'
 import { Route as SitePostsSlugRouteImport } from './routes/_site/posts/$slug'
 import { Route as SiteTagsIndexRouteImport } from './routes/_site/tags/index'
 import { Route as SiteTagsSlugRouteImport } from './routes/_site/tags/$slug'
+import { Route as SiteToolsWadeGilesNameRouteImport } from './routes/_site/tools/wade-giles-name'
 import { Route as SiteWorksIndexRouteImport } from './routes/_site/works/index'
 import { Route as SiteWorksSlugRouteImport } from './routes/_site/works/$slug'
 import { Route as AdminInterviewIndexRouteImport } from './routes/admin/interview/index'
@@ -176,6 +177,11 @@ const SiteTagsSlugRoute = SiteTagsSlugRouteImport.update({
   path: '/tags/$slug',
   getParentRoute: () => SiteRoute,
 } as any)
+const SiteToolsWadeGilesNameRoute = SiteToolsWadeGilesNameRouteImport.update({
+  id: '/tools/wade-giles-name',
+  path: '/tools/wade-giles-name',
+  getParentRoute: () => SiteRoute,
+} as any)
 const SiteWorksIndexRoute = SiteWorksIndexRouteImport.update({
   id: '/works/',
   path: '/works/',
@@ -310,6 +316,7 @@ export interface FileRoutesByFullPath {
   '/labs/use-wg': typeof SiteLabsUseWgRoute
   '/posts/$slug': typeof SitePostsSlugRoute
   '/tags/$slug': typeof SiteTagsSlugRoute
+  '/tools/wade-giles-name': typeof SiteToolsWadeGilesNameRoute
   '/works/$slug': typeof SiteWorksSlugRoute
   '/admin/interview/sections': typeof AdminInterviewSectionsRoute
   '/admin/pages/new': typeof AdminPagesNewRoute
@@ -355,6 +362,7 @@ export interface FileRoutesByTo {
   '/labs/use-wg': typeof SiteLabsUseWgRoute
   '/posts/$slug': typeof SitePostsSlugRoute
   '/tags/$slug': typeof SiteTagsSlugRoute
+  '/tools/wade-giles-name': typeof SiteToolsWadeGilesNameRoute
   '/works/$slug': typeof SiteWorksSlugRoute
   '/admin/interview/sections': typeof AdminInterviewSectionsRoute
   '/admin/pages/new': typeof AdminPagesNewRoute
@@ -404,6 +412,7 @@ export interface FileRoutesById {
   '/_site/labs/use-wg': typeof SiteLabsUseWgRoute
   '/_site/posts/$slug': typeof SitePostsSlugRoute
   '/_site/tags/$slug': typeof SiteTagsSlugRoute
+  '/_site/tools/wade-giles-name': typeof SiteToolsWadeGilesNameRoute
   '/_site/works/$slug': typeof SiteWorksSlugRoute
   '/admin/interview/sections': typeof AdminInterviewSectionsRoute
   '/admin/pages/new': typeof AdminPagesNewRoute
@@ -453,6 +462,7 @@ export interface FileRouteTypes {
     | '/labs/use-wg'
     | '/posts/$slug'
     | '/tags/$slug'
+    | '/tools/wade-giles-name'
     | '/works/$slug'
     | '/admin/interview/sections'
     | '/admin/pages/new'
@@ -498,6 +508,7 @@ export interface FileRouteTypes {
     | '/labs/use-wg'
     | '/posts/$slug'
     | '/tags/$slug'
+    | '/tools/wade-giles-name'
     | '/works/$slug'
     | '/admin/interview/sections'
     | '/admin/pages/new'
@@ -546,6 +557,7 @@ export interface FileRouteTypes {
     | '/_site/labs/use-wg'
     | '/_site/posts/$slug'
     | '/_site/tags/$slug'
+    | '/_site/tools/wade-giles-name'
     | '/_site/works/$slug'
     | '/admin/interview/sections'
     | '/admin/pages/new'
@@ -753,6 +765,13 @@ declare module '@tanstack/react-router' {
       path: '/tags/$slug'
       fullPath: '/tags/$slug'
       preLoaderRoute: typeof SiteTagsSlugRouteImport
+      parentRoute: typeof SiteRoute
+    }
+    '/_site/tools/wade-giles-name': {
+      id: '/_site/tools/wade-giles-name'
+      path: '/tools/wade-giles-name'
+      fullPath: '/tools/wade-giles-name'
+      preLoaderRoute: typeof SiteToolsWadeGilesNameRouteImport
       parentRoute: typeof SiteRoute
     }
     '/_site/works/': {
@@ -965,6 +984,7 @@ interface SiteRouteChildren {
   SiteLabsUseWgRoute: typeof SiteLabsUseWgRoute
   SitePostsSlugRoute: typeof SitePostsSlugRoute
   SiteTagsSlugRoute: typeof SiteTagsSlugRoute
+  SiteToolsWadeGilesNameRoute: typeof SiteToolsWadeGilesNameRoute
   SiteWorksSlugRoute: typeof SiteWorksSlugRoute
   SiteLabsIndexRoute: typeof SiteLabsIndexRoute
   SitePostsIndexRoute: typeof SitePostsIndexRoute
@@ -981,6 +1001,7 @@ const SiteRouteChildren: SiteRouteChildren = {
   SiteLabsUseWgRoute: SiteLabsUseWgRoute,
   SitePostsSlugRoute: SitePostsSlugRoute,
   SiteTagsSlugRoute: SiteTagsSlugRoute,
+  SiteToolsWadeGilesNameRoute: SiteToolsWadeGilesNameRoute,
   SiteWorksSlugRoute: SiteWorksSlugRoute,
   SiteLabsIndexRoute: SiteLabsIndexRoute,
   SitePostsIndexRoute: SitePostsIndexRoute,
