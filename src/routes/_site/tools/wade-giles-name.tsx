@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
 import { labsChromeFn } from "@/server/public";
@@ -83,10 +83,37 @@ function Converter() {
   const { name = DEFAULT_NAME, py, s } = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
 
+  // The field holds its own draft rather than reading straight from the URL.
+  //
+  // A Bopomofo IME builds a character over several keystrokes, and every one
+  // of them fires `change` with the half-finished text. Writing that to the
+  // URL re-rendered the input with a `value` React had decided on, which ends
+  // the composition — so ㄨ committed as ㄨ instead of waiting to become 王.
+  // Nothing about this is specific to our navigation: any controlled input
+  // whose value round-trips through a store mid-composition behaves this way.
+  //
+  // So: the draft is the field's truth while typing, the URL is written when
+  // the composition finishes, and the URL wins again whenever it changes from
+  // the outside (a shared link, a back button).
+  const [draft, setDraft] = useState(name);
+  const composing = useRef(false);
+
+  useEffect(() => {
+    // Never while a character is half-built: an outside change landing then
+    // would end the composition, which is the bug this whole dance avoids.
+    if (!composing.current) setDraft(name);
+  }, [name]);
+
   // `replace` throughout: typing a name is one edit, not a trail of history
   // entries to back out of one keystroke at a time.
   const update = (next: { name?: string; py?: string; s?: number }) =>
     void navigate({ search: (prev) => ({ ...prev, ...next }), replace: true });
+
+  // A new name invalidates both overrides: a split and a reading list chosen
+  // for the old one would mangle this one.
+  const commitName = (value: string) => {
+    if (value !== name) update({ name: value, py: undefined, s: undefined });
+  };
 
   const readings = useMemo(() => (py ? py.split("-") : undefined), [py]);
   const result = useMemo(() => romanizeName(name, { splitAt: s, readings }), [name, s, readings]);
@@ -107,12 +134,23 @@ function Converter() {
       <div className="mb-1.5 text-xs text-tm-dim select-none">{"// 中文姓名"}</div>
       <TmInput
         sigil="姓名"
-        value={name}
-        onChange={(e) =>
-          // A new name invalidates both overrides: a split and a reading list
-          // chosen for the old one would mangle this one.
-          update({ name: e.target.value, py: undefined, s: undefined })
-        }
+        value={draft}
+        onChange={(e) => {
+          setDraft(e.target.value);
+          if (!composing.current) commitName(e.target.value);
+        }}
+        onCompositionStart={() => {
+          composing.current = true;
+        }}
+        onCompositionEnd={(e) => {
+          composing.current = false;
+          // Chrome fires `change` before this and Safari after it, so the
+          // committed text is read off the element rather than trusted to have
+          // arrived through either one.
+          const value = e.currentTarget.value;
+          setDraft(value);
+          commitName(value);
+        }}
         spellCheck={false}
         autoComplete="off"
         placeholder={DEFAULT_NAME}
