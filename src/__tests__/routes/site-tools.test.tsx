@@ -103,6 +103,43 @@ describe("/tools/wade-giles-name", () => {
     expect(router.history.length).toBe(before);
   });
 
+  it("lets a Bopomofo IME finish a character before touching the URL", async () => {
+    const { router } = await renderRoute(PATH);
+    await screen.findByText("WANG, HSIAO-MING");
+    const input = screen.getByLabelText("中文姓名") as HTMLInputElement;
+
+    // What a 注音 IME actually does: several `change` events carrying
+    // half-built text, then one `compositionend` with the character. Writing
+    // any of the intermediate ones back into `value` ends the composition, so
+    // ㄨ committed as ㄨ instead of becoming 王.
+    fireEvent.compositionStart(input);
+    fireEvent.change(input, { target: { value: "ㄨ" } });
+    fireEvent.change(input, { target: { value: "ㄨㄤ" } });
+    fireEvent.change(input, { target: { value: "ㄨㄤˊ" } });
+
+    // The field shows what the IME put there, untouched...
+    expect(input.value).toBe("ㄨㄤˊ");
+    // ...and nothing half-built reaches the URL.
+    expect(router.state.location.search).not.toHaveProperty("name");
+
+    fireEvent.compositionEnd(input, { target: { value: "王" } });
+
+    await waitFor(() => expect(router.state.location.search).toMatchObject({ name: "王" }));
+    expect(input.value).toBe("王");
+    // A lone character is all surname, so WANG lands in three places at once.
+    expect(await screen.findAllByText("WANG")).toHaveLength(3);
+  });
+
+  it("still commits immediately when nothing is composing", async () => {
+    const { router } = await renderRoute(PATH);
+    await screen.findByText("WANG, HSIAO-MING");
+
+    // Pasting, or typing with a Latin keyboard, fires no composition events.
+    fireEvent.change(screen.getByLabelText("中文姓名"), { target: { value: "蔡英文" } });
+
+    await waitFor(() => expect(router.state.location.search).toMatchObject({ name: "蔡英文" }));
+  });
+
   it("restores a chosen reading from the URL", async () => {
     await renderRoute(`${PATH}?name=${encodeURIComponent("樂大維")}&py=yue4-da4-wei2`);
 
