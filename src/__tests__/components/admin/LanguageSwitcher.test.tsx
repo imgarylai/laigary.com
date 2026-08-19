@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // Five lines, one of which decides whether the switcher switches. With no test,
 // `onClick={() => setLocale(key)}` could have been hardcoded to one locale and

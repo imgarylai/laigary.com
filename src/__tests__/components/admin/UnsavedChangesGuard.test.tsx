@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // The guard between an editor full of unsaved work and a stray click on the
 // sidebar (#177). There is no autosave, so if this does not fire the work is

@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // The editor shell itself: what it hands back to the form, what it accepts from
 // the form, and when it is allowed to rebuild the document. Every branch here

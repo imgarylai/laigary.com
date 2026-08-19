@@ -1,5 +1,6 @@
-// Per-file test setup: the console guard, plus the jsdom shims ProseMirror
-// needs.
+// Per-file test setup: the console guard, plus the layout shims ProseMirror
+// needs. Applied under both DOM environments — happy-dom implements no layout
+// either, so the shims below are needed there for the same reason.
 import { installConsoleGuard } from "./helpers/console-guard";
 
 // Turns every console.error / console.warn into a test failure. Vitest 4 hides
@@ -7,9 +8,9 @@ import { installConsoleGuard } from "./helpers/console-guard";
 // green at the same time — see the file for what that was hiding.
 installConsoleGuard();
 
-// jsdom shims needed by ProseMirror, applied to every test file.
+// Layout shims needed by ProseMirror, applied to every test file.
 //
-// jsdom implements no layout, so `Range.getClientRects` / `getBoundingClientRect`
+// A headless DOM implements no layout, so `Range.getClientRects` / `getBoundingClientRect`
 // are missing entirely. ProseMirror calls them from `coordsAtPos` whenever a
 // transaction asks to scroll the selection into view — and Tiptap's `focus()`
 // command defers exactly that into a `requestAnimationFrame`. The throw

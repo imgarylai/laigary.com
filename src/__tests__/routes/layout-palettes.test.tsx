@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // The ⌘K palettes the two layout routes build. AGENTS.md listed these as
 // "uncovered by choice" because the fake-timer flow deadlocked against the

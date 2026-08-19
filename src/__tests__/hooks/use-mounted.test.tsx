@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // The gate that keeps clock- and timezone-dependent formatting out of the SSR
 // pass. It has to report false on the FIRST render and true afterwards — a hook

@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // The works list's own cells and row wiring, mirroring PostsListClient's tests.
 // The extra column here is the year, which is what the portfolio sorts on.

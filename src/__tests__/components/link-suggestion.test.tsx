@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // `@` article mention: picking a result must replace the typed `@query` with a
 // plain markdown link (title as text) plus an unlinked trailing space — no

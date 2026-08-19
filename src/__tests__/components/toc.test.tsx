@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // The post/note table of contents: one entry list rendered twice — a fixed
 // gutter nav on wide screens and a toggleable drawer below xl.

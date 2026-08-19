@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // The works editor. Same writing surface as the post editor — title and body
 // only — with the portfolio metadata (year range, role, links, stack) in the

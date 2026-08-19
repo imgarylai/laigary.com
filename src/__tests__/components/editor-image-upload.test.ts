@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // Pasting or dropping an image into the editor (#176). The interesting part is
 // not the upload — that is lib/upload-client, already covered — but that the

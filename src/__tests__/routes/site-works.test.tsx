@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // The /works index and /works/$slug detail routes. Both are pure presentation
 // over their loader data — ordering is done in SQL, so what these assert is the

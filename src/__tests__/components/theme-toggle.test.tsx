@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // The admin header's theme control. It is one line of JSX, which is exactly why
 // it was at 0% — but the line IS the behaviour: it fixes the two style props the

@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // The editor's image dialog: pick a file, optionally crop it, upload, and drop
 // the result into the document. Reached from both the toolbar and `/image`.

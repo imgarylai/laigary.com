@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // The whole row as a click target (#180). Opening a post used to mean hitting
 // the title text exactly — a thin target in an otherwise empty column.

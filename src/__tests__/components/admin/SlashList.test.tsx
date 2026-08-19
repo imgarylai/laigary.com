@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // The `/` menu's list component: what it renders and how it answers the keys
 // the suggestion plugin hands it (#173).

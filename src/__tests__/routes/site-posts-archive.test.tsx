@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // The /posts archive route component. Its loader hands over every published
 // post and the *client* does the work: split the pinned block out, apply the

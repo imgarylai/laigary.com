@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // Pasting markdown source into the editor used to land as literal text — a
 // table stayed a row of pipes. The detection half is deliberately conservative:

@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // /tools/wade-giles-name. The conversion itself is covered in
 // lib/name-romanization.test.ts; what this asserts is the page's own

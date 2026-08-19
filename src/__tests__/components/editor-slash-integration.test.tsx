@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // The `/` menu driven through a mounted editor, which is the only way to reach
 // the suggestion plugin's render lifecycle (#173).

@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // The `⋯` row menu and the click guard behind the clickable row (#180). Every
 // row used to carry a filled red Delete button, and the only way to open a post

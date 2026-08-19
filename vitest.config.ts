@@ -4,6 +4,21 @@ import react from "@vitejs/plugin-react";
 
 const src = fileURLToPath(new URL("./src", import.meta.url));
 
+// Pin the zone before any worker exists.
+//
+// `toLocaleDateString` reads the system zone, so a date assertion is otherwise
+// machine-dependent — which is how formatOgDate came to be asserted as
+// `/^2025年7月(19|20)日$/`, a regex that tolerates being a day out rather than
+// pinning the day. UTC matches what CI already runs in.
+//
+// It has to be set HERE rather than through `test.env`: workers read the zone
+// once, when they start, and under the threads pool that is the same process
+// this config was evaluated in. `test.env` is applied inside the worker, too
+// late for the already-initialised ICU — six date tests go red. Setting it at
+// config scope runs before any worker spawns, so every pool sees it, including
+// a bare `npx vitest`.
+process.env.TZ = "UTC";
+
 // A `?url` CSS import only resolves to a real asset URL once Vite has emitted
 // the asset, which no test run does — so `import appCss from "./styles.css?url"`
 // in __root evaluates to the empty string and the shell renders
@@ -37,6 +52,12 @@ export default defineConfig({
     },
   },
   test: {
+    // node by default; a file that needs a DOM opts in with
+    // `// @vitest-environment happy-dom` on its first line. happy-dom rather
+    // than jsdom because building one costs ~95ms against jsdom's ~240ms, and
+    // with 88 DOM files that fixed cost, not the tests, is what the suite
+    // spends its time on. Three files stay on jsdom where the two disagree on
+    // DOM fidelity — each says why at the top.
     environment: "node",
     include: ["src/**/*.test.{ts,tsx}"],
     // Mock hygiene is global so no file has to hand-roll it — the version that
@@ -50,11 +71,11 @@ export default defineConfig({
     // test that installed it.
     mockReset: true,
     restoreMocks: true,
-    // Pin the zone. `toLocaleDateString` reads the system one, so any date
-    // assertion is otherwise machine-dependent — which is how formatOgDate came
-    // to be asserted as `/^2025年7月(19|20)日$/`, a regex that tolerates being a
-    // day out rather than pinning the day. UTC matches what CI already runs in.
-    env: { TZ: "UTC" },
+    // Workers, not child processes. The suite's cost is dominated by per-file
+    // fixed overhead — building a DOM and re-importing the module graph — and
+    // threads share a process, so both come out cheaper: measured 30.0s → 25.1s
+    // on its own. The zone pin above is what makes this pool safe to use.
+    pool: "threads",
     // Randomise both the file order and the order within each file, so a test
     // that depends on a sibling running first fails now instead of on whatever
     // future PR happens to reorder it. #192 was that bug, and it survived

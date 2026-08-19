@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // The code block card's language picker (#198). It was a plain Select — open it
 // and scan. Typing `py` should get you Python, the way the tags combobox

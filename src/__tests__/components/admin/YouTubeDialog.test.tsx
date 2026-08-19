@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // The editor's YouTube embed dialog, reached from the toolbar and `/youtube`.
 

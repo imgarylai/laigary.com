@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // The cover image control in the post settings sheet: what it shows with and
 // without a cover, and the upload dialog's own states.

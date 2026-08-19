@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 import { afterEach, describe, expect, it } from "vitest";
 import { act, cleanup, renderHook } from "@testing-library/react";
 import { useSlugAutofill } from "@/hooks/use-slug-autofill";

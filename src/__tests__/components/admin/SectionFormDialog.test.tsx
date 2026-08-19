@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // The section dialog. Same shape as TagFormDialog, and the same two invariants
 // worth pinning: the slug is part of the public /interview/$section URL so edit

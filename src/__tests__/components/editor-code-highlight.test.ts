@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // Parity coverage for #169: what a code fence looks like while you write it and
 // what it looks like once published must be the same thing.

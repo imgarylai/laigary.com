@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // The draft/published badge in the post and note lists (#181): it printed the
 // raw database value next to a translated filter, and put the heavier styling

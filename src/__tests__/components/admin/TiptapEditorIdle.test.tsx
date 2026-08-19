@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // The editor schedules its markdown preview on `requestIdleCallback` so a long
 // document does not render between keystrokes (#175) — and falls back to a
