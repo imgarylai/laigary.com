@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // The `/` block-insert menu (#173).
 import { describe, expect, it, vi } from "vitest";

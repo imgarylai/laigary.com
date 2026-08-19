@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // DataTable's search box supports a controlled mode (globalFilter +
 // onGlobalFilterChange) so list pages can hold the filter in the route's

@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // Behavioural coverage for the code block card (#170) and its keymap (#171),
 // driven through a real editor rather than the pure helpers in

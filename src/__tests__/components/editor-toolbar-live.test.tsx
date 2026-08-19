@@ -1,5 +1,9 @@
 // @vitest-environment jsdom
 //
+// Stays on jsdom: the caret-colour swatch is read through computed styles,
+// which happy-dom resolves differently. Everything else in the suite runs on
+// happy-dom; see vitest.config.ts.
+//
 // The toolbar is memoised and subscribes to the editor itself (#175). Before
 // that it read `editor.isActive(...)` during render and was only ever correct
 // because the document flowed through React state, re-rendering the whole

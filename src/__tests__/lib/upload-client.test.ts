@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // The browser side of the 3-step upload (presign → PUT → confirm) shared by the
 // cover image, the editor's image dialog and the settings OG image.

@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // Pages were the one content type with no delete path at all — not in the query
 // layer, not at the RPC boundary, not in the UI. These mirror the work dialog's

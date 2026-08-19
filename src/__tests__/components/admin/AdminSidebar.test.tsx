@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // Which sidebar entry is lit. It used to compare for exact equality, so the
 // section went dark as soon as you opened an editor under it (#179).

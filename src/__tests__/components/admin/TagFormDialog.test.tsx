@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // The tag dialog, both modes. The invariant worth the most here is that editing
 // a tag cannot change its slug: the slug is part of the public /tags/$slug URL,

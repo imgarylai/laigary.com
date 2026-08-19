@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // Covers the ⌘K palette contract: pages are pre-loaded (rendered immediately);
 // content rows are fetched on demand only after the user types, and (for IME

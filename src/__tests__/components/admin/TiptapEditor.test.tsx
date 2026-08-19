@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // The client-only wrapper around the Tiptap editor. Three lines of component,
 // but they are the thing keeping the editor chunk out of the Worker SSR bundle

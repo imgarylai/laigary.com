@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // Regression coverage for #52 (inline-code backticks appearing to "stay").
 //

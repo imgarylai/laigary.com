@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // The pages list. AGENTS.md had these rows down as "would only restate their own
 // JSX" — the cells maybe, but the file was at 6% because that reasoning also

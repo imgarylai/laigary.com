@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // Editor link dialog (⌘K): URL mode links the selection verbatim; search mode
 // queries posts + notes by title only after typing (never mid-IME-composition)

@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // The editor frame (#174): what the action bar exposes, where the settings
 // fields live, and how the preview gets toggled.

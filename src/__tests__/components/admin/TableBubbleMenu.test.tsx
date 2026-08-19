@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // Row, column and delete controls next to the table being edited (#197).
 //

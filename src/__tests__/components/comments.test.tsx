@@ -1,5 +1,10 @@
 // @vitest-environment jsdom
 //
+// Stays on jsdom: this drives a live <iframe> (giscus) and reads back what the
+// document did with it — happy-dom's iframe and contentWindow handling differs
+// enough that three of these go red on it. Everything else in the suite runs
+// on happy-dom; see vitest.config.ts.
+//
 // The giscus mount contract: configured → the client script lands in the
 // container with the repo/category wiring; unconfigured → nothing renders.
 import { afterEach, describe, expect, it, vi } from "vitest";

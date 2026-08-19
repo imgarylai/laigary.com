@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // The header's breadcrumb, which was blank on the post and note editors — the
 // two most-used pages in the admin (#178).

@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // The terminal header. It carries two controls that exist only on mobile — the
 // hamburger and the drawer it opens — and those were the file's uncovered half:

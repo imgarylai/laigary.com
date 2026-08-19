@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // The /labs section. Each demo page is a thin wrapper around a published npm
 // package, so these tests assert the wiring rather than the package's own

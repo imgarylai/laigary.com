@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // Prose injects pipeline HTML with dangerouslySetInnerHTML. React compares that
 // prop by object identity, so a fresh `{ __html }` literal per render makes it

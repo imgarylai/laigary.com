@@ -1,5 +1,10 @@
 // @vitest-environment jsdom
 //
+// Stays on jsdom: ProseMirror parses and re-serialises real HTML here, and
+// happy-dom's parser differs on the edges these assert (nested spans, escaped
+// < and >, CJK runs). Everything else in the suite runs on happy-dom; see
+// vitest.config.ts.
+//
 // LaTeX round-trip through the official @tiptap/markdown bridge.
 //
 // The community tiptap-markdown bridge did not know the inlineMath node and

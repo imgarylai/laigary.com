@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // The em-dash input rule, scoped so it cannot eat a `---` divider.
 //

@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // The posts list's own cells and row wiring (#180, #181). It was at 0%, which
 // is how a raw English status badge and a filled red Delete button per row went

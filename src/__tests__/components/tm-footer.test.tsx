@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // Footer status bar: renders the resolved social links, drops unset ones,
 // always offers rss, and shows the current path as the tmux window name.

@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // The interview sections list. Sibling of PagesListClient and covered for the
 // same reason: the note-count cell decides between a number and an em dash, and

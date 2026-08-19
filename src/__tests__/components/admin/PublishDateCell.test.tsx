@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // The date column both content lists are now ordered by. Its job is three
 // states, and the third — a row flagged "published" that nobody can read yet —

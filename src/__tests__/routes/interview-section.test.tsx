@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // The /interview/$section listing. Paging, the `?tag=` filter and the
 // pinned/chronological split are the SERVER's job now (the page used to hold

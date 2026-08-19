@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // The only thing on the editor page that distinguishes a saved draft from an
 // unsaved one (#177). There is no autosave, so getting this wrong is how work

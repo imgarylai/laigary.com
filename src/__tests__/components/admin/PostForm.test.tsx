@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // The post editor. Since #174 the writing surface is only the title and the
 // body; slug, excerpt, status, pinned, tags and cover live in a settings sheet.

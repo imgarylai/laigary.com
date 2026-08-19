@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // Smoke-renders the shared terminal layout wrappers so their markup (and the
 // tm-* type-scale classes) is exercised. These are pure presentational

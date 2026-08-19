@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // The terminal 404: echoes the attempted path as a failed `cat`, and offers
 // the `$ cd ~` escape hatch back to home.

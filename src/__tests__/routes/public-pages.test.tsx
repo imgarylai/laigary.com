@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // The remaining public route components: the two home pages, the tag index and
 // tag page, a standalone markdown page, and the post/note detail views. These

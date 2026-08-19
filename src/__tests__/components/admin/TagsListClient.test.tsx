@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // The tags list. The usage column counts posts AND notes; a tag used only by
 // interview notes reading "—" would look unused and invite deleting it, so the

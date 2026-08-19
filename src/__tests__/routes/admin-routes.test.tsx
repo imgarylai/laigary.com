@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // The /admin route wrappers. AGENTS.md used to say these stay uncovered because
 // "the components they mount are tested directly" — true of the components, but

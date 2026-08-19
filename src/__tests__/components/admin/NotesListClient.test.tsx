@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // The notes list gets the same row treatment as posts (AGENTS.md), so it gets
 // the same proof rather than being assumed to follow (#180, #181).

@@ -129,6 +129,7 @@
     "alchemy": "0.94.0",
     "better-sqlite3": "13.0.3",
     "drizzle-kit": "0.31.10",
+    "happy-dom": "^20.11.2",
     "husky": "9.1.7",
     "jsdom": "30.0.1",
     "lint-staged": "17.3.0",

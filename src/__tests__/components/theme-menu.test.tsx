@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // The shadcn ThemeMenu used by the admin header. Separate implementation from
 // the terminal one in features/terminal (Base UI menu, covered by

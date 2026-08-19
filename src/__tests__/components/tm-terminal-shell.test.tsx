@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // The terminal namespace wrapper. It owns exactly one piece of state — whether
 // the ⌘K palette is open — and it is the app's single registration of that

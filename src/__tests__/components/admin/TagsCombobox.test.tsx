@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // The whole interactive surface of the tag editor. Selecting was reachable via
 // the post/note form tests; unselecting was not, so `toggle` could have been a
