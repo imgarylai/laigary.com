@@ -27,7 +27,7 @@
   "dependencies": {
     "@aarkue/tiptap-math-extension": "1.4.0",
     "@base-ui/react": "1.7.0",
-    "@cloudflare/vite-plugin": "1.52.1",
+    "@cloudflare/vite-plugin": "1.53.0",
     "@fontsource-variable/jetbrains-mono": "5.3.0",
     "@hookform/resolvers": "5.8.0",
     "@phosphor-icons/react": "2.1.10",
@@ -111,7 +111,7 @@
     "zod": "4.4.3"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "5.20260813.1",
+    "@cloudflare/workers-types": "5.20260819.1",
     "@commitlint/cli": "21.2.2",
     "@commitlint/config-conventional": "21.2.2",
     "@tailwindcss/typography": "0.5.20",
@@ -140,7 +140,7 @@
     "typescript": "7.0.2",
     "vite": "8.2.1",
     "vitest": "4.1.11",
-    "wrangler": "4.123.0"
+    "wrangler": "4.124.0"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
