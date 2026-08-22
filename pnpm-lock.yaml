@@ -176,10 +176,10 @@ importers:
         specifier: 0.4.6
         version: 0.4.6(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       pinyin-pro:
-        specifier: ^3.29.2
+        specifier: 3.29.2
         version: 3.29.2
       pinyin-zhuyin:
-        specifier: ^1.0.4
+        specifier: 1.0.4
         version: 1.0.4
       react:
         specifier: 19.2.8
@@ -318,7 +318,7 @@ importers:
         specifier: 0.31.10
         version: 0.31.10
       happy-dom:
-        specifier: ^20.11.2
+        specifier: 20.11.2
         version: 20.11.2
       husky:
         specifier: 9.1.7
