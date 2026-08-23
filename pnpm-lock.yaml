@@ -18,7 +18,7 @@ importers:
         version: 1.7.0(@date-fns/tz@1.5.0)(@types/react@19.2.18)(date-fns@4.4.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@cloudflare/vite-plugin':
         specifier: 1.53.0
-        version: 1.53.0(vite@8.2.1(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))(wrangler@4.124.0(@cloudflare/workers-types@5.20260819.1))
+        version: 1.53.0(vite@8.2.1(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))(wrangler@4.124.0(@cloudflare/workers-types@5.20260820.1))
       '@fontsource-variable/jetbrains-mono':
         specifier: 5.3.0
         version: 5.3.0
@@ -156,7 +156,7 @@ importers:
         version: 4.4.0
       drizzle-orm:
         specifier: 0.45.2
-        version: 0.45.2(@cloudflare/workers-types@5.20260819.1)(@types/better-sqlite3@9.6.0)(better-sqlite3@13.0.3)
+        version: 0.45.2(@cloudflare/workers-types@5.20260820.1)(@types/better-sqlite3@9.6.0)(better-sqlite3@13.0.3)
       embla-carousel-react:
         specifier: 8.6.0
         version: 8.6.0(react@19.2.8)
@@ -264,8 +264,8 @@ importers:
         version: 4.4.3
     devDependencies:
       '@cloudflare/workers-types':
-        specifier: 5.20260819.1
-        version: 5.20260819.1
+        specifier: 5.20260820.1
+        version: 5.20260820.1
       '@commitlint/cli':
         specifier: 21.2.2
         version: 21.2.2(@types/node@24.13.3)(conventional-commits-parser@7.1.0)(typescript@7.0.2)
@@ -310,7 +310,7 @@ importers:
         version: 4.1.11(vitest@4.1.11)
       alchemy:
         specifier: 0.94.0
-        version: 0.94.0(@cloudflare/vite-plugin@1.53.0(vite@8.2.1(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))(wrangler@4.124.0(@cloudflare/workers-types@5.20260819.1)))(@types/better-sqlite3@9.6.0)(better-sqlite3@13.0.3)(vite@8.2.1(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))(workerd@1.20260815.1)
+        version: 0.94.0(@cloudflare/vite-plugin@1.53.0(vite@8.2.1(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))(wrangler@4.124.0(@cloudflare/workers-types@5.20260820.1)))(@types/better-sqlite3@9.6.0)(better-sqlite3@13.0.3)(vite@8.2.1(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))(workerd@1.20260815.1)
       better-sqlite3:
         specifier: 13.0.3
         version: 13.0.3
@@ -352,7 +352,7 @@ importers:
         version: 4.1.11(@types/node@24.13.3)(@vitest/coverage-v8@4.1.11)(happy-dom@20.11.2)(jsdom@30.0.1)(vite@8.2.1(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))
       wrangler:
         specifier: 4.124.0
-        version: 4.124.0(@cloudflare/workers-types@5.20260819.1)
+        version: 4.124.0(@cloudflare/workers-types@5.20260820.1)
 
 packages:
 
@@ -699,8 +699,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@cloudflare/workers-types@5.20260819.1':
-    resolution: {integrity: sha512-nUoWrl+16WfocHgXAARAvpQ7dLMF4tSmTvvgLLg5clYhP2j8CYerZ2KC8agnlWHqOAKp45B3F+LcsjNZrZyiRA==}
+  '@cloudflare/workers-types@5.20260820.1':
+    resolution: {integrity: sha512-KFRmtV4toMf1LL2yXylFTIs7YAS1IYo6jrJCneBG8I1VXHcKCIdqPROH6lGum+gZ+ZgdcNZqxDgjM1yEMgma2w==}
 
   '@commitlint/cli@21.2.2':
     resolution: {integrity: sha512-a+6hQxIxnpdvSvS2apvttPNbEliYsVC3PqFYDiiB2kjbwIsQsj1urvQ4Tkf70pKYozPalKAuRQmm/GHwndduqA==}
@@ -7047,14 +7047,14 @@ snapshots:
     optionalDependencies:
       workerd: 1.20260815.1
 
-  '@cloudflare/vite-plugin@1.53.0(vite@8.2.1(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))(wrangler@4.124.0(@cloudflare/workers-types@5.20260819.1))':
+  '@cloudflare/vite-plugin@1.53.0(vite@8.2.1(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))(wrangler@4.124.0(@cloudflare/workers-types@5.20260820.1))':
     dependencies:
       '@cloudflare/unenv-preset': 2.16.1(unenv@2.0.0-rc.24)(workerd@1.20260815.1)
       miniflare: 5.20260815.0-alpha
       unenv: 2.0.0-rc.24
       vite: 8.2.1(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0)
       workerd: 1.20260815.1
-      wrangler: 4.124.0(@cloudflare/workers-types@5.20260819.1)
+      wrangler: 4.124.0(@cloudflare/workers-types@5.20260820.1)
       ws: 8.21.0
     transitivePeerDependencies:
       - bufferutil
@@ -7090,7 +7090,7 @@ snapshots:
   '@cloudflare/workerd-windows-64@1.20260815.1':
     optional: true
 
-  '@cloudflare/workers-types@5.20260819.1': {}
+  '@cloudflare/workers-types@5.20260820.1': {}
 
   '@commitlint/cli@21.2.2(@types/node@24.13.3)(conventional-commits-parser@7.1.0)(typescript@7.0.2)':
     dependencies:
@@ -9390,17 +9390,17 @@ snapshots:
       json-schema-traverse: 1.0.0
       require-from-string: 2.0.2
 
-  alchemy@0.94.0(@cloudflare/vite-plugin@1.53.0(vite@8.2.1(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))(wrangler@4.124.0(@cloudflare/workers-types@5.20260819.1)))(@types/better-sqlite3@9.6.0)(better-sqlite3@13.0.3)(vite@8.2.1(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))(workerd@1.20260815.1):
+  alchemy@0.94.0(@cloudflare/vite-plugin@1.53.0(vite@8.2.1(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))(wrangler@4.124.0(@cloudflare/workers-types@5.20260820.1)))(@types/better-sqlite3@9.6.0)(better-sqlite3@13.0.3)(vite@8.2.1(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))(workerd@1.20260815.1):
     dependencies:
       '@aws-sdk/credential-providers': 3.1090.0
       '@cloudflare/unenv-preset': 2.7.7(unenv@2.0.0-rc.21)(workerd@1.20260815.1)
-      '@cloudflare/workers-types': 5.20260819.1
+      '@cloudflare/workers-types': 5.20260820.1
       '@iarna/toml': 2.2.5
       '@octokit/rest': 21.1.1
       '@smithy/node-config-provider': 4.5.10
       '@smithy/types': 4.16.1
       aws4fetch: 1.0.20
-      drizzle-orm: 0.45.2(@cloudflare/workers-types@5.20260819.1)(@types/better-sqlite3@9.6.0)(better-sqlite3@13.0.3)
+      drizzle-orm: 0.45.2(@cloudflare/workers-types@5.20260820.1)(@types/better-sqlite3@9.6.0)(better-sqlite3@13.0.3)
       env-paths: 3.0.0
       esbuild: 0.25.12
       execa: 9.6.1
@@ -9420,11 +9420,11 @@ snapshots:
       signal-exit: 4.1.0
       undici: 7.28.0
       unenv: 2.0.0-rc.21
-      wrangler: 4.124.0(@cloudflare/workers-types@5.20260819.1)
+      wrangler: 4.124.0(@cloudflare/workers-types@5.20260820.1)
       ws: 8.21.1
       yaml: 2.9.0
     optionalDependencies:
-      '@cloudflare/vite-plugin': 1.53.0(vite@8.2.1(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))(wrangler@4.124.0(@cloudflare/workers-types@5.20260819.1))
+      '@cloudflare/vite-plugin': 1.53.0(vite@8.2.1(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))(wrangler@4.124.0(@cloudflare/workers-types@5.20260820.1))
       vite: 8.2.1(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0)
     transitivePeerDependencies:
       - '@aws-sdk/client-rds-data'
@@ -9885,9 +9885,9 @@ snapshots:
       esbuild: 0.25.12
       tsx: 4.23.1
 
-  drizzle-orm@0.45.2(@cloudflare/workers-types@5.20260819.1)(@types/better-sqlite3@9.6.0)(better-sqlite3@13.0.3):
+  drizzle-orm@0.45.2(@cloudflare/workers-types@5.20260820.1)(@types/better-sqlite3@9.6.0)(better-sqlite3@13.0.3):
     optionalDependencies:
-      '@cloudflare/workers-types': 5.20260819.1
+      '@cloudflare/workers-types': 5.20260820.1
       '@types/better-sqlite3': 9.6.0
       better-sqlite3: 13.0.3
 
@@ -12550,7 +12550,7 @@ snapshots:
       '@cloudflare/workerd-linux-arm64': 1.20260815.1
       '@cloudflare/workerd-windows-64': 1.20260815.1
 
-  wrangler@4.124.0(@cloudflare/workers-types@5.20260819.1):
+  wrangler@4.124.0(@cloudflare/workers-types@5.20260820.1):
     dependencies:
       '@cloudflare/kv-asset-handler': 0.5.0
       '@cloudflare/unenv-preset': 2.16.1(unenv@2.0.0-rc.24)(workerd@1.20260815.1)
@@ -12561,7 +12561,7 @@ snapshots:
       unenv: 2.0.0-rc.24
       workerd: 1.20260815.1
     optionalDependencies:
-      '@cloudflare/workers-types': 5.20260819.1
+      '@cloudflare/workers-types': 5.20260820.1
       fsevents: 2.3.3
     transitivePeerDependencies:
       - bufferutil
