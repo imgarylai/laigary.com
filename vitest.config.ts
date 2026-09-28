@@ -25,7 +25,8 @@ process.env.TZ = "UTC";
 // `<link rel="stylesheet" href="">`. React warns on an empty `href` once per
 // render, which was 36 of the suite's console warnings and belongs to the test
 // environment, not to __root: in a real build appCss is always a hashed URL.
-// Hand back a plausible one instead of teaching product code to expect "".
+// Return undefined so React omits the href. A plausible URL would make React
+// wait for a stylesheet load that the test DOM never completes.
 //
 // It has to redirect to a real `.ts` stub rather than `load()` the replacement
 // in place: returning code for an id that still ends in `.css` leaves `vite:css`

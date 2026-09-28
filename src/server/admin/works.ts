@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireAdmin } from "./auth";
 import { z } from "zod";
 import { toFailure, type ActionResult } from "./_shared";
 
@@ -37,21 +38,8 @@ export type WorkCreateInput = z.infer<typeof workCreateSchema>;
 
 // Update accepts a full or partial work (the query does a partial update). id
 // identifies the row; every content field is optional.
-export const workUpdateSchema = z.object({
+export const workUpdateSchema = workCreateSchema.partial().extend({
   id: z.string().min(1),
-  title: title.optional(),
-  slug: slug.optional(),
-  summary: z.string().optional(),
-  contentMd: z.string().optional(),
-  coverImageUrl: z.string().optional(),
-  projectUrl: optionalUrl,
-  repoUrl: optionalUrl,
-  role: z.string().optional(),
-  year: year.optional(),
-  endYear: year.nullable().optional(),
-  status: z.enum(["draft", "published"]).optional(),
-  pinned: z.boolean().optional(),
-  tagIds: z.array(z.string()).optional(),
 });
 export type WorkUpdateInput = z.infer<typeof workUpdateSchema>;
 
@@ -93,18 +81,21 @@ export async function deleteWorkImpl(input: { id: string }): Promise<ActionResul
 
 /* v8 ignore start -- RPC boundary, unreachable under vitest (see AGENTS.md). */
 export const createWorkFn = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
   .validator((data: unknown) => workCreateSchema.parse(data))
   .handler(({ data }) => createWorkImpl(data));
 /* v8 ignore stop */
 
 /* v8 ignore start -- RPC boundary, unreachable under vitest (see AGENTS.md). */
 export const updateWorkFn = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
   .validator((data: unknown) => workUpdateSchema.parse(data))
   .handler(({ data }) => updateWorkImpl(data));
 /* v8 ignore stop */
 
 /* v8 ignore start -- RPC boundary, unreachable under vitest (see AGENTS.md). */
 export const deleteWorkFn = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
   .validator((data: unknown) => workIdSchema.parse(data))
   .handler(({ data }) => deleteWorkImpl(data));
 /* v8 ignore stop */

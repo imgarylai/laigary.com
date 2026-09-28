@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireAdmin } from "./auth";
 import { z } from "zod";
 import { isSocialKey, normalizeSocialHandle } from "@/lib/social";
 import { type ActionResult } from "./_shared";
@@ -25,6 +26,7 @@ export async function updateSettingsImpl(values: SettingsInput): Promise<ActionR
 
 /* v8 ignore start -- RPC boundary, unreachable under vitest (see AGENTS.md). */
 export const updateSettingsFn = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
   .validator((data: unknown) => settingsSchema.parse(data))
   .handler(({ data }) => updateSettingsImpl(data));
 /* v8 ignore stop */

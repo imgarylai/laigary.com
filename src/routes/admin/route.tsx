@@ -7,8 +7,9 @@ import { Toaster } from "@/components/ui/sonner";
 // The /admin layout. Theme + i18n providers now live at the root (theme drives
 // both the admin `.dark` class and the terminal `data-theme`; i18n is shared by
 // admin and the public site), so this layout only arranges the admin chrome.
-// Access protection for /admin lives at the edge (Cloudflare Access,
-// provisioned in #9) — no in-app gate is needed here.
+// Cloudflare Access handles /admin login at the edge. Every admin server
+// function also verifies its Access JWT via server/admin/auth.ts, including
+// direct /_serverFn requests and calls made by these SSR loaders.
 export const Route = createFileRoute("/admin")({
   head: () => ({
     meta: [{ title: "Admin" }, { name: "robots", content: "noindex, nofollow" }],

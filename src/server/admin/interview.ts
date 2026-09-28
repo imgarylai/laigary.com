@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireAdmin } from "./auth";
 import { z } from "zod";
 import { toFailure, type ActionResult } from "./_shared";
 
@@ -52,16 +53,8 @@ export type NoteCreateInput = z.infer<typeof noteCreateSchema>;
 
 // sectionId is updatable: moving a note to another section is a re-file, and
 // the query layer rejects a slug already taken in the destination.
-export const noteUpdateSchema = z.object({
+export const noteUpdateSchema = noteCreateSchema.partial().extend({
   id: z.string().min(1),
-  slug: slug.optional(),
-  sectionId: z.string().min(1).optional(),
-  title: z.string().min(1).max(255).optional(),
-  contentMd: z.string().optional(),
-  status: z.enum(["draft", "published"]).optional(),
-  pinned: z.boolean().optional(),
-  publishedAt,
-  tagIds: z.array(z.string()).optional(),
 });
 export type NoteUpdateInput = z.infer<typeof noteUpdateSchema>;
 
@@ -131,36 +124,42 @@ export async function deleteNoteImpl(input: { id: string }): Promise<ActionResul
 
 /* v8 ignore start -- RPC boundary, unreachable under vitest (see AGENTS.md). */
 export const createSectionFn = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
   .validator((data: unknown) => sectionCreateSchema.parse(data))
   .handler(({ data }) => createSectionImpl(data));
 /* v8 ignore stop */
 
 /* v8 ignore start -- RPC boundary, unreachable under vitest (see AGENTS.md). */
 export const updateSectionFn = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
   .validator((data: unknown) => sectionUpdateSchema.parse(data))
   .handler(({ data }) => updateSectionImpl(data));
 /* v8 ignore stop */
 
 /* v8 ignore start -- RPC boundary, unreachable under vitest (see AGENTS.md). */
 export const deleteSectionFn = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
   .validator((data: unknown) => idSchema.parse(data))
   .handler(({ data }) => deleteSectionImpl(data));
 /* v8 ignore stop */
 
 /* v8 ignore start -- RPC boundary, unreachable under vitest (see AGENTS.md). */
 export const createNoteFn = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
   .validator((data: unknown) => noteCreateSchema.parse(data))
   .handler(({ data }) => createNoteImpl(data));
 /* v8 ignore stop */
 
 /* v8 ignore start -- RPC boundary, unreachable under vitest (see AGENTS.md). */
 export const updateNoteFn = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
   .validator((data: unknown) => noteUpdateSchema.parse(data))
   .handler(({ data }) => updateNoteImpl(data));
 /* v8 ignore stop */
 
 /* v8 ignore start -- RPC boundary, unreachable under vitest (see AGENTS.md). */
 export const deleteNoteFn = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
   .validator((data: unknown) => idSchema.parse(data))
   .handler(({ data }) => deleteNoteImpl(data));
 /* v8 ignore stop */

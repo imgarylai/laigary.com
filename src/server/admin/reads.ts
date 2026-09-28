@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireAdmin } from "./auth";
 import { z } from "zod";
 import type {
   AdminInterviewNote,
@@ -56,7 +57,9 @@ export async function dashboardStatsImpl() {
   return getDashboardStats();
 }
 
-export const dashboardStatsFn = createServerFn({ method: "GET" }).handler(dashboardStatsImpl);
+export const dashboardStatsFn = createServerFn({ method: "GET" })
+  .middleware([requireAdmin])
+  .handler(dashboardStatsImpl);
 
 // The admin posts table searches / sorts / paginates client-side, so the loader
 // takes the full list.
@@ -65,7 +68,9 @@ export async function listPostsImpl(): Promise<AdminPost[]> {
   return getAllAdminPosts();
 }
 
-export const listPostsFn = createServerFn({ method: "GET" }).handler(listPostsImpl);
+export const listPostsFn = createServerFn({ method: "GET" })
+  .middleware([requireAdmin])
+  .handler(listPostsImpl);
 
 // Tags admin list — every tag with its usage counts + what uses it.
 export async function listTagsImpl(): Promise<TagWithUsage[]> {
@@ -73,7 +78,9 @@ export async function listTagsImpl(): Promise<TagWithUsage[]> {
   return getTagsWithUsage();
 }
 
-export const listTagsFn = createServerFn({ method: "GET" }).handler(listTagsImpl);
+export const listTagsFn = createServerFn({ method: "GET" })
+  .middleware([requireAdmin])
+  .handler(listTagsImpl);
 
 type SectionRow = {
   id: string;
@@ -104,7 +111,9 @@ export async function listSectionsImpl(): Promise<SectionRow[]> {
   }));
 }
 
-export const listSectionsFn = createServerFn({ method: "GET" }).handler(listSectionsImpl);
+export const listSectionsFn = createServerFn({ method: "GET" })
+  .middleware([requireAdmin])
+  .handler(listSectionsImpl);
 
 // Interview notes admin list — one page, filtered and sorted in SQL. The route
 // passes its search params straight through, so the URL is the query.
@@ -151,6 +160,7 @@ export async function listNotesImpl(data?: {
 
 /* v8 ignore start -- RPC boundary, unreachable under vitest (see AGENTS.md). */
 export const listNotesFn = createServerFn({ method: "GET" })
+  .middleware([requireAdmin])
   .validator((data: unknown) =>
     z
       .object({
@@ -173,7 +183,9 @@ export async function newNoteDataImpl(): Promise<{ sections: SectionOption[]; ta
   return { sections: sections.map((s) => ({ id: s.id, label: s.label, slug: s.slug })), tags };
 }
 
-export const newNoteDataFn = createServerFn({ method: "GET" }).handler(newNoteDataImpl);
+export const newNoteDataFn = createServerFn({ method: "GET" })
+  .middleware([requireAdmin])
+  .handler(newNoteDataImpl);
 
 // Edit-note form: the note (with its tag ids resolved) + sections + tags.
 export async function editNoteDataImpl(data: {
@@ -210,6 +222,7 @@ export async function editNoteDataImpl(data: {
 
 /* v8 ignore start -- RPC boundary, unreachable under vitest (see AGENTS.md). */
 export const editNoteDataFn = createServerFn({ method: "GET" })
+  .middleware([requireAdmin])
   .validator((data: unknown) => z.object({ id: z.string().min(1) }).parse(data))
   .handler(({ data }) => editNoteDataImpl(data));
 /* v8 ignore stop */
@@ -253,6 +266,7 @@ export async function searchLinkTargetsImpl(data: { q: string }): Promise<LinkTa
 
 /* v8 ignore start -- RPC boundary, unreachable under vitest (see AGENTS.md). */
 export const searchLinkTargetsFn = createServerFn({ method: "GET" })
+  .middleware([requireAdmin])
   .validator((data: unknown) => z.object({ q: z.string().min(1) }).parse(data))
   .handler(({ data }) => searchLinkTargetsImpl(data));
 /* v8 ignore stop */
@@ -263,7 +277,9 @@ export async function getSettingsImpl(): Promise<Record<string, string>> {
   return getSiteSettings();
 }
 
-export const getSettingsFn = createServerFn({ method: "GET" }).handler(getSettingsImpl);
+export const getSettingsFn = createServerFn({ method: "GET" })
+  .middleware([requireAdmin])
+  .handler(getSettingsImpl);
 
 // Pages admin list.
 export async function listPagesImpl(): Promise<PageListItem[]> {
@@ -271,7 +287,9 @@ export async function listPagesImpl(): Promise<PageListItem[]> {
   return getPagesList();
 }
 
-export const listPagesFn = createServerFn({ method: "GET" }).handler(listPagesImpl);
+export const listPagesFn = createServerFn({ method: "GET" })
+  .middleware([requireAdmin])
+  .handler(listPagesImpl);
 
 // Single page for the edit form (null when the slug doesn't exist).
 export async function getPageImpl(data: { slug: string }): Promise<PageDetail> {
@@ -284,6 +302,7 @@ export async function getPageImpl(data: { slug: string }): Promise<PageDetail> {
 
 /* v8 ignore start -- RPC boundary, unreachable under vitest (see AGENTS.md). */
 export const getPageFn = createServerFn({ method: "GET" })
+  .middleware([requireAdmin])
   .validator((data: unknown) => z.object({ slug: z.string().min(1) }).parse(data))
   .handler(({ data }) => getPageImpl(data));
 /* v8 ignore stop */
@@ -295,7 +314,9 @@ export async function newPostDataImpl(): Promise<{ tags: Tag[]; ogBrand: string 
   return { tags, ogBrand: computeOgBrand(settings) };
 }
 
-export const newPostDataFn = createServerFn({ method: "GET" }).handler(newPostDataImpl);
+export const newPostDataFn = createServerFn({ method: "GET" })
+  .middleware([requireAdmin])
+  .handler(newPostDataImpl);
 
 // Edit-post form: the post being edited (null when missing) + tags + OG brand.
 export async function editPostDataImpl(data: {
@@ -312,6 +333,7 @@ export async function editPostDataImpl(data: {
 
 /* v8 ignore start -- RPC boundary, unreachable under vitest (see AGENTS.md). */
 export const editPostDataFn = createServerFn({ method: "GET" })
+  .middleware([requireAdmin])
   .validator((data: unknown) => z.object({ id: z.string().min(1) }).parse(data))
   .handler(({ data }) => editPostDataImpl(data));
 /* v8 ignore stop */
@@ -323,7 +345,9 @@ export async function listWorksImpl(): Promise<AdminWork[]> {
   return getAllAdminWorks();
 }
 
-export const listWorksFn = createServerFn({ method: "GET" }).handler(listWorksImpl);
+export const listWorksFn = createServerFn({ method: "GET" })
+  .middleware([requireAdmin])
+  .handler(listWorksImpl);
 
 // New-work form: available tags + the OG brand line.
 export async function newWorkDataImpl(): Promise<{ tags: Tag[]; ogBrand: string }> {
@@ -332,7 +356,9 @@ export async function newWorkDataImpl(): Promise<{ tags: Tag[]; ogBrand: string 
   return { tags, ogBrand: computeOgBrand(settings) };
 }
 
-export const newWorkDataFn = createServerFn({ method: "GET" }).handler(newWorkDataImpl);
+export const newWorkDataFn = createServerFn({ method: "GET" })
+  .middleware([requireAdmin])
+  .handler(newWorkDataImpl);
 
 // Edit-work form: the work being edited (null when missing) + tags + OG brand.
 export async function editWorkDataImpl(data: {
@@ -349,6 +375,7 @@ export async function editWorkDataImpl(data: {
 
 /* v8 ignore start -- RPC boundary, unreachable under vitest (see AGENTS.md). */
 export const editWorkDataFn = createServerFn({ method: "GET" })
+  .middleware([requireAdmin])
   .validator((data: unknown) => z.object({ id: z.string().min(1) }).parse(data))
   .handler(({ data }) => editWorkDataImpl(data));
 /* v8 ignore stop */

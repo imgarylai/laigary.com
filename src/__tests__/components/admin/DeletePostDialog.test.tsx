@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, fireEvent, within, waitFor, cleanup } from "@testing-library/react";
 import { DeletePostDialog } from "@/components/admin/DeletePostDialog";
 
@@ -22,7 +22,6 @@ vi.mock("@/i18n/I18nProvider", () => ({
   useI18n: () => ({ t: (k: string) => k, locale: "en" }),
 }));
 
-beforeEach(() => vi.clearAllMocks());
 afterEach(() => cleanup());
 
 /** The dialog is opened by the row's ⋯ menu, so tests render it already open. */
@@ -51,6 +50,28 @@ describe("DeletePostDialog", () => {
 
     await waitFor(() => expect(toast.error).toHaveBeenCalled());
     expect(invalidate).not.toHaveBeenCalled();
+  });
+
+  it("should allow retry without closing when the delete request rejects", async () => {
+    deletePostFn.mockRejectedValueOnce(new Error("Network unavailable"));
+    const onOpenChange = vi.fn();
+    render(
+      <DeletePostDialog postId="retry" postTitle="Keep me" open onOpenChange={onOpenChange} />,
+    );
+
+    await confirm();
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("deletePost.deleteFailed"));
+    expect(onOpenChange).not.toHaveBeenCalled();
+    expect(invalidate).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "deletePost.delete" }).hasAttribute("disabled")).toBe(
+      false,
+    );
+
+    deletePostFn.mockResolvedValueOnce({ ok: true });
+    await confirm();
+    await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
+    expect(invalidate).toHaveBeenCalledTimes(1);
   });
 
   it("closes without deleting when cancelled", async () => {
