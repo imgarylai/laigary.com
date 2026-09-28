@@ -87,19 +87,30 @@ describe("public header", () => {
     fireEvent.keyDown(link, { key: "Escape" });
     expect(document.activeElement).toBe(screen.getByRole("button", { name: "Menu" }));
   });
-  it("should update the navigation and locale cookie when language changes", () => {
-    header();
-    fireEvent.click(screen.getByRole("button", { name: "切換為繁體中文" }));
-    expect(screen.getByRole("link", { name: "文章" })).toBeTruthy();
-    expect(document.cookie).toContain("locale=zh-TW");
-    fireEvent.click(screen.getByRole("button", { name: "Switch to English" }));
-    expect(screen.getByRole("link", { name: "Writing" })).toBeTruthy();
-    expect(document.cookie).toContain("locale=en");
+  it("should open search and close the mobile menu when search is activated", () => {
+    const onOpenSearch = vi.fn();
+    render(
+      <I18nProvider>
+        <PublicHeader onOpenSearch={onOpenSearch} />
+      </I18nProvider>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Menu" }));
+    fireEvent.click(screen.getByRole("button", { name: "Search" }));
+    expect(onOpenSearch).toHaveBeenCalledOnce();
+    expect(screen.queryByRole("navigation", { name: "Mobile navigation" })).toBeNull();
+    expect(screen.queryByRole("button", { name: /切換|language/i })).toBeNull();
   });
   it("should close the menu when navigation changes outside the menu", () => {
     const view = header();
     fireEvent.click(screen.getByRole("button", { name: "Menu" }));
     pathname.value = "/works";
+    view.rerender(
+      <I18nProvider initialLocale="en">
+        <PublicHeader onOpenSearch={vi.fn()} />
+      </I18nProvider>,
+    );
+    expect(screen.queryByRole("navigation", { name: "Mobile navigation" })).toBeNull();
+    pathname.value = "/";
     view.rerender(
       <I18nProvider initialLocale="en">
         <PublicHeader onOpenSearch={vi.fn()} />

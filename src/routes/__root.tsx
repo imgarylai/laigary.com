@@ -29,9 +29,8 @@ const gtmScripts = import.meta.env.PROD
   : [];
 
 export const Route = createRootRoute({
-  // Resolve the UI locale server-side so the initial HTML is in the right
-  // language (no flash). staleTime: Infinity — the locale only changes via the
-  // in-app toggle, so there's no need to re-run this on client navigations.
+  // Preserve the admin locale across navigation; public UI always uses English.
+  // Resolve the preference once so admin SSR has no language flash.
   loader: () => resolveLocaleFn(),
   staleTime: Infinity,
   head: () => ({
@@ -102,7 +101,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   return (
     // suppressHydrationWarning: next-themes writes the theme `class` +
     // `data-theme` onto <html> on the client, which the SSR markup can't match.
-    <html lang={locale === "zh-TW" ? "zh-Hant" : "en"} suppressHydrationWarning>
+    <html lang={isAdmin && locale === "zh-TW" ? "zh-Hant" : "en"} suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>
@@ -120,7 +119,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           </noscript>
         )}
         <ThemeProvider defaultTheme={isAdmin ? "system" : "light"}>
-          <I18nProvider initialLocale={locale}>{children}</I18nProvider>
+          <I18nProvider initialLocale={locale} fixedLocale={isAdmin ? undefined : "en"}>
+            {children}
+          </I18nProvider>
         </ThemeProvider>
         <TanStackDevtools
           config={{
