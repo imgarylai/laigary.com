@@ -66,6 +66,7 @@ vi.mock("@/server/public", () => ({
     latestDate: null,
     socialUrls: [],
   }),
+  labsChromeFn: async () => ({ pageTitle: "Labs", siteName: "Gary Lai" }),
   tagsDataFn: async () => ({ pageTitle: "T", siteName: "U", tags: [] }),
   worksDataFn: async () => ({ pageTitle: "T", siteName: "U", works: [] }),
   tagDataFn: async () => ({
@@ -224,6 +225,13 @@ describe("blog palette", () => {
     fireEvent.click(within(screen.getByRole("dialog")).getByText("public.notes"));
 
     await waitFor(() => expect(router.state.location.pathname).toBe("/interview"));
+  });
+
+  it("should open a lab when its search result is selected", async () => {
+    const { router } = await renderRoute("/");
+    await openPalette("blog.search.placeholder");
+    fireEvent.click(within(screen.getByRole("dialog")).getByText("use-tw-zipcode"));
+    await waitFor(() => expect(router.state.location.pathname).toBe("/labs/use-tw-zipcode"));
   });
 
   it("navigates to the works index when its row is picked", async () => {

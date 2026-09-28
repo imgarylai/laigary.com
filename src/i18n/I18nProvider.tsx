@@ -21,11 +21,16 @@ const I18nContext = createContext<I18nContextValue>({
 export function I18nProvider({
   children,
   initialLocale = defaultLocale,
+  fixedLocale,
 }: {
   children: React.ReactNode;
   initialLocale?: Locale;
+  // Public pages use English while preserving the admin’s language preference.
+  fixedLocale?: Locale;
 }) {
-  const [locale, setLocaleState] = useState<Locale>(initialLocale);
+  const [preferredLocale, setLocaleState] = useState<Locale>(initialLocale);
+
+  const locale = fixedLocale ?? preferredLocale;
 
   const setLocale = useCallback((newLocale: Locale) => {
     setLocaleState(newLocale);

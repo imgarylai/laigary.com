@@ -205,7 +205,7 @@
   padding: 44px 0 72px;
 }
 .public-hero h1 {
-  font-size: clamp(2.6rem, 5.3vw, 4.5rem);
+  font-size: clamp(1.875rem, 3.2vw, 2.75rem);
   max-width: 850px;
   line-height: 1.18;
   margin: 20px 0 28px;
@@ -351,8 +351,7 @@
     gap: 12px;
   }
   .public-desktop-nav,
-  .public-search-label,
-  .public-locale-label {
+  .public-search-label {
     display: none;
   }
   .public-menu-toggle {
@@ -384,9 +383,6 @@
   }
   .public-hero {
     padding: 12px 0 56px;
-  }
-  .public-hero h1 {
-    font-size: clamp(2.3rem, 9vw, 3.5rem);
   }
   .public-hero p {
     font-size: 16px;
