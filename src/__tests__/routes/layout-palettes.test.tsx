@@ -10,7 +10,7 @@
 // the wrong route looks perfectly fine until someone picks it.
 
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, screen, within, waitFor } from "@testing-library/react";
 import { installShellStubs, renderRoute, warmRouteTree } from "../helpers/router";
 
 // See helpers/router for why each of these is load-bearing.
@@ -108,6 +108,10 @@ vi.mock("@/server/public", () => ({
     section: { slug: "coding", label: "Coding", blurb: "" },
     tags: [],
     notes: [],
+    pinned: [],
+    page: 1,
+    pageSize: 20,
+    total: 0,
   }),
   noteDataFn: async () => ({
     pageTitle: "T",
@@ -154,7 +158,7 @@ async function openPalette(placeholder: string) {
   // The shell only exists once the layout loader has resolved; pressing before
   // that lands on a document nothing is listening to yet. The header's hostname
   // is part of the shell, so waiting on it means the hotkey is bound.
-  await screen.findByText("@laigary.com");
+  await screen.findByRole("link", { name: "public.brand" });
   // `mod+k`, which react-hotkeys-hook resolves to Control off Apple platforms —
   // and jsdom's user agent is not one. See tm-terminal-shell.test.tsx.
   fireEvent.keyDown(document, { key: "k", code: "KeyK", ctrlKey: true });
@@ -189,16 +193,16 @@ describe("blog palette", () => {
     await renderRoute("/");
     await openPalette("blog.search.placeholder");
 
-    // Rendered as fsmap commands, the same vocabulary as the header prompt.
+    // Human destination names replace the old filesystem commands.
     for (const cmd of [
-      "cd ~",
-      "cd ./posts",
-      "cd ./works",
-      "cd ./tags",
-      "cd ./interview",
-      "cat ./about.md",
+      "public.home",
+      "public.writing",
+      "public.work",
+      "public.topics",
+      "public.notes",
+      "public.about",
     ]) {
-      expect(screen.getByText(cmd)).toBeTruthy();
+      expect(within(screen.getByRole("dialog")).getByText(cmd)).toBeTruthy();
     }
   });
 
@@ -206,7 +210,7 @@ describe("blog palette", () => {
     const { router } = await renderRoute("/");
     await openPalette("blog.search.placeholder");
 
-    fireEvent.click(screen.getByText("cd ./posts"));
+    fireEvent.click(within(screen.getByRole("dialog")).getByText("public.writing"));
 
     await waitFor(() => expect(router.state.location.pathname).toBe("/posts"));
   });
@@ -217,7 +221,7 @@ describe("blog palette", () => {
     const { router } = await renderRoute("/");
     await openPalette("blog.search.placeholder");
 
-    fireEvent.click(screen.getByText("cd ./interview"));
+    fireEvent.click(within(screen.getByRole("dialog")).getByText("public.notes"));
 
     await waitFor(() => expect(router.state.location.pathname).toBe("/interview"));
   });
@@ -226,7 +230,7 @@ describe("blog palette", () => {
     const { router } = await renderRoute("/");
     await openPalette("blog.search.placeholder");
 
-    fireEvent.click(screen.getByText("cd ./works"));
+    fireEvent.click(within(screen.getByRole("dialog")).getByText("public.work"));
 
     await waitFor(() => expect(router.state.location.pathname).toBe("/works"));
   });
@@ -235,7 +239,7 @@ describe("blog palette", () => {
     const { router } = await renderRoute("/");
     await openPalette("blog.search.placeholder");
 
-    fireEvent.click(screen.getByText("cd ./tags"));
+    fireEvent.click(within(screen.getByRole("dialog")).getByText("public.topics"));
 
     await waitFor(() => expect(router.state.location.pathname).toBe("/tags"));
   });
@@ -244,7 +248,7 @@ describe("blog palette", () => {
     const { router } = await renderRoute("/");
     await openPalette("blog.search.placeholder");
 
-    fireEvent.click(screen.getByText("cat ./about.md"));
+    fireEvent.click(within(screen.getByRole("dialog")).getByText("public.about"));
 
     await waitFor(() => expect(router.state.location.pathname).toBe("/about"));
   });
@@ -253,7 +257,7 @@ describe("blog palette", () => {
     const { router } = await renderRoute("/posts");
     await openPalette("blog.search.placeholder");
 
-    fireEvent.click(screen.getByText("cd ~"));
+    fireEvent.click(within(screen.getByRole("dialog")).getByText("public.home"));
 
     await waitFor(() => expect(router.state.location.pathname).toBe("/"));
   });
@@ -267,8 +271,8 @@ describe("blog palette", () => {
 
     expect(searchPostsFn).toHaveBeenCalledWith({ data: { q: "hello", limit: 20 } });
     // Content rows lead with the human title and tuck the path underneath.
-    expect(screen.getByText("Hello World")).toBeTruthy();
-    expect(screen.getByText("cat ./posts/hello.md")).toBeTruthy();
+    expect(within(screen.getByRole("dialog")).getByText("Hello World")).toBeTruthy();
+    expect(within(screen.getByRole("dialog")).getByText("public.essay")).toBeTruthy();
   });
 
   it("opens the post a content row points at", async () => {
@@ -277,7 +281,7 @@ describe("blog palette", () => {
     const input = await openPalette("blog.search.placeholder");
     await typeAndSettle(input, "hello");
 
-    fireEvent.click(screen.getByText("Hello World"));
+    fireEvent.click(within(screen.getByRole("dialog")).getByText("Hello World"));
 
     await waitFor(() => expect(router.state.location.pathname).toBe("/posts/hello"));
   });
@@ -286,38 +290,38 @@ describe("blog palette", () => {
 describe("interview palette", () => {
   it("offers a row per section plus the way back to the blog", async () => {
     await renderRoute("/interview");
-    await openPalette("blog.search.placeholderInterview");
+    await openPalette("blog.search.placeholder");
 
-    // Commands are namespace-relative here: `cd ~` is the interview home.
-    expect(screen.getByText("cd ~")).toBeTruthy();
-    expect(screen.getByText("cd ./coding")).toBeTruthy();
-    expect(screen.getByText("cd ./system")).toBeTruthy();
-    expect(screen.getByText("cd ../blog")).toBeTruthy();
+    // The same global destinations remain available alongside local sections.
+    expect(within(screen.getByRole("dialog")).getByText("public.home")).toBeTruthy();
+    expect(within(screen.getByRole("dialog")).getByText("Coding")).toBeTruthy();
+    expect(within(screen.getByRole("dialog")).getByText("System Design")).toBeTruthy();
+    expect(within(screen.getByRole("dialog")).getByText("public.home")).toBeTruthy();
   });
 
   it("navigates into a section when its row is picked", async () => {
     const { router } = await renderRoute("/interview");
-    await openPalette("blog.search.placeholderInterview");
+    await openPalette("blog.search.placeholder");
 
-    fireEvent.click(screen.getByText("cd ./coding"));
+    fireEvent.click(within(screen.getByRole("dialog")).getByText("Coding"));
 
     await waitFor(() => expect(router.state.location.pathname).toBe("/interview/coding"));
   });
 
   it("leaves the sub-site through the back-to-blog row", async () => {
     const { router } = await renderRoute("/interview");
-    await openPalette("blog.search.placeholderInterview");
+    await openPalette("blog.search.placeholder");
 
-    fireEvent.click(screen.getByText("cd ../blog"));
+    fireEvent.click(within(screen.getByRole("dialog")).getByText("public.home"));
 
     await waitFor(() => expect(router.state.location.pathname).toBe("/"));
   });
 
   it("returns to the interview home from a section", async () => {
     const { router } = await renderRoute("/interview/coding");
-    await openPalette("blog.search.placeholderInterview");
+    await openPalette("blog.search.placeholder");
 
-    fireEvent.click(screen.getByText("cd ~"));
+    fireEvent.click(within(screen.getByRole("dialog")).getByText("public.notes"));
 
     await waitFor(() => expect(router.state.location.pathname).toBe("/interview"));
   });
@@ -327,15 +331,15 @@ describe("interview palette", () => {
       { slug: "gas", title: "Gas Station", section: "coding" },
     ]);
     await renderRoute("/interview");
-    const input = await openPalette("blog.search.placeholderInterview");
+    const input = await openPalette("blog.search.placeholder");
 
     await typeAndSettle(input, "gas");
 
     expect(searchInterviewNotesFn).toHaveBeenCalledWith({ data: { q: "gas" } });
-    expect(screen.getByText("Gas Station")).toBeTruthy();
+    expect(within(screen.getByRole("dialog")).getByText("Gas Station")).toBeTruthy();
     // The note's own section is in its path — hardcoding one would send every
     // result to the same section.
-    expect(screen.getByText("cat ./coding/gas.md")).toBeTruthy();
+    expect(within(screen.getByRole("dialog")).getByText("public.note")).toBeTruthy();
   });
 
   it("opens the note a content row points at", async () => {
@@ -343,11 +347,45 @@ describe("interview palette", () => {
       { slug: "gas", title: "Gas Station", section: "coding" },
     ]);
     const { router } = await renderRoute("/interview");
-    const input = await openPalette("blog.search.placeholderInterview");
+    const input = await openPalette("blog.search.placeholder");
     await typeAndSettle(input, "gas");
 
-    fireEvent.click(screen.getByText("Gas Station"));
+    fireEvent.click(within(screen.getByRole("dialog")).getByText("Gas Station"));
 
     await waitFor(() => expect(router.state.location.pathname).toBe("/interview/coding/gas"));
   });
+});
+
+describe("shared public search and navigation", () => {
+  it.each(["/", "/interview", "/interview/coding", "/interview/coding/gas"])(
+    "should expose the same three brand links when visiting %s",
+    async (path) => {
+      await renderRoute(path);
+      expect(await screen.findByRole("link", { name: "public.brand" })).toBeTruthy();
+      const nav = screen.getByRole("navigation", { name: "public.navigation" });
+      expect(
+        within(nav)
+          .getAllByRole("link")
+          .map((link) => link.getAttribute("href")),
+      ).toEqual(["/posts", "/works", "/about"]);
+    },
+  );
+  it.each(["/", "/interview"])(
+    "should find both articles and notes when searching from %s",
+    async (path) => {
+      searchPostsFn.mockResolvedValue({ posts: [helloPost], total: 1 });
+      searchInterviewNotesFn.mockResolvedValue([
+        { slug: "gas", title: "Gas Station", section: "coding" },
+      ]);
+      await renderRoute(path);
+      const input = await openPalette("blog.search.placeholder");
+      await typeAndSettle(input, "shared query");
+      const results = within(screen.getByRole("dialog"));
+      expect(results.getByText("Hello World")).toBeTruthy();
+      expect(results.getByText("Gas Station")).toBeTruthy();
+      expect(searchPostsFn).toHaveBeenCalledWith({ data: { q: "shared query", limit: 20 } });
+      expect(searchInterviewNotesFn).toHaveBeenCalledWith({ data: { q: "shared query" } });
+      expect(screen.getByRole("dialog").textContent).not.toMatch(/cd |cat |\.md/);
+    },
+  );
 });

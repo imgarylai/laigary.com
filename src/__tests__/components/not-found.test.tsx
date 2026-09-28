@@ -1,7 +1,6 @@
 // @vitest-environment happy-dom
 //
-// The terminal 404: echoes the attempted path as a failed `cat`, and offers
-// the `$ cd ~` escape hatch back to home.
+// Missing public content uses an ordinary explanation and home link.
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
@@ -24,18 +23,13 @@ vi.mock(import("@tanstack/react-router"), async (importOriginal) => ({
 afterEach(cleanup);
 
 describe("TmNotFound", () => {
-  it("should echo the attempted path as a shell error when rendered", () => {
+  it("should explain the missing page when rendered", () => {
     render(<TmNotFound />);
-    expect(screen.getByText("$ cat ~/posts/does-not-exist")).toBeTruthy();
-    expect(
-      screen.getByText(/cat: ~\/posts\/does-not-exist: No such file or directory/),
-    ).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "public.notFound" })).toBeTruthy();
+    expect(screen.getByText("public.notFoundHint")).toBeTruthy();
   });
-
   it("should link back to home when rendered", () => {
     render(<TmNotFound />);
-    const link = screen.getByText("$ cd ~");
-    expect(link.tagName).toBe("A");
-    expect(screen.getByText("blog.notFound.back")).toBeTruthy();
+    expect(screen.getByText("public.backHome").tagName).toBe("A");
   });
 });

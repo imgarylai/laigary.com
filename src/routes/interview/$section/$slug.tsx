@@ -1,10 +1,10 @@
+import { ArticleBody } from "@/features/public-site/ArticleBody";
 import { createFileRoute, notFound, Link } from "@tanstack/react-router";
 import { noteDataFn } from "@/server/public";
 import { SITE_ORIGIN, breadcrumbLd, serializeJsonLd, techArticleLd } from "@/lib/json-ld";
 import { canonicalLink, markdownAlternateLink, ogMeta } from "@/lib/og-meta";
-import { AsciiRule, Prose, PromptLine, ReadingProgress, TmPage, Toc } from "@/features/terminal";
+import { AsciiRule, ReadingProgress, TmPage, Toc } from "@/features/terminal";
 import { useI18n } from "@/i18n/I18nProvider";
-import { FS_INTERVIEW } from "@/lib/fsmap";
 
 export const Route = createFileRoute("/interview/$section/$slug")({
   loader: async ({ params }) => {
@@ -76,9 +76,6 @@ function NotePage() {
       <ReadingProgress />
       <Toc entries={toc} />
       <TmPage narrow>
-        <PromptLine className="mb-1.5">
-          {FS_INTERVIEW.note.prompt({ sect: note.section, slug: note.slug })}
-        </PromptLine>
         <div className="mb-1.5 flex flex-wrap items-baseline gap-2 text-xs">
           <span className="text-tm-accent">[{note.sectionLabel}]</span>
           <span className="text-tm-dim">·</span>
@@ -94,7 +91,7 @@ function NotePage() {
           <h1 className="mt-2 mb-1 text-2xl font-semibold leading-snug">{note.title}</h1>
           <AsciiRule className="mb-5" />
 
-          <Prose html={html} />
+          <ArticleBody html={html} title={note.title} />
         </article>
 
         {note.tags.length > 0 && (
@@ -119,10 +116,10 @@ function NotePage() {
             params={{ section: note.section }}
             className="text-sm text-tm-muted no-underline"
           >
-            ← cd ../{note.section}
+            ← {note.sectionLabel}
           </Link>
           <Link to="/interview" className="text-sm text-tm-muted no-underline">
-            cd ~
+            {t("public.notes")}
           </Link>
         </div>
       </TmPage>

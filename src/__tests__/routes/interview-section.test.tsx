@@ -125,10 +125,10 @@ describe("/interview/$section", () => {
     await renderRoute("/interview/coding");
 
     await screen.findByText("Note a");
-    expect(screen.getAllByText(/^\.\/\d{4}\/$/).map((el) => el.textContent)).toEqual([
-      "./2025/",
-      "./2024/",
-      "./2023/",
+    expect(screen.getAllByText(/^\d{4}$/).map((el) => el.textContent)).toEqual([
+      "2025",
+      "2024",
+      "2023",
     ]);
   });
 
@@ -137,7 +137,7 @@ describe("/interview/$section", () => {
 
     await renderRoute("/interview/coding");
 
-    await screen.findByText("./pinned/");
+    await screen.findByText("public.selectedWriting");
     // Once, in the pinned block — the server keeps it out of the paged list.
     expect(screen.getAllByText("Note pin")).toHaveLength(1);
     expect(screen.getByText("Note plain")).toBeTruthy();
@@ -149,7 +149,7 @@ describe("/interview/$section", () => {
     await renderRoute("/interview/coding");
 
     await screen.findByText("Note plain");
-    expect(screen.queryByText("./pinned/")).toBeNull();
+    expect(screen.queryByText("public.selectedWriting")).toBeNull();
   });
 
   it("should forward the page and tag from the URL to the loader", async () => {
@@ -207,7 +207,7 @@ describe("/interview/$section", () => {
     const active = await screen.findByText("#graphs");
     expect(active.className).toContain("border-tm-accent");
     // `all` clears the filter and is inactive while a tag is applied.
-    expect(screen.getByText("all").className).toContain("text-tm-muted");
+    expect(screen.getByText("public.all").className).toContain("text-tm-muted");
   });
 
   it("marks `all` active when no tag is applied", async () => {
@@ -215,7 +215,7 @@ describe("/interview/$section", () => {
 
     await renderRoute("/interview/coding");
 
-    const all = await screen.findByText("all");
+    const all = await screen.findByText("public.all");
     expect(all.className).toContain("border-tm-accent");
   });
 
@@ -225,7 +225,7 @@ describe("/interview/$section", () => {
     await renderRoute("/interview/coding");
 
     await screen.findByText("Note a");
-    expect(screen.queryByText("all")).toBeNull();
+    expect(screen.queryByText("public.all")).toBeNull();
   });
 
   it("shows the empty state when a tag matches nothing", async () => {

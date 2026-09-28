@@ -68,10 +68,10 @@ export function useActiveHeading(ids: readonly string[]): string | null {
   return activeId;
 }
 
-// Sticky header height (h-14 = 56px) plus breathing room, matching the
-// `scroll-margin-top` applied to headings in terminal.css. A heading parked by
+// Public header height (80px) plus breathing room, matching the
+// `scroll-margin-top` applied to headings in public-site.css. A heading parked by
 // an anchor jump sits exactly at this offset, so the comparison is inclusive.
-const HEADER_OFFSET = 72;
+const HEADER_OFFSET = 96;
 
 // Sub-pixel slack: fractional scroll positions and zoom mean scrollTop +
 // clientHeight rarely lands exactly on scrollHeight at the bottom.

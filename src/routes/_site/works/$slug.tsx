@@ -1,10 +1,10 @@
+import { ArticleBody } from "@/features/public-site/ArticleBody";
 import { createFileRoute, notFound, Link } from "@tanstack/react-router";
 import { workDataFn } from "@/server/public";
 import { SITE_ORIGIN, breadcrumbLd, creativeWorkLd, serializeJsonLd } from "@/lib/json-ld";
 import { canonicalLink, markdownAlternateLink, ogMeta } from "@/lib/og-meta";
-import { AsciiRule, Prose, PromptLine, TmPage } from "@/features/terminal";
+import { AsciiRule, TmPage } from "@/features/terminal";
 import { useI18n } from "@/i18n/I18nProvider";
-import { FS_BLOG } from "@/lib/fsmap";
 import { fmtYearRange } from "@/lib/date";
 
 export const Route = createFileRoute("/_site/works/$slug")({
@@ -64,36 +64,6 @@ export const Route = createFileRoute("/_site/works/$slug")({
   component: WorkPage,
 });
 
-/**
- * The `---` block above the heading, in the same shape the post page uses.
- * Every line whose value is absent is dropped rather than printed empty — a
- * work with no repo should not advertise a blank `repo:`.
- *
- * Stays plain text, including `stack:`. Frontmatter is a literal transcript of
- * the file's own header; the clickable version of the stack is the `--stack`
- * row below the article, exactly as the post page splits `tags:` from its
- * `--tags` row.
- */
-function frontmatter(work: {
-  title: string;
-  year: number;
-  endYear: number | null;
-  role: string | null;
-  projectUrl: string | null;
-  repoUrl: string | null;
-  tags: { name: string }[];
-}): string {
-  const lines = [
-    `title:  "${work.title}"`,
-    `year:   ${fmtYearRange(work.year, work.endYear)}`,
-    ...(work.role ? [`role:   ${work.role}`] : []),
-    ...(work.tags.length > 0 ? [`stack:  [${work.tags.map((t) => t.name).join(", ")}]`] : []),
-    ...(work.projectUrl ? [`live:   ${work.projectUrl}`] : []),
-    ...(work.repoUrl ? [`repo:   ${work.repoUrl}`] : []),
-  ];
-  return `---\n${lines.join("\n")}\n---`;
-}
-
 function WorkPage() {
   const { work, html } = Route.useLoaderData();
   const { t } = useI18n();
@@ -101,11 +71,12 @@ function WorkPage() {
   return (
     <TmPage narrow>
       <Link to="/works" className="mb-4 inline-block text-sm text-tm-accent no-underline">
-        $ cd ..
+        {t("public.backWork")}
       </Link>
-
-      <PromptLine className="mb-1.5">{FS_BLOG.work.prompt({ slug: work.slug })}</PromptLine>
-      <pre className="m-0 mb-2 text-xs text-tm-muted">{frontmatter(work)}</pre>
+      <p className="text-sm text-tm-muted">
+        {fmtYearRange(work.year, work.endYear)}
+        {work.role && <> · {work.role}</>}
+      </p>
 
       {/* lang: content is written in Traditional Chinese while <html lang>
           follows the UI locale — mark the content region so the language
@@ -116,7 +87,11 @@ function WorkPage() {
 
         {/* A work can ship as a link and a summary with no case study written
             for it, so the body is conditional where a post's never is. */}
-        {html ? <Prose html={html} /> : <p className="text-sm text-tm-fg">{work.summary}</p>}
+        {html ? (
+          <ArticleBody html={html} title={work.title} />
+        ) : (
+          <p className="text-sm text-tm-fg">{work.summary}</p>
+        )}
       </article>
 
       {work.tags.length > 0 && (
@@ -144,7 +119,7 @@ function WorkPage() {
               rel="noreferrer"
               className="text-sm text-tm-accent no-underline"
             >
-              $ open {work.projectUrl}
+              {t("public.visitProject")} ↗
             </a>
           )}
           {work.repoUrl && (
@@ -154,7 +129,7 @@ function WorkPage() {
               rel="noreferrer"
               className="text-sm text-tm-accent no-underline"
             >
-              $ git clone {work.repoUrl}
+              {t("public.viewSource")} ↗
             </a>
           )}
         </div>
@@ -163,9 +138,8 @@ function WorkPage() {
       <AsciiRule className="mt-10 mb-3" />
       <p className="text-sm leading-relaxed text-tm-muted">
         <Link to="/works" className="text-tm-accent no-underline">
-          $ cd ..
+          {t("public.backWork")}
         </Link>
-        {t("blog.works.back")}
       </p>
     </TmPage>
   );

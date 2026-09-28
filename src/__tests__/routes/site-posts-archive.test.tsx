@@ -81,8 +81,8 @@ describe("/posts archive", () => {
     await renderRoute("/posts");
 
     await screen.findByText("Post newest");
-    const years = screen.getAllByText(/^\.\/\d{4}\/$/).map((el) => el.textContent);
-    expect(years).toEqual(["./2025/", "./2024/", "./2023/"]);
+    const years = screen.getAllByText(/^\d{4}$/).map((el) => el.textContent);
+    expect(years).toEqual(["2025", "2024", "2023"]);
   });
 
   it("lifts pinned posts into their own block and out of the chronological list", async () => {
@@ -90,7 +90,7 @@ describe("/posts archive", () => {
 
     await renderRoute("/posts");
 
-    await screen.findByText("./pinned/");
+    await screen.findByText("public.selectedWriting");
     expect(screen.getByText("Post pin")).toBeTruthy();
     // The pinned post appears once — in its own block, not again under its year.
     expect(screen.getAllByText("Post pin")).toHaveLength(1);
@@ -157,7 +157,7 @@ describe("/posts archive", () => {
 
     await screen.findByText("Post tagged");
     // While filtering there is no separate pinned block — it competes on tags.
-    expect(screen.queryByText("./pinned/")).toBeNull();
+    expect(screen.queryByText("public.selectedWriting")).toBeNull();
     expect(screen.getByText("Post pinned-tagged")).toBeTruthy();
     expect(screen.queryByText("Post untagged")).toBeNull();
   });

@@ -373,7 +373,7 @@
   },
   "blog": {
     "search": {
-      "placeholder": "搜尋文章、標籤、頁面…",
+      "placeholder": "搜尋文章、筆記與頁面⋯",
       "placeholderInterview": "搜尋筆記、分類…",
       "pages": "頁面",
       "content": "內容",
@@ -397,43 +397,43 @@
     "archive": {
       "filteredBy": "篩選",
       "clear": "清除 ✕",
-      "noMatch": "// 沒有符合的文章。",
+      "noMatch": "沒有符合的文章。",
       "page": "第 {current}/{total} 頁",
       "showing": " · 顯示 {from}–{to}，共 {total}",
       "newer": "← 較新",
       "older": "較舊 →"
     },
     "post": {
-      "toc": "// 目錄",
+      "toc": "目錄",
       "tocToggle": "開關目錄",
-      "tagsLabel": "--標籤",
+      "tagsLabel": "標籤",
       "back": "  — 回到所有文章",
       "older": "« 較舊",
       "newer": "較新 »"
     },
     "notFound": {
-      "hint": "// 404 — 這個路徑不存在。",
+      "hint": "404 — 這個路徑不存在。",
       "back": "  — 回到首頁"
     },
     "tags": {
-      "noneYet": "// 還沒有標籤。",
+      "noneYet": "還沒有標籤。",
       "postsUnit": "篇",
       "back": "  — 所有標籤"
     },
     "interview": {
-      "title": "./interview/ — 面試準備筆記",
+      "title": "技術筆記",
       "lead": "我自己準備工程師面試的過程中累積的筆記。",
       "notesUnit": "則筆記",
       "sectionsUnit": "個分類",
       "notesArrow": "{count} 則筆記 →",
-      "noneYet": "// 還沒有筆記。",
+      "noneYet": "還沒有筆記。",
       "minRead": "{min} 分鐘閱讀"
     },
     "works": {
       "lead": "我做過的專案，有些是一個人，有些不是。",
-      "noneYet": "// 還沒有作品。",
+      "noneYet": "還沒有作品。",
       "back": "  — 回到所有作品",
-      "stackLabel": "--技術"
+      "stackLabel": "技術"
     },
     "labs": {
       "lead": "我維護的 npm 套件的互動 demo。這些頁面跑的都是真的已發布的套件，直接在你的瀏覽器裡執行。",
@@ -487,5 +487,43 @@
     "deleting": "刪除中...",
     "pageDeleted": "頁面已刪除",
     "deleteFailed": "刪除頁面失敗"
+  },
+  "public": {
+    "brand": "Gary Lai",
+    "domain": "laigary.com",
+    "writing": "文章",
+    "work": "作品",
+    "about": "關於我",
+    "home": "首頁",
+    "navigation": "主要導覽",
+    "mobileNavigation": "手機導覽",
+    "closeMenu": "關閉選單",
+    "skipContent": "跳至主要內容",
+    "changeLanguage": "Switch to English",
+    "chinese": "繁中",
+    "english": "EN",
+    "github": "GitHub",
+    "linkedin": "LinkedIn",
+    "twitter": "X",
+    "email": "Email",
+    "rss": "RSS",
+    "statement": "我打造有想法的產品，也記錄背後的系統與思考。",
+    "exploreWriting": "閱讀文章",
+    "selectedWriting": "精選文章",
+    "topics": "主題",
+    "labs": "實驗室",
+    "notes": "技術筆記",
+    "note": "筆記",
+    "essay": "文章",
+    "nameTool": "護照英文姓名轉換",
+    "backWriting": "返回文章列表",
+    "backWork": "返回作品列表",
+    "visitProject": "前往作品",
+    "viewSource": "查看原始碼",
+    "recentNotes": "最近的筆記",
+    "all": "全部",
+    "notFound": "找不到這個頁面",
+    "notFoundHint": "這個頁面可能已經搬家，或是連結有誤。",
+    "backHome": "返回首頁"
   }
 }

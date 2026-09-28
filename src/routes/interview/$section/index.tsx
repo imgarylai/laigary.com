@@ -1,19 +1,10 @@
 import { createFileRoute, notFound, useNavigate, Link } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 import { sectionDataFn } from "@/server/public";
-import {
-  AsciiRule,
-  PromptLine,
-  TmPage,
-  TmEmpty,
-  TmRowLink,
-  TmRowCells,
-  TmPager,
-} from "@/features/terminal";
+import { AsciiRule, TmPage, TmEmpty, TmRowLink, TmRowCells, TmPager } from "@/features/terminal";
 import { SITE_ORIGIN } from "@/lib/json-ld";
 import { canonicalLink, ogMeta } from "@/lib/og-meta";
 import { useI18n } from "@/i18n/I18nProvider";
-import { FS_INTERVIEW } from "@/lib/fsmap";
 
 type SectionSearch = { page?: number; tag?: string };
 
@@ -89,22 +80,16 @@ function SectionPage() {
 
   return (
     <TmPage>
-      <PromptLine className="mb-1.5">
-        {FS_INTERVIEW.section.prompt({ sect: section.slug })}
-        {totalPages > 1 ? ` | sed -n '${start + 1},${start + pageItems.length}p'` : ""}
-      </PromptLine>
       <h1 className="mb-1.5 text-xl">{section.label}</h1>
       {section.blurb && (
         <p className="mb-2 text-sm leading-relaxed text-tm-muted">{section.blurb}</p>
       )}
       <AsciiRule className="mt-2 mb-5" />
 
-      {/* Tag filter chips (design: interview/app.jsx `--filter` row). Chips
-          carry tag names — the same value note rows and detail links filter
-          by — with `all` clearing the filter. */}
+      {/* Tag names match the server filter; All clears it. */}
       {tags.length > 0 && (
         <div className="mb-5 flex flex-wrap items-baseline gap-1.5">
-          <span className="mr-1.5 text-xs text-tm-muted">--filter</span>
+          <span className="mr-1.5 text-xs text-tm-muted">{t("public.topics")}</span>
           <Link
             to="/interview/$section"
             params={{ section: section.slug }}
@@ -115,7 +100,7 @@ function SectionPage() {
                 : "border-tm-accent bg-tm-subtle text-tm-accent",
             )}
           >
-            all
+            {t("public.all")}
           </Link>
           {tags.map((name) => (
             <Link
@@ -141,7 +126,7 @@ function SectionPage() {
           tag filtering stay untouched. */}
       {!tag && safePage === 1 && pinnedNotes.length > 0 && (
         <section>
-          <pre className="mt-7 mb-1.5 text-xs text-tm-accent">./pinned/</pre>
+          <h2 className="public-section-title">{t("public.selectedWriting")}</h2>
           {pinnedNotes.map((n) => (
             <TmRowLink
               key={n.slug}
@@ -159,7 +144,7 @@ function SectionPage() {
       ) : (
         years.map((y) => (
           <section key={y}>
-            <pre className="mt-7 mb-1.5 text-sm text-tm-accent">./{y}/</pre>
+            <h2 className="public-section-title">{y}</h2>
             {byYear.get(y)!.map((n) => (
               <TmRowLink
                 key={n.slug}

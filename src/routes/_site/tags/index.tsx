@@ -2,9 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { tagsDataFn } from "@/server/public";
 import { SITE_ORIGIN } from "@/lib/json-ld";
 import { canonicalLink, ogMeta } from "@/lib/og-meta";
-import { PromptLine, TmPage, TmEmpty } from "@/features/terminal";
+import { TmPage, TmEmpty } from "@/features/terminal";
 import { useI18n } from "@/i18n/I18nProvider";
-import { FS_BLOG } from "@/lib/fsmap";
 
 export const Route = createFileRoute("/_site/tags/")({
   loader: () => tagsDataFn(),
@@ -32,7 +31,7 @@ function TagsPage() {
 
   return (
     <TmPage narrow>
-      <PromptLine className="mb-4">{FS_BLOG.tags.prompt()}</PromptLine>
+      <h1>{t("public.topics")}</h1>
       {tags.length === 0 ? (
         <TmEmpty>{t("blog.tags.noneYet")}</TmEmpty>
       ) : (

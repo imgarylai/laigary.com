@@ -105,8 +105,8 @@ export function CommandPalette({
 
   // Rows stack vertically so the primary line gets the full row width instead of
   // sharing it side-by-side (on narrow screens the title used to get squeezed
-  // out). Content rows lead with the human title and tuck the file path
-  // underneath; page rows lead with the command. Either way the second line is
+  // out). Content rows lead with the title and a quiet content-type label;
+  // page rows use ordinary destination names. Either way the second line is
   // the smaller, dimmed one.
   const renderItem = (row: PaletteRow, i: number) => {
     const isContent = row.kind === "content";
@@ -122,9 +122,9 @@ export function CommandPalette({
         }}
       >
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <span className="truncate text-tm-fg">{primary}</span>
+          <span className="break-words text-site-ink">{primary}</span>
           {secondary && secondary !== primary && (
-            <span className="truncate text-xs text-tm-muted">{secondary}</span>
+            <span className="break-words text-xs text-site-muted">{secondary}</span>
           )}
         </div>
       </CommandItem>
@@ -135,7 +135,7 @@ export function CommandPalette({
     <CommandDialog
       open={open}
       onOpenChange={onOpenChange}
-      title="Command palette"
+      title={t("common.search")}
       description={placeholder}
       shouldFilter={false}
     >
@@ -154,7 +154,7 @@ export function CommandPalette({
           <CommandGroup heading={t("blog.search.content")}>{content.map(renderItem)}</CommandGroup>
         )}
         {status && (
-          <div className="py-6 text-center text-sm text-tm-muted" data-slot="command-status">
+          <div className="py-6 text-center text-sm text-site-muted" data-slot="command-status">
             {status}
           </div>
         )}

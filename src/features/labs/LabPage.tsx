@@ -1,8 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { CheckIcon, CopyIcon } from "@phosphor-icons/react";
-import { AsciiRule, PromptLine, TmButton, TmMeta, TmPage } from "@/features/terminal";
+import { AsciiRule, TmButton, TmMeta, TmPage } from "@/features/terminal";
 import { useI18n } from "@/i18n/I18nProvider";
-import { FS_BLOG } from "@/lib/fsmap";
 import { npmUrl, repoUrl, type Lab } from "@/lib/labs";
 
 const EXT_LINK = "text-tm-muted no-underline hover:text-tm-accent";
@@ -16,7 +15,6 @@ export function LabPage({ lab, children }: { lab: Lab; children: ReactNode }) {
   const { t } = useI18n();
   return (
     <TmPage narrow>
-      <PromptLine>{FS_BLOG.lab.prompt({ slug: lab.slug })}</PromptLine>
       <TmMeta>
         <a href={npmUrl(lab.pkg)} target="_blank" rel="noreferrer" className={EXT_LINK}>
           {t("blog.labs.npmLabel")}

@@ -53,7 +53,7 @@ describe("/labs", () => {
     await renderRoute("/labs");
 
     for (const lab of LABS) {
-      expect(await screen.findByText(`./${lab.slug}`)).toBeTruthy();
+      expect(await screen.findByText(lab.slug)).toBeTruthy();
       expect(screen.getByText(lab.tagline)).toBeTruthy();
     }
   });
@@ -61,7 +61,7 @@ describe("/labs", () => {
   it("opens a lab when its row is clicked", async () => {
     const { router } = await renderRoute("/labs");
 
-    fireEvent.click(await screen.findByText("./use-wg"));
+    fireEvent.click(await screen.findByText("use-wg"));
 
     await waitFor(() => expect(router.state.location.pathname).toBe("/labs/use-wg"));
   });

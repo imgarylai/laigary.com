@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { TmThemeMenu } from "@/features/terminal/ThemeMenu";
+import { PublicThemeMenu } from "@/features/public-site/ThemeMenu";
 
 const setTheme = vi.fn();
 let currentTheme = "system";
@@ -22,26 +22,30 @@ vi.stubGlobal("ResizeObserver", ResizeObserverStub);
 
 afterEach(() => {
   cleanup();
-  setTheme.mockClear();
   currentTheme = "system";
 });
 
-describe("TmThemeMenu", () => {
-  it("renders a trigger button labelled for toggling the theme", () => {
-    render(<TmThemeMenu />);
+describe("PublicThemeMenu", () => {
+  it("should label the theme trigger when rendered", () => {
+    render(<PublicThemeMenu />);
     expect(screen.getByRole("button", { name: "common.toggleTheme" })).toBeTruthy();
   });
 
-  it("reflects an explicit stored theme in the trigger", () => {
+  it("should select the stored mode when the theme menu opens", async () => {
     // Exercises the mode branch where a concrete light/dark theme is used
     // instead of falling back to "system".
     currentTheme = "dark";
-    render(<TmThemeMenu />);
-    expect(screen.getByRole("button", { name: "common.toggleTheme" }).title).toContain("dark");
+    render(<PublicThemeMenu />);
+    fireEvent.click(screen.getByRole("button", { name: "common.toggleTheme" }));
+    expect(
+      (await screen.findByRole("menuitemradio", { name: /themeDark/ })).getAttribute(
+        "aria-checked",
+      ),
+    ).toBe("true");
   });
 
-  it("opens the menu and offers light / dark / system", async () => {
-    render(<TmThemeMenu />);
+  it("should offer light, dark and system when opened", async () => {
+    render(<PublicThemeMenu />);
     fireEvent.click(screen.getByRole("button", { name: "common.toggleTheme" }));
     await waitFor(() => {
       expect(screen.getByRole("menuitemradio", { name: /themeLight/ })).toBeTruthy();
@@ -50,8 +54,8 @@ describe("TmThemeMenu", () => {
     });
   });
 
-  it("sets the theme when an option is chosen", async () => {
-    render(<TmThemeMenu />);
+  it("should set the theme when an option is chosen", async () => {
+    render(<PublicThemeMenu />);
     fireEvent.click(screen.getByRole("button", { name: "common.toggleTheme" }));
     const dark = await screen.findByRole("menuitemradio", { name: /themeDark/ });
     fireEvent.click(dark);

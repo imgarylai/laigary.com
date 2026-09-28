@@ -48,7 +48,7 @@ describe("terminal layout", () => {
     expect(screen.getByText("the writing")).toBeTruthy();
     expect(screen.getByText("42")).toBeTruthy();
     expect(container.firstElementChild?.className).toContain("minmax(150px,max-content)");
-    expect(screen.getByText("./behavior-question").className).toContain("whitespace-nowrap");
+    expect(screen.getByText("./behavior-question").className).toContain("public-list-label");
   });
 
   it("renders a compact row with date / title / reading time", () => {
