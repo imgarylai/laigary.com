@@ -76,12 +76,12 @@ beforeEach(() => {
 afterEach(() => cleanup());
 
 describe("/works", () => {
-  it("renders one row per work with its slug label, summary and year", async () => {
+  it("should show the title, summary and year when listing works", async () => {
     withWorks([work("laigary-com", { summary: "personal site", year: 2025 })]);
 
     await renderRoute("/works");
 
-    expect(await screen.findByText("./laigary-com/")).toBeTruthy();
+    expect(await screen.findByText("Work laigary-com")).toBeTruthy();
     expect(screen.getByText("personal site")).toBeTruthy();
     expect(screen.getByText("2025")).toBeTruthy();
   });
@@ -117,7 +117,7 @@ describe("/works", () => {
     withWork(work("target"));
 
     const { router } = await renderRoute("/works");
-    fireEvent.click(await screen.findByText("./target/"));
+    fireEvent.click(await screen.findByText("Work target"));
 
     await waitFor(() => expect(router.state.location.pathname).toBe("/works/target"));
   });
@@ -143,7 +143,7 @@ describe("/works/$slug", () => {
     expect(await screen.findByText("just a one-liner")).toBeTruthy();
   });
 
-  it("lists role, stack and links in the frontmatter block when present", async () => {
+  it("should show role, topics and project links when metadata is present", async () => {
     withWork(
       work("rich", {
         role: "Solo · design + build",
@@ -157,27 +157,27 @@ describe("/works/$slug", () => {
 
     await renderRoute("/works/rich");
 
-    const pre = (await screen.findByText(/^---/)).textContent ?? "";
-    expect(pre).toContain("year:   2021–2023");
-    expect(pre).toContain("role:   Solo · design + build");
-    expect(pre).toContain("stack:  [go]");
-    expect(pre).toContain("live:   https://example.com");
-    expect(pre).toContain("repo:   https://github.com/x/y");
+    expect(await screen.findByText(/2021–2023/)).toBeTruthy();
+    expect(screen.getByText(/Solo · design \+ build/)).toBeTruthy();
+    expect(screen.getByRole("link", { name: "#go" }).getAttribute("href")).toBe("/tags/go");
+    expect(screen.getByRole("link", { name: /public.visitProject/ }).getAttribute("href")).toBe(
+      "https://example.com",
+    );
+    expect(screen.getByRole("link", { name: /public.viewSource/ }).getAttribute("href")).toBe(
+      "https://github.com/x/y",
+    );
   });
 
-  it("omits the frontmatter lines a work has no value for", async () => {
+  it("should omit absent project links when metadata is missing", async () => {
     // A site with no public repo must not advertise a blank `repo:` — this is
     // the case the conditional lines exist for.
     withWork(work("sparse"));
 
     await renderRoute("/works/sparse");
 
-    const pre = (await screen.findByText(/^---/)).textContent ?? "";
-    expect(pre).toContain("year:   2025");
-    expect(pre).not.toContain("role:");
-    expect(pre).not.toContain("stack:");
-    expect(pre).not.toContain("live:");
-    expect(pre).not.toContain("repo:");
+    expect(await screen.findByText("2025")).toBeTruthy();
+    expect(screen.queryByRole("link", { name: /public.visitProject/ })).toBeNull();
+    expect(screen.queryByRole("link", { name: /public.viewSource/ })).toBeNull();
   });
 
   it("renders the stack as links into the shared tag namespace", async () => {
@@ -207,10 +207,10 @@ describe("/works/$slug", () => {
 
     await renderRoute("/works/linked");
 
-    const live = (await screen.findByText(/\$ open/)).closest("a")!;
+    const live = (await screen.findByText(/public.visitProject/)).closest("a")!;
     expect(live.getAttribute("href")).toBe("https://example.com");
     expect(live.getAttribute("rel")).toBe("noreferrer");
-    const repo = screen.getByText(/\$ git clone/).closest("a")!;
+    const repo = screen.getByText(/public.viewSource/).closest("a")!;
     expect(repo.getAttribute("href")).toBe("https://github.com/x/y");
   });
 
@@ -220,8 +220,8 @@ describe("/works/$slug", () => {
     await renderRoute("/works/nolinks");
 
     await screen.findByRole("heading", { name: "Work nolinks" });
-    expect(screen.queryByText(/\$ open/)).toBeNull();
-    expect(screen.queryByText(/\$ git clone/)).toBeNull();
+    expect(screen.queryByText(/public.visitProject/)).toBeNull();
+    expect(screen.queryByText(/public.viewSource/)).toBeNull();
   });
 
   it("404s a slug the loader cannot resolve", async () => {

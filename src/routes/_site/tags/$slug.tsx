@@ -2,9 +2,8 @@ import { createFileRoute, notFound, Link } from "@tanstack/react-router";
 import { tagDataFn } from "@/server/public";
 import { SITE_ORIGIN, breadcrumbLd, serializeJsonLd } from "@/lib/json-ld";
 import { canonicalLink, ogMeta } from "@/lib/og-meta";
-import { PromptLine, TmPage, TmRowLink, TmRowCells } from "@/features/terminal";
+import { TmPage, TmRowLink, TmRowCells } from "@/features/terminal";
 import { useI18n } from "@/i18n/I18nProvider";
-import { FS_BLOG } from "@/lib/fsmap";
 import { fmtYearRange } from "@/lib/date";
 
 // Crawlable topic page for one tag — the URL the sitemap advertises. The
@@ -61,8 +60,6 @@ function TagPage() {
 
   return (
     <TmPage>
-      <PromptLine>{FS_BLOG.tag.prompt({ slug: tag.slug })}</PromptLine>
-
       <div className="mb-5 flex items-baseline gap-3">
         <h1 className="m-0 text-xl">
           <span className="text-tm-accent">#</span>
@@ -75,7 +72,7 @@ function TagPage() {
 
       {years.map((y) => (
         <section key={y}>
-          <pre className="mt-7 mb-1.5 text-sm text-tm-accent">./{y}/</pre>
+          <h2 className="public-section-title">{y}</h2>
           {byYear.get(y)!.map((p) => (
             <TmRowLink key={p.slug} to="/posts/$slug" params={{ slug: p.slug }}>
               <TmRowCells date={p.date.slice(5, 10)} title={p.title} read={`${p.readingTime}m`} />
@@ -86,7 +83,7 @@ function TagPage() {
 
       {works.length > 0 && (
         <section>
-          <pre className="mt-7 mb-1.5 text-sm text-tm-accent">./works/</pre>
+          <h2 className="public-section-title">{t("public.work")}</h2>
           {works.map((w) => (
             <TmRowLink key={w.slug} to="/works/$slug" params={{ slug: w.slug }}>
               {/* The year sits where a post's date does, and the role takes the
@@ -104,7 +101,7 @@ function TagPage() {
 
       {notes.length > 0 && (
         <section>
-          <pre className="mt-7 mb-1.5 text-sm text-tm-accent">./interview/</pre>
+          <h2 className="public-section-title">{t("public.notes")}</h2>
           {notes.map((n) => (
             <TmRowLink
               key={`${n.sectionSlug}/${n.slug}`}
@@ -119,9 +116,8 @@ function TagPage() {
 
       <p className="mt-8 text-sm leading-relaxed text-tm-muted">
         <Link to="/tags" className="text-tm-accent no-underline">
-          $ cd ..
+          {t("public.topics")}
         </Link>
-        {t("blog.tags.back")}
       </p>
     </TmPage>
   );

@@ -4,7 +4,6 @@ import { SITE_ORIGIN } from "@/lib/json-ld";
 import { canonicalLink, ogMeta } from "@/lib/og-meta";
 import {
   AsciiRule,
-  PromptLine,
   TmPage,
   TmMeta,
   TmDirList,
@@ -62,13 +61,12 @@ function InterviewHome() {
         )}
       </TmMeta>
       <AsciiRule className="mt-1 mb-7" />
-
-      <PromptLine>$ ls .</PromptLine>
+      <h2 className="public-section-title">{t("public.topics")}</h2>
       <TmDirList className="mb-9">
         {sections.map((s) => (
           <TmDirLink key={s.slug} to="/interview/$section" params={{ section: s.slug }}>
             <TmDirCells
-              label={`./${s.slug}`}
+              label={s.label}
               desc={s.blurb}
               meta={t("blog.interview.notesArrow", { count: String(s.count) })}
             />
@@ -78,7 +76,7 @@ function InterviewHome() {
 
       {recent.length > 0 && (
         <>
-          <PromptLine className="mb-1.5">$ ls -t ./notes/ | head -5</PromptLine>
+          <h2 className="public-section-title">{t("public.recentNotes")}</h2>
           <div className="flex flex-col">
             {recent.map((n) => (
               <TmRowLink

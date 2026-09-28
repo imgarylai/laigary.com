@@ -1,9 +1,9 @@
+import { ArticleBody } from "@/features/public-site/ArticleBody";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { pageDataFn } from "@/server/public";
 import { SITE_ORIGIN, breadcrumbLd, serializeJsonLd, webPageLd } from "@/lib/json-ld";
 import { canonicalLink, markdownAlternateLink, ogMeta } from "@/lib/og-meta";
-import { Prose, PromptLine, TmPage } from "@/features/terminal";
-import { FS_BLOG } from "@/lib/fsmap";
+import { TmPage } from "@/features/terminal";
 
 // Catch-all for DB-backed content pages (e.g. /about, /now). Matches last, so
 // concrete routes like /posts and /tags take precedence.
@@ -56,11 +56,10 @@ function PagePage() {
 
   return (
     <TmPage narrow>
-      <PromptLine className="mb-4">{FS_BLOG.page.prompt({ slug: page.slug })}</PromptLine>
       {/* lang: content region is zh-Hant; <html lang> follows the UI locale. */}
       <article lang="zh-Hant">
         <h1 className="mb-4 text-2xl font-bold leading-snug">{page.title}</h1>
-        <Prose html={html} />
+        <ArticleBody html={html} title={page.title} />
       </article>
     </TmPage>
   );

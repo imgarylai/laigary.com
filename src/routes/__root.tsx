@@ -1,4 +1,4 @@
-import { HeadContent, Scripts, createRootRoute } from "@tanstack/react-router";
+import { HeadContent, Scripts, useRouterState, createRootRoute } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { TanStackDevtools } from "@tanstack/react-devtools";
 
@@ -96,6 +96,9 @@ export const Route = createRootRoute({
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   const locale = Route.useLoaderData();
+  const isAdmin = useRouterState({
+    select: (s) => s.location.pathname === "/admin" || s.location.pathname.startsWith("/admin/"),
+  });
   return (
     // suppressHydrationWarning: next-themes writes the theme `class` +
     // `data-theme` onto <html> on the client, which the SSR markup can't match.
@@ -116,7 +119,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             />
           </noscript>
         )}
-        <ThemeProvider>
+        <ThemeProvider defaultTheme={isAdmin ? "system" : "light"}>
           <I18nProvider initialLocale={locale}>{children}</I18nProvider>
         </ThemeProvider>
         <TanStackDevtools

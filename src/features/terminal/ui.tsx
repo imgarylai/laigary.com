@@ -5,18 +5,9 @@ import { useReadingProgress } from "@/hooks/use-reading-progress";
 // Small terminal primitives. Styling is Tailwind utilities (terminal colours via
 // the `tm-*` utilities); callers may pass an extra class for contextual spacing.
 
-const RULE_CHARS = 70;
-
-// ASCII horizontal rule — part of the design language; deliberately not an <hr>.
-export function AsciiRule({ thick = false, className }: { thick?: boolean; className?: string }) {
-  return (
-    <pre
-      aria-hidden
-      className={cn("m-0 select-none overflow-hidden text-xs text-tm-dim", className)}
-    >
-      {(thick ? "═" : "─").repeat(RULE_CHARS)}
-    </pre>
-  );
+// Compatibility name for legacy content routes; the public UI uses real rules.
+export function AsciiRule({ className }: { thick?: boolean; className?: string }) {
+  return <hr aria-hidden className={cn("public-rule", className)} />;
 }
 
 // A `$ ...` prompt line shown above page content.

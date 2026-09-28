@@ -4,8 +4,7 @@ import { z } from "zod";
 import { labsChromeFn } from "@/server/public";
 import { SITE_ORIGIN, serializeJsonLd, toolPageLd } from "@/lib/json-ld";
 import { canonicalLink, ogMeta } from "@/lib/og-meta";
-import { AsciiRule, PromptLine, TmButton, TmInput, TmPage } from "@/features/terminal";
-import { FS_BLOG } from "@/lib/fsmap";
+import { AsciiRule, TmButton, TmInput, TmPage } from "@/features/terminal";
 import { romanizeName, surnameLength } from "@/lib/name-romanization";
 
 const DEFAULT_NAME = "王小明";
@@ -66,7 +65,6 @@ export const Route = createFileRoute("/_site/tools/wade-giles-name")({
 function Page() {
   return (
     <TmPage narrow>
-      <PromptLine>{FS_BLOG.tool.prompt({ slug: SLUG })}</PromptLine>
       <h1 className="mt-5 mb-2.5 text-2xl leading-snug font-bold">{TITLE}</h1>
       <p className="mb-6 text-sm leading-relaxed text-tm-muted">{DESCRIPTION}</p>
       <AsciiRule className="mb-6" />

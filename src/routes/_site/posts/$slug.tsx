@@ -1,11 +1,11 @@
+import { ArticleBody } from "@/features/public-site/ArticleBody";
 import { createFileRoute, notFound, Link } from "@tanstack/react-router";
 import { postDataFn } from "@/server/public";
 import { SITE_ORIGIN, blogPostingLd, breadcrumbLd, serializeJsonLd } from "@/lib/json-ld";
 import { canonicalLink, markdownAlternateLink, ogMeta } from "@/lib/og-meta";
-import { AsciiRule, Prose, PromptLine, ReadingProgress, TmPage, Toc } from "@/features/terminal";
+import { AsciiRule, ReadingProgress, TmPage, Toc } from "@/features/terminal";
 import { Comments } from "@/components/Comments";
 import { useI18n } from "@/i18n/I18nProvider";
-import { FS_BLOG } from "@/lib/fsmap";
 
 export const Route = createFileRoute("/_site/posts/$slug")({
   loader: async ({ params }) => {
@@ -74,22 +74,21 @@ function PostPage() {
       <Toc entries={toc} />
       <TmPage narrow>
         <Link to="/posts" className="mb-4 inline-block text-sm text-tm-accent no-underline">
-          $ cd ..
+          {t("public.backWriting")}
         </Link>
-
-        <PromptLine className="mb-1.5">{FS_BLOG.post.prompt({ slug: post.slug })}</PromptLine>
-        <pre className="m-0 mb-2 text-xs text-tm-muted">
-          {`---\ntitle:   "${post.title}"\ndate:    ${post.date.slice(0, 10)}\nreading: ${post.readingTime} min\ntags:    [${post.tags.map((tg) => tg.name).join(", ")}]\n---`}
-        </pre>
 
         {/* lang: content is written in Traditional Chinese while <html lang>
             follows the UI locale — mark the content region so the language
             signals agree with the JSON-LD inLanguage declaration. */}
         <article lang="zh-Hant">
           <h1 className="mt-5 mb-2.5 text-2xl font-bold leading-snug">{post.title}</h1>
-          <AsciiRule className="mb-5" />
+          <p className="mb-8 text-sm text-tm-muted">
+            <time dateTime={post.date}>{post.date.slice(0, 10)}</time> ·{" "}
+            {t("blog.interview.minRead", { min: String(post.readingTime) })}
+          </p>
+          <AsciiRule className="mb-8" />
 
-          <Prose html={html} />
+          <ArticleBody html={html} title={post.title} />
         </article>
 
         {post.tags.length > 0 && (
@@ -142,9 +141,8 @@ function PostPage() {
         <AsciiRule className="mt-10 mb-3" />
         <p className="text-sm leading-relaxed text-tm-muted">
           <Link to="/posts" className="text-tm-accent no-underline">
-            $ cd ..
+            {t("public.backWriting")}
           </Link>
-          {t("blog.post.back")}
         </p>
       </TmPage>
     </>

@@ -3,11 +3,21 @@
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/jetbrains-mono";
 @import "./features/terminal/terminal.css";
+@import "./features/public-site/public-site.css";
 
 @custom-variant dark (&:is(.dark *));
 @plugin "@tailwindcss/typography";
 
 @theme inline {
+  --color-site-canvas: var(--site-canvas);
+  --color-site-surface: var(--site-surface);
+  --color-site-ink: var(--site-ink);
+  --color-site-muted: var(--site-muted);
+  --color-site-rule: var(--site-rule);
+  --color-site-accent: var(--site-accent);
+  --color-site-focus: var(--site-focus);
+  --color-site-selection: var(--site-selection);
+
   /* Terminal palette exposed as Tailwind color utilities (bg-tm-bg,
      text-tm-accent, border-tm-border, …). The values resolve through the live
      `--tm-*` vars in terminal.css, so utilities stay theme-reactive. */

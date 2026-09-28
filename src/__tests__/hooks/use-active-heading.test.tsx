@@ -51,7 +51,7 @@ describe("useActiveHeading", () => {
 
   it("should return the heading once it reaches the header offset", () => {
     seedHeadings([
-      { id: "a", top: 72 },
+      { id: "a", top: 96 },
       { id: "b", top: 600 },
     ]);
     const { result } = renderHook(() => useActiveHeading(["a", "b"]));
@@ -81,7 +81,7 @@ describe("useActiveHeading", () => {
     const { result } = renderHook(() => useActiveHeading(["a", "b"]));
     expect(result.current).toBeNull();
 
-    place(document.getElementById("a")!, 72);
+    place(document.getElementById("a")!, 96);
     act(() => void window.dispatchEvent(new Event("hashchange")));
     expect(result.current).toBe("a");
   });
@@ -102,7 +102,7 @@ describe("useActiveHeading", () => {
     // Re-render the article: same ids, brand new element objects.
     seedHeadings([
       { id: "a", top: -900 },
-      { id: "b", top: 72 },
+      { id: "b", top: 96 },
       { id: "c", top: 700 },
     ]);
     scroll();

@@ -1,136 +1,19 @@
-import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
-import { useCallback, useMemo } from "react";
+import { createFileRoute, Outlet } from "@tanstack/react-router";
 import { blogShellFn } from "@/server/public";
-import { searchPostsFn } from "@/server/posts";
-import { TerminalShell, TmNotFound, type NavItem, type PaletteRow } from "@/features/terminal";
-import { useI18n } from "@/i18n/I18nProvider";
-import { FS_BLOG, FS_INTERVIEW, fsCmd } from "@/lib/fsmap";
-import { LABS } from "@/lib/labs";
+import { PublicShell } from "@/features/public-site/PublicShell";
+import { TmNotFound } from "@/features/terminal";
 
-// Blog main-site shell (pathless layout). Terminal aesthetic; the interview
-// sub-site lives under its own /interview layout with a separate header.
+// Preserve the route boundary and loader contract while sharing the public UI.
 export const Route = createFileRoute("/_site")({
   loader: () => blogShellFn(),
-  head: ({ loaderData }) => ({
-    meta: loaderData ? [{ title: loaderData.siteName }] : [],
-  }),
   component: SiteLayout,
-  // Fuzzy not-found matching lands here for dead blog URLs (e.g. a post
-  // loader's notFound()), keeping the TerminalShell around the 404.
   notFoundComponent: TmNotFound,
 });
-
-// Drawer commands come from fsmap (fsCmd) so files render as `cat` — the
-// about page is `cat ./about.md`, not `cd ./about`.
-const NAV_ITEMS: NavItem[] = [
-  { label: "~", to: "/", cmd: fsCmd(FS_BLOG.home) },
-  { label: "posts", to: "/posts", cmd: fsCmd(FS_BLOG.archive) },
-  { label: "works", to: "/works", cmd: fsCmd(FS_BLOG.works) },
-  { label: "tags", to: "/tags", cmd: fsCmd(FS_BLOG.tags) },
-  { label: "labs", to: "/labs", cmd: fsCmd(FS_BLOG.labs) },
-  { label: "interview", to: "/interview", cmd: fsCmd(FS_INTERVIEW.home) },
-  {
-    label: "about",
-    to: "/$slug",
-    params: { slug: "about" },
-    cmd: fsCmd(FS_BLOG.page, { slug: "about" }),
-  },
-];
-
 function SiteLayout() {
-  const { siteName, social } = Route.useLoaderData();
-  const navigate = useNavigate();
-  const { t } = useI18n();
-
-  // Static routes only — pre-loaded and filtered locally in the palette.
-  const palettePages = useMemo<PaletteRow[]>(
-    () => [
-      {
-        kind: "page",
-        label: fsCmd(FS_BLOG.home),
-        haystack: "home ~ ls",
-        onSelect: () => navigate({ to: "/" }),
-      },
-      {
-        kind: "page",
-        label: fsCmd(FS_BLOG.archive),
-        haystack: "posts archive all writing",
-        onSelect: () => navigate({ to: "/posts" }),
-      },
-      {
-        kind: "page",
-        label: fsCmd(FS_BLOG.works),
-        // "projects" and 作品 are what someone reaching for this would type;
-        // the route is /works but the concept has three names.
-        haystack: "works projects portfolio 作品",
-        onSelect: () => navigate({ to: "/works" }),
-      },
-      {
-        kind: "page",
-        label: fsCmd(FS_BLOG.tags),
-        haystack: "tags topics",
-        onSelect: () => navigate({ to: "/tags" }),
-      },
-      {
-        kind: "page",
-        label: fsCmd(FS_BLOG.labs),
-        haystack: "labs demos playground npm packages 套件",
-        onSelect: () => navigate({ to: "/labs" }),
-      },
-      ...LABS.map((lab): PaletteRow => ({
-        kind: "page",
-        label: fsCmd(FS_BLOG.lab, { slug: lab.slug }),
-        haystack: `${lab.slug} ${lab.tagline} demo`,
-        onSelect: () => navigate({ to: lab.to }),
-      })),
-      {
-        kind: "page",
-        label: fsCmd(FS_BLOG.tool, { slug: "wade-giles-name" }),
-        haystack: "wade giles 威妥瑪 護照 拼音 姓名 英文名字 passport romanization",
-        onSelect: () => navigate({ to: "/tools/wade-giles-name" }),
-      },
-      {
-        kind: "page",
-        label: fsCmd(FS_INTERVIEW.home),
-        haystack: "interview prep",
-        onSelect: () => navigate({ to: "/interview" }),
-      },
-      {
-        kind: "page",
-        label: fsCmd(FS_BLOG.page, { slug: "about" }),
-        haystack: "about contact",
-        onSelect: () => navigate({ to: "/$slug", params: { slug: "about" } }),
-      },
-    ],
-    [navigate],
-  );
-
-  // Posts are searched on demand (title match) — never pre-loaded.
-  const paletteSearch = useCallback(
-    async (query: string): Promise<PaletteRow[]> => {
-      const { posts } = await searchPostsFn({ data: { q: query, limit: 20 } });
-      return posts.map((p) => ({
-        kind: "content",
-        label: fsCmd(FS_BLOG.post, { slug: p.slug }),
-        sub: p.title,
-        haystack: `${p.title} ${p.slug}`,
-        onSelect: () => navigate({ to: "/posts/$slug", params: { slug: p.slug } }),
-      }));
-    },
-    [navigate],
-  );
-
+  const data = Route.useLoaderData();
   return (
-    <TerminalShell
-      homeTo="/"
-      navItems={NAV_ITEMS}
-      palettePages={palettePages}
-      paletteSearch={paletteSearch}
-      palettePlaceholder={t("blog.search.placeholder")}
-      siteName={siteName}
-      social={social}
-    >
+    <PublicShell social={data.social}>
       <Outlet />
-    </TerminalShell>
+    </PublicShell>
   );
 }

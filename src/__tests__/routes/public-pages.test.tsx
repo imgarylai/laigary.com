@@ -95,7 +95,7 @@ describe("/ (blog home)", () => {
     expect(await screen.findByText(/gary · engineer/)).toBeTruthy();
     expect(screen.getByText("Notes on building things.")).toBeTruthy();
     // The count and its unit share one span, so match the rendered pair.
-    expect(screen.getAllByText("12 blog.home.postsUnit").length).toBeGreaterThan(0);
+    expect(screen.getByRole("heading", { name: "public.statement" })).toBeTruthy();
   });
 
   it("falls back to a default whoami and drops the intro when settings are empty", async () => {
@@ -111,7 +111,7 @@ describe("/ (blog home)", () => {
 
     await renderRoute("/");
 
-    expect(await screen.findByText(/gary lai/)).toBeTruthy();
+    expect((await screen.findAllByText("public.brand")).length).toBeGreaterThan(0);
     expect(screen.queryByText("Notes on building things.")).toBeNull();
   });
 });
@@ -165,12 +165,10 @@ describe("/tags/$slug", () => {
     await renderRoute("/tags/go");
 
     expect(await screen.findByText("Post One")).toBeTruthy();
-    expect(screen.getAllByText(/^\.\/\d{4}\/$/).map((e) => e.textContent)).toEqual([
-      "./2025/",
-      "./2024/",
-    ]);
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+    expect(screen.getAllByText(/^\d{4}$/).map((e) => e.textContent)).toEqual(["2025", "2024"]);
     // Notes get their own block, not a year heading.
-    expect(screen.getByText("./interview/")).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "public.notes" })).toBeTruthy();
     expect(screen.getByText("Note One")).toBeTruthy();
   });
 
@@ -186,8 +184,8 @@ describe("/tags/$slug", () => {
     await renderRoute("/tags/go");
 
     await screen.findByText("Post One");
-    expect(screen.queryByText("./interview/")).toBeNull();
-    expect(screen.queryByText("./works/")).toBeNull();
+    expect(screen.queryByRole("heading", { name: "public.notes" })).toBeNull();
+    expect(screen.queryByRole("heading", { name: "public.work" })).toBeNull();
   });
 
   it("lists the tag's works in their own block, labelled by year and role", async () => {
@@ -213,7 +211,7 @@ describe("/tags/$slug", () => {
 
     // A works-only tag has a page at all — that is the whole point of this
     // change; before it, tagDataImpl returned null and this 404'd.
-    expect(await screen.findByText("./works/")).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "public.work" })).toBeTruthy();
     expect(screen.getByText("laigary.com")).toBeTruthy();
     // The year takes the date slot and the role the reading-time slot: a work
     // has neither a meaningful day nor a reading time.
@@ -352,8 +350,8 @@ describe("/interview", () => {
 
     await renderRoute("/interview");
 
-    expect(await screen.findByText("./coding")).toBeTruthy();
-    expect(screen.getByText("./system")).toBeTruthy();
+    expect(await screen.findByText("Coding")).toBeTruthy();
+    expect(screen.getByText("System")).toBeTruthy();
     // 7 + 3 across the two sections.
     expect(screen.getByText("10 blog.interview.notesUnit")).toBeTruthy();
     expect(screen.getByText("Recent Note")).toBeTruthy();

@@ -51,7 +51,7 @@ backfills go inside the generated file or via `drizzle-kit generate --custom`.
 ## Architecture pointers
 
 - Routes: `src/routes/` — `_site/` (public blog, pathless layout), `interview/`
-  (sub-site with its own layout), `admin/` (CMS, Cloudflare Access-protected in
+  (notes archive, sharing the public shell), `admin/` (CMS, Cloudflare Access-protected in
   prod only), `api/` (OG image server routes). Server routes use
   `createFileRoute` with `server.handlers`; there is no `createServerFileRoute`.
 - Admin RPC authorization: every `createServerFn` in `src/server/admin/`
@@ -167,7 +167,15 @@ backfills go inside the generated file or via `drizzle-kit generate --custom`.
   `init(yoga.wasm)` — the main satori entry runtime-compiles wasm, which workerd
   forbids. Fonts: JetBrains Mono TTFs from `public/fonts/`; CJK glyphs fetched
   per request from Google Fonts css2 with a Safari 5 UA (forces TTF).
-- Styling: Tailwind 4 + `src/styles/terminal.css` (`--tm-*` vars, hljs theme).
+- Public shell: `src/features/public-site/` owns the Gary Lai header, footer,
+  three-link navigation and shared search across posts and interview notes.
+  `navigation.ts` centralizes Writing → `/posts` until Phase 2 adds `/writing`.
+  Public-only `--site-*` tokens in `public-site.css` also scope the legacy
+  `--tm-*` aliases; do not move those overrides to `:root` (the admin editor
+  still uses the original terminal code/prose theme). Portal content must opt
+  into `.public-overlay`. Public defaults to light; admin retains system.
+- Styling: Tailwind 4 + `src/features/terminal/terminal.css` (legacy editor/code
+  theme) + `src/features/public-site/public-site.css` (public typography).
   Tailwind Typography's decorative `code::before/after` backticks are disabled
   globally in `styles.css` — don't re-enable them.
 - i18n: every user-facing string goes through `t()`; add keys to BOTH

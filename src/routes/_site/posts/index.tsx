@@ -2,9 +2,8 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { postsDataFn } from "@/server/public";
 import { SITE_ORIGIN } from "@/lib/json-ld";
 import { canonicalLink, ogMeta } from "@/lib/og-meta";
-import { PromptLine, TmPage, TmEmpty, TmRowLink, TmRowCells, TmPager } from "@/features/terminal";
+import { TmPage, TmEmpty, TmRowLink, TmRowCells, TmPager } from "@/features/terminal";
 import { useI18n } from "@/i18n/I18nProvider";
-import { FS_BLOG } from "@/lib/fsmap";
 
 const PAGE_SIZE = 8;
 
@@ -66,10 +65,7 @@ function Archive() {
 
   return (
     <TmPage>
-      <PromptLine>
-        {FS_BLOG.archive.prompt()}
-        {totalPages > 1 ? ` | sed -n '${start + 1},${start + pageItems.length}p'` : ""}
-      </PromptLine>
+      <h1>{t("public.writing")}</h1>
 
       {tag && (
         <div className="mb-5 flex items-center gap-2 text-xs text-tm-muted">
@@ -90,7 +86,7 @@ function Archive() {
           tag filtering stay untouched. */}
       {!tag && safePage === 1 && pinnedPosts.length > 0 && (
         <section>
-          <pre className="mt-7 mb-1.5 text-sm text-tm-accent">./pinned/</pre>
+          <h2 className="public-section-title">{t("public.selectedWriting")}</h2>
           {pinnedPosts.map((p) => (
             <TmRowLink key={p.slug} to="/posts/$slug" params={{ slug: p.slug }}>
               <TmRowCells date="*" title={p.title} read={`${p.readingTime}m`} />
@@ -101,7 +97,7 @@ function Archive() {
 
       {years.map((y) => (
         <section key={y}>
-          <pre className="mt-7 mb-1.5 text-sm text-tm-accent">./{y}/</pre>
+          <h2 className="public-section-title">{y}</h2>
           {byYear.get(y)!.map((p) => (
             <TmRowLink key={p.slug} to="/posts/$slug" params={{ slug: p.slug }}>
               <TmRowCells date={p.date.slice(5, 10)} title={p.title} read={`${p.readingTime}m`} />

@@ -9,16 +9,7 @@ import { cn } from "@/lib/utils";
 
 // Page container. `narrow` is the reading width (posts / pages / notes).
 export function TmPage({ narrow = false, children }: { narrow?: boolean; children: ReactNode }) {
-  return (
-    <div
-      className={cn(
-        "mx-auto px-8 pt-8 pb-20 max-sm:px-4 max-sm:pt-5 max-sm:pb-16",
-        narrow ? "max-w-2xl" : "max-w-3xl",
-      )}
-    >
-      {children}
-    </div>
-  );
+  return <div className={cn("public-page", narrow && "public-page-reading")}>{children}</div>;
 }
 
 // The stats line ("N posts · M tags · updated …"). Children are the spans and
@@ -83,7 +74,7 @@ export function TmDirCells({
 }) {
   return (
     <>
-      <span className="whitespace-nowrap text-base text-tm-accent">{label}</span>
+      <span className="public-list-label text-base text-tm-accent">{label}</span>
       <span className="text-sm text-tm-fg max-sm:col-span-full">{desc}</span>
       <span className="whitespace-nowrap text-xs text-tm-muted">{meta}</span>
     </>
@@ -96,7 +87,7 @@ const TmRowLinkBase = forwardRef<HTMLAnchorElement, AnchorHTMLAttributes<HTMLAnc
     <a
       ref={ref}
       className={cn(
-        "grid grid-cols-[60px_1fr_48px] items-baseline gap-3 border-b border-dashed border-tm-border px-2 py-2 text-sm text-tm-fg no-underline hover:bg-tm-subtle max-sm:grid-cols-[52px_1fr] max-sm:gap-x-2.5 max-sm:gap-y-0.5",
+        "public-row grid grid-cols-[60px_1fr_64px] items-baseline gap-3 border-b border-dashed border-tm-border px-2 py-2 text-sm text-tm-fg no-underline hover:bg-tm-subtle max-sm:grid-cols-[52px_1fr] max-sm:gap-x-2.5 max-sm:gap-y-0.5",
         className,
       )}
       {...props}
