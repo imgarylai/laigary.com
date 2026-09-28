@@ -1,17 +1,6 @@
-import { useState } from "react";
-import { useRouter } from "@tanstack/react-router";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { useI18n } from "@/i18n/I18nProvider";
 import { deleteNoteFn } from "@/server/admin/interview";
+import { DeleteContentDialog } from "./DeleteContentDialog";
 
 /**
  * Confirmation for deleting a note. Controlled and trigger-less for the same
@@ -29,39 +18,22 @@ export function DeleteNoteDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const router = useRouter();
   const { t } = useI18n();
-  const [deleting, setDeleting] = useState(false);
-
-  async function handleDelete() {
-    setDeleting(true);
-    const result = await deleteNoteFn({ data: { id: noteId } });
-    setDeleting(false);
-    if (!result.ok) {
-      toast.error(t("noteList.deleteFailed"));
-      return;
-    }
-    toast.success(t("admin.noteDeleted"));
-    onOpenChange(false);
-    router.invalidate();
-  }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{t("noteList.deleteTitle")}</DialogTitle>
-          <DialogDescription>{t("noteList.deleteConfirm", { title: noteTitle })}</DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            {t("noteForm.cancel")}
-          </Button>
-          <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
-            {deleting ? t("noteList.deleting") : t("noteList.delete")}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <DeleteContentDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      onDelete={() => deleteNoteFn({ data: { id: noteId } })}
+      labels={{
+        title: t("noteList.deleteTitle"),
+        description: t("noteList.deleteConfirm", { title: noteTitle }),
+        cancel: t("noteForm.cancel"),
+        confirm: t("noteList.delete"),
+        pending: t("noteList.deleting"),
+        success: t("admin.noteDeleted"),
+        failure: t("noteList.deleteFailed"),
+      }}
+    />
   );
 }

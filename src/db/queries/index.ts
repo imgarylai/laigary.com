@@ -25,7 +25,6 @@ export {
   getAdminPosts,
   getAllAdminPosts,
   getAdminPostById,
-  getTagsWithCounts,
   createPost,
   updatePost,
   deletePost,
@@ -35,6 +34,7 @@ export {
 
 export type { Tag, TagWithUsage, UsedByItem } from "./tags";
 export {
+  getTagsWithCounts,
   getTagsWithUsage,
   getTagBySlug,
   getAllTags,

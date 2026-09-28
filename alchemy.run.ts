@@ -96,47 +96,6 @@ const assets = await R2Bucket("laigary-assets", {
   ],
 });
 
-// The TanStack Start worker.
-//   - `domains` binds the live apex `laigary.com` to this worker.
-//     `adopt: true` takes control of the existing custom-domain binding in the
-//     zone (the apex already has one from the old worker), and
-//     `overrideExistingOrigin` forcibly transfers it off that worker — i.e. this
-//     deploy is the domain cutover. The public frontend is still the scaffold
-//     placeholder until #6.
-//   - `url: true` also keeps the *.workers.dev URL for testing.
-export const worker = await TanStackStart("laigary-web", {
-  name: "laigary-web",
-  build: "vite build",
-  url: true,
-  domains: [{ domainName: "laigary.com", adopt: true, overrideExistingOrigin: true }],
-  bindings: {
-    DB: db,
-    R2_ASSETS: assets,
-    // Non-secret vars.
-    R2_PUBLIC_URL: "https://assets.laigary.com",
-    R2_S3_ENDPOINT: "https://d71f0bf817919431312c711f0543a272.r2.cloudflarestorage.com",
-    R2_BUCKET_NAME: "laigary-assets",
-    // R2 S3 presign credentials (used by the admin upload flow, #28). Supplied
-    // at deploy time via env (the deploy workflow forwards the GitHub secrets);
-    // alchemy.secret encrypts them into the worker rather than storing plaintext.
-    // Guarded so a deploy before the secrets are configured still succeeds
-    // (uploads activate on the next deploy once the secrets exist) instead of
-    // hard-failing on alchemy.secret(undefined).
-    ...(process.env.R2_ACCESS_KEY_ID && process.env.R2_SECRET_ACCESS_KEY
-      ? {
-          R2_ACCESS_KEY_ID: alchemy.secret(process.env.R2_ACCESS_KEY_ID),
-          R2_SECRET_ACCESS_KEY: alchemy.secret(process.env.R2_SECRET_ACCESS_KEY),
-        }
-      : {}),
-    // Bearer token gating the MCP write tools (/mcp endpoint). Guarded the
-    // same way: without the secret the deploy still succeeds and the MCP
-    // server runs read-only.
-    ...(process.env.MCP_ADMIN_TOKEN
-      ? { MCP_ADMIN_TOKEN: alchemy.secret(process.env.MCP_ADMIN_TOKEN) }
-      : {}),
-  },
-});
-
 // Google OAuth IdP. Brings the Access "Sign in with Google" IdP under Alchemy
 // management. `adopt: true` takes over the account's existing Google IdP by name
 // instead of failing on a duplicate.
@@ -203,6 +162,52 @@ export const adminAccess = await AccessApplication("laigary-admin", {
   ],
 });
 
-console.log(`🚀 Deployed: ${worker.url} (laigary.com)`);
+// The TanStack Start worker.
+//   - `domains` binds the live apex `laigary.com` to this worker.
+//     `adopt: true` takes control of the existing custom-domain binding in the
+//     zone (the apex already has one from the old worker), and
+//     `overrideExistingOrigin` forcibly transfers it off that worker — i.e. this
+//     deploy is the domain cutover. The public frontend is still the scaffold
+//     placeholder until #6.
+//   - Disable workers.dev and preview URLs; serve through the custom domain.
+export const worker = await TanStackStart("laigary-web", {
+  name: "laigary-web",
+  build: "vite build",
+  url: false,
+  previewSubdomains: false,
+  domains: [{ domainName: "laigary.com", adopt: true, overrideExistingOrigin: true }],
+  bindings: {
+    DB: db,
+    // Public verification metadata, not secrets. Audience follows the adopted
+    // Access application rather than a manually copied Dashboard value.
+    ACCESS_ISSUER: "https://garylai.cloudflareaccess.com",
+    ACCESS_AUD: adminAccess.aud,
+    R2_ASSETS: assets,
+    // Non-secret vars.
+    R2_PUBLIC_URL: "https://assets.laigary.com",
+    R2_S3_ENDPOINT: "https://d71f0bf817919431312c711f0543a272.r2.cloudflarestorage.com",
+    R2_BUCKET_NAME: "laigary-assets",
+    // R2 S3 presign credentials (used by the admin upload flow, #28). Supplied
+    // at deploy time via env (the deploy workflow forwards the GitHub secrets);
+    // alchemy.secret encrypts them into the worker rather than storing plaintext.
+    // Guarded so a deploy before the secrets are configured still succeeds
+    // (uploads activate on the next deploy once the secrets exist) instead of
+    // hard-failing on alchemy.secret(undefined).
+    ...(process.env.R2_ACCESS_KEY_ID && process.env.R2_SECRET_ACCESS_KEY
+      ? {
+          R2_ACCESS_KEY_ID: alchemy.secret(process.env.R2_ACCESS_KEY_ID),
+          R2_SECRET_ACCESS_KEY: alchemy.secret(process.env.R2_SECRET_ACCESS_KEY),
+        }
+      : {}),
+    // Bearer token gating the MCP write tools (/mcp endpoint). Guarded the
+    // same way: without the secret the deploy still succeeds and the MCP
+    // server runs read-only.
+    ...(process.env.MCP_ADMIN_TOKEN
+      ? { MCP_ADMIN_TOKEN: alchemy.secret(process.env.MCP_ADMIN_TOKEN) }
+      : {}),
+  },
+});
+
+console.log("🚀 Deployed: https://laigary.com");
 
 await app.finalize();

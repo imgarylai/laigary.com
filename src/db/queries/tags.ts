@@ -1,4 +1,4 @@
-import { eq, asc } from "drizzle-orm";
+import { eq, asc, count } from "drizzle-orm";
 import {
   tags,
   postTags,
@@ -9,6 +9,8 @@ import {
   works,
 } from "@/db/schema";
 import { getDb } from "./_db";
+import { cached, cacheKeys } from "./_cache";
+import { liveNotes, livePosts } from "./_visibility";
 import { revalidateContent } from "./_revalidate";
 
 export type UsedByItem = { type: "post" | "note" | "work"; title: string; slug: string };
@@ -166,4 +168,54 @@ export async function deleteTag(id: string): Promise<void> {
   if (!existing) throw new TagNotFoundError(id);
   await db.delete(tags).where(eq(tags.id, id));
   await revalidateContent();
+}
+
+// Tags carrying published content, with the combined count of published posts,
+// interview notes and works — one unified namespace across all three content
+// types. A tag used only by works still appears (so /tags/$slug resolves and
+// the tag lands in the sitemap). Ordered by count, descending.
+export async function getTagsWithCounts(): Promise<
+  { name: string; slug: string; count: number }[]
+> {
+  return cached(cacheKeys.tagCounts, loadTagsWithCounts);
+}
+
+// Cached (see `_cache.ts`). The aggregates make SQLite scan the content table and
+// walk the junction row by row — ~3k rows read per call, on a query the home
+// page and /tags both run on every navigation. Indexes don't help: `status =
+// 'published'` matches nearly every row, so there is nothing to narrow.
+async function loadTagsWithCounts(): Promise<{ name: string; slug: string; count: number }[]> {
+  const db = await getDb();
+
+  const [postCounts, noteCounts, workCounts] = await Promise.all([
+    db
+      .select({ name: tags.name, slug: tags.slug, count: count() })
+      .from(tags)
+      .innerJoin(postTags, eq(tags.id, postTags.tagId))
+      .innerJoin(posts, eq(posts.id, postTags.postId))
+      .where(livePosts())
+      .groupBy(tags.id, tags.name, tags.slug),
+    db
+      .select({ name: tags.name, slug: tags.slug, count: count() })
+      .from(tags)
+      .innerJoin(interviewNoteTags, eq(tags.id, interviewNoteTags.tagId))
+      .innerJoin(interviewNotes, eq(interviewNotes.id, interviewNoteTags.noteId))
+      .where(liveNotes())
+      .groupBy(tags.id, tags.name, tags.slug),
+    db
+      .select({ name: tags.name, slug: tags.slug, count: count() })
+      .from(tags)
+      .innerJoin(workTags, eq(tags.id, workTags.tagId))
+      .innerJoin(works, eq(works.id, workTags.workId))
+      .where(eq(works.status, "published"))
+      .groupBy(tags.id, tags.name, tags.slug),
+  ]);
+
+  const merged = new Map<string, { name: string; slug: string; count: number }>();
+  for (const row of [...postCounts, ...noteCounts, ...workCounts]) {
+    const existing = merged.get(row.slug);
+    if (existing) existing.count += row.count;
+    else merged.set(row.slug, { name: row.name, slug: row.slug, count: row.count });
+  }
+  return [...merged.values()].sort((a, b) => b.count - a.count);
 }

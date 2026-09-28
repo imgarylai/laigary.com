@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireAdmin } from "./auth";
 import { z } from "zod";
 import { type ActionResult } from "./_shared";
 
@@ -88,12 +89,14 @@ export async function confirmUploadImpl(input: ConfirmInput): Promise<ActionResu
 
 /* v8 ignore start -- RPC boundary, unreachable under vitest (see AGENTS.md). */
 export const presignUploadFn = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
   .validator((data: unknown) => presignSchema.parse(data))
   .handler(({ data }) => presignUploadImpl(data));
 /* v8 ignore stop */
 
 /* v8 ignore start -- RPC boundary, unreachable under vitest (see AGENTS.md). */
 export const confirmUploadFn = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
   .validator((data: unknown) => confirmSchema.parse(data))
   .handler(({ data }) => confirmUploadImpl(data));
 /* v8 ignore stop */

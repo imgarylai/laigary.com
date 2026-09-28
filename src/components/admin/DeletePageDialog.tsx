@@ -1,17 +1,6 @@
-import { useState } from "react";
-import { useRouter } from "@tanstack/react-router";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { useI18n } from "@/i18n/I18nProvider";
 import { deletePageFn } from "@/server/admin/pages";
+import { DeleteContentDialog } from "./DeleteContentDialog";
 
 /**
  * Confirmation for deleting a page. Controlled, and carrying no trigger of its
@@ -32,42 +21,22 @@ export function DeletePageDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const router = useRouter();
   const { t } = useI18n();
-  const [deleting, setDeleting] = useState(false);
-
-  async function handleDelete() {
-    setDeleting(true);
-    const result = await deletePageFn({ data: { slug: pageSlug } });
-    setDeleting(false);
-    if (!result.ok) {
-      toast.error(t("deletePage.deleteFailed"));
-      return;
-    }
-    toast.success(t("deletePage.pageDeleted"));
-    onOpenChange(false);
-    // Re-run the list loader so the deleted row disappears.
-    router.invalidate();
-  }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{t("deletePage.deletePage")}</DialogTitle>
-          <DialogDescription>
-            {t("deletePage.confirmMessage", { title: pageTitle })}
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            {t("deletePage.cancel")}
-          </Button>
-          <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
-            {deleting ? t("deletePage.deleting") : t("deletePage.delete")}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <DeleteContentDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      onDelete={() => deletePageFn({ data: { slug: pageSlug } })}
+      labels={{
+        title: t("deletePage.deletePage"),
+        description: t("deletePage.confirmMessage", { title: pageTitle }),
+        cancel: t("deletePage.cancel"),
+        confirm: t("deletePage.delete"),
+        pending: t("deletePage.deleting"),
+        success: t("deletePage.pageDeleted"),
+        failure: t("deletePage.deleteFailed"),
+      }}
+    />
   );
 }

@@ -54,6 +54,16 @@ backfills go inside the generated file or via `drizzle-kit generate --custom`.
   (sub-site with its own layout), `admin/` (CMS, Cloudflare Access-protected in
   prod only), `api/` (OG image server routes). Server routes use
   `createFileRoute` with `server.handlers`; there is no `createServerFileRoute`.
+- Admin RPC authorization: every `createServerFn` in `src/server/admin/`
+  must attach `.middleware([requireAdmin])` from `auth.ts`, including reads and
+  uploads. `/admin` Access protection alone does not cover `/_serverFn`.
+  The middleware verifies the Access assertion header or `CF_Authorization`
+  cookie using `jose`; issuer is the configured team domain and audience comes
+  from Alchemy's `adminAccess.aud`. Only `import.meta.env.DEV` bypasses auth;
+  missing production configuration fails closed. Public RPCs remain public,
+  and MCP keeps its separate bearer-token authorization. workers.dev and
+  preview URLs are disabled in both Alchemy and Wrangler. Tests in
+  `server/admin/rpc-guards.test.ts` guard every admin RPC against omitted auth.
 - Data flow: route `loader` → `createServerFn` (`src/server/public.ts`, admin
   mutations in `src/server/admin/`) → query layer (`src/db/queries/`, Drizzle on
   `env.DB` from `cloudflare:workers`).

@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireAdmin } from "./auth";
 import { z } from "zod";
 import { toFailure, type ActionResult } from "./_shared";
 
@@ -31,17 +32,8 @@ export type PostCreateInput = z.infer<typeof postCreateSchema>;
 
 // Update accepts a full or partial post (the query does a partial update). id
 // identifies the row; every content field is optional.
-export const postUpdateSchema = z.object({
+export const postUpdateSchema = postCreateSchema.partial().extend({
   id: z.string().min(1),
-  title: title.optional(),
-  slug: slug.optional(),
-  contentMd: z.string().min(1).optional(),
-  excerpt: z.string().optional(),
-  coverImageUrl: z.string().optional(),
-  status: z.enum(["draft", "published"]).optional(),
-  pinned: z.boolean().optional(),
-  publishedAt,
-  tagIds: z.array(z.string()).optional(),
 });
 export type PostUpdateInput = z.infer<typeof postUpdateSchema>;
 
@@ -50,7 +42,7 @@ export const postIdSchema = z.object({ id: z.string().min(1) });
 type PostRef = { id: string; slug: string };
 
 // Impl functions hold the mutation + error-mapping logic and are unit-tested
-// with the query layer mocked; the createServerFn wrappers below are the thin
+// against the real query layer; the createServerFn wrappers below are the thin
 // validated RPC boundary the admin forms call.
 export async function createPostImpl(input: PostCreateInput): Promise<ActionResult<PostRef>> {
   try {
@@ -83,18 +75,21 @@ export async function deletePostImpl(input: { id: string }): Promise<ActionResul
 
 /* v8 ignore start -- RPC boundary, unreachable under vitest (see AGENTS.md). */
 export const createPostFn = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
   .validator((data: unknown) => postCreateSchema.parse(data))
   .handler(({ data }) => createPostImpl(data));
 /* v8 ignore stop */
 
 /* v8 ignore start -- RPC boundary, unreachable under vitest (see AGENTS.md). */
 export const updatePostFn = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
   .validator((data: unknown) => postUpdateSchema.parse(data))
   .handler(({ data }) => updatePostImpl(data));
 /* v8 ignore stop */
 
 /* v8 ignore start -- RPC boundary, unreachable under vitest (see AGENTS.md). */
 export const deletePostFn = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
   .validator((data: unknown) => postIdSchema.parse(data))
   .handler(({ data }) => deletePostImpl(data));
 /* v8 ignore stop */

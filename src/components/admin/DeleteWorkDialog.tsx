@@ -1,17 +1,6 @@
-import { useState } from "react";
-import { useRouter } from "@tanstack/react-router";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { useI18n } from "@/i18n/I18nProvider";
 import { deleteWorkFn } from "@/server/admin/works";
+import { DeleteContentDialog } from "./DeleteContentDialog";
 
 /**
  * Confirmation for deleting a work. Controlled, and carrying no trigger of its
@@ -29,42 +18,22 @@ export function DeleteWorkDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const router = useRouter();
   const { t } = useI18n();
-  const [deleting, setDeleting] = useState(false);
-
-  async function handleDelete() {
-    setDeleting(true);
-    const result = await deleteWorkFn({ data: { id: workId } });
-    setDeleting(false);
-    if (!result.ok) {
-      toast.error(t("deleteWork.deleteFailed"));
-      return;
-    }
-    toast.success(t("deleteWork.workDeleted"));
-    onOpenChange(false);
-    // Re-run the list loader so the deleted row disappears.
-    router.invalidate();
-  }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{t("deleteWork.deleteWork")}</DialogTitle>
-          <DialogDescription>
-            {t("deleteWork.confirmMessage", { title: workTitle })}
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            {t("deleteWork.cancel")}
-          </Button>
-          <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
-            {deleting ? t("deleteWork.deleting") : t("deleteWork.delete")}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <DeleteContentDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      onDelete={() => deleteWorkFn({ data: { id: workId } })}
+      labels={{
+        title: t("deleteWork.deleteWork"),
+        description: t("deleteWork.confirmMessage", { title: workTitle }),
+        cancel: t("deleteWork.cancel"),
+        confirm: t("deleteWork.delete"),
+        pending: t("deleteWork.deleting"),
+        success: t("deleteWork.workDeleted"),
+        failure: t("deleteWork.deleteFailed"),
+      }}
+    />
   );
 }

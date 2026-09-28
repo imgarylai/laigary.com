@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireAdmin } from "./auth";
 import { z } from "zod";
 import { toFailure, type ActionResult } from "./_shared";
 
@@ -34,12 +35,14 @@ export async function deletePageImpl(input: { slug: string }): Promise<ActionRes
 
 /* v8 ignore start -- RPC boundary, unreachable under vitest (see AGENTS.md). */
 export const upsertPageFn = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
   .validator((data: unknown) => pageUpsertSchema.parse(data))
   .handler(({ data }) => upsertPageImpl(data));
 /* v8 ignore stop */
 
 /* v8 ignore start -- RPC boundary, unreachable under vitest (see AGENTS.md). */
 export const deletePageFn = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
   .validator((data: unknown) => pageSlugSchema.parse(data))
   .handler(({ data }) => deletePageImpl(data));
 /* v8 ignore stop */
