@@ -270,7 +270,7 @@ backfills go inside the generated file or via `drizzle-kit generate --custom`.
   `Route.useLoaderData()` / `useSearch()` resolve by route id, and only the
   generated tree carries the real ids. A render therefore also exercises
   `__root` and the pathless layout on the way down. Read the header comment
-  before writing one: five `vi.mock` calls are load-bearing (they cannot live
+  before writing one: six `vi.mock` calls are load-bearing (they cannot live
   in the helper — factories are hoisted per file), and `beforeAll(warmRouteTree,
 60_000)` keeps the tree import out of the first test's 5s timeout.
 - The two layouts' palette closures ARE covered now

@@ -14,6 +14,7 @@ import { act, cleanup, fireEvent, screen, waitFor } from "@testing-library/react
 import { installShellStubs, renderRoute, warmRouteTree } from "../helpers/router";
 
 // See helpers/router for why each of these is load-bearing.
+vi.mock("next-themes", () => import("../helpers/next-themes").then((m) => m.mockNextThemes()));
 vi.mock("@/lib/og/render", () => ({ renderOgPng: vi.fn() }));
 vi.mock("@tanstack/react-devtools", () => ({ TanStackDevtools: () => null }));
 vi.mock("@tanstack/react-router-devtools", () => ({ TanStackRouterDevtoolsPanel: () => null }));
