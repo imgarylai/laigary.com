@@ -54,11 +54,17 @@ function Home() {
           <h2>{t("public.work")}</h2>
           <p>{t("blog.home.descWorks")}</p>
         </Link>
+        <Link to="/interview">
+          <h2>{t("public.notes")}</h2>
+          <p>{t("blog.home.descInterview")}</p>
+        </Link>
+        <Link to="/labs">
+          <h2>{t("public.labs")}</h2>
+          <p>{t("blog.home.descLabs")}</p>
+        </Link>
       </div>
       <div className="public-secondary-links">
-        <Link to="/interview">{t("public.notes")}</Link>
         <Link to="/tags">{t("public.topics")}</Link>
-        <Link to="/labs">{t("public.labs")}</Link>
         <Link to="/$slug" params={{ slug: "about" }}>
           {t("public.about")}
         </Link>
