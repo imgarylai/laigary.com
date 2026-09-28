@@ -18,6 +18,7 @@ import { installShellStubs, renderRoute, warmRouteTree } from "../helpers/router
 import { ADMIN_BREADCRUMB_KEYS } from "@/components/admin/admin-location";
 
 // See helpers/router for why each of these is load-bearing.
+vi.mock("next-themes", () => import("../helpers/next-themes").then((m) => m.mockNextThemes()));
 vi.mock("@/lib/og/render", () => ({ renderOgPng: vi.fn() }));
 vi.mock("@tanstack/react-devtools", () => ({ TanStackDevtools: () => null }));
 vi.mock("@tanstack/react-router-devtools", () => ({ TanStackRouterDevtoolsPanel: () => null }));

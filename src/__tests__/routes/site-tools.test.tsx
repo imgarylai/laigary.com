@@ -9,6 +9,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vite
 import { cleanup, screen, fireEvent, waitFor } from "@testing-library/react";
 import { installShellStubs, renderRoute, warmRouteTree } from "../helpers/router";
 
+vi.mock("next-themes", () => import("../helpers/next-themes").then((m) => m.mockNextThemes()));
 vi.mock("@/lib/og/render", () => ({ renderOgPng: vi.fn() }));
 vi.mock("@tanstack/react-devtools", () => ({ TanStackDevtools: () => null }));
 vi.mock("@tanstack/react-router-devtools", () => ({ TanStackRouterDevtoolsPanel: () => null }));

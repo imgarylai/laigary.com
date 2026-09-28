@@ -12,6 +12,7 @@ import { installShellStubs, renderRoute, warmRouteTree } from "../helpers/router
 import { LABS } from "@/lib/labs";
 
 // Same five mocks every route-component test installs — see helpers/router.
+vi.mock("next-themes", () => import("../helpers/next-themes").then((m) => m.mockNextThemes()));
 vi.mock("@/lib/og/render", () => ({ renderOgPng: vi.fn() }));
 vi.mock("@tanstack/react-devtools", () => ({ TanStackDevtools: () => null }));
 vi.mock("@tanstack/react-router-devtools", () => ({ TanStackRouterDevtoolsPanel: () => null }));

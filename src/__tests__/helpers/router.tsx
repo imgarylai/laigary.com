@@ -13,6 +13,8 @@
 // Each test file still declares its own mocks — vi.mock factories are hoisted
 // per file and cannot be installed from here. Every file using this needs:
 //
+//   vi.mock("next-themes", () =>
+//     import("../helpers/next-themes").then((m) => m.mockNextThemes()));
 //   vi.mock("@/lib/og/render", () => ({ renderOgPng: vi.fn() }));
 //   vi.mock("@tanstack/react-devtools", () => ({ TanStackDevtools: () => null }));
 //   vi.mock("@tanstack/react-router-devtools", () => ({
@@ -25,6 +27,9 @@
 //   vi.mock("@/server/locale", () => ({ resolveLocaleFn: async () => "en" }));
 //
 // None are optional:
+//   - next-themes: client-only route tests have no server HTML to hydrate.
+//     Keep the provider real, but make its SSR bootstrap script inert so React
+//     19.3 does not report a script that cannot run on a client mount.
 //   - og/render: the generated tree imports every route eagerly, including
 //     /api/og*, whose satori/resvg `.wasm` imports resolve only in the worker
 //     build and otherwise fail the run before anything renders.
