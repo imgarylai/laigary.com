@@ -79,7 +79,7 @@ beforeEach(() => vi.clearAllMocks());
 afterEach(() => cleanup());
 
 describe("/ (blog home)", () => {
-  it("prints the whoami block and the headline counts", async () => {
+  it("should show the introduction and four content destinations when the home page loads", async () => {
     homeDataFn.mockResolvedValue({
       ...chrome,
       whoami: "gary · engineer",
@@ -94,8 +94,17 @@ describe("/ (blog home)", () => {
 
     expect(await screen.findByText(/gary · engineer/)).toBeTruthy();
     expect(screen.getByText("Notes on building things.")).toBeTruthy();
-    // The count and its unit share one span, so match the rendered pair.
     expect(screen.getByRole("heading", { name: "public.statement" })).toBeTruthy();
+    expect(
+      screen
+        .getAllByRole("heading", { level: 2 })
+        .map((heading) => [heading.textContent, heading.closest("a")?.getAttribute("href")]),
+    ).toEqual([
+      ["public.writing", "/posts"],
+      ["public.work", "/works"],
+      ["public.notes", "/interview"],
+      ["public.labs", "/labs"],
+    ]);
   });
 
   it("falls back to a default whoami and drops the intro when settings are empty", async () => {
