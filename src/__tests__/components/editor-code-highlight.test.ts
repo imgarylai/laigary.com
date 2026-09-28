@@ -10,10 +10,14 @@
 // lowlight's `common` (~37 grammars) while lib/markdown.ts auto-detects within a
 // 9-language subset, so the *same* untagged fence could resolve to different
 // languages on the two sides. Both now read the list from lib/code-languages.
-import { describe, expect, it } from "vitest";
-import { Editor } from "@tiptap/react";
+import { afterEach, describe, expect, it } from "vitest";
+import { createElement } from "react";
+import { cleanup, render } from "@testing-library/react";
+import { Editor, EditorContent } from "@tiptap/react";
 import { createExtensions } from "@/components/admin/editor/extensions";
 import { renderMarkdown } from "@/lib/markdown";
+
+afterEach(cleanup);
 
 function makeEditor(content: string): Editor {
   return new Editor({
@@ -27,10 +31,17 @@ function makeEditor(content: string): Editor {
 /** The hljs token classes the editor paints, in document order. */
 function editorTokens(markdown: string): string[] {
   const editor = makeEditor(markdown);
-  const spans = editor.view.dom.querySelectorAll("[class*='hljs-']");
-  const tokens = [...spans].map((el) => el.className);
-  editor.destroy();
-  return tokens;
+  // React node views now render a placeholder until EditorContent mounts.
+  // Exercise the actual mounted code card, as the browser does, rather than
+  // depending on the old headless fallback to ProseMirror's default <pre>.
+  const mounted = render(createElement(EditorContent, { editor }));
+  try {
+    const spans = editor.view.dom.querySelectorAll("[class*='hljs-']");
+    return [...spans].map((el) => el.className);
+  } finally {
+    mounted.unmount();
+    editor.destroy();
+  }
 }
 
 /** The hljs token classes the published page paints, in document order. */
