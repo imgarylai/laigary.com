@@ -491,6 +491,14 @@
     "deleteFailed": "Failed to delete page"
   },
   "public": {
+    "shareArticle": "Share this article",
+    "shareOnX": "Share on X",
+    "copyLink": "Copy link",
+    "linkCopied": "Copied",
+    "copySuccess": "Link copied. Ready to share.",
+    "copyManually": "Couldn’t copy automatically. Select the link below to copy it.",
+    "articleLink": "Article link",
+    "opensNewTab": "(opens in a new tab)",
     "brand": "Gary Lai",
     "domain": "laigary.com",
     "writing": "Writing",

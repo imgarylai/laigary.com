@@ -1,3 +1,4 @@
+import { ArticleShare } from "@/features/public-site/ArticleShare";
 import { ArticleHeader } from "@/features/public-site/ArticleHeader";
 import { ArticleBody } from "@/features/public-site/ArticleBody";
 import { createFileRoute, notFound, Link } from "@tanstack/react-router";
@@ -83,6 +84,12 @@ function PostPage() {
 
           <ArticleBody html={html} title={post.title} />
         </article>
+
+        <ArticleShare
+          key={`${SITE_ORIGIN}/posts/${encodeURIComponent(post.slug)}`}
+          title={post.title}
+          url={`${SITE_ORIGIN}/posts/${encodeURIComponent(post.slug)}`}
+        />
 
         {post.tags.length > 0 && (
           <div className="mt-8 border-t border-dashed border-tm-border pt-4">
