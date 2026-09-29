@@ -55,7 +55,7 @@ function PagePage() {
   const { page, html } = Route.useLoaderData();
 
   return (
-    <TmPage narrow>
+    <TmPage>
       {/* lang: content region is zh-Hant; <html lang> follows the UI locale. */}
       <article lang="zh-Hant">
         <h1 className="mb-4 text-2xl font-bold leading-snug">{page.title}</h1>

@@ -165,9 +165,11 @@ export const sectionDataFn = createServerFn({ method: "GET" })
 /* v8 ignore stop */
 
 export async function noteDataImpl(data: { section: string; slug: string }) {
-  const { getInterviewNote, getInterviewSectionBySlug } = await import("@/db/queries");
+  const { getInterviewNote, getInterviewSectionBySlug, getSiteSettings } =
+    await import("@/db/queries");
   const { unixToIso, computeReadingTime } = await import("@/lib/date");
   const { extractToc } = await import("@/lib/toc");
+  const { giscusFromSettings } = await import("@/lib/giscus");
   const note = await getInterviewNote(data.section, data.slug);
   if (!note) return null;
   const section = await getInterviewSectionBySlug(data.section);
@@ -187,6 +189,7 @@ export async function noteDataImpl(data: { section: string; slug: string }) {
     },
     html,
     toc: extractToc(html),
+    giscus: giscusFromSettings(await getSiteSettings()),
     ...(await pageChrome(note.title)),
   };
 }

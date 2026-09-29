@@ -376,7 +376,23 @@ describe("noteDataImpl", () => {
     const data = await noteDataImpl({ section: "coding", slug: "gas" });
     expect(data?.note.sectionLabel).toBe("Coding");
     expect(data?.note.tags).toEqual([]);
+    expect(data?.giscus).toBeNull();
     expect(data?.html).toContain("<code>greedy</code>");
+  });
+
+  it("should include comments configuration when a note is published and giscus is configured", async () => {
+    await setSettings({
+      giscus_repo: "owner/blog",
+      giscus_repo_id: "repo-id",
+      giscus_category: "Comments",
+      giscus_category_id: "category-id",
+    });
+    const section = await seedSection({ slug: "coding" });
+    await seedNote(section.id, { slug: "comments" });
+    const { noteDataImpl } = await import("@/server/public");
+    const data = await noteDataImpl({ section: "coding", slug: "comments" });
+    expect(data?.giscus?.repo).toBe("owner/blog");
+    expect(data?.giscus?.categoryId).toBe("category-id");
   });
 
   it("returns null for a missing note", async () => {

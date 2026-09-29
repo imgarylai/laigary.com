@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 // @theme. These wrap the patterns that repeat across pages so the utility
 // strings live in one place.
 
-// Page container. `narrow` is the reading width (posts / pages / notes).
+// Page container. `narrow` is the reading width (posts / notes).
 export function TmPage({ narrow = false, children }: { narrow?: boolean; children: ReactNode }) {
   return <div className={cn("public-page", narrow && "public-page-reading")}>{children}</div>;
 }

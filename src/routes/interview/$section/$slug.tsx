@@ -1,3 +1,5 @@
+import { ArticleHeader } from "@/features/public-site/ArticleHeader";
+import { Comments } from "@/components/Comments";
 import { ArticleBody } from "@/features/public-site/ArticleBody";
 import { createFileRoute, notFound, Link } from "@tanstack/react-router";
 import { noteDataFn } from "@/server/public";
@@ -68,28 +70,23 @@ export const Route = createFileRoute("/interview/$section/$slug")({
 });
 
 function NotePage() {
-  const { note, html, toc } = Route.useLoaderData();
+  const { note, html, toc, giscus } = Route.useLoaderData();
   const { t } = useI18n();
 
   return (
-    <>
+    <div className="public-reading-layout">
       <ReadingProgress />
       <Toc entries={toc} />
       <TmPage narrow>
-        <div className="mb-1.5 flex flex-wrap items-baseline gap-2 text-xs">
-          <span className="text-tm-accent">[{note.sectionLabel}]</span>
-          <span className="text-tm-dim">·</span>
-          <span className="text-tm-muted">{note.date}</span>
-          <span className="text-tm-dim">·</span>
-          <span className="text-tm-muted">
-            {t("blog.interview.minRead", { min: String(note.minutes) })}
-          </span>
-        </div>
-
         {/* lang: content region is zh-Hant; <html lang> follows the UI locale. */}
         <article lang="zh-Hant">
-          <h1 className="mt-2 mb-1 text-2xl font-semibold leading-snug">{note.title}</h1>
-          <AsciiRule className="mb-5" />
+          <ArticleHeader
+            title={note.title}
+            date={note.date}
+            minutes={note.minutes}
+            section={note.sectionLabel}
+          />
+          <AsciiRule className="mb-8" />
 
           <ArticleBody html={html} title={note.title} />
         </article>
@@ -110,6 +107,8 @@ function NotePage() {
           </div>
         )}
 
+        <Comments config={giscus} />
+
         <div className="mt-8 flex gap-3.5">
           <Link
             to="/interview/$section"
@@ -123,6 +122,6 @@ function NotePage() {
           </Link>
         </div>
       </TmPage>
-    </>
+    </div>
   );
 }

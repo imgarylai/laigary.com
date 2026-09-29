@@ -21,7 +21,10 @@ vi.mock("@/i18n/I18nProvider", () => ({
 vi.mock("@/server/locale", () => ({ resolveLocaleFn: async () => "en" }));
 vi.mock("@/server/posts", () => ({ searchPostsFn: async () => ({ posts: [], total: 0 }) }));
 // The post page mounts Giscus, which injects a script into a live DOM.
-vi.mock("@/components/Comments", () => ({ Comments: () => null }));
+vi.mock("@/components/Comments", () => ({
+  Comments: ({ config }: { config: import("@/lib/giscus").GiscusConfig | null }) =>
+    config ? <div data-testid="comments">{config.repo}</div> : null,
+}));
 
 const homeDataFn = vi.fn();
 const tagsDataFn = vi.fn();
@@ -297,6 +300,10 @@ describe("/posts/$slug", () => {
     expect(await screen.findByText("Hello World")).toBeTruthy();
     expect(screen.getByText("The body.")).toBeTruthy();
     expect(screen.getByText("#go")).toBeTruthy();
+    const title = screen.getByRole("heading", { name: "Hello World" });
+    const date = screen.getByText("2025-07-19");
+    expect(title.compareDocumentPosition(date) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getAllByText("public.backWriting")).toHaveLength(1);
   });
 
   it("hides the tag row for an untagged post", async () => {
@@ -392,6 +399,12 @@ describe("/interview/$section/$slug", () => {
       },
       html: "<p>Walk the tank.</p>",
       toc: [],
+      giscus: {
+        repo: "owner/blog",
+        repoId: "repo-id",
+        category: "Comments",
+        categoryId: "category-id",
+      },
     });
 
     await renderRoute("/interview/coding/gas");
@@ -399,5 +412,9 @@ describe("/interview/$section/$slug", () => {
     expect(await screen.findByText("134. Gas Station")).toBeTruthy();
     expect(screen.getByText("Walk the tank.")).toBeTruthy();
     expect(screen.getByText("#greedy")).toBeTruthy();
+    expect(screen.getByTestId("comments").textContent).toBe("owner/blog");
+    const title = screen.getByRole("heading", { name: "134. Gas Station" });
+    const date = screen.getByText("2025-06-01");
+    expect(title.compareDocumentPosition(date) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 });
