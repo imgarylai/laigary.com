@@ -1,3 +1,4 @@
+import { ArticleShare } from "@/features/public-site/ArticleShare";
 import { ArticleHeader } from "@/features/public-site/ArticleHeader";
 import { Comments } from "@/components/Comments";
 import { ArticleBody } from "@/features/public-site/ArticleBody";
@@ -90,6 +91,12 @@ function NotePage() {
 
           <ArticleBody html={html} title={note.title} />
         </article>
+
+        <ArticleShare
+          key={`${SITE_ORIGIN}/interview/${encodeURIComponent(note.section)}/${encodeURIComponent(note.slug)}`}
+          title={note.title}
+          url={`${SITE_ORIGIN}/interview/${encodeURIComponent(note.section)}/${encodeURIComponent(note.slug)}`}
+        />
 
         {note.tags.length > 0 && (
           <div className="mt-8 border-t border-dashed border-tm-border pt-4">

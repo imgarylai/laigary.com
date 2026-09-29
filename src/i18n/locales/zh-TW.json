@@ -491,6 +491,14 @@
     "deleteFailed": "刪除頁面失敗"
   },
   "public": {
+    "shareArticle": "分享這篇文章",
+    "shareOnX": "分享到 X",
+    "copyLink": "複製連結",
+    "linkCopied": "已複製",
+    "copySuccess": "連結已複製，可以分享給朋友了。",
+    "copyManually": "無法自動複製，請選取下方連結並手動複製。",
+    "articleLink": "文章連結",
+    "opensNewTab": "（在新分頁開啟）",
     "brand": "Gary Lai",
     "domain": "laigary.com",
     "writing": "文章",

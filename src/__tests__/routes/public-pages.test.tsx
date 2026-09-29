@@ -300,6 +300,10 @@ describe("/posts/$slug", () => {
     expect(await screen.findByText("Hello World")).toBeTruthy();
     expect(screen.getByText("The body.")).toBeTruthy();
     expect(screen.getByText("#go")).toBeTruthy();
+    const share = screen.getByRole("link", { name: /public.shareOnX/ });
+    expect(new URL(share.getAttribute("href")!).searchParams.get("url")).toBe(
+      "https://laigary.com/posts/hello",
+    );
     const title = screen.getByRole("heading", { name: "Hello World" });
     const date = screen.getByText("2025-07-19");
     expect(title.compareDocumentPosition(date) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -412,6 +416,10 @@ describe("/interview/$section/$slug", () => {
     expect(await screen.findByText("134. Gas Station")).toBeTruthy();
     expect(screen.getByText("Walk the tank.")).toBeTruthy();
     expect(screen.getByText("#greedy")).toBeTruthy();
+    const share = screen.getByRole("link", { name: /public.shareOnX/ });
+    expect(new URL(share.getAttribute("href")!).searchParams.get("url")).toBe(
+      "https://laigary.com/interview/coding/gas",
+    );
     expect(screen.getByTestId("comments").textContent).toBe("owner/blog");
     const title = screen.getByRole("heading", { name: "134. Gas Station" });
     const date = screen.getByText("2025-06-01");
