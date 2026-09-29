@@ -427,7 +427,9 @@
       "sectionsUnit": "sections",
       "notesArrow": "{count} notes →",
       "noneYet": "no notes yet.",
-      "minRead": "{min} min read"
+      "minRead": "{min} min read",
+      "hourRead": "{hours} hr read",
+      "hourMinRead": "{hours} hr {min} min read"
     },
     "works": {
       "lead": "Projects I have built, alone or with others.",

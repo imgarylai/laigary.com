@@ -411,3 +411,30 @@
 .public-site .tm-prose > [aria-hidden="true"]:first-child + * {
   margin-top: 0;
 }
+
+.public-reading-layout {
+  position: relative;
+}
+.public-toc-gutter {
+  position: absolute;
+  top: 64px;
+  bottom: 112px;
+  right: calc(50% + 23rem);
+  width: 14rem;
+}
+.public-toc-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--site-muted) transparent;
+  scrollbar-gutter: stable;
+  /* Local covers reveal the scroll shadows only when more content is hidden. */
+  background:
+    linear-gradient(var(--site-canvas) 30%, transparent) center top / 100% 32px local,
+    linear-gradient(transparent, var(--site-canvas) 70%) center bottom / 100% 32px local,
+    radial-gradient(farthest-side at 50% 0, #0003, transparent) center top / 100% 12px scroll,
+    radial-gradient(farthest-side at 50% 100%, #0003, transparent) center bottom / 100% 12px scroll;
+  background-repeat: no-repeat;
+}
+.public-site .public-article-header h1 {
+  margin-top: 0;
+  margin-bottom: 16px;
+}

@@ -1,25 +1,25 @@
 {
-  "short_name": "Unconstrained",
-  "name": "Unconstrained",
+  "short_name": "Gary Lai",
+  "name": "Gary Lai",
   "icons": [
     {
-      "src": "favicon.svg",
+      "src": "favicon.svg?v=gl-1",
       "type": "image/svg+xml",
       "sizes": "any"
     },
     {
-      "src": "icon-192.png",
+      "src": "icon-192.png?v=gl-1",
       "type": "image/png",
       "sizes": "192x192"
     },
     {
-      "src": "icon-512.png",
+      "src": "icon-512.png?v=gl-1",
       "type": "image/png",
       "sizes": "512x512"
     }
   ],
   "start_url": "/",
   "display": "standalone",
-  "theme_color": "#0d1117",
-  "background_color": "#0d1117"
+  "theme_color": "#365f4b",
+  "background_color": "#f7f6f2"
 }

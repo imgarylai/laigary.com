@@ -427,7 +427,9 @@
       "sectionsUnit": "個分類",
       "notesArrow": "{count} 則筆記 →",
       "noneYet": "還沒有筆記。",
-      "minRead": "{min} 分鐘閱讀"
+      "minRead": "{min} 分鐘閱讀",
+      "hourRead": "{hours} 小時閱讀",
+      "hourMinRead": "{hours} 小時 {min} 分鐘閱讀"
     },
     "works": {
       "lead": "我做過的專案，有些是一個人，有些不是。",

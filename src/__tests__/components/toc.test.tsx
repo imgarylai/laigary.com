@@ -59,6 +59,14 @@ describe("Toc", () => {
     expect(links[0].getAttribute("href")).toBe(`#${encodeURIComponent("三種基本型")}`);
   });
 
+  it("should retain accessible navigation names without a visible title when rendered", () => {
+    render(<Toc entries={ENTRIES} />);
+    expect(gutterNav()).toBeTruthy();
+    fireEvent.click(toggle());
+    expect(screen.getAllByRole("navigation", { name: "blog.post.toc" })).toHaveLength(2);
+    expect(screen.queryByText("blog.post.toc")).toBeNull();
+  });
+
   it("should indent h3 entries deeper than h2 entries", () => {
     render(<Toc entries={ENTRIES} />);
     const [h2, h3] = within(gutterNav()).getAllByRole("link");

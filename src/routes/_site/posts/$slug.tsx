@@ -1,3 +1,4 @@
+import { ArticleHeader } from "@/features/public-site/ArticleHeader";
 import { ArticleBody } from "@/features/public-site/ArticleBody";
 import { createFileRoute, notFound, Link } from "@tanstack/react-router";
 import { postDataFn } from "@/server/public";
@@ -69,23 +70,15 @@ function PostPage() {
   const { t } = useI18n();
 
   return (
-    <>
+    <div className="public-reading-layout">
       <ReadingProgress />
       <Toc entries={toc} />
       <TmPage narrow>
-        <Link to="/posts" className="mb-4 inline-block text-sm text-tm-accent no-underline">
-          {t("public.backWriting")}
-        </Link>
-
         {/* lang: content is written in Traditional Chinese while <html lang>
             follows the UI locale — mark the content region so the language
             signals agree with the JSON-LD inLanguage declaration. */}
         <article lang="zh-Hant">
-          <h1 className="mt-5 mb-2.5 text-2xl font-bold leading-snug">{post.title}</h1>
-          <p className="mb-8 text-sm text-tm-muted">
-            <time dateTime={post.date}>{post.date.slice(0, 10)}</time> ·{" "}
-            {t("blog.interview.minRead", { min: String(post.readingTime) })}
-          </p>
+          <ArticleHeader title={post.title} date={post.date} minutes={post.readingTime} />
           <AsciiRule className="mb-8" />
 
           <ArticleBody html={html} title={post.title} />
@@ -145,6 +138,6 @@ function PostPage() {
           </Link>
         </p>
       </TmPage>
-    </>
+    </div>
   );
 }
