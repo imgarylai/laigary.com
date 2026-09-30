@@ -25,6 +25,31 @@ describe("ogMeta", () => {
     expect(find(tags, "content", "twitter:image")).toBe(`${base.image}?v=bubble-tea-2`);
   });
 
+  it("should describe generated images and attribute the site when building social tags", () => {
+    const tags = ogMeta(base);
+    expect(find(tags, "content", "og:image:alt")).toBe("Two Sum");
+    expect(find(tags, "content", "twitter:image:alt")).toBe("Two Sum");
+    expect(find(tags, "content", "og:image:type")).toBe("image/png");
+    expect(find(tags, "content", "twitter:site")).toBe("@imgarylai");
+    expect(find(tags, "content", "theme-color")).toBe("#faf6ed");
+  });
+  it("should preserve supplied alt text without guessing the format when using a cover", () => {
+    const tags = ogMeta({
+      ...base,
+      image: "https://assets.laigary.com/photo",
+      imageAlt: "A Paris street",
+    });
+    expect(find(tags, "content", "og:image:alt")).toBe("A Paris street");
+    expect(find(tags, "content", "twitter:image:alt")).toBe("A Paris street");
+    expect(find(tags, "content", "og:image:type")).toBeUndefined();
+  });
+  it("should cap all description tags including the ellipsis when an excerpt exceeds the budget", () => {
+    const tags = ogMeta({ ...base, description: "旅".repeat(161) });
+    for (const key of ["description", "og:description", "twitter:description"]) {
+      expect(find(tags, "content", key)).toBe("旅".repeat(159) + "…");
+    }
+  });
+
   it("should version both image tags when the article changes", () => {
     const tags = ogMeta({ ...base, modifiedTime: "2026-09-28T12:00:00Z" });
     const image = find(tags, "content", "og:image")!;
