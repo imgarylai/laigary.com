@@ -41,6 +41,7 @@ export async function serveOgImage(
   const cacheUrl = new URL(request.url);
   cacheUrl.search = "";
   cacheUrl.searchParams.set("design", OG_DESIGN_VERSION);
+  cacheUrl.searchParams.set("build", __BUILD_ID__);
   cacheUrl.searchParams.set("content", await getContentVersion());
   const cacheKey = cacheUrl.toString();
   const cached = await cache?.match(cacheKey);

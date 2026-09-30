@@ -96,24 +96,38 @@ describe("hasCacheBypassParam", () => {
 });
 
 describe("cacheKeyUrl", () => {
+  it("should retire cached HTML and markdown when the build changes without a content write", () => {
+    for (const path of ["/", "/posts/hello", "/posts/hello.md"]) {
+      const oldKey = cacheKeyUrl(`https://laigary.com${path}`, "en", "7", "build-before");
+      const newKey = cacheKeyUrl(`https://laigary.com${path}`, "en", "7", "build-after");
+      expect(newKey).not.toBe(oldKey);
+    }
+  });
+
+  it("should ignore a caller-supplied build version when constructing the cache key", () => {
+    expect(cacheKeyUrl("https://laigary.com/?__build=old", "en", "7", "new")).toBe(
+      cacheKeyUrl("https://laigary.com/", "en", "7", "new"),
+    );
+  });
+
   it("should key different locales apart on the same url", () => {
-    const en = cacheKeyUrl("https://laigary.com/posts", "en", "1");
-    const zh = cacheKeyUrl("https://laigary.com/posts", "zh-TW", "1");
+    const en = cacheKeyUrl("https://laigary.com/posts", "en", "1", "build-a");
+    const zh = cacheKeyUrl("https://laigary.com/posts", "zh-TW", "1", "build-a");
     expect(en).not.toBe(zh);
   });
 
   it("should key different content versions apart", () => {
-    const before = cacheKeyUrl("https://laigary.com/posts", "en", "1");
-    const after = cacheKeyUrl("https://laigary.com/posts", "en", "2");
+    const before = cacheKeyUrl("https://laigary.com/posts", "en", "1", "build-a");
+    const after = cacheKeyUrl("https://laigary.com/posts", "en", "2", "build-a");
     expect(before).not.toBe(after);
   });
 
   it("should keep the params a public route actually renders from", () => {
     // Page 2 of a section is a different document from page 1, and so is the
     // same page filtered by a tag.
-    const first = cacheKeyUrl("https://laigary.com/interview/coding", "en", "1");
-    const paged = cacheKeyUrl("https://laigary.com/interview/coding?page=2", "en", "1");
-    const tagged = cacheKeyUrl("https://laigary.com/interview/coding?tag=go", "en", "1");
+    const first = cacheKeyUrl("https://laigary.com/interview/coding", "en", "1", "build-a");
+    const paged = cacheKeyUrl("https://laigary.com/interview/coding?page=2", "en", "1", "build-a");
+    const tagged = cacheKeyUrl("https://laigary.com/interview/coding?tag=go", "en", "1", "build-a");
 
     expect(paged).toContain("page=2");
     expect(tagged).toContain("tag=go");
@@ -123,8 +137,13 @@ describe("cacheKeyUrl", () => {
   it("should ignore a param no route reads", () => {
     // A shared link carrying ?utm_source= used to miss the entry the bare URL
     // had already stored, and paid a full SSR render plus its D1 queries.
-    const bare = cacheKeyUrl("https://laigary.com/posts", "en", "1");
-    const tracked = cacheKeyUrl("https://laigary.com/posts?utm_source=twitter", "en", "1");
+    const bare = cacheKeyUrl("https://laigary.com/posts", "en", "1", "build-a");
+    const tracked = cacheKeyUrl(
+      "https://laigary.com/posts?utm_source=twitter",
+      "en",
+      "1",
+      "build-a",
+    );
     expect(tracked).toBe(bare);
   });
 
@@ -135,28 +154,38 @@ describe("cacheKeyUrl", () => {
     // one of them at the origin.
     const keys = new Set(
       ["a=1", "a=2", "a=3", "fbclid=xyz", "gclid=abc"].map((q) =>
-        cacheKeyUrl(`https://laigary.com/?${q}`, "en", "1"),
+        cacheKeyUrl(`https://laigary.com/?${q}`, "en", "1", "build-a"),
       ),
     );
     expect(keys.size).toBe(1);
   });
 
   it("should file the same params in either order under one key", () => {
-    const a = cacheKeyUrl("https://laigary.com/interview/coding?tag=go&page=2", "en", "1");
-    const b = cacheKeyUrl("https://laigary.com/interview/coding?page=2&tag=go", "en", "1");
+    const a = cacheKeyUrl(
+      "https://laigary.com/interview/coding?tag=go&page=2",
+      "en",
+      "1",
+      "build-a",
+    );
+    const b = cacheKeyUrl(
+      "https://laigary.com/interview/coding?page=2&tag=go",
+      "en",
+      "1",
+      "build-a",
+    );
     expect(a).toBe(b);
   });
 
   it("should keep the path apart from the query string", () => {
     // Dropping unknown params must not collapse two different pages.
-    const posts = cacheKeyUrl("https://laigary.com/posts?utm_source=x", "en", "1");
-    const works = cacheKeyUrl("https://laigary.com/works?utm_source=x", "en", "1");
+    const posts = cacheKeyUrl("https://laigary.com/posts?utm_source=x", "en", "1", "build-a");
+    const works = cacheKeyUrl("https://laigary.com/works?utm_source=x", "en", "1", "build-a");
     expect(posts).not.toBe(works);
   });
 
   it("should be stable for the same url, locale and version", () => {
-    const a = cacheKeyUrl("https://laigary.com/", "en", "7");
-    const b = cacheKeyUrl("https://laigary.com/", "en", "7");
+    const a = cacheKeyUrl("https://laigary.com/", "en", "7", "build-a");
+    const b = cacheKeyUrl("https://laigary.com/", "en", "7", "build-a");
     expect(a).toBe(b);
   });
 });
