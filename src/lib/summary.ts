@@ -10,5 +10,16 @@ export function plainTextSummary(html: string, max: number): string {
     .replace(/<[^>]+>/g, " ")
     .replace(/\s+/g, " ")
     .trim();
-  return text.length > max ? `${text.slice(0, max)}…` : text;
+  return truncateSummary(text, max);
+}
+
+/** Include the ellipsis in the budget and never split a Unicode code point. */
+export function truncateSummary(text: string, max = META_SUMMARY_MAX): string {
+  const characters = Array.from(text);
+  if (characters.length <= max) return text;
+  if (max <= 0) return "";
+  return `${characters
+    .slice(0, max - 1)
+    .join("")
+    .trimEnd()}…`;
 }

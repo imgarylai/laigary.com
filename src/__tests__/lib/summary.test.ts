@@ -10,8 +10,12 @@ describe("plainTextSummary", () => {
 
   it("should truncate with an ellipsis when the text exceeds max", () => {
     const out = plainTextSummary(`<p>${"word ".repeat(50)}</p>`, 20);
-    expect(out.length).toBe(21);
+    expect(out.length).toBe(20);
     expect(out.endsWith("…")).toBe(true);
+  });
+
+  it("should keep an emoji intact when truncating at a unicode boundary", () => {
+    expect(plainTextSummary("<p>甲乙🙂丙丁</p>", 4)).toBe("甲乙🙂…");
   });
 
   it("should return short text untouched when under max", () => {

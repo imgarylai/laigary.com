@@ -1,3 +1,5 @@
+import { BRAND_CANVAS } from "@/lib/brand";
+import { truncateSummary } from "@/lib/summary";
 import { OG_DESIGN_VERSION } from "@/lib/og/version";
 
 // Open Graph / Twitter meta tags for the head() of content routes. Facebook &
@@ -12,6 +14,8 @@ export interface OgMetaInput {
   url: string;
   /** Absolute image URL (an /api/og* endpoint or a cover image). */
   image: string;
+  /** Description of a custom cover; generated title cards default to their title. */
+  imageAlt?: string;
   type: "website" | "article";
   description?: string;
   /** ISO publish date; emitted as article:published_time for articles. */
@@ -51,13 +55,17 @@ export function ogMeta(input: OgMetaInput): Array<Record<string, string>> {
     if (input.modifiedTime) imageUrl.searchParams.set("updated", input.modifiedTime);
   }
   const image = isOwnOgEndpoint ? imageUrl.toString() : input.image;
+  const imageAlt = input.imageAlt || input.title;
   const tags: Array<Record<string, string>> = [
+    { name: "theme-color", content: BRAND_CANVAS },
     { property: "og:title", content: input.title },
     { property: "og:site_name", content: input.siteName },
     { property: "og:url", content: input.url },
     { property: "og:image", content: image },
+    { property: "og:image:alt", content: imageAlt },
     ...(isOwnOgEndpoint
       ? [
+          { property: "og:image:type", content: "image/png" },
           { property: "og:image:width", content: "1200" },
           { property: "og:image:height", content: "630" },
         ]
@@ -72,14 +80,17 @@ export function ogMeta(input: OgMetaInput): Array<Record<string, string>> {
       ? [{ property: "article:modified_time", content: input.modifiedTime }]
       : []),
     { name: "twitter:card", content: "summary_large_image" },
+    { name: "twitter:site", content: "@imgarylai" },
     { name: "twitter:title", content: input.title },
     { name: "twitter:image", content: image },
+    { name: "twitter:image:alt", content: imageAlt },
   ];
   if (input.description) {
+    const description = truncateSummary(input.description);
     tags.push(
-      { name: "description", content: input.description },
-      { property: "og:description", content: input.description },
-      { name: "twitter:description", content: input.description },
+      { name: "description", content: description },
+      { property: "og:description", content: description },
+      { name: "twitter:description", content: description },
     );
   }
   return tags;
