@@ -263,7 +263,9 @@ describe("/works/$slug head", () => {
   it("falls back to the generated card when a work has no cover image", async () => {
     const out = await head(loaded(work("nocover")));
 
-    expect(ogImage(out)).toBe("https://laigary.com/api/og/works/nocover");
+    expect(ogImage(out)).toBe(
+      "https://laigary.com/api/og/works/nocover?v=editorial-1&updated=2025-01-02",
+    );
   });
 
   it("prefers the uploaded cover image when there is one", async () => {

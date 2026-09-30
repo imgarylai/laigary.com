@@ -1,15 +1,15 @@
 // Font loading for OG images.
 //
-// JetBrains Mono is inlined into the worker bundle at build time (Vite
+// Lato is inlined into the worker bundle at build time (Vite
 // `?inline` -> base64) and decoded once per isolate — a self-fetch of the
 // site's own origin 522s in production, so the bytes must not come from the
 // network. satori cannot parse the variable woff2 that @fontsource-variable
-// provides, hence the static TTFs. CJK glyphs are not in JetBrains Mono at
+// provides, hence the static TTFs. CJK glyphs are not in Lato at
 // all, so a per-request Noto Sans TC subset covering exactly the rendered
 // glyphs is fetched from the Google Fonts css2 API.
 
-import jbmRegularInline from "./fonts/JetBrainsMono-Regular.ttf?inline";
-import jbmBoldInline from "./fonts/JetBrainsMono-Bold.ttf?inline";
+import latoRegularInline from "./fonts/Lato-Regular.ttf?inline";
+import latoBoldInline from "./fonts/Lato-Bold.ttf?inline";
 import type { OgNode } from "./templates";
 
 export interface OgFont {
@@ -26,20 +26,11 @@ type FetchFn = (input: string, init?: RequestInit) => Promise<Response>;
 const TTF_FORCING_UA =
   "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_8; de-at) AppleWebKit/533.21.1 (KHTML, like Gecko) Version/5.0.5 Safari/533.21.1";
 
-/**
- * Every glyph appearing in the node tree that needs the CJK fallback font,
- * deduped. JSON.stringify escapes control characters, so what remains outside
- * printable ASCII is the non-ASCII set; box-drawing characters (U+2500–U+257F,
- * e.g. the `─` / `═` ASCII rules) are dropped because JetBrains Mono already
- * covers them — only the CJK-and-friends glyphs actually need Noto Sans TC.
- */
+/** Deduped non-ASCII code points, preserving supplementary CJK characters. */
 export function collectNonAsciiGlyphs(node: OgNode): string {
-  const matches = JSON.stringify(node).match(/[^ -~]/g) ?? [];
-  const needsCjk = matches.filter((c) => {
-    const cp = c.codePointAt(0) ?? 0;
-    return cp < 0x2500 || cp > 0x257f;
-  });
-  return [...new Set(needsCjk)].join("");
+  return [
+    ...new Set(Array.from(JSON.stringify(node)).filter((char) => char.codePointAt(0)! > 0x7e)),
+  ].join("");
 }
 
 export function buildGoogleFontsCssUrl(family: string, weight: 400 | 700, text: string): string {
@@ -83,16 +74,16 @@ function decodeDataUri(uri: string): ArrayBuffer {
 
 let bundledFonts: OgFont[] | null = null;
 
-/** JetBrains Mono decoded from the inlined build-time assets, once per isolate. */
+/** Lato decoded from the inlined build-time assets, once per isolate. */
 export function loadBundledFonts(): OgFont[] {
   bundledFonts ??= [
-    { name: "JetBrains Mono", data: decodeDataUri(jbmRegularInline), weight: 400, style: "normal" },
-    { name: "JetBrains Mono", data: decodeDataUri(jbmBoldInline), weight: 700, style: "normal" },
+    { name: "Lato", data: decodeDataUri(latoRegularInline), weight: 400, style: "normal" },
+    { name: "Lato", data: decodeDataUri(latoBoldInline), weight: 700, style: "normal" },
   ];
   return bundledFonts;
 }
 
-/** The full font set for one render: bundled mono + CJK subsets for `text`. */
+/** The full font set for one render: bundled sans + CJK subsets for `text`. */
 export async function loadOgFonts(node: OgNode, fetchFn: FetchFn = fetch): Promise<OgFont[]> {
   const glyphs = collectNonAsciiGlyphs(node);
   const [cjkRegular, cjkBold] = await Promise.all([

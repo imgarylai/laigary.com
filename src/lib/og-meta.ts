@@ -1,3 +1,5 @@
+import { OG_DESIGN_VERSION } from "@/lib/og/version";
+
 // Open Graph / Twitter meta tags for the head() of content routes. Facebook &
 // co. read these — not JSON-LD — so every shareable page must carry them
 // explicitly (the FB debugger warns on a missing og:image otherwise).
@@ -41,12 +43,19 @@ export function ogMeta(input: OgMetaInput): Array<Record<string, string>> {
   // crawlers show the card on the very first share, before the image has been
   // processed asynchronously. Cover images have unknown dimensions — claiming
   // wrong ones is worse than omitting them, so those get no size tags.
-  const isOwnOgEndpoint = input.image.includes("/api/og");
+  const imageUrl = new URL(input.image);
+  const isOwnOgEndpoint =
+    imageUrl.origin === new URL(input.url).origin && /^\/api\/og(?:\/|$)/.test(imageUrl.pathname);
+  if (isOwnOgEndpoint) {
+    imageUrl.searchParams.set("v", OG_DESIGN_VERSION);
+    if (input.modifiedTime) imageUrl.searchParams.set("updated", input.modifiedTime);
+  }
+  const image = isOwnOgEndpoint ? imageUrl.toString() : input.image;
   const tags: Array<Record<string, string>> = [
     { property: "og:title", content: input.title },
     { property: "og:site_name", content: input.siteName },
     { property: "og:url", content: input.url },
-    { property: "og:image", content: input.image },
+    { property: "og:image", content: image },
     ...(isOwnOgEndpoint
       ? [
           { property: "og:image:width", content: "1200" },
@@ -64,7 +73,7 @@ export function ogMeta(input: OgMetaInput): Array<Record<string, string>> {
       : []),
     { name: "twitter:card", content: "summary_large_image" },
     { name: "twitter:title", content: input.title },
-    { name: "twitter:image", content: input.image },
+    { name: "twitter:image", content: image },
   ];
   if (input.description) {
     tags.push(

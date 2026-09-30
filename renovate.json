@@ -65,6 +65,12 @@
       "matchUpdateTypes": ["major"],
       "automerge": false,
       "labels": ["dependencies", "major"]
+    },
+    {
+      "description": "Satori 0.33 HarfBuzz dynamically compiles Wasm, forbidden in Workers; review with test:og before upgrading",
+      "matchPackageNames": ["satori"],
+      "allowedVersions": "<0.33.0",
+      "automerge": false
     }
   ]
 }

@@ -33,5 +33,14 @@ export async function renderOgPng(node: OgNode, fonts: OgFont[]): Promise<Uint8A
   // satori's ReactNode input is structurally compatible with our OgNode shape.
   const svg = await satori(node as never, { width: OG_WIDTH, height: OG_HEIGHT, fonts });
   const resvg = new Resvg(svg, { fitTo: { mode: "width", value: OG_WIDTH } });
-  return resvg.render().asPng();
+  try {
+    const rendered = resvg.render();
+    try {
+      return rendered.asPng();
+    } finally {
+      rendered.free();
+    }
+  } finally {
+    resvg.free();
+  }
 }

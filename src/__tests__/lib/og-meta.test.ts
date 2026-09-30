@@ -18,13 +18,25 @@ describe("ogMeta", () => {
     const tags = ogMeta(base);
     expect(find(tags, "content", "og:title")).toBe("Two Sum");
     expect(find(tags, "content", "og:site_name")).toBe("Unconstrained");
-    expect(find(tags, "content", "og:image")).toBe(base.image);
+    expect(find(tags, "content", "og:image")).toBe(`${base.image}?v=editorial-1`);
     expect(find(tags, "content", "og:url")).toBe(base.url);
     expect(find(tags, "content", "og:type")).toBe("article");
     expect(find(tags, "content", "twitter:card")).toBe("summary_large_image");
-    expect(find(tags, "content", "twitter:image")).toBe(base.image);
+    expect(find(tags, "content", "twitter:image")).toBe(`${base.image}?v=editorial-1`);
   });
 
+  it("should version both image tags when the article changes", () => {
+    const tags = ogMeta({ ...base, modifiedTime: "2026-09-28T12:00:00Z" });
+    const image = find(tags, "content", "og:image")!;
+    expect(new URL(image).searchParams.get("updated")).toBe("2026-09-28T12:00:00Z");
+    expect(find(tags, "content", "twitter:image")).toBe(image);
+  });
+  it("should preserve external images even when their path resembles an OG endpoint", () => {
+    const image = "https://example.com/api/og/cover";
+    const tags = ogMeta({ ...base, image });
+    expect(find(tags, "content", "og:image")).toBe(image);
+    expect(find(tags, "content", "og:image:width")).toBeUndefined();
+  });
   it("should include description tags when a description is provided", () => {
     const tags = ogMeta({ ...base, description: "hello" });
     expect(find(tags, "content", "og:description")).toBe("hello");
