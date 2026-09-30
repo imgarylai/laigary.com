@@ -10,7 +10,8 @@ import { getSiteBranding, serveOgImage } from "@/server/og";
 
 const getContentVersion = vi.fn(() => Promise.resolve("7"));
 vi.mock("@/db/queries/_revalidate", () => ({ getContentVersion: () => getContentVersion() }));
-const cacheKey = "http://test.local/api/og/posts/hello?design=bubble-tea-2&content=7";
+const cacheKey =
+  "http://test.local/api/og/posts/hello?design=bubble-tea-2&build=test-build&content=7";
 const getSiteSettings = vi.fn();
 const getNextScheduledPublishAt = vi.fn(() => Promise.resolve<number | null>(null));
 vi.mock("@/db/queries", () => ({

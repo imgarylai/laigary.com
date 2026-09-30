@@ -25,3 +25,6 @@ declare module "cloudflare:workers" {
 interface CacheStorage {
   readonly default: Cache;
 }
+
+// Vite injects a fresh identity once per build, shared by all Worker isolates.
+declare const __BUILD_ID__: string;

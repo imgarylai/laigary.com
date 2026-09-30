@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { defineConfig, type Plugin } from "vite";
 import { devtools } from "@tanstack/devtools-vite";
 
@@ -71,6 +72,9 @@ function temmlSurrogateFix(): Plugin {
 }
 
 const config = defineConfig({
+  // Stable within one bundle, different on every build (including same-commit
+  // redeploys). Never generate this per request or caches would never hit.
+  define: { __BUILD_ID__: JSON.stringify(randomUUID()) },
   resolve: { tsconfigPaths: true },
   // temml is bundled from source rather than pre-bundled, so the plugin below
   // can rewrite it before Rolldown's code generator sees it.

@@ -106,7 +106,7 @@ backfills go inside the generated file or via `drizzle-kit generate --custom`.
   2. `src/start.ts` — a request middleware storing public documents in
      `caches.default`. Cloudflare does not cache a Worker's own responses on
      `Cache-Control` alone. The policy (what may be cached, and the key —
-     path, resolved locale, content version, and an ALLOWLIST of search params)
+     path, resolved locale, content version, build ID, and an ALLOWLIST of search params)
      is in `src/lib/http-cache.ts`, pure and tested there because the middleware
      itself only runs inside a Worker. Give a public route a new search param
      and you must add it to `CACHE_KEY_PARAMS`, or the edge answers that param
@@ -114,6 +114,11 @@ backfills go inside the generated file or via `drizzle-kit generate --custom`.
      `curl -s -D - -o /dev/null` twice on a public page; the second should say
      `x-edge-cache: HIT`. Not `curl -I` — that sends HEAD, which is answered
      from the cache but never stores, so it reports MISS forever.
+
+  Every Vite build embeds a fresh `__BUILD_ID__` into the Worker. Document and
+  OG cache keys include it so code/style deploys retire old entries even when
+  D1's content version stays unchanged. `x-site-build` on public documents
+  exposes the serving build for verification; never generate this ID per request.
 
   Public list pages paginate SERVER-side (`sectionDataImpl`, page size in
   `SECTION_PAGE_SIZE`), and so does the admin notes table

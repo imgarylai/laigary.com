@@ -119,14 +119,16 @@ const CACHE_KEY_PARAMS = ["page", "tag"] as const;
 /**
  * The URL a cached page is filed under.
  *
- * Three things beyond the path decide which document a visitor is owed:
+ * Beyond the path, locale, content version and build identity decide which
+ * document a visitor is owed:
  *
  * The locale is resolved server-side and baked into the HTML (from a cookie,
  * else `Accept-Language`), so two visitors on the same URL can be owed
  * different documents — keying on it keeps a zh-TW reader's page away from an
  * English one. The content version is what makes the day-long TTL safe:
  * publishing bumps it, every previously cached page is filed under a key nobody
- * asks for again, and the next request re-renders.
+ * asks for again, and the next request re-renders. The build ID retires HTML
+ * after a code/style deploy even when the database version has not changed.
  *
  * Everything else in the query string is DROPPED, which is the opposite of the
  * obvious approach and the more important half of this function. Keying on the
@@ -142,7 +144,12 @@ const CACHE_KEY_PARAMS = ["page", "tag"] as const;
  * request URL. Rebuilding the query string from the allowlist also normalises
  * its order, so `?tag=go&page=2` and `?page=2&tag=go` stop being two entries.
  */
-export function cacheKeyUrl(requestUrl: string, locale: string, version: string): string {
+export function cacheKeyUrl(
+  requestUrl: string,
+  locale: string,
+  version: string,
+  buildId: string,
+): string {
   const url = new URL(requestUrl);
   const params = new URLSearchParams();
   for (const name of CACHE_KEY_PARAMS) {
@@ -151,6 +158,7 @@ export function cacheKeyUrl(requestUrl: string, locale: string, version: string)
   }
   params.set("__locale", locale);
   params.set("__v", version);
+  params.set("__build", buildId);
   url.search = params.toString();
   return url.toString();
 }

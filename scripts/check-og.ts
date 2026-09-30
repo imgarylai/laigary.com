@@ -55,6 +55,24 @@ try {
       reject(new Error(`Worker exited ${code}\n${logs}`));
     });
   });
+  // The document cache must be wired to the build too, not only the OG routes.
+  let buildId: string | null = null;
+  for (const path of ["/", "/posts/og-smoke.md"]) {
+    for (const expected of ["MISS", "HIT"]) {
+      const response = await fetch(`http://localhost:${port}${path}`, {
+        signal: AbortSignal.timeout(20_000),
+      });
+      assert.equal(response.status, 200);
+      assert.equal(response.headers.get("x-edge-cache"), expected);
+      const servingBuild = response.headers.get("x-site-build");
+      assert.match(servingBuild ?? "", /^[0-9a-f-]{36}$/);
+      if (buildId !== null) assert.equal(servingBuild, buildId);
+      buildId = servingBuild;
+      assert.match(response.headers.get("cache-control") ?? "", /max-age=0/);
+      await response.arrayBuffer();
+    }
+  }
+  console.log(`Document cache smoke passed for build ${buildId}`);
   for (const path of ["/api/og", "/api/og/posts/og-smoke", "/api/og/posts/og-smoke?v=cached"]) {
     const response = await fetch(`http://localhost:${port}${path}`, {
       signal: AbortSignal.timeout(20_000),
@@ -73,7 +91,7 @@ try {
     console.log(`OG smoke passed: ${path} (${png.length} bytes)`);
   }
 } finally {
-  if (worker?.pid) {
+  if (worker?.pid && worker.exitCode === null && worker.signalCode === null) {
     const closed = new Promise<void>((resolve) => worker!.once("exit", () => resolve()));
     process.kill(-worker.pid, "SIGTERM");
     await closed;

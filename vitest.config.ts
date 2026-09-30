@@ -42,6 +42,7 @@ function cssUrlStub(): Plugin {
 }
 
 export default defineConfig({
+  define: { __BUILD_ID__: JSON.stringify("test-build") },
   plugins: [cssUrlStub(), react()],
   resolve: {
     alias: {

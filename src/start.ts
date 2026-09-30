@@ -23,8 +23,9 @@ import { isMarkdownRequest } from "@/lib/md-path";
 // so this stores them explicitly. Correctness rests on the cache key, built in
 // `lib/http-cache`: the locale (the one request-dependent thing baked into the
 // SSR HTML) and the content version (bumped by every mutation, which is what
-// lets the TTL be a full day). The theme is not in the key because it never
-// reaches the server — next-themes reads localStorage and paints before hydration.
+// lets the TTL be a full day), plus the build ID (retires old HTML on deploy).
+// The theme is not in the key because it never reaches the server —
+// next-themes reads localStorage and paints before hydration.
 const edgeCache = createMiddleware({ type: "request" }).server(async (ctx) => {
   const cache = getEdgeCache();
   const method = ctx.request.method;
@@ -48,9 +49,12 @@ const edgeCache = createMiddleware({ type: "request" }).server(async (ctx) => {
     readCookie(ctx.request.headers.get("cookie"), "locale"),
     ctx.request.headers.get("accept-language") ?? undefined,
   );
-  const key = new Request(cacheKeyUrl(ctx.request.url, locale, await getContentVersion()), {
-    method: "GET",
-  });
+  const key = new Request(
+    cacheKeyUrl(ctx.request.url, locale, await getContentVersion(), __BUILD_ID__),
+    {
+      method: "GET",
+    },
+  );
 
   // How long this document may live: normally a day, but never past the moment
   // a scheduled post or note comes due — that is the one publish with no write
@@ -94,6 +98,7 @@ const edgeCache = createMiddleware({ type: "request" }).server(async (ctx) => {
 function mark(response: Response, state: "HIT" | "MISS", ttl: number | null): Response {
   const copy = new Response(response.body, response);
   copy.headers.set("x-edge-cache", state);
+  copy.headers.set("x-site-build", __BUILD_ID__);
   copy.headers.set("Cache-Control", edgeCacheControl(ttl));
   return copy;
 }
