@@ -3,5 +3,9 @@ User-agent: *
 Allow: /
 Disallow: /admin
 Disallow: /api
+# Social previews need the generated images under the otherwise excluded API.
+Allow: /api/og$
+Allow: /api/og?
+Allow: /api/og/
 
 Sitemap: https://laigary.com/sitemap.xml
