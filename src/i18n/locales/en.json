@@ -491,6 +491,8 @@
     "deleteFailed": "Failed to delete page"
   },
   "public": {
+    "ogHeadline": "Software, products, and the work behind them.",
+    "ogPage": "Page",
     "shareArticle": "Share this article",
     "shareOnX": "Share on X",
     "copyLink": "Copy link",

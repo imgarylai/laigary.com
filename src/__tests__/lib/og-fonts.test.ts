@@ -19,7 +19,7 @@ describe("collectNonAsciiGlyphs", () => {
   it("should return only deduped non-ascii glyphs when the tree mixes scripts", () => {
     const node = siteTemplate({
       siteName: "啟靈啟靈",
-      description: "plain ascii",
+      description: "啟靈啟靈",
       siteUrl: "laigary.com",
     });
     const glyphs = collectNonAsciiGlyphs(node);
@@ -103,7 +103,7 @@ describe("loadOgFonts", () => {
     const fetchFn = vi.fn(async () => okResponse(ttfBytes()));
     const node = siteTemplate({ siteName: "a", description: "b", siteUrl: "c" });
     const fonts = await loadOgFonts(node, fetchFn);
-    expect(fonts.map((f) => f.name)).toEqual(["JetBrains Mono", "JetBrains Mono"]);
+    expect(fonts.map((f) => f.name)).toEqual(["Lato", "Lato"]);
     expect(fetchFn).not.toHaveBeenCalled();
   });
 
@@ -113,13 +113,8 @@ describe("loadOgFonts", () => {
         ? okResponse("src: url(https://fonts.gstatic.com/l/f) format('truetype');")
         : okResponse(ttfBytes()),
     );
-    const node = siteTemplate({ siteName: "啟靈", description: "b", siteUrl: "c" });
+    const node = siteTemplate({ siteName: "a", description: "啟靈", siteUrl: "c" });
     const fonts = await loadOgFonts(node, fetchFn);
-    expect(fonts.map((f) => f.name)).toEqual([
-      "JetBrains Mono",
-      "JetBrains Mono",
-      "Noto Sans TC",
-      "Noto Sans TC",
-    ]);
+    expect(fonts.map((f) => f.name)).toEqual(["Lato", "Lato", "Noto Sans TC", "Noto Sans TC"]);
   });
 });

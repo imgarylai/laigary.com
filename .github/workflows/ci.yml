@@ -65,6 +65,9 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: ${{ matrix.command }}
+      - name: Render OG images in workerd
+        if: matrix.name == 'Build'
+        run: pnpm test:og
       - name: Upload coverage to Codecov
         if: matrix.name == 'Test'
         uses: codecov/codecov-action@v7.1.1

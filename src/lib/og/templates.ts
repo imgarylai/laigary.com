@@ -1,92 +1,199 @@
-// OG image templates: plain satori VNode trees (no JSX so this module stays
-// framework-free and unit-testable). Visuals follow the terminal design
-// language (see /design-system): the `--tm-*` dark palette, JetBrains Mono
-// (Noto Sans TC fallback for CJK), macOS traffic-light dots, a `$` prompt line
-// and an ASCII rule.
-
+// Code-native 1200×630 social cards, sharing the public site's editorial palette.
 import { displayWidth, truncateToWidth } from "./excerpt";
+import { getTranslation } from "@/i18n";
 
 export interface OgNode {
   type: string;
   props: Record<string, unknown> & { children?: unknown };
 }
-
 export const OG_WIDTH = 1200;
 export const OG_HEIGHT = 630;
-
-// satori resolves missing glyphs across the loaded fonts in stack order.
-const FONT_STACK = "JetBrains Mono, Noto Sans TC";
-
-// Terminal palette (dark) — mirrors the `--tm-*` tokens in src/styles/terminal.css.
-const TM = {
-  bg: "#0b0d0c",
-  fg: "#d4d4d4",
-  muted: "#6b7280",
-  dim: "#9ca3af",
-  accent: "#7ee787",
-  rule: "#2c3230",
-} as const;
+const FONT_STACK = "Lato, Noto Sans TC";
+const SITE = {
+  canvas: "#f7f6f2",
+  ink: "#20211f",
+  muted: "#62665e",
+  accent: "#365f4b",
+  rule: "#dcded5",
+};
+const t = (key: string) => getTranslation("en", `public.${key}`);
 
 function h(type: string, props: Record<string, unknown>, ...children: unknown[]): OgNode {
-  return {
-    type,
-    props: { ...props, children: children.length === 1 ? children[0] : children },
-  };
+  return { type, props: { ...props, children: children.length === 1 ? children[0] : children } };
 }
 
-// macOS traffic-light dots + a `~/<crumb> $` prompt — the terminal window chrome
-// shared by every template.
-function topBar(crumb: string): OgNode {
-  const dot = (color: string): OgNode =>
-    h("div", {
-      style: { display: "flex", width: 20, height: 20, borderRadius: 10, backgroundColor: color },
-    });
-  return h(
-    "div",
-    { style: { display: "flex", alignItems: "center", gap: 16 } },
-    h(
-      "div",
-      { style: { display: "flex", gap: 10 } },
-      dot("#ff5f57"),
-      dot("#febc2e"),
-      dot("#28c840"),
-    ),
-    h("div", { style: { display: "flex", color: TM.accent, fontSize: 24 } }, crumb),
-    h("div", { style: { display: "flex", color: TM.dim, fontSize: 24 } }, "$"),
+export function formatOgDate(unixSeconds: number | null | undefined): string | null {
+  if (unixSeconds === null || unixSeconds === undefined || !Number.isFinite(unixSeconds))
+    return null;
+  return new Date(unixSeconds * 1000).toISOString().slice(0, 10);
+}
+
+// Three explicit lines keep long CJK, English and unbroken URLs inside the card.
+// Width budgets are conservative for the bundled sans face and CJK fallback.
+function headlineWidth(text: string): number {
+  // Lato's widest Latin letters need the same allowance as a full-width glyph.
+  return Array.from(text).reduce(
+    (total, char) =>
+      total + (/[MWmw]/.test(char) || char.codePointAt(0)! > 0xffff ? 2 : displayWidth(char)),
+    0,
   );
 }
 
-// ASCII horizontal rule (─ ×N), part of the design language.
-function asciiRule(): OgNode {
+export function titleLines(title: string): { lines: string[]; fontSize: number } {
+  const normalized = title.replace(/\s+/g, " ").trim();
+  const width = displayWidth(normalized);
+  const fontSize = width <= 48 ? 72 : width <= 88 ? 62 : 52;
+  const columns = fontSize === 72 ? 26 : fontSize === 62 ? 31 : 37;
+  const lines: string[] = [];
+  let rest = normalized;
+  while (rest && lines.length < 3) {
+    let line = "";
+    for (const char of rest) {
+      if (headlineWidth(line + char) > columns) break;
+      line += char;
+    }
+    if (lines.length === 2 && line.length < rest.length) {
+      while (headlineWidth(line + "…") > columns) line = Array.from(line).slice(0, -1).join("");
+      lines.push(`${line.trimEnd()}…`);
+      break;
+    }
+    if (
+      line.length < rest.length &&
+      /[A-Za-z0-9]$/.test(line) &&
+      /^[A-Za-z0-9]/.test(rest.slice(line.length))
+    ) {
+      const space = line.lastIndexOf(" ");
+      if (space > line.length / 2) line = line.slice(0, space);
+    }
+    // Keep closing CJK punctuation off the next line and opening punctuation
+    // off this line's end. Move a character with the punctuation when needed.
+    while (
+      line &&
+      (/^[，。！？：；、）】》」』,.!?:;]/.test(rest.slice(line.length)) ||
+        /[（【《「『]$/.test(line))
+    ) {
+      line = Array.from(line).slice(0, -1).join("").trimEnd();
+    }
+    lines.push(line.trim());
+    rest = rest.slice(line.length).trimStart();
+  }
+  return { lines, fontSize };
+}
+
+function headline(title: string): OgNode {
+  const { lines, fontSize } = titleLines(title);
   return h(
     "div",
     {
       style: {
         display: "flex",
-        color: TM.rule,
-        fontSize: 24,
-        overflow: "hidden",
-        whiteSpace: "nowrap",
+        flexDirection: "column",
+        fontWeight: 700,
+        fontSize,
+        lineHeight: 1.24,
+        letterSpacing: "-0.02em",
       },
     },
-    "─".repeat(80),
+    ...lines.map((line) => h("div", { style: { display: "flex", whiteSpace: "nowrap" } }, line)),
   );
 }
 
-/**
- * ISO day (e.g. 2025-07-19) from unix seconds.
- *
- * Every card labels its date this way. It used to be a zh-TW long date, but the
- * cards read as terminal output and `2025年7月19日` does not — and a post's card
- * shows the same day inside a front-matter block, where the ISO form is what a
- * reader would expect to see. UTC, which is what the worker runs in and what
- * `unixToIso` produces for the pages themselves.
- */
-export function formatOgDate(unixSeconds: number | null | undefined): string | null {
-  if (unixSeconds === null || unixSeconds === undefined || !Number.isFinite(unixSeconds)) {
-    return null;
-  }
-  return new Date(unixSeconds * 1000).toISOString().slice(0, 10);
+function monogram(): OgNode {
+  return h(
+    "svg",
+    { width: 52, height: 52, viewBox: "0 0 32 32" },
+    h("rect", { width: 32, height: 32, rx: 7, fill: SITE.accent }),
+    h("path", {
+      d: "M14 10H9L6 13V20L9 23H15V17H12 M20 10V23H27",
+      fill: "none",
+      stroke: SITE.canvas,
+      strokeWidth: 2.5,
+      strokeLinecap: "square",
+      strokeLinejoin: "round",
+    }),
+  );
+}
+
+function card(
+  title: string,
+  category: string,
+  date: string | null,
+  domain = t("domain"),
+  description?: string,
+): OgNode {
+  return h(
+    "div",
+    {
+      style: {
+        width: "100%",
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+        backgroundColor: SITE.canvas,
+        color: SITE.ink,
+        fontFamily: FONT_STACK,
+        padding: "52px 64px",
+        borderTop: `10px solid ${SITE.accent}`,
+      },
+    },
+    h(
+      "div",
+      { style: { display: "flex", alignItems: "center", gap: 16, color: SITE.accent } },
+      monogram(),
+      h("div", { style: { display: "flex", fontSize: 28, fontWeight: 700 } }, t("brand")),
+    ),
+    h(
+      "div",
+      {
+        style: {
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          flexGrow: 1,
+          paddingTop: 22,
+          paddingBottom: 22,
+        },
+      },
+      headline(title),
+      description
+        ? h(
+            "div",
+            {
+              style: {
+                display: "flex",
+                marginTop: 18,
+                fontSize: 24,
+                lineHeight: 1.4,
+                color: SITE.muted,
+              },
+            },
+            truncateToWidth(description, 90),
+          )
+        : "",
+    ),
+    h(
+      "div",
+      {
+        style: {
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          paddingTop: 22,
+          borderTop: `1px solid ${SITE.rule}`,
+          fontSize: 22,
+          color: SITE.muted,
+        },
+      },
+      h(
+        "div",
+        { style: { display: "flex", gap: 22 } },
+        h("span", { style: { color: SITE.accent } }, category),
+        date ? h("span", {}, date) : "",
+      ),
+      h("div", { style: { display: "flex" } }, domain),
+    ),
+  );
 }
 
 export interface SiteOgInput {
@@ -94,57 +201,13 @@ export interface SiteOgInput {
   description: string;
   siteUrl: string;
 }
-
-export function siteTemplate({ siteName, description, siteUrl }: SiteOgInput): OgNode {
-  return h(
-    "div",
-    {
-      style: {
-        width: "100%",
-        height: "100%",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "space-between",
-        backgroundColor: TM.bg,
-        color: TM.fg,
-        fontFamily: FONT_STACK,
-        padding: 72,
-      },
-    },
-    topBar("~"),
-    h(
-      "div",
-      { style: { display: "flex", flexDirection: "column" } },
-      h("div", { style: { display: "flex", color: TM.muted, fontSize: 26 } }, "$ whoami"),
-      h(
-        "div",
-        {
-          style: {
-            display: "flex",
-            fontSize: 76,
-            fontWeight: 700,
-            letterSpacing: "-0.02em",
-            marginTop: 10,
-          },
-        },
-        siteName,
-      ),
-      h("div", { style: { display: "flex", marginTop: 26, marginBottom: 26 } }, asciiRule()),
-      h(
-        "div",
-        {
-          style: {
-            display: "flex",
-            color: TM.muted,
-            fontSize: 30,
-            maxWidth: "92%",
-            lineHeight: 1.4,
-          },
-        },
-        description,
-      ),
-    ),
-    h("div", { style: { display: "flex", color: TM.dim, fontSize: 24 } }, `$ open ${siteUrl}`),
+export function siteTemplate({ description, siteUrl }: SiteOgInput): OgNode {
+  return card(
+    t("ogHeadline"),
+    t("home"),
+    null,
+    siteUrl.replace(/^https?:\/\//, "").replace(/\/$/, ""),
+    description,
   );
 }
 
@@ -152,193 +215,19 @@ export interface ArticleOgInput {
   title: string;
   branding: string;
   dateLabel: string | null;
-  /** Breadcrumb-style prefix line, e.g. `./interview/system-design/`. */
   kicker: string | null;
 }
 
-/**
- * The shell every card shares: terminal chrome on top, an ASCII rule and the
- * branding/date footer at the bottom, and whatever the caller puts between.
- */
-function card(body: OgNode, branding: string, dateLabel: string | null): OgNode {
-  return h(
-    "div",
-    {
-      style: {
-        width: "100%",
-        height: "100%",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "space-between",
-        backgroundColor: TM.bg,
-        color: TM.fg,
-        fontFamily: FONT_STACK,
-        padding: 72,
-      },
-    },
-    topBar("~"),
-    body,
-    h(
-      "div",
-      { style: { display: "flex", flexDirection: "column" } },
-      h("div", { style: { display: "flex", marginBottom: 22 } }, asciiRule()),
-      h(
-        "div",
-        {
-          style: {
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            width: "100%",
-          },
-        },
-        h("div", { style: { display: "flex", color: TM.accent, fontSize: 24 } }, branding),
-        dateLabel
-          ? h("div", { style: { display: "flex", color: TM.dim, fontSize: 22 } }, dateLabel)
-          : "",
-      ),
-    ),
-  );
+export function articleTemplate({ title, dateLabel, kicker }: ArticleOgInput): OgNode {
+  const category = kicker?.startsWith("./interview/")
+    ? t("notes")
+    : kicker?.startsWith("./works/")
+      ? t("work")
+      : t("ogPage");
+  return card(title, category, dateLabel);
 }
 
-/** `$ cat <path>` — the prompt line the article pages print for themselves. */
-function promptLine(kicker: string): OgNode {
-  return h(
-    "div",
-    { style: { display: "flex", color: TM.muted, fontSize: 24, marginBottom: 18 } },
-    `$ cat ${kicker}`,
-  );
-}
-
-export function articleTemplate({ title, branding, dateLabel, kicker }: ArticleOgInput): OgNode {
-  const body: OgNode[] = [];
-  if (kicker) body.push(promptLine(kicker));
-  body.push(
-    h(
-      "div",
-      {
-        style: {
-          display: "flex",
-          fontSize: title.length > 40 ? 48 : 60,
-          fontWeight: 700,
-          lineHeight: 1.25,
-          letterSpacing: "-0.02em",
-          maxWidth: "94%",
-        },
-      },
-      title,
-    ),
-  );
-
-  return card(
-    h("div", { style: { display: "flex", flexDirection: "column" } }, ...body),
-    branding,
-    dateLabel,
-  );
-}
-
-export interface PostOgInput {
-  title: string;
-  branding: string;
-  /** ISO day, e.g. `2026-08-05` — the form the article page prints. */
-  dateLabel: string | null;
-  kicker: string;
-  /** Plain-text opening of the article, already trimmed to fit. */
-  excerpt: string;
-}
-
-/**
- * The post card, which is the whole `cat` rather than a headline.
- *
- * The article page prints a front-matter block and then its text; the card
- * shows the same thing, so the two agree about what a post looks like instead
- * of each deciding separately. The title lives inside the block as a `title:`
- * row, set larger and brighter than its key — it is the one thing that has to
- * survive a thumbnail, and the block still reads as file contents.
- */
-/**
- * Columns the title row has left after its key, per font size.
- *
- * The card is 1200px wide with 72px of padding, and a monospace glyph advances
- * about 0.6em — so the value has roughly (1056 - 101) / (size * 0.6) columns
- * next to a 24px `title: `. The row cannot wrap (it would break the alignment
- * the block depends on), so the size steps down until the title fits, and the
- * smallest step truncates. Measured in display width, because a CJK title of
- * the same character count is twice as wide.
- */
-const TITLE_SIZES = [
-  { fontSize: 36, columns: 44 },
-  { fontSize: 30, columns: 53 },
-  { fontSize: 24, columns: 66 },
-] as const;
-
-function fitTitle(title: string): { shownTitle: string; titleSize: number } {
-  const width = displayWidth(title);
-  for (const step of TITLE_SIZES) {
-    if (width <= step.columns) return { shownTitle: title, titleSize: step.fontSize };
-  }
-  const smallest = TITLE_SIZES[TITLE_SIZES.length - 1];
-  return {
-    shownTitle: truncateToWidth(title, smallest.columns),
-    titleSize: smallest.fontSize,
-  };
-}
-
-export function postTemplate({ title, branding, dateLabel, kicker, excerpt }: PostOgInput): OgNode {
-  const { shownTitle, titleSize } = fitTitle(title);
-
-  // `whiteSpace: pre` keeps the key padding that lines the values up; satori
-  // collapses runs of spaces the way a browser does. It is why the article page
-  // renders this block in a <pre>.
-  const row = (text: string, color: string): OgNode =>
-    h(
-      "div",
-      { style: { display: "flex", color, fontSize: 24, lineHeight: 1.6, whiteSpace: "pre" } },
-      text,
-    );
-
-  const block = h(
-    "div",
-    { style: { display: "flex", flexDirection: "column", marginBottom: 20 } },
-    row("---", TM.muted),
-    h(
-      "div",
-      { style: { display: "flex", alignItems: "baseline" } },
-      row("title: ", TM.muted),
-      // Larger than the rest of the block: at thumbnail size the title is the
-      // one thing a reader has to be able to make out, and 24px grey monospace
-      // does not survive a Slack preview. The key stays small so the row still
-      // reads as `key: value`.
-      h(
-        "div",
-        { style: { display: "flex", color: TM.fg, fontSize: titleSize, whiteSpace: "pre" } },
-        shownTitle,
-      ),
-    ),
-    row("---", TM.muted),
-  );
-
-  return card(
-    h(
-      "div",
-      { style: { display: "flex", flexDirection: "column" } },
-      promptLine(kicker),
-      block,
-      h(
-        "div",
-        {
-          style: {
-            display: "flex",
-            color: TM.dim,
-            fontSize: 24,
-            lineHeight: 1.6,
-            maxWidth: "94%",
-          },
-        },
-        excerpt,
-      ),
-    ),
-    branding,
-    dateLabel,
-  );
+export type PostOgInput = Pick<ArticleOgInput, "title" | "dateLabel">;
+export function postTemplate({ title, dateLabel }: PostOgInput): OgNode {
+  return card(title, t("writing"), dateLabel);
 }

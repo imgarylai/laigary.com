@@ -165,7 +165,11 @@ backfills go inside the generated file or via `drizzle-kit generate --custom`.
   and pollute stored content.
 - OG images (`src/lib/og/`, `src/routes/api/og*`): satori **standalone** entry +
   `init(yoga.wasm)` — the main satori entry runtime-compiles wasm, which workerd
-  forbids. Fonts: JetBrains Mono TTFs from `public/fonts/`; CJK glyphs fetched
+  forbids. Satori is pinned below 0.33 (also in Renovate): its new HarfBuzz
+  loader assumes browser globals and dynamically compiles callback Wasm, both
+  incompatible with workerd. Run `pnpm build && pnpm test:og` before changing
+  this pin; CI renders real PNGs in workerd using an isolated local D1.
+  Fonts: bundled Lato TTFs in `src/lib/og/fonts/`; CJK glyphs fetched
   per request from Google Fonts css2 with a Safari 5 UA (forces TTF).
 - Public shell: `src/features/public-site/` owns the Gary Lai header, footer,
   three-link navigation and shared search across posts and interview notes.
