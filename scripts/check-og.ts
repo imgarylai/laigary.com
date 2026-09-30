@@ -73,6 +73,18 @@ try {
     }
   }
   console.log(`Document cache smoke passed for build ${buildId}`);
+  // Social crawlers probe an uncached image with HEAD before downloading it.
+  const coldHead = await fetch(`http://localhost:${port}/api/og/posts/og-smoke`, {
+    method: "HEAD",
+    signal: AbortSignal.timeout(20_000),
+  });
+  assert.equal(coldHead.status, 200);
+  assert.equal(coldHead.headers.get("content-type"), "image/png");
+  assert(
+    Number(coldHead.headers.get("content-length")) > 5000,
+    "Cold HEAD must advertise PNG byte length",
+  );
+  assert.equal((await coldHead.arrayBuffer()).byteLength, 0);
   for (const path of ["/api/og", "/api/og/posts/og-smoke", "/api/og/posts/og-smoke?v=cached"]) {
     const response = await fetch(`http://localhost:${port}${path}`, {
       signal: AbortSignal.timeout(20_000),
@@ -87,6 +99,14 @@ try {
     assert.equal(png.subarray(0, 8).toString("hex"), "89504e470d0a1a0a");
     assert.equal(png.readUInt32BE(16), 1200);
     assert.equal(png.readUInt32BE(20), 630);
+    assert.equal(
+      Number(response.headers.get("content-length")),
+      png.length,
+      "GET byte length must match its header",
+    );
+    if (path === "/api/og/posts/og-smoke") {
+      assert.equal(Number(coldHead.headers.get("content-length")), png.length);
+    }
     assert(png.length > 5000, "Expected a rendered card, not an empty image");
     console.log(`OG smoke passed: ${path} (${png.length} bytes)`);
   }
