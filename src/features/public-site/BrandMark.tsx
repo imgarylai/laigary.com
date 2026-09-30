@@ -1,5 +1,5 @@
 import { createElement } from "react";
-import { BUBBLE_TEA_BACKGROUND, BUBBLE_TEA_SHAPES } from "@/lib/brand";
+import { BUBBLE_TEA_SHAPES } from "@/lib/brand";
 
 /** Decorative beside the accessible Gary Lai wordmark. */
 export function BrandMark({ className }: { className?: string }) {
@@ -13,9 +13,6 @@ export function BrandMark({ className }: { className?: string }) {
       aria-hidden="true"
       focusable="false"
     >
-      {BUBBLE_TEA_BACKGROUND.map(({ type, props }, index) =>
-        createElement(type, { ...props, key: index }),
-      )}
       <g transform="translate(4 2)">
         {BUBBLE_TEA_SHAPES.map(({ type, props }, index) =>
           createElement(type, { ...props, key: index }),
