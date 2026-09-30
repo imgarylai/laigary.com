@@ -533,6 +533,7 @@
     "all": "全部",
     "notFound": "找不到這個頁面",
     "notFoundHint": "這個頁面可能已經搬家，或是連結有誤。",
-    "backHome": "返回首頁"
+    "backHome": "返回首頁",
+    "fueledByTea": "寫程式的燃料，是珍珠奶茶。"
   }
 }

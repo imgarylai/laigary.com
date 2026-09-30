@@ -18,11 +18,11 @@ describe("ogMeta", () => {
     const tags = ogMeta(base);
     expect(find(tags, "content", "og:title")).toBe("Two Sum");
     expect(find(tags, "content", "og:site_name")).toBe("Unconstrained");
-    expect(find(tags, "content", "og:image")).toBe(`${base.image}?v=editorial-1`);
+    expect(find(tags, "content", "og:image")).toBe(`${base.image}?v=bubble-tea-2`);
     expect(find(tags, "content", "og:url")).toBe(base.url);
     expect(find(tags, "content", "og:type")).toBe("article");
     expect(find(tags, "content", "twitter:card")).toBe("summary_large_image");
-    expect(find(tags, "content", "twitter:image")).toBe(`${base.image}?v=editorial-1`);
+    expect(find(tags, "content", "twitter:image")).toBe(`${base.image}?v=bubble-tea-2`);
   });
 
   it("should version both image tags when the article changes", () => {

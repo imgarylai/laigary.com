@@ -28,6 +28,7 @@ export function PublicFooter({ social }: { social: FooterSocial }) {
         <a href="/feed.xml">{t("public.rss")}</a>
       </div>
       <div className="public-signature">
+        <span className="public-fuel-signature">{t("public.fueledByTea")}</span>
         <span>
           © {new Date().getFullYear()} {t("public.brand")}
         </span>

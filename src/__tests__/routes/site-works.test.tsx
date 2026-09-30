@@ -264,7 +264,7 @@ describe("/works/$slug head", () => {
     const out = await head(loaded(work("nocover")));
 
     expect(ogImage(out)).toBe(
-      "https://laigary.com/api/og/works/nocover?v=editorial-1&updated=2025-01-02",
+      "https://laigary.com/api/og/works/nocover?v=bubble-tea-2&updated=2025-01-02",
     );
   });
 

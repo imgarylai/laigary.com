@@ -3,23 +3,23 @@
   "name": "Gary Lai",
   "icons": [
     {
-      "src": "favicon.svg?v=gl-1",
+      "src": "favicon.svg?v=bubble-tea-2",
       "type": "image/svg+xml",
       "sizes": "any"
     },
     {
-      "src": "icon-192.png?v=gl-1",
+      "src": "icon-192.png?v=bubble-tea-2",
       "type": "image/png",
       "sizes": "192x192"
     },
     {
-      "src": "icon-512.png?v=gl-1",
+      "src": "icon-512.png?v=bubble-tea-2",
       "type": "image/png",
       "sizes": "512x512"
     }
   ],
   "start_url": "/",
   "display": "standalone",
-  "theme_color": "#365f4b",
-  "background_color": "#f7f6f2"
+  "theme_color": "#684832",
+  "background_color": "#faf6ed"
 }

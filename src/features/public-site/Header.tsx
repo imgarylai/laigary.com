@@ -3,6 +3,7 @@ import { useRef, useState } from "react";
 import { ListIcon, MagnifyingGlassIcon, XIcon } from "@phosphor-icons/react";
 import { useI18n } from "@/i18n/I18nProvider";
 import { PublicThemeMenu } from "./ThemeMenu";
+import { BrandMark } from "./BrandMark";
 import { PUBLIC_NAV } from "./navigation";
 
 export function PublicHeader({ onOpenSearch }: { onOpenSearch: () => void }) {
@@ -34,7 +35,8 @@ function HeaderContent({ onOpenSearch }: { onOpenSearch: () => void }) {
     >
       <div className="public-header-inner">
         <Link to="/" className="public-wordmark">
-          {t("public.brand")}
+          <BrandMark className="public-brand-mark" />
+          <span>{t("public.brand")}</span>
         </Link>
         <nav aria-label={t("public.navigation")} className="public-desktop-nav">
           {navigation}
