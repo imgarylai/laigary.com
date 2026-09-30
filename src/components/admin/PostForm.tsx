@@ -1,3 +1,4 @@
+import { formatOgDate } from "@/lib/og/templates";
 import { useForm } from "react-hook-form";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { Link, useNavigate, useRouter } from "@tanstack/react-router";
@@ -118,7 +119,12 @@ export function PostForm({
             <PublishedAtField control={form.control} />
             <PinnedField control={form.control} />
             <TagsField control={form.control} availableTags={availableTags} />
-            <CoverImageField control={form.control} title={form.watch("title")} ogBrand={ogBrand} />
+            <CoverImageField
+              control={form.control}
+              title={form.watch("title")}
+              ogBrand={ogBrand}
+              dateLabel={formatOgDate(form.watch("publishedAt"))}
+            />
           </>
         }
         actions={

@@ -139,7 +139,9 @@
     "postUpdated": "文章已更新",
     "hidePreview": "隱藏預覽",
     "showPreview": "顯示預覽",
-    "previewPlaceholder": "預覽將顯示在這裡..."
+    "previewPlaceholder": "預覽將顯示在這裡...",
+    "untitled": "未命名",
+    "ogPreview": "社群分享圖片預覽"
   },
   "postList": {
     "searchPlaceholder": "搜尋文章...",

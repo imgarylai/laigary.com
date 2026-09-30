@@ -139,7 +139,9 @@
     "postUpdated": "Post updated",
     "hidePreview": "Hide preview",
     "showPreview": "Show preview",
-    "previewPlaceholder": "Preview will appear here..."
+    "previewPlaceholder": "Preview will appear here...",
+    "untitled": "Untitled",
+    "ogPreview": "Social sharing image preview"
   },
   "postList": {
     "searchPlaceholder": "Search posts...",

@@ -83,7 +83,22 @@ describe("CoverImageUpload", () => {
     renderCover();
 
     expect(screen.getByText("A post")).toBeTruthy();
-    expect(screen.getByText("Unconstrained")).toBeTruthy();
+    expect(screen.getByText("Gary Lai")).toBeTruthy();
+    expect(screen.getByText("Writing")).toBeTruthy();
+    expect(screen.getByText("laigary.com")).toBeTruthy();
+  });
+
+  it("should update the work preview when unsaved title and year change", () => {
+    const props = { value: "", onChange: vi.fn(), ogBrand: "Old brand", kind: "work" as const };
+    const { rerender } = render(
+      <CoverImageUpload {...props} title="First title" dateLabel="2020" />,
+    );
+    expect(screen.getByText("Work")).toBeTruthy();
+    expect(screen.getByText("2020")).toBeTruthy();
+    rerender(<CoverImageUpload {...props} title="Updated title" dateLabel="2020–2026" />);
+    expect(screen.getByText("Updated title")).toBeTruthy();
+    expect(screen.getByText("2020–2026")).toBeTruthy();
+    expect(screen.queryByText("First title")).toBeNull();
   });
 
   it("should show the cover itself once one is set", () => {
@@ -93,7 +108,7 @@ describe("CoverImageUpload", () => {
       "src",
       expect.stringContaining("cover.png"),
     );
-    expect(screen.queryByText("Unconstrained")).toBeNull();
+    expect(screen.queryByText("Gary Lai")).toBeNull();
   });
 
   it("should clear the cover when it is removed", () => {

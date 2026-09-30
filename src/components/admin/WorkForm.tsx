@@ -1,3 +1,4 @@
+import { fmtYearRange } from "@/lib/date";
 import { useForm, Controller } from "react-hook-form";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { z } from "zod";
@@ -336,6 +337,12 @@ export function WorkForm({
               onChange={field.onChange}
               title={form.watch("title")}
               ogBrand={ogBrand}
+              kind="work"
+              dateLabel={
+                form.watch("year")
+                  ? fmtYearRange(Number(form.watch("year")), Number(form.watch("endYear")) || null)
+                  : null
+              }
             />
           </Field>
         )}

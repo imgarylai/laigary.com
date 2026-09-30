@@ -14,6 +14,8 @@ import { Button } from "@/components/ui/button";
 import { useI18n } from "@/i18n/I18nProvider";
 import { uploadFile, getCroppedBlob, compressImage } from "@/lib/upload-client";
 
+import { OgPreview } from "./OgPreview";
+
 const ASPECT_RATIO = 16 / 9;
 
 function centerAspectCrop(mediaWidth: number, mediaHeight: number) {
@@ -85,34 +87,20 @@ function reducer(state: CoverState, action: CoverAction): CoverState {
   }
 }
 
-// `brand` is the OG image's footer line — passed in from site_settings (via the
-// form loader) so the preview stays in sync with the real SEO metadata instead
-// of hardcoding the site name / url here.
-function OGFallback({ title, brand }: { title: string; brand: string }) {
-  return (
-    <div className="flex aspect-[1200/630] w-full flex-col justify-between bg-[#0a0a0a] p-6 text-white">
-      <div
-        className="leading-tight font-bold"
-        style={{ fontSize: title.length > 40 ? "1rem" : "1.25rem" }}
-      >
-        {title || "Untitled"}
-      </div>
-      <div className="text-xs text-zinc-500">{brand}</div>
-    </div>
-  );
-}
-
 export function CoverImageUpload({
   value,
   onChange,
   title,
-  ogBrand,
+  kind,
+  dateLabel,
 }: {
   value: string;
   onChange: (url: string) => void;
   title: string;
-  // OG preview footer line, e.g. `${siteName} | ${siteHost}` from site_settings.
+  // Legacy loader field; the public OG template owns branding.
   ogBrand: string;
+  kind?: "post" | "work";
+  dateLabel?: string | null;
 }) {
   const { t } = useI18n();
   const [state, dispatch] = useReducer(reducer, initialState);
@@ -193,7 +181,7 @@ export function CoverImageUpload({
               </Button>
             </>
           ) : (
-            <OGFallback title={title} brand={ogBrand} />
+            <OgPreview title={title} kind={kind} dateLabel={dateLabel} />
           )}
         </div>
       </div>
