@@ -256,10 +256,12 @@ export function CoverImageField({
   control,
   title,
   ogBrand,
+  dateLabel,
 }: {
   control: Ctrl;
   title: string;
   ogBrand: string;
+  dateLabel?: string | null;
 }) {
   const { t } = useI18n();
   return (
@@ -274,6 +276,7 @@ export function CoverImageField({
             onChange={field.onChange}
             title={title}
             ogBrand={ogBrand}
+            dateLabel={dateLabel}
           />
         </Field>
       )}
