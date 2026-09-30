@@ -3,17 +3,17 @@
   "name": "Gary Lai",
   "icons": [
     {
-      "src": "favicon.svg?v=bubble-tea-2",
+      "src": "app-icon.svg?v=bubble-tea-3",
       "type": "image/svg+xml",
       "sizes": "any"
     },
     {
-      "src": "icon-192.png?v=bubble-tea-2",
+      "src": "icon-192.png?v=bubble-tea-3",
       "type": "image/png",
       "sizes": "192x192"
     },
     {
-      "src": "icon-512.png?v=bubble-tea-2",
+      "src": "icon-512.png?v=bubble-tea-3",
       "type": "image/png",
       "sizes": "512x512"
     }
