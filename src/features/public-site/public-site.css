@@ -2,15 +2,15 @@
    Portals opt in explicitly; tm aliases bridge legacy content primitives. */
 .public-site,
 .public-overlay {
-  --site-canvas: #f7f6f2;
-  --site-surface: #ffffff;
-  --site-ink: #20211f;
-  --site-muted: #62665e;
-  --site-rule: #dcded5;
-  --site-accent: #365f4b;
-  --site-focus: #365f4b;
-  --site-selection: #dfe8df;
-  --site-soft: #efefe8;
+  --site-canvas: #faf6ed;
+  --site-surface: #fffdf8;
+  --site-ink: #302a24;
+  --site-muted: #756757;
+  --site-rule: #e3d8c8;
+  --site-accent: #684832;
+  --site-focus: #684832;
+  --site-selection: #eaddc8;
+  --site-soft: #f1e9dc;
   --tm-bg: var(--site-canvas);
   --tm-fg: var(--site-ink);
   --tm-muted: var(--site-muted);
@@ -28,15 +28,15 @@
   font-size: 1rem;
 }
 [data-theme="dark"] :is(.public-site, .public-overlay) {
-  --site-canvas: #171816;
-  --site-surface: #20211f;
-  --site-ink: #ecece7;
-  --site-muted: #b1b3a9;
-  --site-rule: #393c35;
-  --site-accent: #9fc8af;
-  --site-focus: #9fc8af;
-  --site-selection: #35473b;
-  --site-soft: #242720;
+  --site-canvas: #1e1a17;
+  --site-surface: #302a24;
+  --site-ink: #f2e9da;
+  --site-muted: #c3b39e;
+  --site-rule: #493d32;
+  --site-accent: #dbb78b;
+  --site-focus: #dbb78b;
+  --site-selection: #50402f;
+  --site-soft: #352c24;
   --tm-warn: #e5b077;
 }
 .public-site {
@@ -85,6 +85,9 @@
   gap: 36px;
 }
 .public-wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   font-size: 22px;
   font-weight: 650;
   letter-spacing: -0.045em;
@@ -369,6 +372,9 @@
     padding: 4px 0;
   }
   .public-wordmark {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
     font-size: 21px;
   }
   .public-utilities {
@@ -502,4 +508,71 @@
   color: var(--site-ink);
   background: var(--site-surface);
   font-size: 14px;
+}
+
+/* Sparse pearl / terrazzo rhythm, limited to the introduction and footer.
+   It never sits beneath reading text and adds no DOM or screen-reader noise. */
+.public-brand-mark {
+  flex-shrink: 0;
+  color: var(--site-accent);
+}
+.public-hero {
+  position: relative;
+  isolation: isolate;
+}
+.public-hero::after {
+  content: "";
+  display: block;
+  width: 144px;
+  height: 28px;
+  margin-top: 36px;
+  opacity: 0.35;
+  background-image:
+    radial-gradient(circle at 4px 4px, var(--site-accent) 2px, transparent 2.5px),
+    radial-gradient(circle at 16px 16px, var(--site-accent) 1.3px, transparent 1.8px);
+  background-size: 24px 24px;
+  mask-image: linear-gradient(to right, #000 40%, transparent);
+}
+.public-tea-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--site-accent);
+  font-size: 12px;
+  letter-spacing: 0.035em;
+  margin-bottom: 32px;
+}
+.public-pearl-trio {
+  width: 5px;
+  height: 5px;
+  margin: 0 14px 0 1px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow:
+    8px -3px currentColor,
+    16px 1px currentColor;
+}
+.public-fuel-signature {
+  color: var(--site-accent);
+  margin-bottom: 5px;
+}
+.public-footer {
+  border-top-style: dotted;
+}
+@media (max-width: 767px) {
+  .public-brand-mark {
+    width: 28px;
+    height: 32px;
+  }
+  .public-wordmark {
+    gap: 6px;
+  }
+  .public-tea-note {
+    font-size: 11px;
+    margin-bottom: 24px;
+  }
+}
+
+[data-theme="dark"] .public-brand-mark [stroke] {
+  stroke: #b5bdae;
 }

@@ -61,25 +61,25 @@ export const Route = createRootRoute({
       },
       {
         rel: "icon",
-        href: "/favicon.svg?v=gl-1",
+        href: "/favicon.svg?v=bubble-tea-2",
         type: "image/svg+xml",
       },
       // PNG fallback for anything that doesn't render SVG favicons.
       {
         rel: "icon",
-        href: "/favicon-32.png?v=gl-1",
+        href: "/favicon-32.png?v=bubble-tea-2",
         type: "image/png",
         sizes: "32x32",
       },
       // iOS "Add to Home Screen" tile (Safari ignores the manifest icons).
       {
         rel: "apple-touch-icon",
-        href: "/apple-touch-icon.png?v=gl-1",
+        href: "/apple-touch-icon.png?v=bubble-tea-2",
         sizes: "180x180",
       },
       {
         rel: "manifest",
-        href: "/manifest.json?v=gl-1",
+        href: "/manifest.json?v=bubble-tea-2",
       },
       // Feed auto-discovery: RSS readers resolve /feed.xml from any page URL.
       {

@@ -533,6 +533,7 @@
     "all": "All",
     "notFound": "Page not found",
     "notFoundHint": "This page may have moved, or the link may be incorrect.",
-    "backHome": "Back to home"
+    "backHome": "Back to home",
+    "fueledByTea": "Code, fueled by bubble tea."
   }
 }

@@ -38,6 +38,10 @@ function Home() {
   return (
     <TmPage>
       <section className="public-hero">
+        <div className="public-tea-note">
+          <span aria-hidden="true" className="public-pearl-trio" />
+          {t("public.fueledByTea")}
+        </div>
         <div className="public-eyebrow">{whoami || t("public.brand")}</div>
         <h1>{t("public.statement")}</h1>
         {intro && <p>{intro}</p>}

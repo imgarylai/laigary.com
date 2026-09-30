@@ -1,4 +1,5 @@
 // Code-native 1200×630 social cards, sharing the public site's editorial palette.
+import { BRAND_INK, BRAND_CANVAS, BUBBLE_TEA_SHAPES } from "@/lib/brand";
 import { displayWidth, truncateToWidth } from "./excerpt";
 import { getTranslation } from "@/i18n";
 
@@ -10,11 +11,11 @@ export const OG_WIDTH = 1200;
 export const OG_HEIGHT = 630;
 const FONT_STACK = "Lato, Noto Sans TC";
 const SITE = {
-  canvas: "#f7f6f2",
-  ink: "#20211f",
-  muted: "#62665e",
-  accent: "#365f4b",
-  rule: "#dcded5",
+  canvas: BRAND_CANVAS,
+  ink: "#302a24",
+  muted: "#756757",
+  accent: BRAND_INK,
+  rule: "#e3d8c8",
 };
 const t = (key: string) => getTranslation("en", `public.${key}`);
 
@@ -101,16 +102,12 @@ function headline(title: string): OgNode {
 function monogram(): OgNode {
   return h(
     "svg",
-    { width: 52, height: 52, viewBox: "0 0 32 32" },
-    h("rect", { width: 32, height: 32, rx: 7, fill: SITE.accent }),
-    h("path", {
-      d: "M14 10H9L6 13V20L9 23H15V17H12 M20 10V23H27",
-      fill: "none",
-      stroke: SITE.canvas,
-      strokeWidth: 2.5,
-      strokeLinecap: "square",
-      strokeLinejoin: "round",
-    }),
+    { width: 52, height: 52, viewBox: "0 0 64 64" },
+    h(
+      "g",
+      { transform: "translate(4 2)" },
+      ...BUBBLE_TEA_SHAPES.map(({ type, props }) => h(type, props)),
+    ),
   );
 }
 
