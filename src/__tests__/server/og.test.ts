@@ -88,6 +88,7 @@ describe("serveOgImage", () => {
     const res = await serveOgImage(request, async () => node);
 
     expect(res.headers.get("Content-Type")).toBe("image/png");
+    expect(res.headers.get("Content-Length")).toBe("4");
     expect(res.headers.get("Cache-Control")).toBe("public, max-age=3600");
     expect(new Uint8Array(await res.arrayBuffer())).toEqual(new Uint8Array([137, 80, 78, 71]));
     expect(match).toHaveBeenCalledWith(cacheKey);
@@ -153,6 +154,7 @@ describe("serveOgImage", () => {
     const res = await serveOgImage(request, async () => node);
 
     expect(res.headers.get("Content-Type")).toBe("image/png");
+    expect(res.headers.get("Content-Length")).toBe("4");
     expect(renderOgPng).toHaveBeenCalledOnce();
   });
 });

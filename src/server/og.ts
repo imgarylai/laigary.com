@@ -57,7 +57,13 @@ export async function serveOgImage(
       ? CACHE_SECONDS
       : Math.min(CACHE_SECONDS, Math.max(1, nextPublish - Math.floor(Date.now() / 1000)));
   const response = new Response(png as unknown as BodyInit, {
-    headers: { "Content-Type": "image/png", "Cache-Control": `public, max-age=${ttl}` },
+    headers: {
+      "Content-Type": "image/png",
+      // Crawlers can probe with HEAD before GET; advertise the rendered size on
+      // a cold response too, rather than relying on Cache API to add it later.
+      "Content-Length": String(png.byteLength),
+      "Cache-Control": `public, max-age=${ttl}`,
+    },
   });
   await cache?.put(cacheKey, response.clone());
   return response;
