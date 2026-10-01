@@ -413,7 +413,8 @@ export function WorkForm({
               name="title"
               render={({ field, fieldState }) => (
                 <Field>
-                  <Input
+                  <Textarea
+                    rows={1}
                     id="work-title"
                     aria-label={t("postForm.title")}
                     placeholder={t("postForm.titlePlaceholder")}

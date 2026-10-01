@@ -6,6 +6,7 @@ import { ArrowSquareOutIcon } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { Field, FieldLabel, FieldError, FieldDescription } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -157,7 +158,8 @@ export function NoteForm({
       name="title"
       render={({ field, fieldState }) => (
         <Field>
-          <Input
+          <Textarea
+            rows={1}
             id="note-title"
             aria-label={t("noteForm.title")}
             placeholder={t("postForm.titlePlaceholder")}

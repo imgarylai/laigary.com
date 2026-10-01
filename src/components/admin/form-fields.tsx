@@ -38,11 +38,11 @@ type Ctrl = Control<PostFormValues>;
 
 /**
  * The title doubles as the page heading, so it carries no label and no chrome —
- * the placeholder is the only affordance it needs. Shared with NoteForm via the
- * className so both editors present the same writing surface.
+ * the placeholder is the only affordance it needs. Shared by all four content
+ * editors; Textarea grows vertically so long titles remain fully visible.
  */
 export const EDITOR_TITLE_CLASS =
-  "h-auto rounded-none border-0 bg-transparent px-0 py-1 text-2xl font-bold tracking-tight shadow-none md:text-3xl focus-visible:border-0 focus-visible:ring-0 dark:bg-transparent";
+  "h-auto min-h-0 min-w-0 resize-none [overflow-wrap:anywhere] rounded-none border-0 bg-transparent px-0 py-1 text-2xl font-bold tracking-tight shadow-none md:text-3xl focus-visible:border-0 focus-visible:ring-0 dark:bg-transparent";
 
 export function TitleField({
   control,
@@ -58,7 +58,8 @@ export function TitleField({
       name="title"
       render={({ field, fieldState }) => (
         <Field>
-          <Input
+          <Textarea
+            rows={1}
             id="post-title"
             aria-label={t("postForm.title")}
             placeholder={t("postForm.titlePlaceholder")}
