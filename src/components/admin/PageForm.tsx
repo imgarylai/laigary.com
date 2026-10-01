@@ -6,6 +6,7 @@ import { ArrowSquareOutIcon } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/i18n/I18nProvider";
 import { useSaveShortcut } from "@/hooks/use-save-shortcut";
@@ -151,7 +152,8 @@ export function PageForm({ page }: { page?: { slug: string; title: string; conte
               name="title"
               render={({ field, fieldState }) => (
                 <Field>
-                  <Input
+                  <Textarea
+                    rows={1}
                     id="page-title"
                     aria-label={t("pageForm.title")}
                     placeholder={t("pageForm.titlePlaceholder")}
