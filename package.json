@@ -113,7 +113,7 @@
     "zod": "4.6.5"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "5.20261015.1",
+    "@cloudflare/workers-types": "5.20261021.1",
     "@commitlint/cli": "21.2.3",
     "@commitlint/config-conventional": "21.2.3",
     "@tailwindcss/typography": "0.5.20",
@@ -142,7 +142,7 @@
     "typescript": "7.0.2",
     "vite": "8.3.1",
     "vitest": "5.0.5",
-    "wrangler": "4.151.0"
+    "wrangler": "4.151.3"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
