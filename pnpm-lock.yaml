@@ -176,13 +176,13 @@ importers:
         version: 1.8.0(@date-fns/tz@1.5.0)(@types/react@19.3.0)(date-fns@4.4.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@cloudflare/vite-plugin':
         specifier: 1.65.0
-        version: 1.65.0(@types/node@24.13.6)(vite@8.3.1(@types/node@24.13.6)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))(workerd@1.20261012.1)(wrangler@4.154.0(@cloudflare/workers-types@5.20261028.1)(@types/node@24.13.6))
+        version: 1.65.0(@types/node@24.13.6)(vite@8.3.1(@types/node@24.13.6)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))(workerd@1.20261023.1)(wrangler@4.154.0(@cloudflare/workers-types@5.20261028.1)(@types/node@24.13.6))
       '@fontsource-variable/jetbrains-mono':
         specifier: 5.3.0
         version: 5.3.0
       '@hookform/resolvers':
-        specifier: 5.9.1
-        version: 5.9.1(@standard-schema/spec@1.1.0)(ajv-formats@2.1.1(ajv@8.20.0))(ajv@8.20.0)(react-hook-form@7.88.0(react@19.3.1))(zod@4.6.5)
+        specifier: 6.0.2
+        version: 6.0.2(@standard-schema/spec@1.1.0)(ajv-formats@2.1.1(ajv@8.20.0))(ajv@8.20.0)(react-hook-form@7.88.0(react@19.3.1))(zod@4.6.5)
       '@phosphor-icons/react':
         specifier: 2.1.10
         version: 2.1.10(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -471,7 +471,7 @@ importers:
         version: 5.0.5(vitest@5.0.5)
       alchemy:
         specifier: 0.94.0
-        version: 0.94.0(@cloudflare/vite-plugin@1.65.0(@types/node@24.13.6)(vite@8.3.1(@types/node@24.13.6)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))(workerd@1.20261012.1)(wrangler@4.154.0(@cloudflare/workers-types@5.20261028.1)(@types/node@24.13.6)))(@types/better-sqlite3@9.6.0)(@types/node@24.13.6)(better-sqlite3@13.0.3)(vite@8.3.1(@types/node@24.13.6)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))(workerd@1.20261012.1)
+        version: 0.94.0(@cloudflare/vite-plugin@1.65.0(@types/node@24.13.6)(vite@8.3.1(@types/node@24.13.6)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))(workerd@1.20261023.1)(wrangler@4.154.0(@cloudflare/workers-types@5.20261028.1)(@types/node@24.13.6)))(@types/better-sqlite3@9.6.0)(@types/node@24.13.6)(better-sqlite3@13.0.3)(vite@8.3.1(@types/node@24.13.6)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))(workerd@1.20261023.1)
       better-sqlite3:
         specifier: 13.0.3
         version: 13.0.3
@@ -1712,22 +1712,21 @@ packages:
     peerDependencies:
       hono: ^4
 
-  '@hookform/resolvers@5.9.1':
-    resolution: {integrity: sha512-7b7vsbraJxKgjVSA1Nur9tLwj539WGJUBLA7QNvXnFoT2pM5Z7G+6rlukk4B2/QrTZy6huRtH6wKeESPKuIr6w==}
+  '@hookform/resolvers@6.0.2':
+    resolution: {integrity: sha512-e2dqUOlaGuirKVOd/iZWk/Yg5zeaGw7t0hSc3LzxL3o7eZGwZkTyEbBL8H52m0wRKEsNLWoMGOiXGHbPHTXlEQ==}
     peerDependencies:
       '@sinclair/typebox': '>=0.25.24'
       '@standard-schema/spec': ^1.0.0
-      '@typeschema/main': '>=0.13.7'
       '@vinejs/vine': ^2.0.0 || ^3.0.0 || ^4.0.0
       ajv: ^8.12.0
       ajv-errors: ^3.0.0
       ajv-formats: ^2.1.1
       arktype: ^2.0.0
-      ata-validator: ^1.2.0
+      ata-validator: ^1.23.0
       class-transformer: '>=0.4.0'
       class-validator: '>=0.12.0'
       computed-types: ^1.0.0
-      effect: ^3.10.3
+      effect: ^4.0.0
       fluentvalidation-ts: ^3.0.0
       fp-ts: ^2.7.0
       io-ts: ^2.0.0
@@ -1744,8 +1743,6 @@ packages:
       '@sinclair/typebox':
         optional: true
       '@standard-schema/spec':
-        optional: true
-      '@typeschema/main':
         optional: true
       '@vinejs/vine':
         optional: true
@@ -7405,27 +7402,21 @@ snapshots:
 
   '@cloudflare/kv-asset-handler@0.5.0': {}
 
-  '@cloudflare/unenv-preset@2.16.2(unenv@2.0.0-rc.24)(workerd@1.20261012.1)':
-    dependencies:
-      unenv: 2.0.0-rc.24
-    optionalDependencies:
-      workerd: 1.20261012.1
-
   '@cloudflare/unenv-preset@2.16.2(unenv@2.0.0-rc.24)(workerd@1.20261023.1)':
     dependencies:
       unenv: 2.0.0-rc.24
     optionalDependencies:
       workerd: 1.20261023.1
 
-  '@cloudflare/unenv-preset@2.7.7(unenv@2.0.0-rc.21)(workerd@1.20261012.1)':
+  '@cloudflare/unenv-preset@2.7.7(unenv@2.0.0-rc.21)(workerd@1.20261023.1)':
     dependencies:
       unenv: 2.0.0-rc.21
     optionalDependencies:
-      workerd: 1.20261012.1
+      workerd: 1.20261023.1
 
-  '@cloudflare/vite-plugin@1.65.0(@types/node@24.13.6)(vite@8.3.1(@types/node@24.13.6)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))(workerd@1.20261012.1)(wrangler@4.154.0(@cloudflare/workers-types@5.20261028.1)(@types/node@24.13.6))':
+  '@cloudflare/vite-plugin@1.65.0(@types/node@24.13.6)(vite@8.3.1(@types/node@24.13.6)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))(workerd@1.20261023.1)(wrangler@4.154.0(@cloudflare/workers-types@5.20261028.1)(@types/node@24.13.6))':
     dependencies:
-      '@cloudflare/unenv-preset': 2.16.2(unenv@2.0.0-rc.24)(workerd@1.20261012.1)
+      '@cloudflare/unenv-preset': 2.16.2(unenv@2.0.0-rc.24)(workerd@1.20261023.1)
       miniflare: 5.20261019.2-beta(@types/node@24.13.6)
       unenv: 2.0.0-rc.24
       vite: 8.3.1(@types/node@24.13.6)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0)
@@ -8032,7 +8023,7 @@ snapshots:
     dependencies:
       hono: 4.12.31
 
-  '@hookform/resolvers@5.9.1(@standard-schema/spec@1.1.0)(ajv-formats@2.1.1(ajv@8.20.0))(ajv@8.20.0)(react-hook-form@7.88.0(react@19.3.1))(zod@4.6.5)':
+  '@hookform/resolvers@6.0.2(@standard-schema/spec@1.1.0)(ajv-formats@2.1.1(ajv@8.20.0))(ajv@8.20.0)(react-hook-form@7.88.0(react@19.3.1))(zod@4.6.5)':
     dependencies:
       '@standard-schema/utils': 0.3.0
       react-hook-form: 7.88.0(react@19.3.1)
@@ -9836,10 +9827,10 @@ snapshots:
       json-schema-traverse: 1.0.0
       require-from-string: 2.0.2
 
-  alchemy@0.94.0(@cloudflare/vite-plugin@1.65.0(@types/node@24.13.6)(vite@8.3.1(@types/node@24.13.6)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))(workerd@1.20261012.1)(wrangler@4.154.0(@cloudflare/workers-types@5.20261028.1)(@types/node@24.13.6)))(@types/better-sqlite3@9.6.0)(@types/node@24.13.6)(better-sqlite3@13.0.3)(vite@8.3.1(@types/node@24.13.6)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))(workerd@1.20261012.1):
+  alchemy@0.94.0(@cloudflare/vite-plugin@1.65.0(@types/node@24.13.6)(vite@8.3.1(@types/node@24.13.6)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))(workerd@1.20261023.1)(wrangler@4.154.0(@cloudflare/workers-types@5.20261028.1)(@types/node@24.13.6)))(@types/better-sqlite3@9.6.0)(@types/node@24.13.6)(better-sqlite3@13.0.3)(vite@8.3.1(@types/node@24.13.6)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))(workerd@1.20261023.1):
     dependencies:
       '@aws-sdk/credential-providers': 3.1090.0
-      '@cloudflare/unenv-preset': 2.7.7(unenv@2.0.0-rc.21)(workerd@1.20261012.1)
+      '@cloudflare/unenv-preset': 2.7.7(unenv@2.0.0-rc.21)(workerd@1.20261023.1)
       '@cloudflare/workers-types': 5.20261028.1
       '@iarna/toml': 2.2.5
       '@octokit/rest': 21.1.1
@@ -9870,7 +9861,7 @@ snapshots:
       ws: 8.21.1
       yaml: 2.9.0
     optionalDependencies:
-      '@cloudflare/vite-plugin': 1.65.0(@types/node@24.13.6)(vite@8.3.1(@types/node@24.13.6)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))(workerd@1.20261012.1)(wrangler@4.154.0(@cloudflare/workers-types@5.20261028.1)(@types/node@24.13.6))
+      '@cloudflare/vite-plugin': 1.65.0(@types/node@24.13.6)(vite@8.3.1(@types/node@24.13.6)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))(workerd@1.20261023.1)(wrangler@4.154.0(@cloudflare/workers-types@5.20261028.1)(@types/node@24.13.6))
       vite: 8.3.1(@types/node@24.13.6)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0)
     transitivePeerDependencies:
       - '@aws-sdk/client-rds-data'
@@ -13007,7 +12998,6 @@ snapshots:
       '@cloudflare/workerd-linux-64': 1.20261012.1
       '@cloudflare/workerd-linux-arm64': 1.20261012.1
       '@cloudflare/workerd-windows-64': 1.20261012.1
-    optional: true
 
   workerd@1.20261019.1:
     optionalDependencies:
